@@ -4,14 +4,17 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: VM and repository provisioning are complete; application implementation has not begun.
-- Last meaningful change: Authenticated GitHub CLI as `fourtytwo42`, created the private repository `https://github.com/fourtytwo42/KeyGame`, and pushed the verified initial `main` commit from the VM.
-- Next step: Begin `DEL-BOOT-001` on the VM by scaffolding the pnpm Next.js application with strict checks and CI, then implement the typed domain model and `QA-FIX-001` through `QA-FIX-010`.
+- Current task: Complete. Last Bell is implemented, tested, and running against the authoritative VM devnet.
+- Last meaningful change: Finished the contracts, real Anvil wiring, testnet workflow, CI, runbook, full automated suite, and in-app browser UAT. Fixed the discovered zero-airtime faction tie mismatch so UI and contract both prefer NVDA by configured faction order.
+- Next step: Obtain an independent contract audit and legal review before any value-bearing deployment. For wallet UAT, add a real Reown project ID and test browser extensions on Robinhood Chain testnet.
 - Blockers: None documented.
 
 ## Current State
 
-- The repository currently contains research and agent guidance only; there is no application source, package manifest, build command, test suite, or `.git` directory at this level.
+- The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
+- The complete responsive application, Foundry contracts, deterministic Anvil controller, CI, and testnet deployment workflow are implemented.
+- Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-28.
+- Deterministic local addresses are recorded in `deployments/31337.json`; the deployment script recreates a fresh funded round without storing private keys.
 - The authoritative build workspace is VM `192.168.50.138`, user `hendo420`, path `/home/hendo420/projects/KeyGame`.
 - The VM repository uses branch `main`, tracks `origin/main`, and pushes to the private GitHub repository `https://github.com/fourtytwo42/KeyGame`.
 - `docs/fomo3d-game-logic-research.md` is the current technical baseline for original FoMo3D rules, formulas, accounting, timing, edge cases, and historical attacks.
@@ -51,7 +54,10 @@ When sources conflict, use this order:
 
 ## Setup And Commands
 
-- No application setup or build commands exist yet.
+- Frontend commands: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, and `pnpm test:all`.
+- Devnet commands: `pnpm devnet:start`, `pnpm devnet:deploy`, `pnpm devnet:stop`, `pnpm app:start`, and `pnpm app:stop`.
+- Contract commands: `forge fmt --check`, `forge test -vvv`, `pnpm contracts:deploy:local`, and `pnpm contracts:deploy:testnet`.
+- `README.md` is the current local-devnet, wallet, verification, and Robinhood Chain testnet runbook.
 - Research verification used the verified deployed source, public Ethereum JSON-RPC storage reads, and independent BigInt reproduction of the key curves.
 - VM last verified 2026-07-28: Ubuntu 24.04 LTS at `192.168.50.138`, SSH user `hendo420`, project path `/home/hendo420/projects/KeyGame`.
 - Dedicated local SSH key: `C:\Users\hendo420\.ssh\keygame_vm_ed25519`. Do not store the VM password in this repository or memory.
@@ -75,7 +81,11 @@ When sources conflict, use this order:
 
 ## Architecture Notes
 
-- No application architecture has been selected.
+- Implemented architecture: Next.js App Router and Server Components for public routes, narrowly scoped Client Components for simulator, replay, receipt sharing, wallet state, and live interactions; shared typed domain under `src/lib/game`; Wagmi/Viem under `src/lib/web3`; one global Channel 4663 CSS system.
+- `contracts/LastBellRound.sol` implements the prototype state machine and pull-payment settlement. `contracts/mocks/MockUSDG.sol` is devnet-only.
+- Devnet mode reads the deployed contract and events through `src/lib/web3/devnet.ts`; the development action API selects prejoined deterministic Anvil accounts and submits real transactions.
+- Wallet configuration includes injected EIP-6963 wallets, MetaMask, Coinbase Wallet, Safe, and optional WalletConnect through a Reown project ID. No extension connection has been claimed as tested.
+- Robinhood Chain testnet is configured as chain ID `46630`; `script/DeployTestnet.s.sol` consumes environment configuration and does not embed a signing key.
 - The research separates the economic state machine into players/vaults, per-round key balances and masks, key-price curves, timer/leader updates, external distributions, airdrop state, and settlement.
 - Original FoMo3D behavior contains known vulnerabilities and accounting defects. Historical fidelity and production-safe behavior must be treated as separate modes or designs.
 - Proposed direction, not yet approved: “Last Bell,” a short market-arena round where users lock canonical Stock Tokens, pay a small explicit USDG action fee to claim control, accrue time-weighted control score, receive locked principal back after settlement, and compete for a fee/sponsor-funded prize. A final-leader bonus preserves countdown tension without making one last transaction the whole outcome.
@@ -126,6 +136,14 @@ When sources conflict, use this order:
 - 2026-07-28: Installed and verified GitHub CLI, build-essential, jq, unzip, nvm, Node v24.18.0, and pnpm 11.17.0; added dedicated key-based SSH access.
 - 2026-07-28: Copied 31 project files totaling about 22.9 MB to `/home/hendo420/projects/KeyGame`; SHA-256 verification found 31 matching files, zero mismatches, and zero extras before Git initialization.
 - 2026-07-28: Created initial commit `2d74289b8aead3d62e7f6f0dea201b35f0ce1daf`, created private repository `fourtytwo42/KeyGame`, pushed `main`, and verified the local and remote commit hashes matched.
+- 2026-07-28: Generated `docs/design/assets/last-bell-mascot.png` with built-in ImageGen from the approved Channel 4663 reference, removed a keyed magenta background, inspected the transparent result, and derived favicon, Apple icon, app icons, and Open Graph assets.
+- 2026-07-28: Verified the first application slice on the VM with `pnpm typecheck`, `pnpm lint`, six deterministic simulator tests, and `pnpm build`; all passed. The build emitted only non-blocking fallback-metric warnings for two Google fonts.
+- 2026-07-28: Final frontend gates passed on the authoritative VM: Prettier, TypeScript, ESLint, 11 Vitest unit/component tests, and the Next.js production build.
+- 2026-07-28: Final Foundry suite passed 11 contract tests, including 512 fuzz runs for Rug Zone non-extension, payout conservation, pull claims, refunds, self-claim rejection, hard-cap enforcement, and deterministic faction settlement.
+- 2026-07-28: Real Anvil integration suite passed 3 tests covering snapshot reads, a browser-equivalent claim, Rug Zone behavior, and finalization.
+- 2026-07-28: Playwright passed 12/12 tests in installed Chrome across desktop and Pixel 7 profiles: five-second comprehension, real devnet claim, wallet panel, all public routes, axe serious/critical checks, and horizontal-overflow checks.
+- 2026-07-28: In-app browser UAT verified the live Anvil source, the $1 claim action, deterministic NVDA tie leader, wallet choices and WalletConnect configuration notice, mobile 390x844 layout with no horizontal overflow, literal rules/constants, and zero browser console errors.
+- 2026-07-28: CI workflow added for frontend, Foundry, integration, and Playwright gates. It is committed configuration; the first GitHub Actions execution remains external verification.
 
 ## Decisions
 
@@ -158,7 +176,11 @@ When sources conflict, use this order:
 
 ## Known Issues
 
-- There is no game implementation to run or test.
+- Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
+- Robinhood Chain testnet deployment is ready but was not performed; it requires funded signer configuration, real token/treasury addresses, and explicit launch authorization.
+- CI configuration is present but its first hosted GitHub Actions run has not yet been observed.
+- The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
+- Contracts have extensive local tests but no independent security audit.
 - Original FoMo3D includes predictable airdrop randomness, block-stuffing exposure, contract-wallet exclusions, external-call dependencies, integer-boundary quirks, and several documented accounting/view defects.
 - Any real-money implementation would require security and current legal/regulatory review.
 - Robinhood Stock Tokens are unavailable to U.S. persons and restricted in other jurisdictions. A permissionless contract plus frontend geo-block is not automatically a sufficient compliance design.
@@ -177,18 +199,18 @@ When sources conflict, use this order:
 - 2026-07-28: Created `docs/prd/08-user-stories.md`, added it to the PRD index, and made it the backlog source in the delivery plan.
 - 2026-07-28: Updated PRDs 01, 02, 03, 04, 06, 07, 08, and the PRD index with the approved build kickoff, testnet-points MVP, configurable prototype constants, pnpm/CI/test stack, shared domain model, visual implementation rules, ten-fixture matrix, and three-slice implementation plan.
 - 2026-07-28: Provisioned the Ubuntu KeyGame VM, expanded its root volume, installed the toolchain, transferred the project, initialized Git, authenticated GitHub CLI, created the private GitHub repository, and pushed `main`.
+- 2026-07-28: Added the Next.js application foundation, full responsive Channel 4663 screen system, deterministic simulator, custom Wagmi wallet panel, and ImageGen-derived production brand/icon assets.
+- 2026-07-28: Implemented `LastBellRound`, `MockUSDG`, Foundry deployment scripts, complete contract tests, and a deterministic local Anvil lifecycle.
+- 2026-07-28: Wired the live UI to real devnet contract state and transactions, added testnet-ready chain/deployment configuration, and documented wallet/testnet operation.
+- 2026-07-28: Added CI and completed unit, component, contract, fuzz, integration, accessibility, desktop/mobile Playwright, and in-app browser UAT.
 
 ## Open Follow-ups
 
-- Approve, revise, or reject the consolidated `Last Bell: Ticker Royale` design in `docs/last-bell-product-concept.md`.
-- Decide whether the MVP is points-only testnet, sponsor-funded USDG mainnet, or actual player-funded prizes.
-- Decide whether actual Stock Tokens are locked in the MVP or used only as canonical themes/oracle data until eligibility controls exist.
-- Decide whether the primary payout should reward sustained faction control, the final bell holder, or a clearly displayed split between both.
-- Approve the core meme vocabulary and decide whether `THE TRENCHES` is the live feed, a high-volatility mode, or neither.
-- Review the twelve-screen gallery and identify any screen-specific visual changes before treating it as the frontend implementation target.
-- Review the remaining PRD decision ledger after simulation, especially same-faction theft, late entry, timer/scoring precision, production timer constants, and production payout economics.
-- Use simulation evidence to resolve same-faction theft, late entry, control-time precision, faction ties, production timer constants, and production payout economics.
+- Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
+- Observe the first hosted GitHub Actions run and correct any environment-only discrepancy.
+- Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
+- Select real testnet payment token, treasury, operator, monitoring, and RPC-provider configuration before deployment.
 
 ## Do Not Forget
 

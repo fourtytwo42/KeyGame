@@ -1,0 +1,26 @@
+[profile.default]
+src = "contracts"
+test = "test/contracts"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.30"
+optimizer = true
+optimizer_runs = 10000
+via_ir = true
+
+[fmt]
+line_length = 88
+tab_width = 4
+bracket_spacing = true
+
+[fuzz]
+runs = 512
+
+[invariant]
+runs = 256
+depth = 32
+
+[rpc_endpoints]
+local = "http://127.0.0.1:8545"
+robinhood_testnet = "${ROBINHOOD_TESTNET_RPC_URL}"
