@@ -52,6 +52,11 @@ export const roundConfig: RoundConfig = {
   factions,
 };
 
+export const sessionApproval = {
+  amountUsd: 100,
+  refreshBelowUsd: 10,
+} as const;
+
 export const demoAddresses = {
   caller: "0x4663B31100000000000000000000000000000001",
   rival: "0x4663B31100000000000000000000000000000002",

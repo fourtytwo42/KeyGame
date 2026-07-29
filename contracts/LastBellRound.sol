@@ -54,7 +54,6 @@ contract LastBellRound {
     uint256 public protocolPool;
 
     mapping(address => uint8) private selectedFactionPlusOne;
-    mapping(address => uint256) public maxSpend;
     mapping(address => uint256) public paid;
     mapping(address => uint256) public controlTime;
     mapping(uint8 => uint256) public factionAirtime;
@@ -79,9 +78,7 @@ contract LastBellRound {
         uint64 hardEnd,
         uint256 seedPot
     );
-    event FactionJoined(
-        uint256 indexed roundId, address indexed player, uint8 faction, uint256 maxSpend
-    );
+    event FactionJoined(uint256 indexed roundId, address indexed player, uint8 faction);
     event BellClaimed(
         uint256 indexed roundId,
         uint256 indexed sequence,
@@ -138,7 +135,6 @@ contract LastBellRound {
     error AlreadyJoined();
     error NotJoined();
     error CurrentHolder();
-    error BudgetExceeded();
     error NothingToClaim();
     error TransferFailed();
     error Reentrancy();
@@ -230,17 +226,15 @@ contract LastBellRound {
         emit RoundStarted(roundId, now64, deadline, hardEnd, seedPot);
     }
 
-    function joinFaction(uint8 faction, uint256 spendLimit) external {
+    function joinFaction(uint8 faction) external {
         Phase phase = currentPhase();
         if (phase != Phase.Scheduled && phase != Phase.Live && phase != Phase.Rug) {
             revert InvalidPhase(Phase.Live, phase);
         }
         if (faction >= factionSymbols.length) revert InvalidFaction();
-        if (spendLimit < claimPrice) revert InvalidConfiguration();
         if (selectedFactionPlusOne[msg.sender] != 0) revert AlreadyJoined();
         selectedFactionPlusOne[msg.sender] = faction + 1;
-        maxSpend[msg.sender] = spendLimit;
-        emit FactionJoined(roundId, msg.sender, faction, spendLimit);
+        emit FactionJoined(roundId, msg.sender, faction);
     }
 
     function claimBell() external nonReentrant {
@@ -251,10 +245,6 @@ contract LastBellRound {
         uint8 faction = factionOf(msg.sender);
         if (faction == NO_FACTION) revert NotJoined();
         if (msg.sender == holder) revert CurrentHolder();
-        if (paid[msg.sender] + claimPrice > maxSpend[msg.sender]) {
-            revert BudgetExceeded();
-        }
-
         address previousHolder = holder;
         uint8 previousFaction = holderFaction;
         _accrueAirtime(uint64(block.timestamp));

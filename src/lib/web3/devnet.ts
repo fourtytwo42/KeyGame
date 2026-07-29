@@ -15,7 +15,7 @@ import type {
   RoundState,
   SessionBudget,
 } from "@/lib/game/types";
-import { factions } from "@/lib/game/constants";
+import { factions, sessionApproval } from "@/lib/game/constants";
 import { devDollarAbi, lastBellAbi } from "./last-bell-abi";
 import { localDevnet } from "./chains";
 
@@ -285,7 +285,6 @@ export async function getDevnetSession(
   const snapshot = await getDevnetSnapshot();
   const [
     faction,
-    maximum,
     spent,
     allowance,
     holderClaimed,
@@ -297,12 +296,6 @@ export async function getDevnetSession(
       address: roundAddress,
       abi: lastBellAbi,
       functionName: "factionOf",
-      args: [player],
-    }),
-    devnetPublicClient.readContract({
-      address: roundAddress,
-      abi: lastBellAbi,
-      functionName: "maxSpend",
       args: [player],
     }),
     devnetPublicClient.readContract({
@@ -344,7 +337,6 @@ export async function getDevnetSession(
   ]);
 
   const joined = Number(faction) < factions.length;
-  const maximumUsd = unitsToUsd(maximum);
   const spentUsd = unitsToUsd(spent);
   const allowanceUsd = unitsToUsd(allowance);
   const expired =
@@ -365,13 +357,10 @@ export async function getDevnetSession(
     session: {
       player,
       faction: playerFaction,
-      maximumUsd,
+      maximumUsd: allowanceUsd,
       spentUsd,
-      remainingUsd: Math.max(0, Math.min(maximumUsd - spentUsd, allowanceUsd)),
-      availableActions: Math.max(
-        0,
-        Math.floor(Math.min(maximumUsd - spentUsd, allowanceUsd) / Number(1)),
-      ),
+      remainingUsd: allowanceUsd,
+      availableActions: Math.max(0, Math.floor(allowanceUsd)),
       allowanceUsd,
       expiresAt: snapshot.deadline ?? null,
       status: !joined
@@ -409,7 +398,7 @@ async function sendContract(
     | "claimHolderReward"
     | "claimFactionReward"
     | "claimCancellationRefund",
-  args?: readonly [number, bigint],
+  args?: readonly [number],
 ): Promise<Hash> {
   const walletClient = createWalletClient({
     account,
@@ -499,21 +488,33 @@ export async function fundDevnetWallet(player: Address, amountUsd = 25) {
 export async function sendDevnetAction(
   action: DevnetAction,
   faction?: FactionId,
-  budgetUsd = 5,
 ) {
   let hash: Hash;
   if (action === "enter") {
     const factionIndex = factions.findIndex((item) => item.id === faction);
     if (factionIndex < 0) throw new Error("Select one of the four bags.");
-    const budget = BigInt(budgetUsd * 1e6);
-    await approveSession(devnetSessionPlayer, budget);
+    await approveSession(
+      devnetSessionPlayer,
+      BigInt(sessionApproval.amountUsd * 1e6),
+    );
     hash = await sendContract(devnetSessionPlayer, "joinFaction", [
       factionIndex,
-      budget,
     ]);
   } else if (action === "revoke") {
     hash = await approveSession(devnetSessionPlayer, 0n);
   } else if (action === "claim") {
+    const allowance = await devnetPublicClient.readContract({
+      address: devDollarAddress,
+      abi: devDollarAbi,
+      functionName: "allowance",
+      args: [devnetSessionPlayer, roundAddress],
+    });
+    if (allowance < BigInt(sessionApproval.refreshBelowUsd * 1e6)) {
+      await approveSession(
+        devnetSessionPlayer,
+        BigInt(sessionApproval.amountUsd * 1e6),
+      );
+    }
     hash = await sendContract(devnetSessionPlayer, "claimBell");
   } else if (action === "demo-claim") {
     const snapshot = await getDevnetSnapshot();

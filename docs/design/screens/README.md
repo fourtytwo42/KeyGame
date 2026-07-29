@@ -21,8 +21,13 @@ Viewport: `1200 px+`
 Desktop does not stretch the mobile arena or become a trading terminal. The
 clock, holder, and `$1` action stay inside one dominant center broadcast. A
 station-rundown rail carries the rules and faction airtime on the left, while a
-live transmission rail carries the Trenches, bounded session budget, and
+live transmission rail carries the Trenches, reusable allowance state, and
 secondary navigation on the right.
+
+Allowance note: these generated concepts predate the reusable-approval
+decision. Any max-spend picker or bounded-budget copy in an image is
+superseded by the implemented $100 play-USDG approval, automatic refresh when
+the allowance is below $10, and wallet-controlled revocation.
 
 ![Desktop Live / On Air](./desktop-live-on-air.png)
 

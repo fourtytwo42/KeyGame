@@ -17,7 +17,6 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       action?: string;
       faction?: string;
-      budgetUsd?: number;
     };
     const supported: DevnetAction[] = [
       "enter",
@@ -44,17 +43,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (body.action === "enter" && ![5, 10, 25].includes(body.budgetUsd ?? 5)) {
-      return NextResponse.json(
-        { ok: false, error: "Budget must be $5, $10, or $25." },
-        { status: 400 },
-      );
-    }
-
     const result = await sendDevnetAction(
       body.action as DevnetAction,
       body.faction as FactionId | undefined,
-      body.budgetUsd,
     );
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {

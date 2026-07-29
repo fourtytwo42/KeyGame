@@ -51,7 +51,7 @@ for index in "${!accounts[@]}"; do
     --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
   send_checked "$token_address" "approve(address,uint256)" "$round_address" 100000000 \
     --rpc-url "$rpc_url" --unlocked --from "$account" --gas-limit 150000
-  send_checked "$round_address" "joinFaction(uint8,uint256)" "$faction" 100000000 \
+  send_checked "$round_address" "joinFaction(uint8)" "$faction" \
     --rpc-url "$rpc_url" --unlocked --from "$account" --gas-limit 150000
 done
 

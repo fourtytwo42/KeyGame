@@ -25,9 +25,9 @@ Comprehension is measured separately through moderated and in-product research; 
 | ID | Metric | Definition | MVP target |
 |---|---|---|---:|
 | `DATA-001` | Five-second comprehension | Testers answering action, cost, win, budget, and holder questions correctly | ≥85% |
-| `DATA-002` | Entry completion | Started bounded authorization resulting in confirmed round entry | ≥75% |
+| `DATA-002` | Entry completion | Started reusable-allowance authorization resulting in confirmed round entry | ≥75% |
 | `DATA-003` | Accepted-state accuracy | Accepted UI holder transitions matching canonical order | 100% |
-| `DATA-004` | Budget comprehension | Testers who correctly state remaining maximum spend | ≥90% |
+| `DATA-004` | Allowance comprehension | Testers who correctly explain approval amount, refresh threshold, and revocation | ≥90% |
 | `DATA-005` | Round completion visibility | Active participants receiving final canonical state | ≥98% |
 | `DATA-006` | Replay parity | Replays matching contract settlement and event order | 100% |
 | `DATA-007` | Immediate runback | Settled-round participants entering or spectating the next round | Hypothesis: ≥25% |
@@ -112,7 +112,7 @@ states, expected replay, and expected final receipt.
 | `QA-FIX-002` | Rug Zone snipe | Final-seconds holder changes without extending the effective end; receipt records the accepted remaining time. |
 | `QA-FIX-003` | Rapid competing claims | Canonical order is stable, no optimistic holder appears, and configured control-time precision is explicit. |
 | `QA-FIX-004` | Rejected current-holder claim | Self-extension is rejected and the game fee remains uncharged. |
-| `QA-FIX-005` | Session budget exhausted | The last affordable action is accepted, the next is blocked, and no silent top-up occurs. |
+| `QA-FIX-005` | Allowance refresh threshold | Claims remain one-tap above $10; below $10 the next claim requests a new $100 approval and proceeds only after wallet confirmation. |
 | `QA-FIX-006` | Weak Signal and recovery | Freshness degrades, unsafe claims pause, direct or simulated fallback recovers, and no false crown appears. |
 | `QA-FIX-007` | Settlement pending | Zero freezes, claims close, last observed holder remains nonfinal, and another actor can settle. |
 | `QA-FIX-008` | Cancelled round | No winner exists; fee refunds and principal recovery remain independent and replayable. |
@@ -131,7 +131,7 @@ can replace canonical live state.
 - Tie-breakers.
 - Control intervals.
 - Copy-state mapping.
-- Budget calculation.
+- Allowance and refresh-threshold calculation.
 
 ### Contract unit tests
 
@@ -179,7 +179,7 @@ Required journeys:
 4. Win faction pool without final bell.
 5. Receive both final and faction rewards.
 6. Submit too late and see no game-fee charge.
-7. Exhaust session budget.
+7. Lower allowance below $10, reject and accept the refresh request, and verify both outcomes.
 8. Revoke session.
 9. Observe Weak Signal and recover.
 10. Cancel a test round and claim refund.

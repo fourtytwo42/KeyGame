@@ -3,7 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { demoAddresses, formatUsd, roundConfig } from "@/lib/game/constants";
+import {
+  demoAddresses,
+  formatUsd,
+  roundConfig,
+  sessionApproval,
+} from "@/lib/game/constants";
 import { factionById, scenarioIds, scenarios } from "@/lib/game/scenarios";
 import { claimBell, leadingFaction, settle, tick } from "@/lib/game/simulator";
 import type {
@@ -33,7 +38,6 @@ export function LiveGame({
     cloneState(scenarios[initialScenario].state),
   );
   const [selectedFaction, setSelectedFaction] = useState<FactionId>("NVDA");
-  const [selectedBudget, setSelectedBudget] = useState(5);
   const [guestSession, setGuestSession] = useState<SessionBudget | null>(null);
   const [guestClaimable, setGuestClaimable] = useState<ClaimableBalances>({
     holderUsd: 0,
@@ -162,13 +166,12 @@ export function LiveGame({
       | "claim-faction"
       | "claim-refund",
     faction = selectedFaction,
-    budgetUsd = selectedBudget,
   ) => {
     try {
       const response = await fetch("/api/devnet/action", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action, faction, budgetUsd }),
+        body: JSON.stringify({ action, faction }),
       });
       const payload = (await response.json()) as {
         ok: boolean;
@@ -186,7 +189,7 @@ export function LiveGame({
       setActionStatus("accepted");
       setAnnouncement(
         action === "enter"
-          ? `${faction} faction entry accepted. $${budgetUsd} session active.`
+          ? `${faction} faction entry accepted. Reusable USDG approval active.`
           : action === "claim"
             ? `Claim accepted on chain 31337. You have the ${faction} bell.`
             : action.startsWith("claim-")
@@ -257,12 +260,12 @@ export function LiveGame({
   const enterRound = async () => {
     setActionStatus("submitted");
     setAnnouncement(
-      `Authorizing ${selectedFaction} with a $${selectedBudget} maximum.`,
+      `Joining ${selectedFaction} with a reusable USDG approval.`,
     );
     if (devnetMode) {
       if (walletGame.isConnected) {
         try {
-          await walletGame.enter(selectedFaction, selectedBudget);
+          await walletGame.enter(selectedFaction);
           await refreshDevnet();
           setActionStatus("accepted");
           setAnnouncement(
@@ -275,7 +278,7 @@ export function LiveGame({
           );
         }
       } else {
-        await requestDevnetAction("enter", selectedFaction, selectedBudget);
+        await requestDevnetAction("enter", selectedFaction);
       }
       return;
     }
@@ -287,17 +290,17 @@ export function LiveGame({
     setGuestSession({
       player: demoAddresses.player,
       faction: selectedFaction,
-      maximumUsd: selectedBudget,
+      maximumUsd: sessionApproval.amountUsd,
       spentUsd: 0,
-      remainingUsd: selectedBudget,
-      availableActions: selectedBudget,
-      allowanceUsd: selectedBudget,
+      remainingUsd: sessionApproval.amountUsd,
+      availableActions: sessionApproval.amountUsd,
+      allowanceUsd: sessionApproval.amountUsd,
       expiresAt: null,
       status: "active",
       mode: "devnet-guest",
     });
     setActionStatus("accepted");
-    setAnnouncement(`${selectedFaction} bag and budget locked.`);
+    setAnnouncement(`${selectedFaction} bag joined with reusable approval.`);
   };
 
   const factionLeader = leadingFaction(state);
@@ -381,8 +384,6 @@ export function LiveGame({
             <EntryDesk
               selected={selectedFaction}
               onSelect={setSelectedFaction}
-              budget={selectedBudget}
-              onBudget={setSelectedBudget}
               onEnter={enterRound}
               status={actionStatus}
               walletConnected={walletGame.isConnected}
@@ -465,16 +466,12 @@ export function LiveGame({
 function EntryDesk({
   selected,
   onSelect,
-  budget,
-  onBudget,
   onEnter,
   status,
   walletConnected,
 }: {
   selected: FactionId;
   onSelect: (id: FactionId) => void;
-  budget: number;
-  onBudget: (budget: number) => void;
   onEnter: () => void;
   status: ActionStatus;
   walletConnected: boolean;
@@ -509,23 +506,10 @@ function EntryDesk({
           </button>
         ))}
       </div>
-      <fieldset className="budgetPicker">
-        <legend>MAX SPEND</legend>
-        {[5, 10, 25].map((amount) => (
-          <button
-            type="button"
-            key={amount}
-            aria-pressed={budget === amount}
-            onClick={() => onBudget(amount)}
-          >
-            ${amount}
-          </button>
-        ))}
-      </fieldset>
       <div className="entryTerms">
         <span>ONE ROUND</span>
-        <span>{budget} MAX CALLS</span>
-        <span>$1 EACH</span>
+        <span>$1 PER CALL</span>
+        <span>ONE APPROVAL</span>
         <span>REVOKE ANY TIME</span>
       </div>
       <button
@@ -534,14 +518,12 @@ function EntryDesk({
         onClick={onEnter}
         disabled={status === "submitted"}
       >
-        {status === "submitted"
-          ? "TUNING THE LINE…"
-          : `ENTER ${selected} · MAX $${budget}`}
+        {status === "submitted" ? "TUNING THE LINE…" : `ENTER ${selected}`}
       </button>
       <p className="actionFinePrint">
         {walletConnected
-          ? "Your wallet approves a round-only USDG ceiling. Stock Tokens are not deposited."
-          : "Devnet guest session. Faucet USDG only; no real value is used."}
+          ? `Approves ${formatUsd(sessionApproval.amountUsd)} play USDG only when allowance is below ${formatUsd(sessionApproval.refreshBelowUsd)}. You can change or revoke it in your wallet.`
+          : `Devnet guest mode uses the same ${formatUsd(sessionApproval.amountUsd)} reusable play-USDG approval. No real value is used.`}
       </p>
     </div>
   );
@@ -604,7 +586,7 @@ function LiveArena({
         <span>YOUR BAG · LOCKED</span>
         <strong>{selectedFaction}</strong>
         <small>
-          {formatUsd(session?.remainingUsd ?? 0)} LEFT ·{" "}
+          {formatUsd(session?.remainingUsd ?? 0)} APPROVED ·{" "}
           {session?.availableActions ?? 0} CALLS
         </small>
       </div>
@@ -867,7 +849,7 @@ function SessionPanel({
           </div>
           <dl>
             <div>
-              <dt>MAX</dt>
+              <dt>APPROVED</dt>
               <dd>{formatUsd(session.maximumUsd)}</dd>
             </div>
             <div>
@@ -875,7 +857,7 @@ function SessionPanel({
               <dd>{formatUsd(session.spentUsd)}</dd>
             </div>
             <div>
-              <dt>LEFT</dt>
+              <dt>ALLOWANCE</dt>
               <dd>{formatUsd(session.remainingUsd)}</dd>
             </div>
             <div>

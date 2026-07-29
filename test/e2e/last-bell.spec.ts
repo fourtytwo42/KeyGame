@@ -12,17 +12,16 @@ test("home communicates the game in one screen", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("real devnet round accepts faction entry and a bounded call", async ({
+test("real devnet round accepts faction entry and a reusable approval", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name === "mobile-chromium");
   await page.goto("/play/4663");
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
   await page.getByRole("button", { name: "AAPL" }).click();
-  await page.getByRole("button", { name: "$5", exact: true }).click();
-  await page.getByRole("button", { name: "ENTER AAPL · MAX $5" }).click();
+  await page.getByRole("button", { name: "ENTER AAPL" }).click();
   await expect(page.getByText("AAPL BAG")).toBeVisible();
-  await expect(page.getByText("$5").first()).toBeVisible();
+  await expect(page.getByText("$100").first()).toBeVisible();
   const potBefore = await page.locator(".lowerThird strong").textContent();
   await page.getByRole("button", { name: "SEND IT FOR THE BELL · $1" }).click();
   await expect(
@@ -31,7 +30,7 @@ test("real devnet round accepts faction entry and a bounded call", async ({
   await expect(page.locator(".lowerThird strong")).not.toHaveText(
     potBefore ?? "",
   );
-  await expect(page.getByText("$4").first()).toBeVisible();
+  await expect(page.getByText("$99").first()).toBeVisible();
 });
 
 test("wallet panel exposes injected, MetaMask, Coinbase, Safe and config state", async ({

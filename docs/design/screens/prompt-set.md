@@ -70,8 +70,8 @@ Add a `LIVE NOW` panel for `ROUND 0042`, timer `00:23.4`,
 
 Show `OFF AIR`, `ROUND 0043`, `ENTRY OPEN`, and `PICK YOUR BAG`.
 Offer `$NVDA`, `$AAPL`, `$TSLA`, and `$SPY`, with `$NVDA` selected.
-Show `YOUR BAG $NVDA`, `MAX SPEND $10 · 10 APES`,
-`ENTRY LOCK $5 OF $NVDA`, and
+Show `YOUR BAG $NVDA`, `ONE APPROVAL $100 · 100 CALLS`,
+`REFRESH BELOW $10`, `ENTRY LOCK $5 OF $NVDA`, and
 `YOUR STOCK TOKEN UNLOCKS AFTER SETTLEMENT`. End with `ENTER ROUND`
 and `VIEW RULES`.
 
@@ -150,11 +150,11 @@ and `5% OPERATIONS`. End with
 
 Open a severe opaque control panel over a faint live broadcast.
 Show `LINE CHECK`, `WALLET / SESSION`, `0x71A4...9C2E`,
-`CONNECTED`, and `ROUND 0042 SESSION`. The budget reads
-`MAX SPEND $10`, `SPENT $2`, `REMAINING $8 · 8 APES`, and
-`EXPIRES AT ROUND END`. Under `THIS SESSION CAN`, show
-`ONLY ROUND 0042`, `ONLY APE FUNCTION`, and `ONLY USDG`.
-End with `NO UNLIMITED APPROVALS`, `REVOKE SESSION`, and
+`CONNECTED`, and `PLAY USDG APPROVAL`. The allowance reads
+`APPROVED $98`, `SPENT $2`, `98 CALLS`, and
+`REFRESHES BELOW $10`. Under `THIS APPROVAL CAN`, show
+`ONLY USDG`, `ONE DOLLAR PER ACCEPTED CALL`, and `WALLET CONTROLLED`.
+End with `REVOKE USDG APPROVAL`, `EDIT IN WALLET`, and
 `BACK TO BROADCAST`.
 
 ### 11. Supported Assets

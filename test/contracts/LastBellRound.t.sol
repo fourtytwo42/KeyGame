@@ -44,7 +44,7 @@ contract LastBellRoundTest is TestBase {
         assertEq(uint256(round.factionOf(ALICE)), 2, "selected faction");
         vm.prank(ALICE);
         vm.expectRevert(LastBellRound.AlreadyJoined.selector);
-        round.joinFaction(1, 5 * UNIT);
+        round.joinFaction(1);
     }
 
     function test_CanJoinScheduledRoundBeforeStart() public {
@@ -55,20 +55,20 @@ contract LastBellRoundTest is TestBase {
             nextToken, address(this), TREASURY, 4664, UNIT, 45, 2, 10, 180, symbols
         );
         vm.prank(ALICE);
-        nextRound.joinFaction(0, 5 * UNIT);
+        nextRound.joinFaction(0);
         assertEq(uint256(nextRound.factionOf(ALICE)), 0, "scheduled entry");
     }
 
-    function test_SessionBudgetCapsAcceptedClaims() public {
+    function test_AllowanceControlsAcceptedClaims() public {
         token.mint(ALICE, 10 * UNIT);
         token.mint(BOB, 10 * UNIT);
         vm.startPrank(ALICE);
-        token.approve(address(round), 10 * UNIT);
-        round.joinFaction(0, 2 * UNIT);
+        token.approve(address(round), 2 * UNIT);
+        round.joinFaction(0);
         vm.stopPrank();
         vm.startPrank(BOB);
         token.approve(address(round), 10 * UNIT);
-        round.joinFaction(1, 10 * UNIT);
+        round.joinFaction(1);
         vm.stopPrank();
 
         vm.prank(ALICE);
@@ -80,10 +80,10 @@ contract LastBellRoundTest is TestBase {
         vm.prank(BOB);
         round.claimBell();
         vm.prank(ALICE);
-        vm.expectRevert(LastBellRound.BudgetExceeded.selector);
+        vm.expectRevert(abi.encodeWithSignature("Error(string)", "ALLOWANCE"));
         round.claimBell();
 
-        assertEq(round.paid(ALICE), 2 * UNIT, "budget capped");
+        assertEq(round.paid(ALICE), 2 * UNIT, "allowance exhausted");
     }
 
     function test_NormalClaimAddsTwoSecondsAndCollectsOneDollar() public {
@@ -229,7 +229,7 @@ contract LastBellRoundTest is TestBase {
         token.mint(player, 100 * UNIT);
         vm.startPrank(player);
         token.approve(address(round), type(uint256).max);
-        round.joinFaction(faction, 100 * UNIT);
+        round.joinFaction(faction);
         vm.stopPrank();
     }
 }

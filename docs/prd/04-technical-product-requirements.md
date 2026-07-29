@@ -9,7 +9,7 @@ later proposed or open boundaries.
 | ID | Objective |
 |---|---|
 | `TECH-001` | Treat canonical chain state as the authority for gameplay and settlement. |
-| `TECH-002` | Provide one bounded round authorization followed by one-tap claims. |
+| `TECH-002` | Reuse a $100 play-USDG allowance, request refresh only below $10, and preserve one-tap claims while allowance is sufficient. |
 | `TECH-003` | Reconstruct every round from contract events. |
 | `TECH-004` | Keep principal custody, action-fee accounting, pot allocation, and reward claims independently auditable. |
 | `TECH-005` | Prevent frontend or indexer failure from changing the canonical winner. |
@@ -132,7 +132,7 @@ styles/
 | Home, rules, supported assets | Server |
 | Scheduled round shell | Server with revalidation |
 | Live arena | Server shell plus Client Component state machine |
-| Wallet and session budget | Client |
+| Wallet allowance and refresh state | Client |
 | Replay | Server initial event list plus optional client stepper |
 | Receipt page and Open Graph image | Server |
 | Status | Server |
@@ -227,7 +227,7 @@ Events must support replay and receipts without reading operator-only data.
 | `TECH-033` | The contract independently enforces the spend limit; UI display is not the only control. |
 | `TECH-034` | Unlimited token approval is not the default entry path. |
 | `TECH-035` | Session compromise cannot transfer Stock Token principal to an arbitrary destination. |
-| `TECH-036` | The UI distinguishes session budget, wallet balance, game fee, and network gas. |
+| `TECH-036` | The UI distinguishes token allowance, round spend, wallet balance, game fee, and network gas. |
 | `TECH-037` | Gas sponsorship failure must degrade to an explained alternative or stop submission before misleading the user. |
 
 Account abstraction, EIP-7702 delegation, ERC-4337, paymaster provider, and session-key library are open implementation decisions.

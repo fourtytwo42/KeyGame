@@ -466,11 +466,6 @@
         "name": "faction",
         "type": "uint8",
         "internalType": "uint8"
-      },
-      {
-        "name": "spendLimit",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -485,25 +480,6 @@
         "name": "",
         "type": "uint64",
         "internalType": "uint64"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "maxSpend",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -891,12 +867,6 @@
         "type": "uint8",
         "indexed": false,
         "internalType": "uint8"
-      },
-      {
-        "name": "maxSpend",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1201,11 +1171,6 @@
   {
     "type": "error",
     "name": "AlreadyJoined",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "BudgetExceeded",
     "inputs": []
   },
   {

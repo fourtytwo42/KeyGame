@@ -28,17 +28,14 @@ describe("LiveGame", () => {
     expect(screen.getAllByText("bellboy.eth").length).toBeGreaterThan(0);
   });
 
-  it("lets a player choose a faction and bounded budget", () => {
+  it("lets a player choose a faction with one reusable approval", () => {
     render(<LiveGame initialScenario="entry" />);
     fireEvent.click(screen.getByRole("button", { name: /AAPL/i }));
-    fireEvent.click(screen.getByRole("button", { name: "$10" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "ENTER AAPL · MAX $10" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "ENTER AAPL" }));
     expect(
       screen.getByRole("button", { name: "SEND IT FOR THE BELL · $1" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("$10").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$100").length).toBeGreaterThan(0);
   });
 
   it("shows submitted state before accepting a simulated claim", () => {

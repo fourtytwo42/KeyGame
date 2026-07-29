@@ -132,7 +132,7 @@ All locked Stock Tokens become withdrawable after settlement.
 ## Example round
 
 1. A player locks $5 worth of the canonical NVDA Stock Token.
-2. They authorize a $10 USDG session budget, enough for at most 10 ape actions.
+2. They approve $100 play USDG once; each accepted bell claim consumes $1.
 3. `$NVDA` controls the bell for 42% of the round and is shown as `COOKING`.
 4. `$AAPL` takes the bell with 6.8 seconds remaining.
 5. A final `$NVDA` claim loses the ordering race.
@@ -150,7 +150,7 @@ The game should fit on one primary mobile screen:
 4. One faction-control bar.
 5. The instruction `HOLD THE BELL AT 0 · WIN 50%`.
 6. One dominant `APE FOR THE BELL · $1` button.
-7. Remaining session budget or `APES LEFT`.
+7. Remaining USDG allowance or `APES LEFT`.
 8. A two-line `THE TRENCHES` activity feed.
 
 Portfolio analytics, token price charts, leaderboards, rules, and transaction history belong behind secondary views. They should not compete with the main action.
@@ -165,7 +165,7 @@ The product fails its usability test if a new player cannot answer these questio
 - How do I win? Hold the bell when the clock reaches zero.
 - What do I win? 50% of the displayed pot.
 - What does my ticker do? It is my team for the separate 30% control bonus.
-- How much can I spend? No more than the session budget approved before the round.
+- What is approved? $100 play USDG, refreshed only with wallet confirmation when allowance is below $10.
 
 Slang should confirm an event after the plain-language rule is already clear:
 
@@ -243,13 +243,14 @@ The game will not retain low-attention traders if every ape requires a wallet po
 The intended flow is:
 
 1. Connect or create a smart account.
-2. Select the ticker and choose a maximum round budget, such as $5, $10, or $25.
-3. Approve that bounded session once.
-4. Make subsequent ape actions with one tap.
-5. Show both the remaining dollar budget and number of $1 actions left at all times.
-6. Revoke or expire the session automatically after the round.
+2. Select the ticker.
+3. Approve $100 play USDG if the current allowance is below $10.
+4. Make subsequent actions with one tap while allowance is sufficient.
+5. Ask for a new $100 approval only after allowance drops below $10.
+6. Show remaining allowance and round spend in the session panel.
+7. Let the player reject, change, or revoke approval in the wallet.
 
-The entry screen should therefore present only two choices, `YOUR BAG` and `MAX SPEND`, followed by one `ENTER ROUND` authorization. Token locking and session setup may be separate onchain operations internally, but they should read as one bounded setup to the player.
+The entry screen therefore presents one choice, `YOUR BAG`, followed by `ENTER ROUND`. Approval remains a wallet-owned decision and is never silently increased.
 
 Gas sponsorship or USDG-denominated gas abstraction should be evaluated so the player sees one comprehensible action price.
 

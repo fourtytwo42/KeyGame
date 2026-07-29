@@ -53,7 +53,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-010` | Exclude a native token, ICO, affiliate tree, random airdrop, key curve, holder dividends, and unlimited overtime. | `DECIDED` | Historical FoMo3D mechanics remain research only. |
 | `D-011` | Actual Stock Token locking and value-bearing play require jurisdiction, eligibility, security, and product-counsel gates. | `GATE` | Frontend geo-blocking alone is not assumed sufficient. |
 | `D-012` | Clock and control-time precision require simulation before the payout model is production-final. | `OPEN` | Second-level EVM timestamps may produce zero-duration rapid holds. |
-| `D-013` | Gas sponsorship and session-key implementation. | `OPEN` | The UX requirement is one bounded authorization followed by one-tap play. |
+| `D-013` | Approval UX uses a reusable $100 play-USDG allowance and requests refresh only below $10. | `DECIDED` | The player may reject, change, or revoke approval; account abstraction and gas sponsorship remain open. |
 | `D-014` | Begin with MVP-0 and Milestone 1: a static Channel 4663 shell against typed deterministic fixtures. | `DECIDED` | Wallet, contract, indexer, USDG, and Stock Token custody work are excluded from the initial scaffold. |
 | `D-015` | Use the current `GAME-CFG-*` timer and payout values as configurable simulation defaults. | `SELECTED FOR PROTOTYPE` | Prototype selection does not approve production economics. |
 | `D-016` | Keep same-faction theft, late entry, control-time precision, and faction tie-breaking configurable until simulation produces evidence. | `DECIDED` | Components consume typed configuration and cannot hard-code an unresolved outcome. |

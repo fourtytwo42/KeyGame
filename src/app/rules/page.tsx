@@ -61,12 +61,12 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">05</span>
         <div>
-          <h2>Your maximum is enforced onchain</h2>
+          <h2>One reusable approval</h2>
           <p>
-            Entry locks one faction and a $5, $10, or $25 round maximum. The
-            contract rejects any accepted claims beyond that ceiling. Revoking
-            the USDG approval prevents further calls but does not undo accepted
-            calls.
+            Entry asks for a $100 play-USDG allowance only when the current
+            allowance is below $10. Each accepted call consumes exactly $1. You
+            can change or revoke the allowance in your wallet at any time;
+            revoking prevents further calls but does not undo accepted calls.
           </p>
         </div>
       </section>

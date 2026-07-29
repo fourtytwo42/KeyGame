@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import deploymentJson from "../../../deployments/31337.json";
-import { factions } from "@/lib/game/constants";
+import { factions, sessionApproval } from "@/lib/game/constants";
 import type {
   ClaimableBalances,
   FactionId,
@@ -63,7 +63,6 @@ export function useWalletGame() {
     const [
       phase,
       faction,
-      maximum,
       spent,
       allowance,
       deadline,
@@ -85,12 +84,6 @@ export function useWalletGame() {
         address: configuredRoundAddress,
         abi: lastBellAbi,
         functionName: "factionOf",
-        args: [address],
-      }),
-      publicClient.readContract({
-        address: configuredRoundAddress,
-        abi: lastBellAbi,
-        functionName: "maxSpend",
         args: [address],
       }),
       publicClient.readContract({
@@ -167,21 +160,16 @@ export function useWalletGame() {
         ),
       );
     const joined = Number(faction) < factions.length;
-    const maximumUsd = Number(maximum) / 1e6;
     const spentUsd = Number(spent) / 1e6;
     const allowanceUsd = Number(allowance) / 1e6;
     const expired = Number(phase) >= 4;
-    const remainingUsd = Math.max(
-      0,
-      Math.min(maximumUsd - spentUsd, allowanceUsd),
-    );
     setSession({
       player: address,
       faction: joined ? factions[Number(faction)].id : null,
-      maximumUsd,
+      maximumUsd: allowanceUsd,
       spentUsd,
-      remainingUsd,
-      availableActions: Math.floor(remainingUsd),
+      remainingUsd: allowanceUsd,
+      availableActions: Math.floor(allowanceUsd),
       allowanceUsd,
       expiresAt: Number(deadline) || null,
       status: !joined
@@ -241,7 +229,7 @@ export function useWalletGame() {
         | "claimHolderReward"
         | "claimFactionReward"
         | "claimCancellationRefund",
-      args?: readonly [number, bigint],
+      args?: readonly [number],
     ) => {
       if (!address || !publicClient || !walletClient.data) {
         throw new Error("Connect the wallet on the game network first.");
@@ -263,8 +251,37 @@ export function useWalletGame() {
     [address, publicClient, refresh, walletClient.data],
   );
 
+  const ensureAllowance = useCallback(async () => {
+    if (!address || !publicClient || !walletClient.data) {
+      throw new Error("Connect the wallet on the game network first.");
+    }
+    const allowance = await publicClient.readContract({
+      address: configuredPaymentToken,
+      abi: devDollarAbi,
+      functionName: "allowance",
+      args: [address, configuredRoundAddress],
+    });
+    if (allowance >= BigInt(sessionApproval.refreshBelowUsd * 1e6)) return;
+
+    setAction("approving");
+    const approvalHash = await walletClient.data.writeContract({
+      account: address,
+      chain: configuredGameChain,
+      address: configuredPaymentToken,
+      abi: devDollarAbi,
+      functionName: "approve",
+      args: [configuredRoundAddress, BigInt(sessionApproval.amountUsd * 1e6)],
+    });
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: approvalHash,
+    });
+    if (receipt.status !== "success") {
+      throw new Error("USDG approval was rejected.");
+    }
+  }, [address, publicClient, walletClient.data]);
+
   const enter = useCallback(
-    async (faction: FactionId, budgetUsd: number) => {
+    async (faction: FactionId) => {
       if (!address || !publicClient || !walletClient.data || !ready) {
         throw new Error(
           `Connect and switch to ${configuredGameChain.name} before entering.`,
@@ -281,21 +298,10 @@ export function useWalletGame() {
           });
           if (!response.ok) throw new Error("The local faucet failed.");
         }
-        const budget = BigInt(budgetUsd * 1e6);
-        setAction("approving");
-        const approvalHash = await walletClient.data.writeContract({
-          account: address,
-          chain: configuredGameChain,
-          address: configuredPaymentToken,
-          abi: devDollarAbi,
-          functionName: "approve",
-          args: [configuredRoundAddress, budget],
-        });
-        await publicClient.waitForTransactionReceipt({ hash: approvalHash });
+        await ensureAllowance();
         setAction("entering");
         await write("joinFaction", [
           factions.findIndex((item) => item.id === faction),
-          budget,
         ]);
       } catch (cause) {
         const message =
@@ -306,13 +312,14 @@ export function useWalletGame() {
         setAction("idle");
       }
     },
-    [address, publicClient, ready, walletClient.data, write],
+    [address, ensureAllowance, publicClient, ready, walletClient.data, write],
   );
 
   const claim = useCallback(async () => {
-    setAction("claiming");
     setError(null);
     try {
+      await ensureAllowance();
+      setAction("claiming");
       return await write("claimBell");
     } catch (cause) {
       const message =
@@ -324,7 +331,7 @@ export function useWalletGame() {
     } finally {
       setAction("idle");
     }
-  }, [write]);
+  }, [ensureAllowance, write]);
 
   const revoke = useCallback(async () => {
     if (!address || !publicClient || !walletClient.data) return;

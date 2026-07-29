@@ -38,7 +38,7 @@ Scope:
 - Sponsored test gas.
 - Synthetic ticker factions.
 - Faucet-issued or non-transferable action units that mimic the $1 interaction.
-- Bounded session authorization.
+- Explicit reusable token allowance, visible remaining approval, threshold refresh confirmation, and revocation.
 - Public replay and receipts.
 
 Exit gates:

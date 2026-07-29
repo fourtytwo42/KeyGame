@@ -4,8 +4,8 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: PRD reconciliation and missing Stage 1 testnet-MVP implementation are complete.
-- Last meaningful result: Faction entry, contract-enforced spend ceilings, allowance revocation, connected-wallet game writes, settlement/refund claims, canonical replay/receipts, and proof identities are implemented and browser-verified on fresh Anvil.
+- Current task: Reusable play-USDG allowance simplification is implemented and verified.
+- Last meaningful result: Entry now asks only for a faction and one reusable $100 play-USDG approval; a claim refreshes the approval to $100 only when the current allowance is below $10. The max-spend picker and contract-level session ceiling were removed, while wallet revocation remains available.
 - Next step: Add real testnet environment ownership and WalletConnect configuration only when the user authorizes Robinhood Chain testnet deployment.
 - Blockers: None documented.
 
@@ -13,6 +13,7 @@ Durable project context lives here. Update this file whenever information should
 
 - The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
 - The complete responsive application, Foundry contracts, deterministic Anvil controller, CI, and testnet deployment workflow are implemented.
+- The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
 - `docs/prd/09-implementation-gap-audit.md` records implemented gaps, intentional product gates, and external launch prerequisites.
 - Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-28.
 - Deterministic local addresses are recorded in `deployments/31337.json`; the deployment script recreates a fresh funded round without storing private keys.
@@ -97,7 +98,7 @@ When sources conflict, use this order:
 - Meme-language proposal, not yet approved: use a fixed semantic lexicon rather than interchangeable slang. Proposed core: `APE` = take the claim action, `COOKING` = building control momentum, `COOKED` = losing badly or eliminated, `RUGGED` = ordinary bell theft, `SNIPED` = final-seconds theft, `BAG SECURED` = win, `THE TRENCHES` = live arena/feed, and `SEND IT` = high-stakes confirmation. Keep `jeet`, `exit liquidity`, `honeypot`, and `rug pull` out of official product copy because they are derogatory or imply protocol fraud.
 - Consolidated round proposal, not yet approved: lock a minimum canonical Stock Token value to choose a four-ticker faction; open with 45 seconds; charge a fixed $1 USDG per accepted bell claim; add two seconds per normal-phase claim up to a three-minute hard end; make the last ten seconds a non-extendable `RUG ZONE`; score faction and player control by accepted onchain time; and return the same locked token amount after settlement.
 - Consolidated payout proposal, not yet approved: 50% to the final bell holder as the obvious headline winner, 30% to the control-winning faction split by personal bell-control time, 15% to seed the next round, and 5% to protocol operations. Locked Stock Tokens are kept separate from the prize pot.
-- Comprehension rule approved in principle by user feedback: every first-time surface should reduce the game to `Pick a bag`, `Pay $1 to steal the bell`, and `Hold it at zero to win 50%`. Pair meme language with literal explanations, use `APE FOR THE BELL · $1` as the primary action, show the remaining session budget or number of actions, and reduce entry to `YOUR BAG`, `MAX SPEND`, and one `ENTER ROUND` authorization.
+- Comprehension rule approved by user feedback: every first-time surface should reduce the game to `Pick a bag`, `Pay $1 to steal the bell`, and `Hold it at zero to win 50%`. Pair meme language with literal explanations, keep the primary action visibly priced at $1, show the current allowance and estimated calls, and reduce entry to a faction choice plus one reusable approval.
 - Selected visual direction: `Channel 4663`, a fictional late-night public-access market game show named for Robinhood Chain ID 4663. Use broadcast identifiers, teletext-density score strips, a studio-switch action, transmission receipts, square/clipped color slabs, awkward three-color mascots, and the `Dead Channel` palette. Avoid dark-green fintech, neon cyberpunk, glassmorphism, neo-brutalism, casino/gacha polish, generic shadcn dashboards, gradients, glows, card stacks, and corporate ticker branding.
 - Selected frontend direction: Next.js 16.2.x App Router with strict TypeScript, React Server Components by default, narrowly scoped Client Components for the live arena, CSS Modules plus global tokens, `next/font`, native CSS/Web Animations, and `viem`. Do not use Tailwind, shadcn/ui, a dashboard template, or Framer Motion as the default implementation.
 - Approved MVP baseline: build the Next.js Channel 4663 static shell and deterministic simulator first, followed by Robinhood Chain testnet points with synthetic factions, sponsored test gas, and faucet-issued or non-transferable test units. Player-funded prizes and Stock Token custody remain excluded.
@@ -150,6 +151,7 @@ When sources conflict, use this order:
 - 2026-07-28: Final reconciliation gates passed on the VM: TypeScript, ESLint, 14 Vitest tests, 12 Foundry tests including 512 fuzz runs, 3 live Anvil integration tests, production build, and 11 Playwright desktop/mobile tests with one deliberate duplicate-mutation skip.
 - 2026-07-28: In-app browser UAT verified the authoritative entry/session state, revoke transition, automatic settlement, 50/30/15/5 allocations, holder and faction claims, canonical replay identity, and receipt chain/block/contract proof.
 - 2026-07-28: Pushed the reconciliation implementation as commit `5f25c956999fe491a95f3c8cc66af0a68f3a0675`; GitHub Actions run `30423038363` passed app, contracts, and browser jobs.
+- 2026-07-28: Replaced $5/$10/$25 max-spend sessions with a reusable $100 play-USDG allowance and a below-$10 refresh threshold. Local and VM unit/type/lint checks passed; 12 Foundry tests passed including allowance-constrained claims; 4 live Anvil integration tests passed including threshold refresh; production build passed; Playwright passed 11 tests with one deliberate duplicate mobile mutation skip; in-app browser UAT verified AAPL entry at $100 and a successful $1 claim reducing the allowance to $99.
 
 ## Decisions
 
@@ -179,6 +181,13 @@ When sources conflict, use this order:
 - Keep unusual visuals subordinate to the literal five-second game explanation.
 - Build the frontend with Next.js 16.2.x App Router, TypeScript, CSS Modules, `next/font`, and narrowly scoped client-side arena components.
 - Reject generic fintech, Web3, casino, neo-brutalist, glassmorphic, and pre-skinned dashboard patterns.
+
+### 2026-07-28 - Use One Reusable Play-Token Approval
+
+- Entry asks the player to choose a faction and approve $100 of play USDG; there is no max-spend picker.
+- Each successful bell claim still transfers exactly $1.
+- Before a claim, the client requests a fresh $100 approval only when the existing allowance is below $10.
+- ERC-20 allowance and balance are the onchain spend constraints. The player may edit or reject the approval in the wallet and may revoke it from the app or wallet.
 
 ## Known Issues
 
@@ -211,6 +220,7 @@ When sources conflict, use this order:
 - 2026-07-28: Wired the live UI to real devnet contract state and transactions, added testnet-ready chain/deployment configuration, and documented wallet/testnet operation.
 - 2026-07-28: Added CI and completed unit, component, contract, fuzz, integration, accessibility, desktop/mobile Playwright, and in-app browser UAT.
 - 2026-07-28: Closed the PRD implementation gaps and added `docs/prd/09-implementation-gap-audit.md` as the explicit handoff boundary.
+- 2026-07-28: Simplified entry authorization to one reusable $100 play-USDG approval, refresh below $10, removed the max-spend UI and contract mapping, updated the PRD/visual handoff, and retained wallet-controlled revocation.
 
 ## Open Follow-ups
 

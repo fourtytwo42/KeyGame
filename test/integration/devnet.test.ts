@@ -1,12 +1,20 @@
-import { createTestClient, http, publicActions } from "viem";
+import {
+  createTestClient,
+  createWalletClient,
+  http,
+  publicActions,
+} from "viem";
 import { beforeAll, describe, expect, it } from "vitest";
 import { factions } from "@/lib/game/constants";
 import deployment from "../../deployments/31337.json";
-import { lastBellAbi } from "@/lib/web3/last-bell-abi";
+import { devDollarAbi, lastBellAbi } from "@/lib/web3/last-bell-abi";
 import {
+  devDollarAddress,
   devnetPublicClient,
+  devnetSessionPlayer,
   getDevnetSnapshot,
   getDevnetSession,
+  roundAddress,
   sendDevnetAction,
 } from "@/lib/web3/devnet";
 import { localDevnet } from "@/lib/web3/chains";
@@ -23,9 +31,9 @@ describe("deployed local devnet", () => {
   });
 
   it("reads the deployed round and accepts a real contract claim", async () => {
-    const entered = await sendDevnetAction("enter", "AAPL", 5);
+    const entered = await sendDevnetAction("enter", "AAPL");
     expect(entered.session?.faction).toBe("AAPL");
-    expect(entered.session?.maximumUsd).toBe(5);
+    expect(entered.session?.allowanceUsd).toBe(100);
     const before = await getDevnetSnapshot();
     const deadlineBefore = await devnetPublicClient.readContract({
       address: deployment.lastBellRound as `0x${string}`,
@@ -48,8 +56,32 @@ describe("deployed local devnet", () => {
     expect(deadlineAfter).toBe(deadlineBefore + 2n);
     const { session } = await getDevnetSession();
     expect(session.spentUsd).toBe(1);
-    expect(session.remainingUsd).toBe(4);
-    expect(session.availableActions).toBe(4);
+    expect(session.remainingUsd).toBe(99);
+    expect(session.availableActions).toBe(99);
+  });
+
+  it("refreshes a low allowance before the next claim", async () => {
+    const wallet = createWalletClient({
+      account: devnetSessionPlayer,
+      chain: localDevnet,
+      transport: http(process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545"),
+    });
+    await wallet.writeContract({
+      address: devDollarAddress,
+      abi: devDollarAbi,
+      functionName: "approve",
+      args: [roundAddress, 5_000_000n],
+    });
+    await sendDevnetAction("demo-claim", "TSLA");
+    await sendDevnetAction("claim");
+
+    const allowance = await devnetPublicClient.readContract({
+      address: devDollarAddress,
+      abi: devDollarAbi,
+      functionName: "allowance",
+      args: [devnetSessionPlayer, roundAddress],
+    });
+    expect(allowance).toBe(99_000_000n);
   });
 
   it("keeps the deadline fixed for a real Rug Zone claim", async () => {

@@ -165,8 +165,9 @@ Do not continuously move essential text. The crawl updates in discrete readable 
 
 - Dead Air canvas.
 - Ticker contestants appear as numbered channels.
-- Two inputs only: `YOUR BAG` and `MAX SPEND`.
+- One input only: `YOUR BAG`.
 - Primary action: `ENTER ROUND`.
+- Supporting approval line: `$100 PLAY USDG · REFRESH BELOW $10 · REVOKE ANY TIME`.
 - Supporting line: `Your Stock Token unlocks after settlement.`
 
 ### On Air

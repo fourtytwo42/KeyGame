@@ -105,19 +105,16 @@ export function WalletPanel() {
                     </dd>
                   </div>
                   <div>
-                    <dt>Round budget</dt>
+                    <dt>USDG allowance</dt>
                     <dd>
                       {game.session?.status === "active"
-                        ? `$${game.session.remainingUsd} remaining`
+                        ? `$${game.session.allowanceUsd} approved`
                         : (game.session?.status ?? "Not authorized")}
                     </dd>
                   </div>
                   <div>
-                    <dt>Spent</dt>
-                    <dd>
-                      ${game.session?.spentUsd ?? 0} / $
-                      {game.session?.maximumUsd ?? 0}
-                    </dd>
+                    <dt>Round spend</dt>
+                    <dd>${game.session?.spentUsd ?? 0}</dd>
                   </div>
                   <div>
                     <dt>Actions left</dt>
