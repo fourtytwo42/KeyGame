@@ -92,3 +92,25 @@ test("narrow layout has no horizontal overflow", async ({ page }) => {
     page.locator(".broadcastArena .primaryAction").first(),
   ).toBeInViewport();
 });
+
+test("desktop studio fits entirely inside the viewport", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile-chromium");
+  await page.goto("/play/4663?scenario=entry");
+  const dimensions = await page.evaluate(() => ({
+    viewport: window.innerHeight,
+    page: document.documentElement.scrollHeight,
+    footerDisplay: getComputedStyle(
+      document.querySelector(".stationFooter") as HTMLElement,
+    ).display,
+    arenaBottom: document
+      .querySelector(".broadcastArena")
+      ?.getBoundingClientRect().bottom,
+  }));
+  expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.arenaBottom ?? Infinity).toBeLessThanOrEqual(
+    dimensions.viewport,
+  );
+  expect(dimensions.footerDisplay).toBe("none");
+});

@@ -4,8 +4,8 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Reusable play-USDG allowance simplification is implemented and verified.
-- Last meaningful result: Entry now asks only for a faction and one reusable $100 play-USDG approval; a claim refreshes the approval to $100 only when the current allowance is below $10. The max-spend picker and contract-level session ceiling were removed, while wallet revocation remains available.
+- Current task: Desktop `/play/` studio viewport-fit correction is implemented and verified.
+- Last meaningful result: The desktop studio is confined to the available viewport with no document scrolling; the footer is hidden on desktop play routes and entry, live, and final states compact at shorter heights without clipping actionable content.
 - Next step: Add real testnet environment ownership and WalletConnect configuration only when the user authorizes Robinhood Chain testnet deployment.
 - Blockers: None documented.
 
@@ -14,6 +14,7 @@ Durable project context lives here. Update this file whenever information should
 - The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
 - The complete responsive application, Foundry contracts, deterministic Anvil controller, CI, and testnet deployment workflow are implemented.
 - The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
+- Desktop `/play/` routes use a fixed viewport-height studio. At widths above 820px the page footer is suppressed, the broadcast grid consumes only the space below the header/source bar, and height-aware sizing keeps the complete studio visible without vertical document scrolling.
 - `docs/prd/09-implementation-gap-audit.md` records implemented gaps, intentional product gates, and external launch prerequisites.
 - Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-28.
 - Deterministic local addresses are recorded in `deployments/31337.json`; the deployment script recreates a fresh funded round without storing private keys.
@@ -153,6 +154,7 @@ When sources conflict, use this order:
 - 2026-07-28: Pushed the reconciliation implementation as commit `5f25c956999fe491a95f3c8cc66af0a68f3a0675`; GitHub Actions run `30423038363` passed app, contracts, and browser jobs.
 - 2026-07-28: Replaced $5/$10/$25 max-spend sessions with a reusable $100 play-USDG allowance and a below-$10 refresh threshold. Local and VM unit/type/lint checks passed; 12 Foundry tests passed including allowance-constrained claims; 4 live Anvil integration tests passed including threshold refresh; production build passed; Playwright passed 11 tests with one deliberate duplicate mobile mutation skip; in-app browser UAT verified AAPL entry at $100 and a successful $1 claim reducing the allowance to $99.
 - 2026-07-28: Pushed the reusable-allowance implementation as commit `7fb21f6cdbdfc80468930def49f897147f36662f`; GitHub Actions run `30424178882` passed app, contracts, integration, and browser jobs.
+- 2026-07-29: Measured the reported in-app browser viewport at 1522x911; the pre-fix studio document was 1090px tall, producing 179px of vertical overflow. After the CSS correction, document scroll height equals viewport height at both 1522x911 and 1280x720, with entry and final-state actions visible. Formatting, TypeScript, ESLint, 14 unit/component tests, production build, and Playwright passed; Playwright reported 12 passed and 2 intentional skips.
 
 ## Decisions
 
@@ -222,6 +224,7 @@ When sources conflict, use this order:
 - 2026-07-28: Added CI and completed unit, component, contract, fuzz, integration, accessibility, desktop/mobile Playwright, and in-app browser UAT.
 - 2026-07-28: Closed the PRD implementation gaps and added `docs/prd/09-implementation-gap-audit.md` as the explicit handoff boundary.
 - 2026-07-28: Simplified entry authorization to one reusable $100 play-USDG approval, refresh below $10, removed the max-spend UI and contract mapping, updated the PRD/visual handoff, and retained wallet-controlled revocation.
+- 2026-07-29: Confined the desktop `/play/` studio to the browser viewport, removed its route-level footer, added compact-height rules for all arena states, retained the three-column studio down to 1181px, used a two-column arena/activity layout from 821px to 1180px, and added a Playwright vertical-overflow regression test.
 
 ## Open Follow-ups
 
