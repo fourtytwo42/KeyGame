@@ -27,18 +27,10 @@ contract DeployTestnet is ScriptBase {
             producerPassRequired: vm.envBool("PRODUCER_PASS_REQUIRED")
         });
         LastBellRound.TickerConfig[4] memory tickers;
-        tickers[0] = _ticker(
-            bytes32("NVDA"), "TICKER_0_TOKEN", "TICKER_0_FEED_ID"
-        );
-        tickers[1] = _ticker(
-            bytes32("AAPL"), "TICKER_1_TOKEN", "TICKER_1_FEED_ID"
-        );
-        tickers[2] = _ticker(
-            bytes32("TSLA"), "TICKER_2_TOKEN", "TICKER_2_FEED_ID"
-        );
-        tickers[3] = _ticker(
-            bytes32("SPY"), "TICKER_3_TOKEN", "TICKER_3_FEED_ID"
-        );
+        tickers[0] = _ticker(bytes32("NVDA"), "TICKER_0_TOKEN", "TICKER_0_FEED_ID");
+        tickers[1] = _ticker(bytes32("AAPL"), "TICKER_1_TOKEN", "TICKER_1_FEED_ID");
+        tickers[2] = _ticker(bytes32("TSLA"), "TICKER_2_TOKEN", "TICKER_2_FEED_ID");
+        tickers[3] = _ticker(bytes32("SPY"), "TICKER_3_TOKEN", "TICKER_3_FEED_ID");
 
         vm.startBroadcast();
         round = new LastBellRound(
@@ -56,14 +48,9 @@ contract DeployTestnet is ScriptBase {
         bytes32 symbol,
         string memory tokenVariable,
         string memory feedVariable
-    )
-        internal
-        returns (LastBellRound.TickerConfig memory)
-    {
+    ) internal returns (LastBellRound.TickerConfig memory) {
         return LastBellRound.TickerConfig(
-            symbol,
-            vm.envAddress(tokenVariable),
-            vm.envBytes32(feedVariable)
+            symbol, vm.envAddress(tokenVariable), vm.envBytes32(feedVariable)
         );
     }
 }

@@ -59,9 +59,8 @@ contract DeployLocal is ScriptBase {
                 bytes32("SPY"), address(spy), keccak256("SPY/USD")
             )
         ];
-        round = new LastBellRound(
-            token, verifier, deployer, deployer, settings, tickers
-        );
+        round =
+            new LastBellRound(token, verifier, deployer, deployer, settings, tickers);
         token.mint(deployer, 1_000_000e6);
         token.approve(address(round), 50e6);
         bytes[4] memory reports = [

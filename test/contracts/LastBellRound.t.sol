@@ -2,7 +2,9 @@
 pragma solidity ^0.8.30;
 
 import { LastBellRound } from "../../contracts/LastBellRound.sol";
-import { MockMarketDataVerifier } from "../../contracts/mocks/MockMarketDataVerifier.sol";
+import {
+    MockMarketDataVerifier
+} from "../../contracts/mocks/MockMarketDataVerifier.sol";
 import { MockStockToken } from "../../contracts/mocks/MockStockToken.sol";
 import { MockUSDG } from "../../contracts/mocks/MockUSDG.sol";
 import { TestBase } from "./TestBase.sol";
@@ -312,8 +314,6 @@ contract LastBellRoundTest is TestBase {
         view
         returns (bytes memory)
     {
-        return abi.encode(
-            feeds[ticker], price, observedAt, observedAt, observedAt + 30
-        );
+        return abi.encode(feeds[ticker], price, observedAt, observedAt, observedAt + 30);
     }
 }

@@ -240,13 +240,9 @@ contract LastBellRound {
                 || settings_.greenMultiplierBps <= settings_.flatMultiplierBps
                 || settings_.redMultiplierBps >= settings_.flatMultiplierBps
                 || settings_.flatMultiplierBps != BPS
-                || (
-                    settings_.marketMode == MarketMode.Verified
-                        && (
-                            address(marketVerifier_) == address(0)
-                                || settings_.maxReportAge == 0
-                        )
-                )
+                || (settings_.marketMode == MarketMode.Verified
+                    && (address(marketVerifier_) == address(0)
+                        || settings_.maxReportAge == 0))
         ) revert InvalidConfiguration();
 
         bytes32[4] memory symbols;
@@ -256,10 +252,8 @@ contract LastBellRound {
             if (
                 tickers_[index].symbol == bytes32(0)
                     || tickers_[index].token == address(0)
-                    || (
-                        settings_.marketMode == MarketMode.Verified
-                            && tickers_[index].feedId == bytes32(0)
-                    )
+                    || (settings_.marketMode == MarketMode.Verified
+                        && tickers_[index].feedId == bytes32(0))
             ) revert InvalidConfiguration();
             tickerConfigs[index] = tickers_[index];
             symbols[index] = tickers_[index].symbol;
@@ -340,9 +334,7 @@ contract LastBellRound {
             pot = seedPot;
         }
 
-        emit RoundStarted(
-            roundId, now64, deadline, hardEnd, seedPot, openingPrices
-        );
+        emit RoundStarted(roundId, now64, deadline, hardEnd, seedPot, openingPrices);
     }
 
     function claimBell(uint8 ticker, bytes calldata marketReport, uint8 passTokenIndex)
@@ -456,9 +448,9 @@ contract LastBellRound {
         ) revert NothingToClaim();
 
         closingPrintRewardClaimed[msg.sender] = true;
-        uint256 amount = (
-            closingPrintPool * playerTickerScore[msg.sender][winningTicker]
-        ) / tickerScore[winningTicker];
+        uint256 amount =
+            (closingPrintPool * playerTickerScore[msg.sender][winningTicker])
+                / tickerScore[winningTicker];
         _push(msg.sender, amount);
         emit RewardClaimed(roundId, msg.sender, "CLOSING_PRINT", amount);
     }
@@ -490,7 +482,11 @@ contract LastBellRound {
         emit RewardClaimed(roundId, treasury, "PROTOCOL_POOL", amount);
     }
 
-    function transferNextRoundSeed(address recipient) external onlyOperator nonReentrant {
+    function transferNextRoundSeed(address recipient)
+        external
+        onlyOperator
+        nonReentrant
+    {
         if (!settled || recipient == address(0)) revert Unauthorized();
         uint256 amount = nextRoundPool;
         if (amount == 0) revert NothingToClaim();
@@ -523,9 +519,7 @@ contract LastBellRound {
         uint256 greenBoundary = referencePrice * (BPS + marketThresholdBps);
         uint256 redBoundary = referencePrice * (BPS - marketThresholdBps);
         if (scaled >= greenBoundary) {
-            return (
-                price, reportTimestamp, MarketBand.Green, greenMultiplierBps
-            );
+            return (price, reportTimestamp, MarketBand.Green, greenMultiplierBps);
         }
         if (scaled <= redBoundary) {
             return (price, reportTimestamp, MarketBand.Red, redMultiplierBps);
@@ -598,10 +592,7 @@ contract LastBellRound {
         for (uint8 ticker; ticker < 4; ticker++) {
             uint256 score = tickerScore[ticker];
             uint64 acquisition = lastTickerAcquisitionAt[ticker];
-            if (
-                score > bestScore
-                    || (score == bestScore && acquisition > latest)
-            ) {
+            if (score > bestScore || (score == bestScore && acquisition > latest)) {
                 bestScore = score;
                 latest = acquisition;
                 leader = ticker;
