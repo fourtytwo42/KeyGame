@@ -169,6 +169,7 @@ When sources conflict, use this order:
 - 2026-07-29: Added `--slow` to the local Forge broadcast because parallel transaction submission could leave nonce-dependent deployments pending on a freshly restarted Anvil. A clean stop/start/deploy completed at block 37 after the change.
 - 2026-07-29: Rewrote `/rules` in plain high-school-level language. The page now leads with the three-step loop, explains market bands as +/-0.05% rather than basis points, describes both winners directly, and makes clear that the $100 approval is a limit rather than a charge. VM format, lint, typecheck, 23 tests, production build, and in-app browser review passed.
 - 2026-07-29: Replaced the separate marketing home with the live game at `/`, redirected legacy play URLs, removed Final Transmission receipt/replay buttons, and added a VM-local Historical Runs archive. The first real archived run recorded a $51 peak pot, `caller-70997`, NVDA, and one call; its replay resolved with canonical chain, contract, block, and event details. VM lint, typecheck, 24 tests, build, desktop/mobile browser checks, and archive-link UAT passed.
+- 2026-07-29: Removed Signal/System Status links from the primary navigation and footer. `/status` remains available by direct URL for operator health checks but is not advertised to players.
 
 ## Decisions
 
