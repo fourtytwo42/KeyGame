@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordCompletedRun } from "@/lib/game/history";
 import { getDevnetSession, getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ export async function GET() {
       getDevnetSnapshot(),
       getDevnetSession(),
     ]);
+    await recordCompletedRun(state);
     return NextResponse.json({
       ok: true,
       chainId: 31337,

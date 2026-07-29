@@ -816,20 +816,6 @@ function FinalTransmission({
         ROUND CONTRACT {state.contractAddress?.slice(0, 8) ?? "SIM"}… · BLOCK{" "}
         {state.blockNumber}
       </p>
-      <div className="finalActions">
-        <Link
-          className="primaryAction linkAction"
-          href={`/receipt/${roundConfig.roundId}/${state.holder?.address ?? demoAddresses.caller}`}
-        >
-          GET THE RECEIPT
-        </Link>
-        <Link
-          className="secondaryAction linkAction"
-          href={`/replay/${roundConfig.roundId}`}
-        >
-          REPLAY THE CHAOS
-        </Link>
-      </div>
     </div>
   );
 }

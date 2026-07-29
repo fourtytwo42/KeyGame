@@ -64,4 +64,14 @@ describe("LiveGame", () => {
       screen.queryByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("keeps receipt and replay actions out of the final transmission", () => {
+    render(<LiveGame initialScenario="settled" />);
+    expect(
+      screen.queryByRole("link", { name: /GET THE RECEIPT/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /REPLAY THE CHAOS/i }),
+    ).not.toBeInTheDocument();
+  });
 });

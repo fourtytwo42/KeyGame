@@ -1,22 +1,21 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("home communicates Closing Print in one screen", async ({ page }) => {
+test("the main page opens directly into the game and archive", async ({
+  page,
+}) => {
   await page.goto("/");
+  await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: /the last caller keeps the bell/i }),
-  ).toBeVisible();
-  await expect(page.getByText(/Pick a stock. Pay \$1/i)).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "WATCH ROUND 4663" }),
-  ).toBeVisible();
+    page.getByRole("heading", { name: "Historical runs" }),
+  ).toBeAttached();
 });
 
 test("real devnet starter ticker is the first paid claim", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name === "mobile-chromium");
-  await page.goto("/play/4663");
+  await page.goto("/");
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
   if (
     await page
@@ -34,7 +33,7 @@ test("real devnet starter ticker is the first paid claim", async ({
 test("live studio exposes four market-labeled one-tap claims", async ({
   page,
 }) => {
-  await page.goto("/play/4663");
+  await page.goto("/");
   const entryAction = page.getByRole("button", {
     name: /ENTER WITH NVDA · \$1/i,
   });
@@ -86,7 +85,7 @@ test("all trust and proof routes render without a wallet", async ({ page }) => {
 });
 
 test("core pages have no serious axe violations", async ({ page }) => {
-  for (const route of ["/", "/play/4663", "/rules"]) {
+  for (const route of ["/", "/rules"]) {
     await page.goto(route);
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa"])
@@ -101,7 +100,7 @@ test("core pages have no serious axe violations", async ({ page }) => {
 });
 
 test("narrow layout has no horizontal overflow", async ({ page }) => {
-  await page.goto("/play/4663");
+  await page.goto("/");
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     page: document.documentElement.scrollWidth,
@@ -113,20 +112,19 @@ test("desktop studio fits entirely inside the viewport", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name === "mobile-chromium");
-  await page.goto("/play/4663?scenario=entry");
+  await page.goto("/?scenario=entry");
   const dimensions = await page.evaluate(() => ({
     viewport: window.innerHeight,
-    page: document.documentElement.scrollHeight,
-    footerDisplay: getComputedStyle(
-      document.querySelector(".stationFooter") as HTMLElement,
-    ).display,
+    studioBottom: document.querySelector(".homeStudio")?.getBoundingClientRect()
+      .bottom,
     arenaBottom: document
       .querySelector(".broadcastArena")
       ?.getBoundingClientRect().bottom,
   }));
-  expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.studioBottom ?? Infinity).toBeLessThanOrEqual(
+    dimensions.viewport + 1,
+  );
   expect(dimensions.arenaBottom ?? Infinity).toBeLessThanOrEqual(
     dimensions.viewport,
   );
-  expect(dimensions.footerDisplay).toBe("none");
 });

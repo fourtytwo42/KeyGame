@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ReplayPlayer } from "@/components/replay-player";
+import { getHistoricalRun } from "@/lib/game/history";
 import { scenarios } from "@/lib/game/scenarios";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
@@ -13,17 +14,20 @@ export default async function ReplayPage({
   params: Promise<{ roundId: string }>;
 }) {
   const { roundId } = await params;
-  const state =
-    process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
+  const archivedRun = await getHistoricalRun(roundId);
+  const state = archivedRun
+    ? archivedRun.state
+    : process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
       ? await getDevnetSnapshot()
       : scenarios.settled.state;
+  const displayRoundId = archivedRun?.roundId ?? roundId;
 
   return (
     <div className="replayPage">
       <header className="pageTitleBar">
         <div>
           <span className="eyebrow">ARCHIVE TAPE / CANONICAL ORDER</span>
-          <h1>Round {roundId} replay</h1>
+          <h1>Round {displayRoundId} replay</h1>
           <p>
             Every accepted call in deterministic order. Rejected calls never
             rewrite the holder.
@@ -41,10 +45,7 @@ export default async function ReplayPage({
         {state.blockNumber ?? "SIM"}
       </p>
       <div className="pageEndActions">
-        <Link
-          className="primaryAction linkAction"
-          href="/play/4663?scenario=entry"
-        >
+        <Link className="primaryAction linkAction" href="/?scenario=entry">
           RUN IT BACK
         </Link>
         <Link className="secondaryAction linkAction" href="/rules">

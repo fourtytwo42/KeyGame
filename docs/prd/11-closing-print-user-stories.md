@@ -32,6 +32,11 @@ this immutable round scores every ticker at `1.00×`.
 As a risk-conscious player, I can see the current clock, Rug Zone boundary,
 and 180-second hard stop before paying.
 
+### `CP-DISC-005` Land directly in the game
+
+As a visitor, `/` opens the one active Last Bell game without making me pass
+through a marketing page or choose a game mode.
+
 ## Entry and allowance
 
 ### `CP-ENTRY-001` Choose a starter ticker
@@ -195,6 +200,19 @@ contract, version, ticker, report, score, and payout identity.
 
 As a returning user, I can view `faction-v0` replays through an explicit
 read-only version parser without those fields entering current state.
+
+### `CP-PROOF-005` Browse completed runs
+
+As a returning player, I can browse real completed runs beneath the main game,
+see each peak pot, final caller, Closing Print ticker, and call count, then open
+one run to inspect its full event-derived details.
+
+Acceptance:
+
+- No fake historical runs are displayed.
+- A settled devnet run is archived on the VM and survives an Anvil reset.
+- The Final Transmission does not duplicate archive navigation with receipt or
+  replay buttons.
 
 ## Operator and market data
 

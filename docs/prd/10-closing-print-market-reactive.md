@@ -132,6 +132,16 @@ special-round access. Open chat is out of scope.
 
 ## Interface
 
+Main route:
+
+- `/` opens directly into the one active game; there is no separate marketing
+  landing page or game picker;
+- legacy `/play/{roundId}` links redirect to the main route;
+- a Historical Runs section follows the studio and lists only completed,
+  event-derived runs;
+- each run shows its peak pot, final caller, Closing Print ticker, and call
+  count, then opens the complete replay/details view.
+
 Entry Desk:
 
 - automatic four-stock roster;
@@ -152,7 +162,9 @@ Final Transmission:
 - final caller and 50% reward first;
 - Closing Print ticker and score second;
 - contributor score and claimable share;
-- separate pull-payment actions.
+- separate pull-payment actions;
+- no standalone receipt or replay buttons; completed-run discovery lives in
+  Historical Runs.
 
 ## Events, replay, and receipts
 
@@ -167,6 +179,8 @@ multiplier, and weighted score.
 Replay and receipts show report, band, multiplier, interval, switch, raw
 seconds, weighted points, transaction, block, chain, contract, and version.
 Legacy `faction-v0` parsing is read-only behind an explicit version branch.
+Devnet archives settled snapshots on the VM and keeps them across Anvil resets.
+Production history must come from the canonical event indexer.
 
 ## Acceptance
 

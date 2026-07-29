@@ -578,7 +578,8 @@ main {
   font-size: 2rem;
 }
 
-.playPage {
+.playPage,
+.homeStudio {
   min-height: calc(100vh - 78px);
   background: var(--night-raised);
 }
@@ -607,7 +608,16 @@ main {
     overflow: hidden;
   }
 
-  .playPage .broadcastGrid {
+  .homeStudio {
+    height: calc(100dvh - 79px);
+    min-height: 640px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .playPage .broadcastGrid,
+  .homeStudio .broadcastGrid {
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -615,7 +625,8 @@ main {
   }
 
   .sideRail,
-  .playPage .broadcastArena {
+  .playPage .broadcastArena,
+  .homeStudio .broadcastArena {
     height: 100%;
     min-height: 0;
   }
@@ -623,6 +634,124 @@ main {
   .sideRail {
     overflow: hidden;
   }
+}
+
+.gameHomePage {
+  background: var(--night-raised);
+}
+
+.historicalRuns {
+  padding: 70px clamp(22px, 7vw, 120px) 90px;
+  color: var(--night-desk);
+  background: var(--paper);
+  border-top: 8px solid var(--prize-tape);
+}
+
+.historicalRuns > header,
+.historicalRunGrid,
+.emptyHistory {
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+.historicalRuns > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+  gap: 16px 50px;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.historicalRuns > header .eyebrow {
+  grid-column: 1 / -1;
+}
+
+.historicalRuns h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(3.4rem, 7vw, 7rem);
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+
+.historicalRuns > header p {
+  max-width: 560px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.historicalRunGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.historicalRunCard {
+  min-width: 0;
+  padding: 22px;
+  color: var(--night-desk);
+  background: var(--tube-white);
+  border: var(--outline);
+  box-shadow: 7px 7px 0 var(--night-desk);
+  text-decoration: none;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.historicalRunCard:hover,
+.historicalRunCard:focus-visible {
+  transform: translate(-3px, -3px);
+  box-shadow: 10px 10px 0 var(--market-red);
+}
+
+.historicalRunCard > span,
+.historicalRunCard > small {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 900;
+}
+
+.historicalRunCard > strong {
+  display: block;
+  margin: 12px 0 18px;
+  font-family: var(--display);
+  font-size: clamp(2.5rem, 4vw, 4.7rem);
+  line-height: 0.85;
+}
+
+.historicalRunCard dl {
+  margin: 0 0 20px;
+  border-top: 2px solid var(--night-desk);
+}
+
+.historicalRunCard dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--night-desk);
+}
+
+.historicalRunCard dt {
+  font-family: var(--mono);
+  font-size: 0.57rem;
+  text-transform: uppercase;
+}
+
+.historicalRunCard dd {
+  margin: 0;
+  overflow: hidden;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emptyHistory {
+  padding: 28px;
+  background: var(--dead-air);
+  border: var(--outline);
+  font-weight: 800;
 }
 
 .scenarioBar {
@@ -2189,6 +2318,10 @@ main {
 }
 
 @media (max-width: 1180px) {
+  .historicalRunGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .stationHeader {
     grid-template-columns: 1fr auto auto;
   }
@@ -2469,6 +2602,22 @@ main {
     min-height: auto;
     grid-template-columns: 1fr;
     padding: 0;
+  }
+
+  .historicalRuns {
+    padding: 50px 18px 70px;
+  }
+
+  .historicalRuns > header {
+    grid-template-columns: 1fr;
+  }
+
+  .historicalRuns > header .eyebrow {
+    grid-column: auto;
+  }
+
+  .historicalRunGrid {
+    grid-template-columns: 1fr;
   }
 
   .leftRail {

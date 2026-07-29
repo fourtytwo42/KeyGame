@@ -29,6 +29,8 @@ Durable project context lives here. Update this file whenever information should
 - `docs/channel-4663-ui-design.md` is the selected palette, UI grammar, typography, motion, mascot, accessibility, responsive, and Next.js frontend direction.
 - `docs/prd/README.md` indexes the implementation-facing PRD suite and is the requirements entrypoint.
 - `docs/prd/11-closing-print-user-stories.md` is the current implementation backlog; `docs/prd/08-user-stories.md` is the superseded faction-era backlog.
+- `/` is the one-game entrypoint and opens directly into the active studio. Legacy `/play/{roundId}` routes redirect to `/`.
+- Completed devnet runs are stored as event-derived snapshots in `.devnet/round-history.json`, survive Anvil resets, and appear beneath the main studio with peak pot, final caller, Closing Print ticker, call count, and a full replay link. No fake history is seeded.
 - GitHub Actions is disabled for this repository and no workflow is committed. All compilation and testing must run locally on the project VM. Last verified 2026-07-29.
 - `docs/design/screens/README.md` is the visual handoff for all twelve planned app screens; `screen-contact-sheet.png` is the at-a-glance review artifact and `prompt-set.md` records the ImageGen direction.
 - `docs/design/screens/desktop-live-on-air.png` is the desktop layout reference: a narrow center arena, rules and airtime on the left rail, and Trenches plus session controls on the right rail.
@@ -166,6 +168,7 @@ When sources conflict, use this order:
 - 2026-07-29: At user direction, canceled the active hosted run, disabled GitHub Actions at the repository permissions level, deleted the workflow, and moved all release gates to the VM.
 - 2026-07-29: Added `--slow` to the local Forge broadcast because parallel transaction submission could leave nonce-dependent deployments pending on a freshly restarted Anvil. A clean stop/start/deploy completed at block 37 after the change.
 - 2026-07-29: Rewrote `/rules` in plain high-school-level language. The page now leads with the three-step loop, explains market bands as +/-0.05% rather than basis points, describes both winners directly, and makes clear that the $100 approval is a limit rather than a charge. VM format, lint, typecheck, 23 tests, production build, and in-app browser review passed.
+- 2026-07-29: Replaced the separate marketing home with the live game at `/`, redirected legacy play URLs, removed Final Transmission receipt/replay buttons, and added a VM-local Historical Runs archive. The first real archived run recorded a $51 peak pot, `caller-70997`, NVDA, and one call; its replay resolved with canonical chain, contract, block, and event details. VM lint, typecheck, 24 tests, build, desktop/mobile browser checks, and archive-link UAT passed.
 
 ## Decisions
 
