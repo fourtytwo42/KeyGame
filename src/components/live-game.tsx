@@ -375,7 +375,7 @@ export function LiveGame({
               </li>
               <li>
                 <strong>Pay $1.</strong>
-                <span>Take the bell from the caller.</span>
+                <span>Start the clock or take the bell.</span>
               </li>
               <li>
                 <strong>Hold at zero.</strong>
@@ -473,7 +473,9 @@ export function LiveGame({
           <Trenches state={state} />
           <section className="railCard nextCard">
             <span className="railLabel">NEXT TRANSMISSION</span>
-            <strong>ROUND 4664</strong>
+            <strong>
+              ROUND {Number(state.roundId ?? roundConfig.roundId) + 1}
+            </strong>
             <span>Four fresh tickers. Same bad instincts.</span>
             <Link href="/rules">READ THE FINE PRINT →</Link>
           </section>
@@ -501,7 +503,7 @@ function EntryDesk({
       <div className="segmentTitle">
         <span>OPEN PHONE LINES</span>
         <h1>Pick the first print</h1>
-        <p>Every $1 call can put a different stock on air.</p>
+        <p>Your first $1 call starts the 45-second broadcast clock.</p>
       </div>
       <div className="factionGrid">
         {roundConfig.tickers.map((ticker) => (
@@ -536,7 +538,7 @@ function EntryDesk({
         ))}
       </div>
       <div className="entryTerms">
-        <span>ONE ROUND</span>
+        <span>TIMER WAITS FOR YOU</span>
         <span>$1 PER CALL</span>
         <span>ONE APPROVAL</span>
         <span>REVOKE ANY TIME</span>

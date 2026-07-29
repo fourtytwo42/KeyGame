@@ -30,6 +30,9 @@ describe("LiveGame", () => {
 
   it("turns the starter ticker into the first paid claim", () => {
     render(<LiveGame initialScenario="entry" />);
+    expect(
+      screen.getByText(/first \$1 call starts the 45-second broadcast clock/i),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /AAPL.*FLAT/i }));
     fireEvent.click(
       screen.getByRole("button", { name: "ENTER WITH AAPL · $1" }),

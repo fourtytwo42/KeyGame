@@ -21,7 +21,8 @@ export default function RulesPage() {
           <p>
             Your first choice is also your first $1 play. You are not joining a
             permanent team. The next time you take the bell, you can choose a
-            different stock.
+            different stock. The timer does not start until this first $1 play
+            succeeds.
           </p>
         </div>
       </section>
@@ -40,10 +41,11 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">03</span>
         <div>
-          <h2>Each play adds two seconds</h2>
+          <h2>Later plays add two seconds</h2>
           <p>
-            Most successful plays add {roundConfig.extensionSeconds} seconds to
-            the clock. The round can never last longer than{" "}
+            Your first successful play starts the clock at 45 seconds. Later
+            successful plays usually add {roundConfig.extensionSeconds} seconds
+            to it. The round can never last longer than{" "}
             {roundConfig.hardCapSeconds} seconds. When only{" "}
             {roundConfig.rugZoneSeconds} seconds remain, the Rug Zone begins.
             You can still take the bell, but the clock will not gain more time.

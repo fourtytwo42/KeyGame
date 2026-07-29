@@ -81,13 +81,6 @@ send_checked "$token_address" "mint(address,uint256)" "$session_player" 10000000
 send_checked "${stock_addresses[0]}" "mint(address,uint256)" "$session_player" 1 \
   --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
 
-observed_hex="$(cast block latest --rpc-url "$rpc_url" --json | jq -r '.timestamp')"
-observed_at="$(cast to-dec "$observed_hex")"
-feed_id="$(cast keccak 'NVDA/USD')"
-report="$(cast abi-encode 'f(bytes32,uint256,uint64,uint64,uint64)' "$feed_id" 10006000000 "$observed_at" "$observed_at" "$((observed_at + 30))")"
-send_checked "$round_address" "claimBell(uint8,bytes,uint8)" 0 "$report" 0 \
-  --rpc-url "$rpc_url" --unlocked --from "${accounts[0]}" --gas-limit 650000
-
 mkdir -p "$project_root/deployments" "$project_root/public/contracts"
 jq -n \
   --argjson chainId 31337 \

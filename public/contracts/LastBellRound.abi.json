@@ -579,6 +579,19 @@
   },
   {
     "type": "function",
+    "name": "initialized",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lastClaimAt",
     "inputs": [],
     "outputs": [
@@ -1641,6 +1654,11 @@
   },
   {
     "type": "error",
+    "name": "AlreadyInitialized",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "CurrentHolder",
     "inputs": []
   },
@@ -1693,6 +1711,11 @@
   {
     "type": "error",
     "name": "ReplayedMarketReport",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoundNotInitialized",
     "inputs": []
   },
   {

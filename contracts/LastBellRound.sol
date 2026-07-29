@@ -87,6 +87,7 @@ contract LastBellRound {
     uint64 public hardEnd;
     uint64 public lastClaimAt;
     uint64 public settledAt;
+    bool public initialized;
     bool public cancelled;
     bool public settled;
     bool private locked;
@@ -200,6 +201,8 @@ contract LastBellRound {
 
     error Unauthorized();
     error InvalidConfiguration();
+    error AlreadyInitialized();
+    error RoundNotInitialized();
     error InvalidPhase(Phase expected, Phase actual);
     error InvalidTicker();
     error InvalidMarketReport();
@@ -318,6 +321,7 @@ contract LastBellRound {
         onlyOperator
         nonReentrant
     {
+        if (initialized) revert AlreadyInitialized();
         Phase phase = currentPhase();
         if (phase != Phase.Scheduled) revert InvalidPhase(Phase.Scheduled, phase);
 
@@ -330,16 +334,11 @@ contract LastBellRound {
             }
         }
 
-        uint64 now64 = uint64(block.timestamp);
-        startedAt = now64;
-        deadline = now64 + startDuration;
-        hardEnd = now64 + hardCapDuration;
         if (seedPot != 0) {
             _pull(operator, seedPot);
             pot = seedPot;
         }
-
-        emit RoundStarted(roundId, now64, deadline, hardEnd, seedPot, openingPrices);
+        initialized = true;
     }
 
     function claimBell(uint8 ticker, bytes calldata marketReport, uint8 passTokenIndex)
@@ -347,7 +346,11 @@ contract LastBellRound {
         nonReentrant
     {
         Phase beforeClaim = currentPhase();
-        if (beforeClaim != Phase.Live && beforeClaim != Phase.Rug) {
+        if (!initialized) revert RoundNotInitialized();
+        if (
+            beforeClaim != Phase.Scheduled && beforeClaim != Phase.Live
+                && beforeClaim != Phase.Rug
+        ) {
             revert InvalidPhase(Phase.Live, beforeClaim);
         }
         if (ticker >= 4) revert InvalidTicker();
@@ -362,6 +365,14 @@ contract LastBellRound {
             MarketBand band,
             uint16 multiplier
         ) = _marketState(ticker, marketReport);
+
+        if (beforeClaim == Phase.Scheduled) {
+            uint64 now64 = uint64(block.timestamp);
+            startedAt = now64;
+            deadline = now64 + startDuration;
+            hardEnd = now64 + hardCapDuration;
+            emit RoundStarted(roundId, now64, deadline, hardEnd, pot, openingPrices);
+        }
 
         address previousHolder = holder;
         uint8 previousTicker = holderTicker;
@@ -383,7 +394,7 @@ contract LastBellRound {
         if (beforeClaim == Phase.Live) {
             uint64 candidate = deadline + extensionDuration;
             deadline = candidate > hardEnd ? hardEnd : candidate;
-        } else {
+        } else if (beforeClaim == Phase.Rug) {
             emit RugZoneObserved(roundId, uint64(block.timestamp), deadline);
         }
 

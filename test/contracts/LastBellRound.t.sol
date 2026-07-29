@@ -50,11 +50,43 @@ contract LastBellRoundTest is TestBase {
         round.start(SEED, reports);
     }
 
-    function test_StartsWithVerifiedOpeningPricesAndExactBounds() public view {
-        assertEq(uint256(round.deadline() - round.startedAt()), 45, "initial");
-        assertEq(uint256(round.hardEnd() - round.startedAt()), 180, "hard cap");
+    function test_InitializationWaitsForFirstPaidClaim() public view {
+        assertTrue(round.initialized(), "initialized");
+        assertEq(round.startedAt(), 0, "timer not started");
+        assertEq(round.deadline(), 0, "no deadline");
+        assertEq(round.hardEnd(), 0, "no hard end");
         assertEq(round.openingPrices(2), opening[2], "opening price");
         assertEq(round.pot(), SEED, "seed");
+    }
+
+    function test_FirstPaidClaimStartsExactClockWithoutExtension() public {
+        _fund(ALICE);
+        uint64 acceptedAt = uint64(block.timestamp);
+        vm.prank(ALICE);
+        round.claimBell(0, _freshReport(0, 100_060_000_00), 4);
+
+        assertEq(round.startedAt(), acceptedAt, "started by first claim");
+        assertEq(round.deadline(), acceptedAt + 45, "initial clock");
+        assertEq(round.hardEnd(), acceptedAt + 180, "hard cap");
+        assertEq(round.acceptedClaims(), 1, "opening claim accepted");
+        assertEq(round.pot(), SEED + UNIT, "opening fee added");
+    }
+
+    function test_CannotClaimBeforeOperatorInitialization() public {
+        LastBellRound waiting = _deploy(LastBellRound.MarketMode.Verified, false);
+        _fund(ALICE);
+        vm.expectRevert(LastBellRound.RoundNotInitialized.selector);
+        vm.prank(ALICE);
+        waiting.claimBell(0, _freshReport(0, 100_060_000_00), 4);
+    }
+
+    function test_CannotInitializeTwice() public {
+        bytes[4] memory reports;
+        for (uint8 index; index < 4; index++) {
+            reports[index] = _report(index, opening[index], uint64(block.timestamp));
+        }
+        vm.expectRevert(LastBellRound.AlreadyInitialized.selector);
+        round.start(0, reports);
     }
 
     function test_ClaimSelectsTickerAndCanSwitchNextClaim() public {
@@ -147,7 +179,7 @@ contract LastBellRoundTest is TestBase {
         vm.expectRevert(LastBellRound.InvalidMarketReport.selector);
         round.claimBell(1, valid, 4);
 
-        uint64 refreshedAt = round.startedAt() + 5;
+        uint64 refreshedAt = uint64(block.timestamp) + 5;
         vm.warp(refreshedAt);
         vm.prank(ALICE);
         vm.expectRevert(LastBellRound.StaleMarketReport.selector);

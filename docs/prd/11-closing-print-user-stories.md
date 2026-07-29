@@ -47,7 +47,8 @@ a transaction.
 ### `CP-ENTRY-002` Enter with one paid claim
 
 As a new player, pressing `ENTER WITH {TICKER} · $1` checks allowance and
-submits the first bell claim without a separate entry transaction.
+submits the first bell claim without a separate entry transaction. That
+accepted claim starts the 45-second timer; configuration and waiting do not.
 
 ### `CP-ENTRY-003` Use one reusable approval
 
@@ -82,8 +83,8 @@ wallet takes the bell.
 
 ### `CP-LIVE-004` Extend live time
 
-As an accepted caller outside Rug Zone, my claim adds exactly two seconds
-without crossing the hard cap.
+As an accepted caller outside Rug Zone after the opening claim, my claim adds
+exactly two seconds without crossing the hard cap.
 
 ### `CP-LIVE-005` Steal in Rug Zone
 
@@ -244,7 +245,8 @@ each network and do not depend on a hardcoded mainnet address.
 ### `CP-OPS-006` Keep broadcasts running
 
 As a player, I see an eight-second Final Transmission and then the next
-numbered round starts automatically with the prior round's 15% seed.
+numbered round appears automatically with the prior round's 15% seed and waits
+for its first `$1` claim before starting the timer.
 
 Acceptance:
 
@@ -255,6 +257,10 @@ Acceptance:
 - The player keeps one reusable payment-router approval across rounds.
 - The studio changes contract, round number, pot, and session state without an
   application rebuild or restart.
+- The waiting round has `startedAt == 0`, no deadline, and no automatic opening
+  caller.
+- Its first valid paid claim sets the exact initial deadline and becomes claim
+  number one without receiving the later-claim extension.
 
 ## Accessibility and viewport
 

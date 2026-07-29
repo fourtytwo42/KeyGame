@@ -48,7 +48,9 @@ No operator manually picks the top four.
 
 Entry ticker selection is local UI state. `ENTER WITH NVDA · $1` performs the
 reusable USDG allowance check and first paid `claimBell` transaction. There is
-no free entry transaction or permanent team.
+no free entry transaction or permanent team. The configured round waits with
+no running deadline until this first valid paid claim starts the 45-second
+clock and 180-second hard cap.
 
 ```solidity
 claimBell(uint8 tickerIndex, bytes signedMarketReport, uint8 passTokenIndex)
@@ -65,7 +67,8 @@ price, time ordering, freshness, expiry, and replay status.
 
 `VERIFIED`
 
-- `start()` verifies four opening reports and stores immutable references.
+- `start()` verifies four opening reports, stores immutable references, and
+  funds the seed pot without starting the timer.
 - Every claim requires a signed report for its selected feed.
 - Production reports are at most three seconds old and cannot predate that
   ticker's last accepted report or be replayed.
@@ -114,8 +117,9 @@ Payout allocation must conserve the gross pot.
 - `$1` accepted-claim fee.
 - `$100` reusable allowance to the permanent payment router, refreshed only
   below `$10`; changing round contracts does not require another approval.
-- 45-second opening clock.
-- Two-second accepted live extension.
+- First valid paid claim starts the 45-second opening clock and 180-second hard
+  cap. Waiting for that claim has no timeout.
+- Later accepted live claims add two seconds.
 - Ten-second Rug Zone with no extension.
 - 180-second hard cap.
 - Pull payments and cancellation refunds.
@@ -128,8 +132,10 @@ A settled round never leaves the main game idle:
 1. Record the final event-derived snapshot in Historical Runs.
 2. Hold Final Transmission for eight seconds so the result is readable.
 3. Transfer the settled round's 15% `nextRoundPool` into the next round.
-4. Configure and start the next numbered round automatically.
-5. Move the studio to the new round without a page rebuild or app restart.
+4. Configure and fund the next numbered round automatically, leaving its timer
+   stopped on the Entry Desk.
+5. Move the studio to the waiting round without a page rebuild or app restart.
+6. Start its timer only when a player makes the first valid `$1` claim.
 
 The rollover is single-flight and resumable. A partial operator transaction
 sequence must not duplicate a round, lose the seed, or leave the public
@@ -170,6 +176,7 @@ Entry Desk:
 - 30-minute rank, move, band, multiplier, and pass badge;
 - local starter selection;
 - `ENTER WITH {TICKER} · $1`.
+- explicit notice that the first `$1` claim starts the timer.
 
 Live Studio:
 

@@ -6,6 +6,7 @@ export const lastBellAbi = parseAbi([
   "function paymentToken() view returns (address)",
   "function marketMode() view returns (uint8)",
   "function producerPassRequired() view returns (bool)",
+  "function initialized() view returns (bool)",
   "function claimPrice() view returns (uint256)",
   "function startDuration() view returns (uint64)",
   "function extensionDuration() view returns (uint64)",

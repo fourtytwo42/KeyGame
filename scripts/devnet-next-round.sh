@@ -83,12 +83,12 @@ if [[ "$remaining_seed" != "0" ]]; then
     --gas-limit 150000
 fi
 
-started_at="$(
-  cast call "$new_round" "startedAt()(uint64)" --rpc-url "$rpc_url"
+initialized="$(
+  cast call "$new_round" "initialized()(bool)" --rpc-url "$rpc_url"
 )"
 symbols=("NVDA" "AAPL" "TSLA" "SPY")
 opening_prices=(10000000000 20000000000 25000000000 50000000000)
-if [[ "$started_at" == "0" ]]; then
+if [[ "$initialized" == "false" ]]; then
   send_checked \
     "$payment_token" \
     "approve(address,uint256)" \
@@ -134,55 +134,6 @@ done
 next_round_id="$(
   cast call "$new_round" "roundId()(uint256)" --rpc-url "$rpc_url"
 )"
-caller_index="$((next_round_id % ${#players[@]}))"
-ticker_index="$((next_round_id % 4))"
-band_offsets=(6 0 -6 0)
-symbol="${symbols[$ticker_index]}"
-opening_price="${opening_prices[$ticker_index]}"
-offset="${band_offsets[$ticker_index]}"
-claim_price="$((opening_price * (10000 + offset) / 10000))"
-observed_hex="$(cast block latest --rpc-url "$rpc_url" --json | jq -r '.timestamp')"
-observed_at="$(cast to-dec "$observed_hex")"
-feed_id="$(cast keccak "$symbol/USD")"
-report="$(
-  cast abi-encode \
-    'f(bytes32,uint256,uint64,uint64,uint64)' \
-    "$feed_id" \
-    "$claim_price" \
-    "$observed_at" \
-    "$observed_at" \
-    "$((observed_at + 30))"
-)"
-accepted_claims="$(
-  cast call "$new_round" "acceptedClaims()(uint256)" --rpc-url "$rpc_url"
-)"
-current_phase="$(
-  cast call "$new_round" "currentPhase()(uint8)" --rpc-url "$rpc_url" \
-    | awk '{print $1}'
-)"
-if [[ "$current_phase" == "3" ]]; then
-  send_checked \
-    "$new_round" \
-    "finalize()" \
-    --rpc-url "$rpc_url" \
-    --unlocked \
-    --from "$deployer" \
-    --gas-limit 650000
-  current_phase="4"
-fi
-if [[ "$accepted_claims" == "0" ]] \
-  && { [[ "$current_phase" == "1" ]] || [[ "$current_phase" == "2" ]]; }; then
-  send_checked \
-    "$new_round" \
-    "claimBell(uint8,bytes,uint8)" \
-    "$ticker_index" \
-    "$report" \
-    "$ticker_index" \
-    --rpc-url "$rpc_url" \
-    --unlocked \
-    --from "${players[$caller_index]}" \
-    --gas-limit 650000
-fi
 
 temporary_file="$deployment_file.next"
 jq \

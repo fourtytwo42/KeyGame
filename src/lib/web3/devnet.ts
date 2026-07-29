@@ -95,9 +95,28 @@ const phaseName = (phase: number): RoundPhase =>
             : "cancelled";
 const unitsToUsd = (value: bigint) => Number(value) / 1e6;
 const reportPrice = (value: bigint) => Number(value) / 1e8;
+const getLatestBlockFresh = async () => {
+  const blockNumber = await devnetPublicClient.getBlockNumber({ cacheTime: 0 });
+  return devnetPublicClient.getBlock({ blockNumber });
+};
+const mineDevnetBlock = async () => {
+  const response = await fetch(serverRpc, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "evm_mine",
+      params: [],
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Could not synchronize the devnet clock.");
+};
 
 export async function createMockMarketReport(ticker: TickerId) {
   refreshDeployment();
+  await mineDevnetBlock();
   const index = tickerSlots.findIndex((slot) => slot.id === ticker);
   if (index < 0) throw new Error("Unknown ticker.");
   const [config, opening, block, acceptedClaims, mode] = await Promise.all([
@@ -113,7 +132,7 @@ export async function createMockMarketReport(ticker: TickerId) {
       functionName: "openingPrices",
       args: [BigInt(index)],
     }),
-    devnetPublicClient.getBlock(),
+    getLatestBlockFresh(),
     devnetPublicClient.readContract({
       address: roundAddress,
       abi: lastBellAbi,
@@ -279,7 +298,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       abi: lastBellAbi,
       functionName: "acceptedClaims",
     }),
-    devnetPublicClient.getBlock(),
+    getLatestBlockFresh(),
   ] as const);
 
   const [
@@ -454,7 +473,8 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
     broadcastLabel: Number(mode) === 1 ? "HEAT CHECK" : "VOLUME CHECK",
     producerPassRequired: passRequired,
     timeLeftSeconds: Math.max(0, deadlineNumber - now),
-    elapsedSeconds: Math.max(0, now - Number(startedAt)),
+    elapsedSeconds:
+      chainPhase === "entry" ? 0 : Math.max(0, now - Number(startedAt)),
     hardTimeLeftSeconds: Math.max(0, hardEndNumber - now),
     potUsd: unitsToUsd(pot),
     holder:

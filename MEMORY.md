@@ -4,8 +4,12 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Closing Print is implemented and now runs continuous automatic rounds.
-- Last meaningful result: Automatic finalization, eight-second intermission, archived history, resumable 15% seed rollover, permanent payment-router approval, and dynamic current-round switching passed clean live VM and browser acceptance.
+- Current task: Closing Print is implemented with continuous automatic round
+  configuration and first-claim timer starts.
+- Last meaningful result: Rollover now opens a funded Entry Desk with no
+  deadline or automatic caller. The first valid $1 claim starts the exact
+  45-second clock and passed contract, integration, Playwright, and in-app
+  browser acceptance.
 - Next step: Configure production Robinhood Stock Token addresses, Chainlink Data Streams credentials/verifier, Reown WalletConnect project, and Robinhood Chain testnet deployment only when the user authorizes external deployment.
 - Blockers: None documented.
 
@@ -23,7 +27,9 @@ Durable project context lives here. Update this file whenever information should
   accepted claim fee, so a wallet does not approve again on rollover.
 - The VM round keeper finalizes unattended expired rounds, archives the
   event-derived result, holds an eight-second Final Transmission, transfers the
-  15% seed, and opens the next numbered round without rebuilding the app.
+  15% seed, and opens the next numbered round without rebuilding the app. The
+  new round waits indefinitely with `startedAt == 0`; its first valid paid
+  claim starts the clock and does not receive the later-claim extension.
   Rollover is single-flight and uses `.devnet/round-rollover.json` to resume
   safely after partial transaction sequences.
 - Desktop `/play/` routes use a fixed viewport-height studio. At widths above 820px the page footer is suppressed, the broadcast grid consumes only the space below the header/source bar, and height-aware sizing keeps the complete studio visible without vertical document scrolling.
@@ -179,7 +185,8 @@ When sources conflict, use this order:
 - 2026-07-29: Replaced the separate marketing home with the live game at `/`, redirected legacy play URLs, removed Final Transmission receipt/replay buttons, and added a VM-local Historical Runs archive. The first real archived run recorded a $51 peak pot, `caller-70997`, NVDA, and one call; its replay resolved with canonical chain, contract, block, and event details. VM lint, typecheck, 24 tests, build, desktop/mobile browser checks, and archive-link UAT passed.
 - 2026-07-29: Removed Signal/System Status links from the primary navigation and footer. `/status` remains available by direct URL for operator health checks but is not advertised to players.
 - 2026-07-29: Continuous-round Playwright acceptance passed 14/14 applicable desktop and Pixel 7 checks with two intentional cross-profile skips after correcting the Historical Runs foreground fallback from the undefined `--paper` token to `--dead-air`. The VM's Chromium runtime libraries are locally extracted under `.devnet/playwright-root`; use that directory in `LD_LIBRARY_PATH` unless the dependencies are installed system-wide.
-- 2026-07-29: Final clean devnet handoff started round 4663 at the deterministic initial contract with a $51 pot and 45-second clock. The background keeper was running and will continue finalizing, archiving, carrying the 15% seed, and opening later rounds unattended.
+- 2026-07-29: First-claim timer-start verification passed on the VM: 17 Forge tests, 24 app tests, four live-Anvil integration tests, lint, typecheck, production build, and 14 applicable Playwright checks with two intentional skips. In-app browser UAT observed a waiting carried-seed round with no holder, then a successful first $1 claim at exactly 00:45. Devnet report generation now mines a fresh block before encoding deterministic reports so Anvil time offsets cannot expire the first post-rollover claim.
+- 2026-07-29: Final clean devnet handoff left deterministic round 4663 on the Entry Desk with a $50 seed pot, `startedAt == 0`, no holder, and zero claims across repeated checks. The keeper remains running but will not start the timer.
 
 ## Decisions
 
@@ -231,6 +238,15 @@ When sources conflict, use this order:
 - Do not compile, test, run browsers, or spend Actions minutes on GitHub.
 - Keep GitHub Actions disabled and run all verification on `/home/hendo420/projects/KeyGame`.
 
+### 2026-07-29 - Start The Timer With The First Paid Claim
+
+- Operator initialization verifies opening reports and deposits the seed but
+  does not set `startedAt`, `deadline`, or `hardEnd`.
+- The first valid `$1` `claimBell` sets the 45-second clock and 180-second hard
+  cap, becomes claim number one, and receives no two-second extension.
+- Automatic rollover configures and funds the next round, then waits on the
+  Entry Desk without an automatic caller or timeout.
+
 ## Known Issues
 
 - Real Stock Token custody, player-funded prizes, account abstraction/gas sponsorship, and production compliance remain intentional PRD gates, not missing Stage 1 implementation.
@@ -274,6 +290,11 @@ When sources conflict, use this order:
   across rounds and unauthorized-pull rejection, while 4 integration tests and
   24 app tests pass. The complete Playwright pass reported 14 passed and two
   intentional skips.
+- 2026-07-29: Changed continuous rounds to wait for player activation. Removed
+  deterministic opening callers from initial deploy and rollover, moved timer
+  initialization into the first accepted claim, added waiting-state copy and
+  regression coverage, and hardened devnet report freshness across Anvil time
+  offsets.
 
 ## Open Follow-ups
 

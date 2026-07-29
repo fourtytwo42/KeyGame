@@ -31,9 +31,28 @@ describe("deployed local devnet", () => {
   });
 
   it("reads the deployed round and accepts a real contract claim", async () => {
+    const beforeEntry = await getDevnetSnapshot();
+    expect(beforeEntry.phase).toBe("entry");
+    expect(beforeEntry.timeLeftSeconds).toBe(0);
+    const startedBefore = await devnetPublicClient.readContract({
+      address: deployment.lastBellRound as `0x${string}`,
+      abi: lastBellAbi,
+      functionName: "startedAt",
+    });
+    expect(startedBefore).toBe(0n);
+
     const entered = await sendDevnetAction("enter", "AAPL");
     expect(entered.session?.starterTicker).toBe("AAPL");
     expect(entered.session?.allowanceUsd).toBe(99);
+    expect(entered.state.phase).toBe("live");
+    expect(entered.state.timeLeftSeconds).toBeGreaterThanOrEqual(44);
+    expect(entered.state.timeLeftSeconds).toBeLessThanOrEqual(45);
+    const startedAfter = await devnetPublicClient.readContract({
+      address: deployment.lastBellRound as `0x${string}`,
+      abi: lastBellAbi,
+      functionName: "startedAt",
+    });
+    expect(startedAfter).toBeGreaterThan(0n);
     await sendDevnetAction("demo-claim", "NVDA");
     const before = await getDevnetSnapshot();
     const deadlineBefore = await devnetPublicClient.readContract({

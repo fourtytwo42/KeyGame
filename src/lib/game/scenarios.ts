@@ -149,7 +149,8 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
   entry: {
     id: "entry",
     label: "Entry desk",
-    description: "Pick the first ticker you want to put on air for $1.",
+    description:
+      "Pick the first ticker you want to put on air. Its $1 call starts the timer.",
     state: stateFor("entry", {
       timeLeftSeconds: 45,
       elapsedSeconds: 0,

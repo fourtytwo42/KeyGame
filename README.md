@@ -16,8 +16,8 @@ script, product requirements, research, and automated test suites.
 - Channel 4663 visual system across desktop and mobile
 - Live round, lobby, finalizing, results, replay, receipt, rules, assets, and
   status screens
-- Exact-price $1 bell claims, 45-second round, 2-second extensions, 10-second
-  Rug zone, and 180-second hard cap
+- Exact-price $1 bell claims, a first-claim-started 45-second round, later
+  2-second extensions, 10-second Rug zone, and 180-second hard cap
 - 50% caller, 30% Closing Print, 15% next round, and 5% treasury settlement
 - Automatic settlement, eight-second Final Transmission, 15% seed transfer,
   archive capture, and continuous next-round launch
@@ -59,7 +59,8 @@ creates a fresh deterministic round with approved callers, mock Stock Tokens,
 and signed mock reports. `pnpm app:start` also launches the local round keeper.
 It finalizes expired rounds, archives the result, shows an eight-second
 intermission, transfers the 15% seed, and opens the next numbered round without
-rebuilding or restarting the application.
+rebuilding or restarting the application. The new round waits on its Entry
+Desk with no running timer until the first real $1 claim starts its clock.
 
 ## Verification
 
