@@ -1,6 +1,8 @@
 import { createTestClient, http, publicActions } from "viem";
 import { beforeAll, describe, expect, it } from "vitest";
 import { factions } from "@/lib/game/constants";
+import deployment from "../../deployments/31337.json";
+import { lastBellAbi } from "@/lib/web3/last-bell-abi";
 import {
   devnetPublicClient,
   getDevnetSnapshot,
@@ -21,17 +23,25 @@ describe("deployed local devnet", () => {
 
   it("reads the deployed round and accepts a real contract claim", async () => {
     const before = await getDevnetSnapshot();
+    const deadlineBefore = await devnetPublicClient.readContract({
+      address: deployment.lastBellRound as `0x${string}`,
+      abi: lastBellAbi,
+      functionName: "deadline",
+    });
     const target = factions.find(
       (faction) => faction.id !== before.holder?.faction,
     )!;
     const result = await sendDevnetAction("claim", target.id);
+    const deadlineAfter = await devnetPublicClient.readContract({
+      address: deployment.lastBellRound as `0x${string}`,
+      abi: lastBellAbi,
+      functionName: "deadline",
+    });
 
     expect(result.state.holder?.faction).toBe(target.id);
     expect(result.state.potUsd).toBe(before.potUsd + 1);
     expect(result.state.claims.length).toBe(before.claims.length + 1);
-    expect(result.state.timeLeftSeconds).toBeGreaterThanOrEqual(
-      before.timeLeftSeconds,
-    );
+    expect(deadlineAfter).toBe(deadlineBefore + 2n);
   });
 
   it("keeps the deadline fixed for a real Rug Zone claim", async () => {
