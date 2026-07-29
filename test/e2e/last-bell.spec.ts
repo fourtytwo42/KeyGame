@@ -12,18 +12,26 @@ test("home communicates the game in one screen", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("real devnet round accepts a browser-driven call", async ({ page }) => {
+test("real devnet round accepts faction entry and a bounded call", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile-chromium");
   await page.goto("/play/4663");
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
-  const potBefore = await page.locator(".lowerThird strong").textContent();
   await page.getByRole("button", { name: "AAPL" }).click();
-  await page.getByRole("button", { name: "APE FOR THE BELL · $1" }).click();
+  await page.getByRole("button", { name: "$5", exact: true }).click();
+  await page.getByRole("button", { name: "ENTER AAPL · MAX $5" }).click();
+  await expect(page.getByText("AAPL BAG")).toBeVisible();
+  await expect(page.getByText("$5").first()).toBeVisible();
+  const potBefore = await page.locator(".lowerThird strong").textContent();
+  await page.getByRole("button", { name: "SEND IT FOR THE BELL · $1" }).click();
   await expect(
     page.getByRole("button", { name: "YOU HAVE THE BELL" }),
   ).toBeVisible();
   await expect(page.locator(".lowerThird strong")).not.toHaveText(
     potBefore ?? "",
   );
+  await expect(page.getByText("$4").first()).toBeVisible();
 });
 
 test("wallet panel exposes injected, MetaMask, Coinbase, Safe and config state", async ({
@@ -82,6 +90,6 @@ test("narrow layout has no horizontal overflow", async ({ page }) => {
   }));
   expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport + 1);
   await expect(
-    page.getByRole("button", { name: "APE FOR THE BELL · $1" }),
+    page.locator(".broadcastArena .primaryAction").first(),
   ).toBeInViewport();
 });

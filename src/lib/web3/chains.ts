@@ -1,12 +1,13 @@
 import { defineChain } from "viem";
 import { anvil } from "wagmi/chains";
+import { publicEnvironment } from "@/lib/env";
 
 export const localDevnet = defineChain({
   ...anvil,
   name: "Last Bell Local Devnet",
   nativeCurrency: { name: "Dev Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: { http: ["http://127.0.0.1:8545"] },
+    default: { http: [publicEnvironment.localRpcUrl] },
   },
 });
 
@@ -16,10 +17,7 @@ export const robinhoodChainTestnet = defineChain({
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
     default: {
-      http: [
-        process.env.NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL ||
-          "https://rpc.testnet.chain.robinhood.com",
-      ],
+      http: [publicEnvironment.robinhoodTestnetRpcUrl],
     },
   },
   blockExplorers: {

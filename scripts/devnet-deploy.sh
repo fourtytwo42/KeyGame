@@ -14,6 +14,7 @@ accounts=(
   "0x14dc79964da2c08b23698b3d3cc7ca32193d9955"
   "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f"
 )
+session_player="0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
 
 export PATH="$HOME/.foundry/bin:$PATH"
 export DEPLOYER_ADDRESS="$deployer"
@@ -50,9 +51,12 @@ for index in "${!accounts[@]}"; do
     --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
   send_checked "$token_address" "approve(address,uint256)" "$round_address" 100000000 \
     --rpc-url "$rpc_url" --unlocked --from "$account" --gas-limit 150000
-  send_checked "$round_address" "joinFaction(uint8)" "$faction" \
+  send_checked "$round_address" "joinFaction(uint8,uint256)" "$faction" 100000000 \
     --rpc-url "$rpc_url" --unlocked --from "$account" --gas-limit 150000
 done
+
+send_checked "$token_address" "mint(address,uint256)" "$session_player" 100000000 \
+  --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
 
 send_checked "$round_address" "start(uint256)" 50000000 \
   --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 250000
@@ -66,6 +70,7 @@ jq -n \
   --arg deployer "$deployer" \
   --arg token "$token_address" \
   --arg round "$round_address" \
+  --arg sessionPlayer "$session_player" \
   --argjson players "$(printf '%s\n' "${accounts[@]}" | jq -R . | jq -s .)" \
   '{
     chainId: $chainId,
@@ -73,6 +78,7 @@ jq -n \
     deployer: $deployer,
     devDollar: $token,
     lastBellRound: $round,
+    sessionPlayer: $sessionPlayer,
     players: $players
   }' >"$project_root/deployments/31337.json"
 

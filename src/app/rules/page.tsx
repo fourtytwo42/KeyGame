@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { roundConfig } from "@/lib/game/constants";
+import { devDollarAddress, roundAddress } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = { title: "Rules" };
 
@@ -52,8 +53,20 @@ export default function RulesPage() {
           <p>
             The interface never names a winner at zero. It first waits for
             settlement. The final accepted holder receives 50%, the leading
-            faction receives 30%, participation receives 15%, and 5% funds the
-            protocol.
+            faction receives 30%, 15% seeds the next round, and 5% funds the
+            protocol. Rewards use pull payments: winners claim after settlement.
+          </p>
+        </div>
+      </section>
+      <section>
+        <span className="chapterNumber">05</span>
+        <div>
+          <h2>Your maximum is enforced onchain</h2>
+          <p>
+            Entry locks one faction and a $5, $10, or $25 round maximum. The
+            contract rejects any accepted claims beyond that ceiling. Revoking
+            the USDG approval prevents further calls but does not undo accepted
+            calls.
           </p>
         </div>
       </section>
@@ -63,6 +76,18 @@ export default function RulesPage() {
         <span>RUG ≤10s</span>
         <span>HARD STOP 180s</span>
         <span>CALL $1</span>
+      </div>
+      <div className="disclosureBlock">
+        <span className="chapterNumber">ID</span>
+        <div>
+          <h2>Canonical devnet identities</h2>
+          <p>Round contract: {roundAddress}</p>
+          <p>Play USDG: {devDollarAddress}</p>
+          <p>
+            Stock ticker factions are synthetic identity labels in this stage.
+            No Stock Token is deposited, traded, or awarded.
+          </p>
+        </div>
       </div>
     </InfoPage>
   );

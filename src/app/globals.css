@@ -947,18 +947,16 @@ main {
   margin-right: 4px;
 }
 
-.miniFactionSwitch button {
-  cursor: pointer;
-  padding: 4px 6px;
-  background: var(--dead-air);
-  border: 2px solid var(--night-desk);
-  font-family: inherit;
-  font-size: 0.58rem;
-}
-
-.miniFactionSwitch button[aria-pressed="true"] {
+.miniFactionSwitch strong {
+  padding: 4px 8px;
   color: var(--tube-white);
   background: var(--night-desk);
+  border: 2px solid var(--night-desk);
+  font-family: inherit;
+}
+
+.miniFactionSwitch small {
+  font-size: 0.55rem;
 }
 
 .apeButton {
@@ -1105,7 +1103,7 @@ main {
 
 .segmentTitle > span {
   padding: 4px 9px;
-  color: var(--tube-white);
+  color: var(--night-desk);
   background: var(--hot-mic);
   font-family: var(--mono);
   font-size: 0.62rem;
@@ -1163,8 +1161,107 @@ main {
   transform: translate(-2px, -2px);
 }
 
+.factionChoice[data-selected="false"] .tickerBadge {
+  color: var(--night-desk);
+  background: var(--tube-white);
+}
+
 .entryDesk > .primaryAction {
   width: min(100%, 520px);
+}
+
+.budgetPicker {
+  width: min(100%, 520px);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 9px;
+  border: 3px solid var(--night-desk);
+}
+
+.budgetPicker legend {
+  padding: 0 7px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.budgetPicker button {
+  min-height: 40px;
+  cursor: pointer;
+  background: var(--dead-air);
+  border: 2px solid var(--night-desk);
+  font-family: var(--mono);
+  font-weight: 900;
+}
+
+.budgetPicker button[aria-pressed="true"] {
+  color: var(--tube-white);
+  background: var(--night-desk);
+}
+
+.entryTerms {
+  width: min(100%, 520px);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 12px;
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.entryTerms span {
+  padding: 5px 3px;
+  border: 1px solid var(--night-desk);
+}
+
+.sessionPanel {
+  background: var(--caller-lilac);
+}
+
+.sessionHeadline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+}
+
+.sessionHeadline span {
+  padding: 3px 5px;
+  color: var(--tube-white);
+  background: var(--late-feed);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+}
+
+.sessionPanel dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 12px 0;
+  border: 2px solid var(--night-desk);
+}
+
+.sessionPanel dl div {
+  padding: 7px;
+  border: 1px solid var(--night-desk);
+}
+
+.sessionPanel dt {
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  font-weight: 900;
+}
+
+.sessionPanel dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.4rem;
+}
+
+.sessionPanel .textButton {
+  width: 100%;
 }
 
 .stateInterstitial,
@@ -1269,6 +1366,48 @@ main {
 .payoutTape strong {
   font-family: var(--display);
   font-size: 2.5rem;
+}
+
+.winnerSummary {
+  width: min(100%, 560px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.winnerSummary .payoutTape {
+  width: auto;
+  display: grid;
+  text-align: left;
+  transform: none;
+}
+
+.poolBreakdown,
+.proofLine {
+  margin-top: 9px;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.poolBreakdown {
+  display: flex;
+  gap: 18px;
+}
+
+.claimActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.cancelledRound {
+  color: var(--tube-white);
+  background: var(--late-feed);
+}
+
+.cancelledRound .payoutTape {
+  color: var(--night-desk);
 }
 
 .finalActions {
@@ -1649,6 +1788,10 @@ main {
   color: var(--tube-white);
   background: var(--late-feed);
   border: var(--outline);
+}
+
+.disclosureBlock .chapterNumber {
+  color: var(--night-desk);
 }
 
 .statusGrid {

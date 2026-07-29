@@ -2,6 +2,18 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LiveGame } from "./live-game";
 
+vi.mock("@/lib/web3/use-wallet-game", () => ({
+  useWalletGame: () => ({
+    isConnected: false,
+    session: null,
+    claimable: { holderUsd: 0, factionUsd: 0, refundUsd: 0 },
+    enter: vi.fn(),
+    claim: vi.fn(),
+    revoke: vi.fn(),
+    claimReward: vi.fn(),
+  }),
+}));
+
 describe("LiveGame", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -11,26 +23,29 @@ describe("LiveGame", () => {
     render(<LiveGame initialScenario="live" />);
     expect(screen.getByText("$89 POT")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "APE FOR THE BELL · $1" }),
+      screen.getByRole("button", { name: "SEND IT FOR THE BELL · $1" }),
     ).toBeEnabled();
     expect(screen.getAllByText("bellboy.eth").length).toBeGreaterThan(0);
   });
 
-  it("lets a player pick a bag and enter the fixture round", () => {
+  it("lets a player choose a faction and bounded budget", () => {
     render(<LiveGame initialScenario="entry" />);
     fireEvent.click(screen.getByRole("button", { name: /AAPL/i }));
-    const join = screen.getByRole("button", { name: "JOIN AAPL BAG · $1" });
-    fireEvent.click(join);
+    fireEvent.click(screen.getByRole("button", { name: "$10" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "ENTER AAPL · MAX $10" }),
+    );
     expect(
-      screen.getByRole("button", { name: "APE FOR THE BELL · $1" }),
+      screen.getByRole("button", { name: "SEND IT FOR THE BELL · $1" }),
     ).toBeInTheDocument();
+    expect(screen.getAllByText("$10").length).toBeGreaterThan(0);
   });
 
   it("shows submitted state before accepting a simulated claim", () => {
     vi.useFakeTimers();
     render(<LiveGame initialScenario="live" />);
     fireEvent.click(
-      screen.getByRole("button", { name: "APE FOR THE BELL · $1" }),
+      screen.getByRole("button", { name: "SEND IT FOR THE BELL · $1" }),
     );
     expect(
       screen.getByRole("button", { name: "CALLING THE CHAIN…" }),
@@ -48,7 +63,7 @@ describe("LiveGame", () => {
       screen.getByRole("heading", { name: "Dead air" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "APE FOR THE BELL · $1" }),
+      screen.queryByRole("button", { name: "SEND IT FOR THE BELL · $1" }),
     ).not.toBeInTheDocument();
   });
 });

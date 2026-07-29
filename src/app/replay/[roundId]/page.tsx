@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ReplayPlayer } from "@/components/replay-player";
 import { scenarios } from "@/lib/game/scenarios";
+import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = { title: "Replay Round 4663" };
+export const dynamic = "force-dynamic";
 
 export default async function ReplayPage({
   params,
@@ -11,7 +13,10 @@ export default async function ReplayPage({
   params: Promise<{ roundId: string }>;
 }) {
   const { roundId } = await params;
-  const state = scenarios.settled.state;
+  const state =
+    process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
+      ? await getDevnetSnapshot()
+      : scenarios.settled.state;
 
   return (
     <div className="replayPage">
@@ -29,7 +34,12 @@ export default async function ReplayPage({
           <strong>{state.holder?.displayName}</strong>
         </div>
       </header>
-      <ReplayPlayer />
+      <ReplayPlayer state={state} />
+      <p className="canonicalProof">
+        CHAIN {state.chainId ?? "SIM"} · CONTRACT{" "}
+        {state.contractAddress ?? "LOCAL FIXTURE"} · BLOCK{" "}
+        {state.blockNumber ?? "SIM"}
+      </p>
       <div className="pageEndActions">
         <Link
           className="primaryAction linkAction"

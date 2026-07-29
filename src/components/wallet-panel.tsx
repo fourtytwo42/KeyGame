@@ -11,7 +11,12 @@ import {
 } from "wagmi";
 import { shortAddress } from "@/lib/game/constants";
 import { walletConnectConfigured } from "@/lib/web3/config";
-import { robinhoodChainTestnet } from "@/lib/web3/chains";
+import {
+  configuredGameChain,
+  configuredPaymentToken,
+  configuredRoundAddress,
+  useWalletGame,
+} from "@/lib/web3/use-wallet-game";
 
 export function WalletPanel() {
   const [open, setOpen] = useState(false);
@@ -21,6 +26,7 @@ export function WalletPanel() {
   const { connectors, connect, error, isPending } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: switching } = useSwitchChain();
+  const game = useWalletGame();
 
   useEffect(() => {
     if (!open) return;
@@ -100,25 +106,58 @@ export function WalletPanel() {
                   </div>
                   <div>
                     <dt>Round budget</dt>
-                    <dd>Not authorized</dd>
+                    <dd>
+                      {game.session?.status === "active"
+                        ? `$${game.session.remainingUsd} remaining`
+                        : (game.session?.status ?? "Not authorized")}
+                    </dd>
                   </div>
                   <div>
                     <dt>Spent</dt>
-                    <dd>$0 / $20</dd>
+                    <dd>
+                      ${game.session?.spentUsd ?? 0} / $
+                      {game.session?.maximumUsd ?? 0}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Actions left</dt>
+                    <dd>{game.session?.availableActions ?? 0}</dd>
+                  </div>
+                  <div>
+                    <dt>Faction</dt>
+                    <dd>{game.session?.faction ?? "Not joined"}</dd>
                   </div>
                 </dl>
-                {chain?.id !== robinhoodChainTestnet.id ? (
+                <div className="proofField">
+                  <span>ROUND CONTRACT</span>
+                  <code>{configuredRoundAddress}</code>
+                  <span>FEE TOKEN</span>
+                  <code>{configuredPaymentToken}</code>
+                </div>
+                {chain?.id !== configuredGameChain.id ? (
                   <button
                     className="secondaryAction fullWidth"
                     type="button"
                     disabled={switching}
                     onClick={() =>
-                      switchChain({ chainId: robinhoodChainTestnet.id })
+                      switchChain({ chainId: configuredGameChain.id })
                     }
                   >
                     {switching
                       ? "SWITCHING CHANNEL…"
-                      : "SWITCH TO ROBINHOOD TESTNET"}
+                      : `SWITCH TO ${configuredGameChain.name.toUpperCase()}`}
+                  </button>
+                ) : null}
+                {game.session?.status === "active" ? (
+                  <button
+                    className="secondaryAction fullWidth"
+                    type="button"
+                    disabled={game.action === "revoking"}
+                    onClick={() => void game.revoke()}
+                  >
+                    {game.action === "revoking"
+                      ? "REVOKING SESSION…"
+                      : "REVOKE ROUND SESSION"}
                   </button>
                 ) : null}
                 <button

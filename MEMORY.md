@@ -4,15 +4,16 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Complete. Last Bell is implemented, pushed, tested, and running against the authoritative VM devnet.
-- Last meaningful change: Hosted GitHub CI passed all app, contract, integration, and browser jobs after making integration assertions use authoritative contract deadlines and resetting shared devnet state before Playwright.
-- Next step: Obtain an independent contract audit and legal review before any value-bearing deployment. For wallet UAT, add a real Reown project ID and test browser extensions on Robinhood Chain testnet.
+- Current task: PRD reconciliation and missing Stage 1 testnet-MVP implementation are complete.
+- Last meaningful result: Faction entry, contract-enforced spend ceilings, allowance revocation, connected-wallet game writes, settlement/refund claims, canonical replay/receipts, and proof identities are implemented and browser-verified on fresh Anvil.
+- Next step: Add real testnet environment ownership and WalletConnect configuration only when the user authorizes Robinhood Chain testnet deployment.
 - Blockers: None documented.
 
 ## Current State
 
 - The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
 - The complete responsive application, Foundry contracts, deterministic Anvil controller, CI, and testnet deployment workflow are implemented.
+- `docs/prd/09-implementation-gap-audit.md` records implemented gaps, intentional product gates, and external launch prerequisites.
 - Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-28.
 - Deterministic local addresses are recorded in `deployments/31337.json`; the deployment script recreates a fresh funded round without storing private keys.
 - The authoritative build workspace is VM `192.168.50.138`, user `hendo420`, path `/home/hendo420/projects/KeyGame`.
@@ -145,6 +146,9 @@ When sources conflict, use this order:
 - 2026-07-28: In-app browser UAT verified the live Anvil source, the $1 claim action, deterministic NVDA tie leader, wallet choices and WalletConnect configuration notice, mobile 390x844 layout with no horizontal overflow, literal rules/constants, and zero browser console errors.
 - 2026-07-28: GitHub Actions run `30421210958` passed all three hosted jobs: app, contracts, and browser. The browser job independently installed Chromium, deployed Anvil, ran integration tests, reset the chain, and passed all Playwright tests.
 - 2026-07-28: Corrected a CI-only timing assumption by comparing contract deadlines instead of snapshot countdowns, then isolated stateful integration and E2E suites with a fresh devnet deployment.
+- 2026-07-28: Reconciled the full PRD suite against the app and implemented immutable faction entry, $5/$10/$25 onchain spend ceilings, allowance revocation, wallet writes, holder/faction/refund pull claims, correct 15% next-round seed semantics, enriched canonical events, and deployed-state replay/receipts.
+- 2026-07-28: Final reconciliation gates passed on the VM: TypeScript, ESLint, 14 Vitest tests, 12 Foundry tests including 512 fuzz runs, 3 live Anvil integration tests, production build, and 11 Playwright desktop/mobile tests with one deliberate duplicate-mutation skip.
+- 2026-07-28: In-app browser UAT verified the authoritative entry/session state, revoke transition, automatic settlement, 50/30/15/5 allocations, holder and faction claims, canonical replay identity, and receipt chain/block/contract proof.
 
 ## Decisions
 
@@ -177,6 +181,7 @@ When sources conflict, use this order:
 
 ## Known Issues
 
+- Real Stock Token custody, player-funded prizes, account abstraction/gas sponsorship, and production compliance remain intentional PRD gates, not missing Stage 1 implementation.
 - Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
 - Robinhood Chain testnet deployment is ready but was not performed; it requires funded signer configuration, real token/treasury addresses, and explicit launch authorization.
 - GitHub Actions reports non-blocking warnings that some third-party action versions target Node.js 20 while the runner forces Node.js 24. All jobs pass.
@@ -204,11 +209,12 @@ When sources conflict, use this order:
 - 2026-07-28: Implemented `LastBellRound`, `MockUSDG`, Foundry deployment scripts, complete contract tests, and a deterministic local Anvil lifecycle.
 - 2026-07-28: Wired the live UI to real devnet contract state and transactions, added testnet-ready chain/deployment configuration, and documented wallet/testnet operation.
 - 2026-07-28: Added CI and completed unit, component, contract, fuzz, integration, accessibility, desktop/mobile Playwright, and in-app browser UAT.
+- 2026-07-28: Closed the PRD implementation gaps and added `docs/prd/09-implementation-gap-audit.md` as the explicit handoff boundary.
 
 ## Open Follow-ups
 
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
-- Observe the first hosted GitHub Actions run and correct any environment-only discrepancy.
+- Observe the new hosted GitHub Actions run for the PRD-reconciliation commit and correct any environment-only discrepancy.
 - Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
 - Select real testnet payment token, treasury, operator, monitoring, and RPC-provider configuration before deployment.

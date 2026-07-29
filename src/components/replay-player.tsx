@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { formatUsd } from "@/lib/game/constants";
-import { scenarios, factionById } from "@/lib/game/scenarios";
+import { factionById } from "@/lib/game/scenarios";
+import type { RoundState } from "@/lib/game/types";
 
-const tape = scenarios.settled.state.claims;
-
-export function ReplayPlayer() {
+export function ReplayPlayer({ state }: { state: RoundState }) {
+  const tape = state.claims;
   const [index, setIndex] = useState(tape.length - 1);
   const event = tape[index];
+
+  if (!event) {
+    return (
+      <p className="emptyTape">No accepted claims are on this tape yet.</p>
+    );
+  }
 
   return (
     <div className="replayPlayer">

@@ -18,7 +18,7 @@ contract LastBellRound {
 
     uint16 public constant HOLDER_BPS = 5_000;
     uint16 public constant FACTION_BPS = 3_000;
-    uint16 public constant PARTICIPATION_BPS = 1_500;
+    uint16 public constant NEXT_ROUND_BPS = 1_500;
     uint16 public constant PROTOCOL_BPS = 500;
     uint16 public constant BPS = 10_000;
     uint8 public constant NO_FACTION = type(uint8).max;
@@ -50,10 +50,11 @@ contract LastBellRound {
     uint256 public pot;
     uint256 public holderPool;
     uint256 public factionPool;
-    uint256 public participationPool;
+    uint256 public nextRoundPool;
     uint256 public protocolPool;
 
     mapping(address => uint8) private selectedFactionPlusOne;
+    mapping(address => uint256) public maxSpend;
     mapping(address => uint256) public paid;
     mapping(address => uint256) public controlTime;
     mapping(uint8 => uint256) public factionAirtime;
@@ -78,15 +79,29 @@ contract LastBellRound {
         uint64 hardEnd,
         uint256 seedPot
     );
-    event FactionJoined(uint256 indexed roundId, address indexed player, uint8 faction);
+    event FactionJoined(
+        uint256 indexed roundId, address indexed player, uint8 faction, uint256 maxSpend
+    );
     event BellClaimed(
         uint256 indexed roundId,
         uint256 indexed sequence,
         address indexed player,
         uint8 faction,
+        address previousHolder,
+        uint8 previousFaction,
+        uint256 fee,
         uint64 acceptedAt,
         uint64 deadline,
-        uint256 pot
+        uint256 pot,
+        bool rugZone
+    );
+    event ControlCredited(
+        uint256 indexed roundId,
+        address indexed player,
+        uint8 indexed faction,
+        uint64 intervalStart,
+        uint64 intervalEnd,
+        uint256 duration
     );
     event RugZoneObserved(uint256 indexed roundId, uint64 observedAt, uint64 deadline);
     event SettlementStarted(uint256 indexed roundId, uint64 timestamp);
@@ -97,7 +112,7 @@ contract LastBellRound {
         uint256 grossPot,
         uint256 holderPool,
         uint256 factionPool,
-        uint256 participationPool,
+        uint256 nextRoundPool,
         uint256 protocolPool
     );
     event RewardClaimed(
@@ -109,6 +124,12 @@ contract LastBellRound {
     event RoundCancelled(
         uint256 indexed roundId, bytes32 reason, uint256 refundablePot
     );
+    event RefundClaimed(
+        uint256 indexed roundId, address indexed player, uint256 amount
+    );
+    event NextRoundSeedTransferred(
+        uint256 indexed roundId, address indexed recipient, uint256 amount
+    );
 
     error Unauthorized();
     error InvalidConfiguration();
@@ -117,6 +138,7 @@ contract LastBellRound {
     error AlreadyJoined();
     error NotJoined();
     error CurrentHolder();
+    error BudgetExceeded();
     error NothingToClaim();
     error TransferFailed();
     error Reentrancy();
@@ -208,15 +230,17 @@ contract LastBellRound {
         emit RoundStarted(roundId, now64, deadline, hardEnd, seedPot);
     }
 
-    function joinFaction(uint8 faction) external {
+    function joinFaction(uint8 faction, uint256 spendLimit) external {
         Phase phase = currentPhase();
         if (phase != Phase.Scheduled && phase != Phase.Live && phase != Phase.Rug) {
             revert InvalidPhase(Phase.Live, phase);
         }
         if (faction >= factionSymbols.length) revert InvalidFaction();
+        if (spendLimit < claimPrice) revert InvalidConfiguration();
         if (selectedFactionPlusOne[msg.sender] != 0) revert AlreadyJoined();
         selectedFactionPlusOne[msg.sender] = faction + 1;
-        emit FactionJoined(roundId, msg.sender, faction);
+        maxSpend[msg.sender] = spendLimit;
+        emit FactionJoined(roundId, msg.sender, faction, spendLimit);
     }
 
     function claimBell() external nonReentrant {
@@ -227,7 +251,12 @@ contract LastBellRound {
         uint8 faction = factionOf(msg.sender);
         if (faction == NO_FACTION) revert NotJoined();
         if (msg.sender == holder) revert CurrentHolder();
+        if (paid[msg.sender] + claimPrice > maxSpend[msg.sender]) {
+            revert BudgetExceeded();
+        }
 
+        address previousHolder = holder;
+        uint8 previousFaction = holderFaction;
         _accrueAirtime(uint64(block.timestamp));
         _pull(msg.sender, claimPrice);
         paid[msg.sender] += claimPrice;
@@ -249,9 +278,13 @@ contract LastBellRound {
             acceptedClaims,
             msg.sender,
             faction,
+            previousHolder,
+            previousFaction,
+            claimPrice,
             uint64(block.timestamp),
             deadline,
-            pot
+            pot,
+            beforeClaim == Phase.Rug
         );
     }
 
@@ -266,8 +299,8 @@ contract LastBellRound {
         winningFaction = _leadingFaction();
         holderPool = (pot * HOLDER_BPS) / BPS;
         factionPool = (pot * FACTION_BPS) / BPS;
-        participationPool = (pot * PARTICIPATION_BPS) / BPS;
-        protocolPool = pot - holderPool - factionPool - participationPool;
+        nextRoundPool = (pot * NEXT_ROUND_BPS) / BPS;
+        protocolPool = pot - holderPool - factionPool - nextRoundPool;
         settled = true;
         settledAt = uint64(block.timestamp);
 
@@ -278,7 +311,7 @@ contract LastBellRound {
             pot,
             holderPool,
             factionPool,
-            participationPool,
+            nextRoundPool,
             protocolPool
         );
     }
@@ -323,20 +356,32 @@ contract LastBellRound {
         refundClaimed[msg.sender] = true;
         uint256 amount = paid[msg.sender];
         _push(msg.sender, amount);
-        emit RewardClaimed(roundId, msg.sender, "CANCEL_REFUND", amount);
+        emit RefundClaimed(roundId, msg.sender, amount);
     }
 
-    function sweepTreasuryPools() external nonReentrant {
+    function claimProtocolPool() external nonReentrant {
         if (!settled || msg.sender != treasury) revert Unauthorized();
-        uint256 amount = participationPool + protocolPool;
-        participationPool = 0;
+        uint256 amount = protocolPool;
         protocolPool = 0;
         _push(treasury, amount);
-        emit RewardClaimed(roundId, treasury, "TREASURY_POOLS", amount);
+        emit RewardClaimed(roundId, treasury, "PROTOCOL_POOL", amount);
+    }
+
+    function transferNextRoundSeed(address recipient)
+        external
+        onlyOperator
+        nonReentrant
+    {
+        if (!settled || recipient == address(0)) revert Unauthorized();
+        uint256 amount = nextRoundPool;
+        if (amount == 0) revert NothingToClaim();
+        nextRoundPool = 0;
+        _push(recipient, amount);
+        emit NextRoundSeedTransferred(roundId, recipient, amount);
     }
 
     function payoutSum() external view returns (uint256) {
-        return holderPool + factionPool + participationPool + protocolPool;
+        return holderPool + factionPool + nextRoundPool + protocolPool;
     }
 
     function _accrueAirtime(uint64 until) internal {
@@ -344,6 +389,9 @@ contract LastBellRound {
         uint256 duration = until - lastClaimAt;
         controlTime[holder] += duration;
         factionAirtime[holderFaction] += duration;
+        emit ControlCredited(
+            roundId, holder, holderFaction, lastClaimAt, until, duration
+        );
     }
 
     function _leadingFaction() internal view returns (uint8 leader) {

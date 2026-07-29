@@ -7,10 +7,13 @@ import { demoAddresses, formatUsd, roundConfig } from "@/lib/game/constants";
 import { factionById, scenarioIds, scenarios } from "@/lib/game/scenarios";
 import { claimBell, leadingFaction, settle, tick } from "@/lib/game/simulator";
 import type {
+  ClaimableBalances,
   FactionId,
   RoundState,
+  SessionBudget,
   SimulationScenarioId,
 } from "@/lib/game/types";
+import { useWalletGame } from "@/lib/web3/use-wallet-game";
 
 type ActionStatus = "idle" | "submitted" | "accepted" | "rejected";
 const devnetMode = process.env.NEXT_PUBLIC_GAME_MODE === "devnet";
@@ -30,10 +33,24 @@ export function LiveGame({
     cloneState(scenarios[initialScenario].state),
   );
   const [selectedFaction, setSelectedFaction] = useState<FactionId>("NVDA");
+  const [selectedBudget, setSelectedBudget] = useState(5);
+  const [guestSession, setGuestSession] = useState<SessionBudget | null>(null);
+  const [guestClaimable, setGuestClaimable] = useState<ClaimableBalances>({
+    holderUsd: 0,
+    factionUsd: 0,
+    refundUsd: 0,
+  });
   const [actionStatus, setActionStatus] = useState<ActionStatus>("idle");
   const [announcement, setAnnouncement] = useState(
     "Live broadcast synchronized.",
   );
+  const walletGame = useWalletGame();
+  const activeSession = walletGame.isConnected
+    ? walletGame.session
+    : guestSession;
+  const activeClaimable = walletGame.isConnected
+    ? walletGame.claimable
+    : guestClaimable;
 
   const loadScenario = (nextScenario: SimulationScenarioId) => {
     setScenario(nextScenario);
@@ -50,12 +67,19 @@ export function LiveGame({
     const payload = (await response.json()) as {
       ok: boolean;
       state?: RoundState;
+      session?: SessionBudget;
+      claimable?: ClaimableBalances;
       error?: string;
     };
     if (!response.ok || !payload.state) {
       throw new Error(payload.error || "Local chain snapshot failed");
     }
     setState(payload.state);
+    if (payload.session) {
+      setGuestSession(payload.session);
+      if (payload.session.faction) setSelectedFaction(payload.session.faction);
+    }
+    if (payload.claimable) setGuestClaimable(payload.claimable);
   };
 
   useEffect(() => {
@@ -129,29 +153,47 @@ export function LiveGame({
   }, [state.phase]);
 
   const requestDevnetAction = async (
-    action: "claim" | "finalize",
+    action:
+      | "enter"
+      | "claim"
+      | "finalize"
+      | "revoke"
+      | "claim-holder"
+      | "claim-faction"
+      | "claim-refund",
     faction = selectedFaction,
+    budgetUsd = selectedBudget,
   ) => {
     try {
       const response = await fetch("/api/devnet/action", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action, faction }),
+        body: JSON.stringify({ action, faction, budgetUsd }),
       });
       const payload = (await response.json()) as {
         ok: boolean;
         state?: RoundState;
+        session?: SessionBudget;
+        claimable?: ClaimableBalances;
         error?: string;
       };
       if (!response.ok || !payload.state) {
         throw new Error(payload.error || "Local chain rejected the call");
       }
       setState(payload.state);
+      if (payload.session) setGuestSession(payload.session);
+      if (payload.claimable) setGuestClaimable(payload.claimable);
       setActionStatus("accepted");
       setAnnouncement(
-        action === "claim"
-          ? `Claim accepted on chain 31337. You have the ${faction} bell.`
-          : "Settlement confirmed on chain 31337.",
+        action === "enter"
+          ? `${faction} faction entry accepted. $${budgetUsd} session active.`
+          : action === "claim"
+            ? `Claim accepted on chain 31337. You have the ${faction} bell.`
+            : action.startsWith("claim-")
+              ? "Pull-payment claim confirmed on chain 31337."
+              : action === "revoke"
+                ? "Round session revoked. No further claims are authorized."
+                : "Settlement confirmed on chain 31337.",
       );
       window.setTimeout(() => setActionStatus("idle"), 1500);
     } catch (error) {
@@ -172,7 +214,25 @@ export function LiveGame({
         : "Claim submitted. Waiting for the local tape.",
     );
     if (devnetMode) {
-      void requestDevnetAction("claim");
+      if (walletGame.isConnected) {
+        void walletGame
+          .claim()
+          .then(() => refreshDevnet())
+          .then(() => {
+            setActionStatus("accepted");
+            setAnnouncement("Claim accepted from your connected wallet.");
+          })
+          .catch((error: unknown) => {
+            setActionStatus("rejected");
+            setAnnouncement(
+              `${
+                error instanceof Error ? error.message : "Claim rejected."
+              } The $1 game fee was not charged; network gas may have been spent.`,
+            );
+          });
+      } else {
+        void requestDevnetAction("claim");
+      }
       return;
     }
     window.setTimeout(() => {
@@ -194,22 +254,70 @@ export function LiveGame({
     }, 450);
   };
 
-  const enterRound = () => {
+  const enterRound = async () => {
+    setActionStatus("submitted");
+    setAnnouncement(
+      `Authorizing ${selectedFaction} with a $${selectedBudget} maximum.`,
+    );
+    if (devnetMode) {
+      if (walletGame.isConnected) {
+        try {
+          await walletGame.enter(selectedFaction, selectedBudget);
+          await refreshDevnet();
+          setActionStatus("accepted");
+          setAnnouncement(
+            `${selectedFaction} entry confirmed for your connected wallet.`,
+          );
+        } catch (error) {
+          setActionStatus("rejected");
+          setAnnouncement(
+            error instanceof Error ? error.message : "Entry rejected.",
+          );
+        }
+      } else {
+        await requestDevnetAction("enter", selectedFaction, selectedBudget);
+      }
+      return;
+    }
     setState((current) => ({
       ...current,
       phase: "live",
-      potUsd: current.potUsd + roundConfig.entryPriceUsd,
       updatedAt: new Date().toISOString(),
     }));
-    setAnnouncement(
-      `${selectedFaction} bag locked for Round ${roundConfig.roundId}.`,
-    );
+    setGuestSession({
+      player: demoAddresses.player,
+      faction: selectedFaction,
+      maximumUsd: selectedBudget,
+      spentUsd: 0,
+      remainingUsd: selectedBudget,
+      availableActions: selectedBudget,
+      allowanceUsd: selectedBudget,
+      expiresAt: null,
+      status: "active",
+      mode: "devnet-guest",
+    });
+    setActionStatus("accepted");
+    setAnnouncement(`${selectedFaction} bag and budget locked.`);
   };
 
   const factionLeader = leadingFaction(state);
+  const joined = activeSession?.status === "active";
+  const isCurrentHolder =
+    (
+      activeSession?.player ?? (!devnetMode ? demoAddresses.player : undefined)
+    )?.toLowerCase() === state.holder?.address.toLowerCase();
+  const entryRequired =
+    state.freshness === "live" &&
+    (state.phase === "entry" ||
+      (devnetMode &&
+        (state.phase === "live" || state.phase === "rug") &&
+        (!activeSession || activeSession.status === "unjoined")));
   const canAct =
     state.freshness === "live" &&
-    (state.phase === "live" || state.phase === "rug");
+    (state.phase === "live" || state.phase === "rug") &&
+    Boolean(devnetMode ? joined : true) &&
+    !isCurrentHolder &&
+    Boolean(devnetMode ? (activeSession?.availableActions ?? 0) > 0 : true);
 
   return (
     <>
@@ -269,24 +377,52 @@ export function LiveGame({
 
           {state.freshness === "offline" ? (
             <DeadAir />
-          ) : state.phase === "entry" ? (
+          ) : entryRequired ? (
             <EntryDesk
               selected={selectedFaction}
               onSelect={setSelectedFaction}
+              budget={selectedBudget}
+              onBudget={setSelectedBudget}
               onEnter={enterRound}
+              status={actionStatus}
+              walletConnected={walletGame.isConnected}
+            />
+          ) : state.phase === "cancelled" ? (
+            <CancelledRound
+              state={state}
+              refundUsd={activeClaimable.refundUsd}
+              onClaim={() =>
+                walletGame.isConnected
+                  ? void walletGame.claimReward("refund")
+                  : void requestDevnetAction("claim-refund")
+              }
             />
           ) : state.phase === "finalizing" ? (
             <Finalizing state={state} />
           ) : state.phase === "settled" ? (
-            <FinalTransmission state={state} />
+            <FinalTransmission
+              state={state}
+              claimable={activeClaimable}
+              onClaim={(kind) =>
+                walletGame.isConnected
+                  ? void walletGame.claimReward(kind)
+                  : void requestDevnetAction(
+                      kind === "holder" ? "claim-holder" : "claim-faction",
+                    )
+              }
+            />
           ) : (
             <LiveArena
               state={state}
-              selectedFaction={selectedFaction}
-              setSelectedFaction={setSelectedFaction}
-              actionStatus={actionStatus}
+              selectedFaction={activeSession?.faction ?? selectedFaction}
+              actionStatus={
+                actionStatus === "accepted" && !isCurrentHolder
+                  ? "idle"
+                  : actionStatus
+              }
               canAct={canAct}
               takeBell={takeBell}
+              session={activeSession}
             />
           )}
 
@@ -304,6 +440,15 @@ export function LiveGame({
         </section>
 
         <aside className="sideRail rightRail" aria-label="Broadcast activity">
+          <SessionPanel
+            session={activeSession}
+            connected={walletGame.isConnected}
+            onRevoke={() =>
+              walletGame.isConnected
+                ? void walletGame.revoke()
+                : void requestDevnetAction("revoke")
+            }
+          />
           <Trenches state={state} />
           <section className="railCard nextCard">
             <span className="railLabel">NEXT TRANSMISSION</span>
@@ -320,11 +465,19 @@ export function LiveGame({
 function EntryDesk({
   selected,
   onSelect,
+  budget,
+  onBudget,
   onEnter,
+  status,
+  walletConnected,
 }: {
   selected: FactionId;
   onSelect: (id: FactionId) => void;
+  budget: number;
+  onBudget: (budget: number) => void;
   onEnter: () => void;
+  status: ActionStatus;
+  walletConnected: boolean;
 }) {
   return (
     <div className="entryDesk">
@@ -356,11 +509,39 @@ function EntryDesk({
           </button>
         ))}
       </div>
-      <button type="button" className="primaryAction" onClick={onEnter}>
-        JOIN {selected} BAG · $1
+      <fieldset className="budgetPicker">
+        <legend>MAX SPEND</legend>
+        {[5, 10, 25].map((amount) => (
+          <button
+            type="button"
+            key={amount}
+            aria-pressed={budget === amount}
+            onClick={() => onBudget(amount)}
+          >
+            ${amount}
+          </button>
+        ))}
+      </fieldset>
+      <div className="entryTerms">
+        <span>ONE ROUND</span>
+        <span>{budget} MAX CALLS</span>
+        <span>$1 EACH</span>
+        <span>REVOKE ANY TIME</span>
+      </div>
+      <button
+        type="button"
+        className="primaryAction"
+        onClick={onEnter}
+        disabled={status === "submitted"}
+      >
+        {status === "submitted"
+          ? "TUNING THE LINE…"
+          : `ENTER ${selected} · MAX $${budget}`}
       </button>
       <p className="actionFinePrint">
-        Local devnet simulation. No wallet or real value is used.
+        {walletConnected
+          ? "Your wallet approves a round-only USDG ceiling. Stock Tokens are not deposited."
+          : "Devnet guest session. Faucet USDG only; no real value is used."}
       </p>
     </div>
   );
@@ -369,17 +550,17 @@ function EntryDesk({
 function LiveArena({
   state,
   selectedFaction,
-  setSelectedFaction,
   actionStatus,
   canAct,
   takeBell,
+  session,
 }: {
   state: RoundState;
   selectedFaction: FactionId;
-  setSelectedFaction: (id: FactionId) => void;
   actionStatus: ActionStatus;
   canAct: boolean;
   takeBell: () => void;
+  session: SessionBudget | null;
 }) {
   const faction = state.holder ? factionById(state.holder.faction) : null;
   const clockLabel = state.phase === "rug" ? "RUG ZONE" : "BROADCAST CLOCK";
@@ -420,17 +601,12 @@ function LiveArena({
         </div>
       </div>
       <div className="miniFactionSwitch" aria-label="Your faction">
-        <span>YOUR BAG</span>
-        {roundConfig.factions.map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            aria-pressed={selectedFaction === item.id}
-            onClick={() => setSelectedFaction(item.id)}
-          >
-            {item.id}
-          </button>
-        ))}
+        <span>YOUR BAG · LOCKED</span>
+        <strong>{selectedFaction}</strong>
+        <small>
+          {formatUsd(session?.remainingUsd ?? 0)} LEFT ·{" "}
+          {session?.availableActions ?? 0} CALLS
+        </small>
       </div>
       <button
         className="primaryAction apeButton"
@@ -444,7 +620,7 @@ function LiveArena({
             ? "YOU HAVE THE BELL"
             : actionStatus === "rejected"
               ? "CALL REJECTED"
-              : "APE FOR THE BELL · $1"}
+              : "SEND IT FOR THE BELL · $1"}
       </button>
       <p className="actionFinePrint">
         {state.phase === "rug"
@@ -465,7 +641,7 @@ function AirtimeBoard({
   const max = Math.max(...state.airtime.map((score) => score.seconds), 1);
   return (
     <section className="railCard airtimeCard">
-      <span className="railLabel">FACTION AIRTIME</span>
+      <span className="railLabel">FACTION AIRTIME · 30% BONUS</span>
       {state.airtime.map((score) => {
         const faction = factionById(score.faction);
         return (
@@ -548,8 +724,19 @@ function Finalizing({ state }: { state: RoundState }) {
   );
 }
 
-function FinalTransmission({ state }: { state: RoundState }) {
-  const holderPayout = state.potUsd * 0.5;
+function FinalTransmission({
+  state,
+  claimable,
+  onClaim,
+}: {
+  state: RoundState;
+  claimable: ClaimableBalances;
+  onClaim: (kind: "holder" | "faction") => void;
+}) {
+  const holderPayout = state.pools?.holderUsd ?? state.potUsd * 0.5;
+  const factionPayout = state.pools?.factionUsd ?? state.potUsd * 0.3;
+  const nextRound = state.pools?.nextRoundUsd ?? state.potUsd * 0.15;
+  const protocol = state.pools?.protocolUsd ?? state.potUsd * 0.05;
   return (
     <div className="finalTransmission">
       <span className="phaseBug">FINAL TRANSMISSION</span>
@@ -561,11 +748,49 @@ function FinalTransmission({ state }: { state: RoundState }) {
       />
       <span className="eyebrow">LAST CALLER STANDING</span>
       <h1>{state.holder?.displayName}</h1>
-      <p className="winnerLine">RUG PULLED. BELL KEPT.</p>
-      <div className="payoutTape">
-        <span>FINAL HOLDER</span>
-        <strong>{formatUsd(holderPayout)}</strong>
+      <p className="winnerLine">BAG SECURED. BELL KEPT.</p>
+      <div className="winnerSummary">
+        <div className="payoutTape">
+          <span>FINAL HOLDER · 50%</span>
+          <strong>{formatUsd(holderPayout)}</strong>
+        </div>
+        <div className="payoutTape">
+          <span>AIRTIME FACTION · 30%</span>
+          <strong>
+            {state.winningFaction ?? "—"} · {formatUsd(factionPayout)}
+          </strong>
+        </div>
       </div>
+      <div className="poolBreakdown">
+        <span>NEXT ROUND · {formatUsd(nextRound)}</span>
+        <span>PROTOCOL · {formatUsd(protocol)}</span>
+      </div>
+      {claimable.holderUsd > 0 || claimable.factionUsd > 0 ? (
+        <div className="claimActions">
+          {claimable.holderUsd > 0 ? (
+            <button
+              type="button"
+              className="secondaryAction"
+              onClick={() => onClaim("holder")}
+            >
+              CLAIM HOLDER {formatUsd(claimable.holderUsd)}
+            </button>
+          ) : null}
+          {claimable.factionUsd > 0 ? (
+            <button
+              type="button"
+              className="secondaryAction"
+              onClick={() => onClaim("faction")}
+            >
+              CLAIM AIRTIME {formatUsd(claimable.factionUsd)}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <p className="proofLine">
+        ROUND CONTRACT {state.contractAddress?.slice(0, 8) ?? "SIM"}… · BLOCK{" "}
+        {state.blockNumber}
+      </p>
       <div className="finalActions">
         <Link
           className="primaryAction linkAction"
@@ -581,6 +806,95 @@ function FinalTransmission({ state }: { state: RoundState }) {
         </Link>
       </div>
     </div>
+  );
+}
+
+function CancelledRound({
+  state,
+  refundUsd,
+  onClaim,
+}: {
+  state: RoundState;
+  refundUsd: number;
+  onClaim: () => void;
+}) {
+  return (
+    <div className="stateInterstitial cancelledRound">
+      <span className="eyebrow">TRANSMISSION CANCELLED</span>
+      <h1>No winner was declared</h1>
+      <p>
+        {state.cancellationReason ||
+          "The operator cancelled this round under the published incident rules."}
+      </p>
+      <div className="payoutTape">
+        <span>YOUR ACCEPTED GAME FEES</span>
+        <strong>{formatUsd(refundUsd)}</strong>
+      </div>
+      <p>
+        Network gas is separate and cannot be refunded by the game contract.
+      </p>
+      <button
+        type="button"
+        className="primaryAction"
+        disabled={refundUsd <= 0}
+        onClick={onClaim}
+      >
+        {refundUsd > 0
+          ? `CLAIM ${formatUsd(refundUsd)} REFUND`
+          : "NO REFUND DUE"}
+      </button>
+    </div>
+  );
+}
+
+function SessionPanel({
+  session,
+  connected,
+  onRevoke,
+}: {
+  session: SessionBudget | null;
+  connected: boolean;
+  onRevoke: () => void;
+}) {
+  return (
+    <section className="railCard sessionPanel">
+      <span className="railLabel">ROUND SESSION</span>
+      {session && session.status !== "unjoined" ? (
+        <>
+          <div className="sessionHeadline">
+            <strong>{session.faction ?? "—"} BAG</strong>
+            <span data-status={session.status}>{session.status}</span>
+          </div>
+          <dl>
+            <div>
+              <dt>MAX</dt>
+              <dd>{formatUsd(session.maximumUsd)}</dd>
+            </div>
+            <div>
+              <dt>SPENT</dt>
+              <dd>{formatUsd(session.spentUsd)}</dd>
+            </div>
+            <div>
+              <dt>LEFT</dt>
+              <dd>{formatUsd(session.remainingUsd)}</dd>
+            </div>
+            <div>
+              <dt>CALLS</dt>
+              <dd>{session.availableActions}</dd>
+            </div>
+          </dl>
+          {session.status === "active" ? (
+            <button type="button" className="textButton" onClick={onRevoke}>
+              REVOKE USDG APPROVAL
+            </button>
+          ) : null}
+        </>
+      ) : (
+        <p className="emptyTape">
+          NOT ENTERED · {connected ? "CHOOSE A BAG" : "GUEST OR WALLET"}
+        </p>
+      )}
+    </section>
   );
 }
 

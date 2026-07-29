@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
-import { getDevnetSnapshot } from "@/lib/web3/devnet";
+import { getDevnetSession, getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const state = await getDevnetSnapshot();
+    const [state, sessionState] = await Promise.all([
+      getDevnetSnapshot(),
+      getDevnetSession(),
+    ]);
     return NextResponse.json({
       ok: true,
       chainId: 31337,
       state,
+      ...sessionState,
     });
   } catch (error) {
     return NextResponse.json(

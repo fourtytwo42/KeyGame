@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
+import { getDevnetSnapshot, roundAddress } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = { title: "Signal Status" };
 
-export default function StatusPage() {
+export const dynamic = "force-dynamic";
+
+export default async function StatusPage() {
+  const snapshot =
+    process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
+      ? await getDevnetSnapshot().catch(() => null)
+      : null;
   return (
     <InfoPage
       eyebrow="ENGINEERING / TRANSMITTER ROOM"
@@ -20,12 +27,16 @@ export default function StatusPage() {
           <strong>ONLINE</strong>
         </article>
         <article>
-          <span className="statusLamp good" />
+          <span className={`statusLamp ${snapshot ? "good" : "standby"}`} />
           <div>
-            <h2>Local game tape</h2>
-            <p>Deterministic simulator available without RPC or wallet.</p>
+            <h2>Canonical game tape</h2>
+            <p>
+              {snapshot
+                ? `Chain ${snapshot.chainId} · block ${snapshot.blockNumber} · ${snapshot.phase}.`
+                : "Canonical RPC is unavailable; game actions are disabled."}
+            </p>
           </div>
-          <strong>ONLINE</strong>
+          <strong>{snapshot ? "ONLINE" : "OFFLINE"}</strong>
         </article>
         <article>
           <span className="statusLamp standby" />
@@ -44,6 +55,15 @@ export default function StatusPage() {
           <strong>CONFIG</strong>
         </article>
       </div>
+      <section className="disclosureBlock">
+        <span className="chapterNumber">ID</span>
+        <div>
+          <h2>Build and contract identity</h2>
+          <p>Application version: 0.1.0</p>
+          <p>Round contract: {roundAddress}</p>
+          <p>Latest verified block: {snapshot?.blockNumber ?? "unavailable"}</p>
+        </div>
+      </section>
       <section className="disclosureBlock">
         <span className="chapterNumber">i</span>
         <div>

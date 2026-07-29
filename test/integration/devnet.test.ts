@@ -6,6 +6,7 @@ import { lastBellAbi } from "@/lib/web3/last-bell-abi";
 import {
   devnetPublicClient,
   getDevnetSnapshot,
+  getDevnetSession,
   sendDevnetAction,
 } from "@/lib/web3/devnet";
 import { localDevnet } from "@/lib/web3/chains";
@@ -22,6 +23,9 @@ describe("deployed local devnet", () => {
   });
 
   it("reads the deployed round and accepts a real contract claim", async () => {
+    const entered = await sendDevnetAction("enter", "AAPL", 5);
+    expect(entered.session?.faction).toBe("AAPL");
+    expect(entered.session?.maximumUsd).toBe(5);
     const before = await getDevnetSnapshot();
     const deadlineBefore = await devnetPublicClient.readContract({
       address: deployment.lastBellRound as `0x${string}`,
@@ -42,6 +46,10 @@ describe("deployed local devnet", () => {
     expect(result.state.potUsd).toBe(before.potUsd + 1);
     expect(result.state.claims.length).toBe(before.claims.length + 1);
     expect(deadlineAfter).toBe(deadlineBefore + 2n);
+    const { session } = await getDevnetSession();
+    expect(session.spentUsd).toBe(1);
+    expect(session.remainingUsd).toBe(4);
+    expect(session.availableActions).toBe(4);
   });
 
   it("keeps the deadline fixed for a real Rug Zone claim", async () => {
@@ -56,7 +64,7 @@ describe("deployed local devnet", () => {
     const target = factions.find(
       (faction) => faction.id !== inRug.holder?.faction,
     )!;
-    const result = await sendDevnetAction("claim", target.id);
+    const result = await sendDevnetAction("demo-claim", target.id);
     expect(result.state.timeLeftSeconds).toBeLessThanOrEqual(
       inRug.timeLeftSeconds,
     );

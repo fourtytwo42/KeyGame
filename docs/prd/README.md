@@ -24,6 +24,7 @@ The complete mobile and desktop concept set is embedded in
 | [06 Analytics, QA, and Acceptance](06-analytics-qa-and-acceptance.md) | Success metrics, telemetry, experiments, testing layers, invariants, UAT, and release acceptance | `DATA`, `QA` |
 | [07 Delivery Plan](07-delivery-plan.md) | Milestones, dependencies, ownership, decision gates, prioritized backlog, and definitions of done | `DEL` |
 | [08 Comprehensive User Stories](08-user-stories.md) | Traceable stories and acceptance criteria for spectators, players, operators, support, auditors, accessibility, compliance, and product learning | `US` |
+| [09 Implementation Gap Audit](09-implementation-gap-audit.md) | Reconciliation of requirements against the working application, deliberate gates, and external prerequisites | `AUDIT` |
 
 ## Status vocabulary
 
@@ -42,7 +43,7 @@ The complete mobile and desktop concept set is embedded in
 |---|---|---|---|
 | `D-001` | Product is `Last Bell`; primary mode is `Ticker Royale`. | `DECIDED` | Channel 4663 is the visual world, not the product name. |
 | `D-002` | Target Robinhood Chain, chain ID `4663`. | `DECIDED` | External chain facts were last verified 2026-07-28. |
-| `D-003` | Main action copy is `APE FOR THE BELL · $1`. | `SELECTED FOR PROTOTYPE` | Stage 0 and Stage 1 use a test unit mirroring one USD; actual USDG is later gated scope. |
+| `D-003` | Main action copy is `SEND IT FOR THE BELL · $1`; `ape` remains supporting meme vocabulary. | `SELECTED FOR PROTOTYPE` | Stage 0 and Stage 1 use a test unit mirroring one USD; actual USDG is later gated scope. |
 | `D-004` | Final holder receives 50%; control-winning faction receives 30%; 15% seeds the next round; 5% funds operations. | `SELECTED FOR PROTOTYPE` | Use for fixtures and simulation; production still requires economic validation and approval. |
 | `D-005` | Four ticker factions per round. | `SELECTED FOR PROTOTYPE` | Use four synthetic factions in Stage 0 and Stage 1; later ticker rosters remain configurable. |
 | `D-006` | Stock Token principal is separate from the prize pot and the same token amount becomes withdrawable after settlement. | `PROPOSED` | Value can still change while locked. |

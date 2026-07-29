@@ -4,11 +4,13 @@ import Link from "next/link";
 import { ShareReceipt } from "@/components/share-receipt";
 import { formatUsd, shortAddress } from "@/lib/game/constants";
 import { scenarios } from "@/lib/game/scenarios";
+import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = {
   title: "Final Holder Receipt",
   description: "The canonical receipt for Last Bell Round 4663.",
 };
+export const dynamic = "force-dynamic";
 
 export default async function ReceiptPage({
   params,
@@ -16,7 +18,10 @@ export default async function ReceiptPage({
   params: Promise<{ roundId: string; player: string }>;
 }) {
   const { roundId, player } = await params;
-  const state = scenarios.settled.state;
+  const state =
+    process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
+      ? await getDevnetSnapshot()
+      : scenarios.settled.state;
   const isWinner =
     state.holder?.address.toLowerCase() === player.toLowerCase() ||
     player === "demo";
@@ -37,10 +42,10 @@ export default async function ReceiptPage({
             height={210}
           />
           <span className="eyebrow">
-            {isWinner ? "FINAL HOLDER" : "EXIT LIQUIDITY"}
+            {isWinner ? "FINAL HOLDER" : "ON THE TAPE"}
           </span>
           <h1>
-            {isWinner ? "Rug pulled.\nBell kept." : "Cooked.\nStill on tape."}
+            {isWinner ? "Bag secured.\nBell kept." : "Cooked.\nStill on tape."}
           </h1>
           <p>
             {isWinner
@@ -67,7 +72,23 @@ export default async function ReceiptPage({
           </div>
           <div>
             <dt>Tape status</dt>
-            <dd>Settled</dd>
+            <dd>{state.phase.toUpperCase()}</dd>
+          </div>
+          <div>
+            <dt>Chain</dt>
+            <dd>{state.chainId ?? "SIM"}</dd>
+          </div>
+          <div>
+            <dt>Block</dt>
+            <dd>{state.blockNumber ?? "SIM"}</dd>
+          </div>
+          <div>
+            <dt>Contract</dt>
+            <dd>
+              {state.contractAddress
+                ? shortAddress(state.contractAddress)
+                : "LOCAL"}
+            </dd>
           </div>
         </dl>
         <div className="receiptRip" aria-hidden="true" />

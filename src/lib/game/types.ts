@@ -48,6 +48,13 @@ export interface ClaimEvent {
   sequence: number;
   atSeconds: number;
   claimant: BellHolder;
+  previousHolder?: `0x${string}`;
+  previousFaction?: FactionId;
+  feeUsd?: number;
+  phase?: "live" | "rug";
+  transactionHash?: `0x${string}`;
+  blockNumber?: number;
+  logIndex?: number;
   accepted: boolean;
   reason?: string;
   potAfterUsd: number;
@@ -66,6 +73,39 @@ export interface RoundState {
   freshness: DataFreshness;
   updatedAt: string;
   settlementTx?: `0x${string}`;
+  chainId?: number;
+  contractAddress?: `0x${string}`;
+  blockNumber?: number;
+  startedAt?: number;
+  deadline?: number;
+  hardEnd?: number;
+  winningFaction?: FactionId;
+  pools?: {
+    holderUsd: number;
+    factionUsd: number;
+    nextRoundUsd: number;
+    protocolUsd: number;
+  };
+  cancellationReason?: string;
+}
+
+export interface SessionBudget {
+  player: `0x${string}`;
+  faction: FactionId | null;
+  maximumUsd: number;
+  spentUsd: number;
+  remainingUsd: number;
+  availableActions: number;
+  allowanceUsd: number;
+  expiresAt: number | null;
+  status: "unjoined" | "active" | "revoked" | "expired";
+  mode: "devnet-guest" | "wallet";
+}
+
+export interface ClaimableBalances {
+  holderUsd: number;
+  factionUsd: number;
+  refundUsd: number;
 }
 
 export interface Receipt {
