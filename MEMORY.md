@@ -4,15 +4,16 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Provision the new KeyGame VM, establish the project repository there, and complete GitHub device authentication before the first commit and remote repository creation.
-- Last meaningful change: Configured SSH key access, expanded the root LVM filesystem to the full disk, installed the development toolchain, transferred and hash-verified all project files, and initialized `/home/hendo420/projects/KeyGame` on branch `main`.
-- Next step: Complete the currently pending GitHub device authorization, configure Git identity from the authenticated account, create the initial commit, create the GitHub repository, push `main`, and verify the remote.
+- Current task: VM and repository provisioning are complete; application implementation has not begun.
+- Last meaningful change: Authenticated GitHub CLI as `fourtytwo42`, created the private repository `https://github.com/fourtytwo42/KeyGame`, and pushed the verified initial `main` commit from the VM.
+- Next step: Begin `DEL-BOOT-001` on the VM by scaffolding the pnpm Next.js application with strict checks and CI, then implement the typed domain model and `QA-FIX-001` through `QA-FIX-010`.
 - Blockers: None documented.
 
 ## Current State
 
 - The repository currently contains research and agent guidance only; there is no application source, package manifest, build command, test suite, or `.git` directory at this level.
-- The authoritative build workspace is being established on VM `192.168.50.138` as user `hendo420` at `/home/hendo420/projects/KeyGame`; the VM copy has an initialized Git repository on `main` but no commit or GitHub remote yet.
+- The authoritative build workspace is VM `192.168.50.138`, user `hendo420`, path `/home/hendo420/projects/KeyGame`.
+- The VM repository uses branch `main`, tracks `origin/main`, and pushes to the private GitHub repository `https://github.com/fourtytwo42/KeyGame`.
 - `docs/fomo3d-game-logic-research.md` is the current technical baseline for original FoMo3D rules, formulas, accounting, timing, edge cases, and historical attacks.
 - `docs/last-bell-product-concept.md` is the current proposed modern product synthesis, including the round state machine, payout model, mobile screen, meme vocabulary, Stock Token role, share loop, and staged launch.
 - `docs/channel-4663-ui-design.md` is the selected palette, UI grammar, typography, motion, mascot, accessibility, responsive, and Next.js frontend direction.
@@ -56,6 +57,7 @@ When sources conflict, use this order:
 - Dedicated local SSH key: `C:\Users\hendo420\.ssh\keygame_vm_ed25519`. Do not store the VM password in this repository or memory.
 - VM root storage was expanded online from a 31 GiB LVM logical volume to the full 62 GiB volume; `df -h /` reported 61 GiB usable and approximately 52 GiB free after expansion.
 - VM toolchain last verified 2026-07-28: Git 2.43.0, GitHub CLI 2.45.0, Node v24.18.0 through nvm, pnpm 11.17.0, GCC 13.3.0, jq 1.7.
+- GitHub CLI last verified 2026-07-28 as authenticated account `fourtytwo42` using HTTPS Git operations. Authentication secrets remain in the VM user's GitHub CLI configuration and are never stored in this repository.
 
 ## Project Map
 
@@ -123,6 +125,7 @@ When sources conflict, use this order:
 - 2026-07-28: Verified the new VM as Ubuntu 24.04 LTS with a 64 GiB disk; extended `ubuntu-vg/ubuntu-lv` and ext4 online from 31 GiB to 62 GiB, leaving approximately 52 GiB free.
 - 2026-07-28: Installed and verified GitHub CLI, build-essential, jq, unzip, nvm, Node v24.18.0, and pnpm 11.17.0; added dedicated key-based SSH access.
 - 2026-07-28: Copied 31 project files totaling about 22.9 MB to `/home/hendo420/projects/KeyGame`; SHA-256 verification found 31 matching files, zero mismatches, and zero extras before Git initialization.
+- 2026-07-28: Created initial commit `2d74289b8aead3d62e7f6f0dea201b35f0ce1daf`, created private repository `fourtytwo42/KeyGame`, pushed `main`, and verified the local and remote commit hashes matched.
 
 ## Decisions
 
@@ -173,6 +176,7 @@ When sources conflict, use this order:
 - 2026-07-28: Added the complete visual screen specification section to `docs/prd/03-experience-and-interface.md` and linked it from the PRD suite index.
 - 2026-07-28: Created `docs/prd/08-user-stories.md`, added it to the PRD index, and made it the backlog source in the delivery plan.
 - 2026-07-28: Updated PRDs 01, 02, 03, 04, 06, 07, 08, and the PRD index with the approved build kickoff, testnet-points MVP, configurable prototype constants, pnpm/CI/test stack, shared domain model, visual implementation rules, ten-fixture matrix, and three-slice implementation plan.
+- 2026-07-28: Provisioned the Ubuntu KeyGame VM, expanded its root volume, installed the toolchain, transferred the project, initialized Git, authenticated GitHub CLI, created the private GitHub repository, and pushed `main`.
 
 ## Open Follow-ups
 
