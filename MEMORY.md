@@ -163,6 +163,8 @@ When sources conflict, use this order:
 - 2026-07-29: Closing Print final verification passed on the authoritative VM: formatting, ESLint, TypeScript, 23 Vitest tests, production build, 12 Foundry tests including 512 fuzz runs, and four live-Anvil integration tests.
 - 2026-07-29: Playwright against the VM devnet passed 14 desktop/Pixel 7 checks with two intentional cross-profile skips. It covered first paid entry, four ticker claim controls, visible market bands, mobile Closing Print standings, public proof routes, WCAG serious/critical checks, and overflow.
 - 2026-07-29: In-app browser UAT verified the live Anvil source, all four market-labeled controls, visible Closing Print state, exact 1280x720 desktop viewport fit, and mobile 390x844 horizontal fit. A fresh round was left running for handoff.
+- 2026-07-29: At user direction, canceled the active hosted run, disabled GitHub Actions at the repository permissions level, deleted the workflow, and moved all release gates to the VM.
+- 2026-07-29: Added `--slow` to the local Forge broadcast because parallel transaction submission could leave nonce-dependent deployments pending on a freshly restarted Anvil. A clean stop/start/deploy completed at block 37 after the change.
 
 ## Decisions
 

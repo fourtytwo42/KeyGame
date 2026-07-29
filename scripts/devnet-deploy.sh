@@ -32,6 +32,7 @@ send_checked() {
 forge script script/DeployLocal.s.sol:DeployLocal \
   --rpc-url "$rpc_url" \
   --broadcast \
+  --slow \
   --unlocked \
   --sender "$deployer"
 
