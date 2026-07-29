@@ -165,6 +165,7 @@ When sources conflict, use this order:
 - 2026-07-29: In-app browser UAT verified the live Anvil source, all four market-labeled controls, visible Closing Print state, exact 1280x720 desktop viewport fit, and mobile 390x844 horizontal fit. A fresh round was left running for handoff.
 - 2026-07-29: At user direction, canceled the active hosted run, disabled GitHub Actions at the repository permissions level, deleted the workflow, and moved all release gates to the VM.
 - 2026-07-29: Added `--slow` to the local Forge broadcast because parallel transaction submission could leave nonce-dependent deployments pending on a freshly restarted Anvil. A clean stop/start/deploy completed at block 37 after the change.
+- 2026-07-29: Rewrote `/rules` in plain high-school-level language. The page now leads with the three-step loop, explains market bands as +/-0.05% rather than basis points, describes both winners directly, and makes clear that the $100 approval is a limit rather than a charge. VM format, lint, typecheck, 23 tests, production build, and in-app browser review passed.
 
 ## Decisions
 

@@ -8,95 +8,101 @@ export const metadata: Metadata = { title: "Rules" };
 export default function RulesPage() {
   return (
     <InfoPage
-      eyebrow="STATION HANDBOOK / REV 4663"
-      title="Rules without the lore"
-      intro="The interface uses meme language. The chain uses these literal rules."
+      eyebrow="HOW TO PLAY / ROUND 4663"
+      title="The rules, in plain English"
+      intro="Pick a stock, pay $1 to take the bell, and still hold it when the clock reaches zero."
     >
       <section>
         <span className="chapterNumber">01</span>
         <div>
-          <h2>Pick a ticker on every call</h2>
+          <h2>Pick one of four stocks</h2>
           <p>
-            Entry selection is your first paid call, not a permanent team. A
-            later accepted claim may put any other roster ticker on air.
+            Your first choice is also your first $1 play. You are not joining a
+            permanent team. The next time you take the bell, you can choose a
+            different stock.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">02</span>
         <div>
-          <h2>Take the bell for $1</h2>
+          <h2>Pay $1 to take the bell</h2>
           <p>
-            Each accepted claim costs {roundConfig.claimPriceUsd} play USD,
-            changes the holder, and grows the pot. The current holder cannot
-            claim their own bell.
+            A successful play costs {roundConfig.claimPriceUsd} play USD, puts
+            your stock on air, and makes you the new bell holder. The $1 goes
+            into the prize pot. You cannot play again while you already hold the
+            bell.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">03</span>
         <div>
-          <h2>The clock gets two seconds, until it does not</h2>
+          <h2>Each play adds two seconds</h2>
           <p>
-            Normal claims add {roundConfig.extensionSeconds} seconds without
-            crossing the {roundConfig.hardCapSeconds}-second hard cap. At{" "}
-            {roundConfig.rugZoneSeconds} seconds the Rug Zone begins. Claims
-            still change the holder but add no time.
+            Most successful plays add {roundConfig.extensionSeconds} seconds to
+            the clock. The round can never last longer than{" "}
+            {roundConfig.hardCapSeconds} seconds. When only{" "}
+            {roundConfig.rugZoneSeconds} seconds remain, the Rug Zone begins.
+            You can still take the bell, but the clock will not gain more time.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">04</span>
         <div>
-          <h2>Zero freezes the tape</h2>
+          <h2>The market changes the score</h2>
           <p>
-            The interface never names a winner at zero. It first waits for
-            settlement. The final accepted holder receives 50%. The
-            market-weighted Closing Print ticker receives a 30% contributor
-            pool, 15% seeds the next round, and 5% funds the protocol.
+            We compare your stock&apos;s verified price with its price at the
+            start of the round. Up 0.05% or more earns 1.25 points per second. A
+            smaller move earns 1 point per second. Down 0.05% or more earns 0.75
+            points per second. Your rate locks when your play succeeds and stays
+            the same until someone else takes the bell.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">05</span>
         <div>
-          <h2>Momentum locks for each holder interval</h2>
+          <h2>There are two main winners</h2>
           <p>
-            A verified move of at least +5 bps scores 1.25×, between the bands
-            scores 1×, and at most -5 bps scores 0.75×. The multiplier locks
-            when the claim lands and cannot change retroactively.
+            The person holding the bell when the clock reaches zero wins 50% of
+            the pot. The stock with the most market-adjusted points wins the 30%
+            Closing Print Pool. That 30% is shared among the players who earned
+            points for that stock. Another 15% starts the next round, and 5%
+            goes to the protocol.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">06</span>
         <div>
-          <h2>One reusable approval</h2>
+          <h2>Your wallet gives one approval</h2>
           <p>
-            The first paid call asks for a $100 play-USDG allowance only when
-            the current allowance is below $10. Each accepted call consumes
-            exactly $1. You can change or revoke the allowance in your wallet at
-            any time; revoking prevents further calls but does not undo accepted
-            calls.
+            Before your first play, your wallet may ask for permission to spend
+            up to $100 of play USDG. This is a spending limit, not a $100
+            charge. Each successful play still costs only $1. We ask again when
+            less than $10 remains. You can lower or cancel the permission in
+            your wallet at any time.
           </p>
         </div>
       </section>
       <div className="constantTape">
         <span>START 45s</span>
-        <span>EXTEND +2s</span>
-        <span>RUG ≤10s</span>
+        <span>ADD 2s</span>
+        <span>RUG ZONE 10s</span>
         <span>HARD STOP 180s</span>
-        <span>CALL $1</span>
+        <span>PLAY $1</span>
       </div>
       <div className="disclosureBlock">
         <span className="chapterNumber">ID</span>
         <div>
-          <h2>Canonical devnet identities</h2>
+          <h2>For people checking the code</h2>
           <p>Round contract: {roundAddress}</p>
           <p>Play USDG: {devDollarAddress}</p>
           <p>
-            Mock Stock Tokens power Producer Pass on devnet. No Stock Token is
-            deposited, locked, traded, or awarded by the game contract.
+            This test version uses fake Stock Tokens for the Producer Pass. The
+            game never takes, locks, trades, or awards those tokens.
           </p>
         </div>
       </div>
