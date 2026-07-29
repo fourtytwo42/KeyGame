@@ -67,12 +67,12 @@ Do not use Tailwind, shadcn/ui, a dashboard template, a canvas renderer for stan
 |---|---|
 | `TECH-BOOT-001` | Initialize a Git repository at the project root before application feature work begins. |
 | `TECH-BOOT-002` | Use pnpm, commit `pnpm-lock.yaml`, and declare the package manager in `package.json`. |
-| `TECH-BOOT-003` | Pin a Next.js-compatible active-LTS Node runtime through committed runtime metadata and enforce it in CI. |
+| `TECH-BOOT-003` | Pin a Next.js-compatible active-LTS Node runtime through committed runtime metadata and enforce it on the project VM. |
 | `TECH-BOOT-004` | Provide scripts for development, production build, typecheck, lint, format check, unit tests, E2E tests, accessibility checks, and visual regression. |
-| `TECH-BOOT-005` | Use ESLint and Prettier with committed configuration; formatting or lint failure blocks CI. |
+| `TECH-BOOT-005` | Use ESLint and Prettier with committed configuration; formatting or lint failure blocks a local release. |
 | `TECH-BOOT-006` | Validate environment variables at startup with a typed schema and fail with a literal configuration error. |
 | `TECH-BOOT-007` | Use Vitest and React Testing Library for unit and component tests, Playwright for E2E and screenshot regression, and axe-core for automated accessibility checks. |
-| `TECH-BOOT-008` | Run typecheck, lint, format check, unit tests, accessibility tests, E2E smoke tests, and visual regression in CI before merge. |
+| `TECH-BOOT-008` | Run typecheck, lint, format check, unit tests, accessibility tests, E2E smoke tests, and visual regression on the project VM before release. GitHub Actions must remain disabled. |
 | `TECH-BOOT-009` | The Stage 0 shell and simulator must run without an RPC URL, wallet provider, deployed contract, USDG address, or Stock Token address. |
 | `TECH-BOOT-010` | Do not commit secrets or environment-specific production addresses; provide documented example configuration only. |
 

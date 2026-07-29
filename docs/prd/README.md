@@ -69,7 +69,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-015` | Use the current `GAME-CFG-*` timer and payout values as configurable simulation defaults. | `SELECTED FOR PROTOTYPE` | Prototype selection does not approve production economics. |
 | `D-016` | Keep same-faction theft, late entry, control-time precision, and faction tie-breaking configurable until simulation produces evidence. | `DECIDED` | Components consume typed configuration and cannot hard-code an unresolved outcome. |
 | `D-020` | Replace permanent factions with a ticker selected on every paid claim and market-weight the 30% Closing Print contest. | `IMPLEMENTED STAGE 1` | Use `closing-print-v1`; no separate entry transaction or Stock Token custody. |
-| `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, strict checks, and CI before feature branches expand. | `DECIDED` | See PRD 04 engineering bootstrap. |
+| `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |
 

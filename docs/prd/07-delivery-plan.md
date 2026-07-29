@@ -218,7 +218,7 @@ Resolve in this order:
 
 | ID | Deliverable |
 |---|---|
-| `DEL-BOOT-001` | Initialize Git and scaffold Next.js with pnpm, strict TypeScript, linting, formatting, validated environment configuration, and CI. |
+| `DEL-BOOT-001` | Initialize Git and scaffold Next.js with pnpm, strict TypeScript, linting, formatting, validated environment configuration, and VM-local release gates. |
 | `DEL-BOOT-002` | Implement the Dead Channel tokens, font loading, focus treatment, responsive arena widths, clipped fields, and broadcast primitives. |
 | `DEL-BOOT-003` | Define `RoundConfig`, `RoundState`, `Faction`, `ClaimEvent`, `SessionBudget`, `Settlement`, `Receipt`, `IncidentState`, `CancellationState`, and `SimulationScenario`. |
 | `DEL-BOOT-004` | Commit `QA-FIX-001` through `QA-FIX-010` as typed deterministic fixture contracts before screen-specific state logic. |
@@ -255,7 +255,7 @@ Resolve in this order:
 - Create pure game state machine and seeded simulator.
 - Implement five-second comprehension test prototype.
 - Convert `GAME-INV-*` requirements into test placeholders.
-- Establish CI for typecheck, lint, unit tests, accessibility, and visual regression.
+- Establish VM-local release checks for typecheck, lint, unit tests, accessibility, and visual regression. Do not use GitHub Actions.
 
 ### P1
 

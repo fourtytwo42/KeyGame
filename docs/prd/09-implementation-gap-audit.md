@@ -48,7 +48,7 @@ This audit distinguishes missing implementation from intentionally gated work. P
 
 - Responsive Channel 4663 shell and all planned public routes.
 - Deterministic simulator scenarios for entry, live, Rug Zone, finalizing, settlement, and Dead Air.
-- Local Anvil deployment, Foundry tests, integration tests, Playwright browser coverage, accessibility checks, and CI.
+- Local Anvil deployment, Foundry tests, integration tests, Playwright browser coverage, and accessibility checks on the project VM. GitHub Actions is intentionally disabled.
 - Injected/EIP-6963, MetaMask, Coinbase Wallet, Safe, and optional WalletConnect connector configuration.
 - Robinhood Chain testnet configuration and deployment scripts.
 - Faucet-issued devnet units and synthetic ticker factions.

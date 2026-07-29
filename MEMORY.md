@@ -12,7 +12,7 @@ Durable project context lives here. Update this file whenever information should
 ## Current State
 
 - The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
-- The complete responsive application, Foundry contracts, deterministic Anvil controller, CI, and testnet deployment workflow are implemented.
+- The complete responsive application, Foundry contracts, deterministic Anvil controller, local VM verification, and testnet deployment workflow are implemented.
 - Permanent factions are removed. Every accepted $1 claim selects one of four configured ticker slots; the current holder cannot claim again.
 - VERIFIED rounds lock GREEN/FLAT/RED scoring at 1.25x/1.0x/0.75x for each holder interval. FLAT rounds require no report and score every interval at 1.0x.
 - The 30% pool is the Closing Print Pool and is paid proportionally to players' weighted contribution to the winning ticker. The 50% final-holder payout, 15% next-round seed, and 5% protocol allocation remain unchanged.
@@ -29,6 +29,7 @@ Durable project context lives here. Update this file whenever information should
 - `docs/channel-4663-ui-design.md` is the selected palette, UI grammar, typography, motion, mascot, accessibility, responsive, and Next.js frontend direction.
 - `docs/prd/README.md` indexes the implementation-facing PRD suite and is the requirements entrypoint.
 - `docs/prd/11-closing-print-user-stories.md` is the current implementation backlog; `docs/prd/08-user-stories.md` is the superseded faction-era backlog.
+- GitHub Actions is disabled for this repository and no workflow is committed. All compilation and testing must run locally on the project VM. Last verified 2026-07-29.
 - `docs/design/screens/README.md` is the visual handoff for all twelve planned app screens; `screen-contact-sheet.png` is the at-a-glance review artifact and `prompt-set.md` records the ImageGen direction.
 - `docs/design/screens/desktop-live-on-air.png` is the desktop layout reference: a narrow center arena, rules and airtime on the left rail, and Trenches plus session controls on the right rail.
 - Robinhood Chain is the intended deployment target. Closing Print is the approved prototype architecture; production deployment remains gated.
@@ -108,7 +109,7 @@ When sources conflict, use this order:
 - Selected visual direction: `Channel 4663`, a fictional late-night public-access market game show named for Robinhood Chain ID 4663. Use broadcast identifiers, teletext-density score strips, a studio-switch action, transmission receipts, square/clipped color slabs, awkward three-color mascots, and the `Dead Channel` palette. Avoid dark-green fintech, neon cyberpunk, glassmorphism, neo-brutalism, casino/gacha polish, generic shadcn dashboards, gradients, glows, card stacks, and corporate ticker branding.
 - Selected frontend direction: Next.js 16.2.x App Router with strict TypeScript, React Server Components by default, narrowly scoped Client Components for the live arena, CSS Modules plus global tokens, `next/font`, native CSS/Web Animations, and `viem`. Do not use Tailwind, shadcn/ui, a dashboard template, or Framer Motion as the default implementation.
 - Approved prototype constants: four ticker slots, one-USD-equivalent test action, 45-second initial deadline, two-second normal extension, 180-second hard end, final-ten-second Rug Zone, +/-5 basis-point bands, 1.25/1.0/0.75 multipliers, and 50/30/15/5 settlement. These remain configurable between rounds and immutable during a round.
-- Approved engineering bootstrap: Git, pnpm, pinned compatible active-LTS Node metadata, strict TypeScript, ESLint, Prettier, typed environment validation, Vitest plus React Testing Library, Playwright, axe-core, screenshot regression, and blocking CI checks.
+- Approved engineering bootstrap: Git, pnpm, pinned compatible active-LTS Node metadata, strict TypeScript, ESLint, Prettier, typed environment validation, Vitest plus React Testing Library, Playwright, axe-core, and screenshot regression. Run all gates locally on the project VM; do not use GitHub Actions.
 - Approved implementation order: shared typed domain model and ten deterministic fixture scenarios before stateful screen logic; then the complete static Home through Dead Air screen slice across mobile, desktop, keyboard, and reduced-motion states.
 - Players may change ticker on every accepted claim; same-holder claims revert. Ticker-score ties use the most recent accepted acquisition, then the lower configured ticker index.
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
@@ -207,12 +208,18 @@ When sources conflict, use this order:
 - Stock Token balances are never custody or score weight. Producer Pass is a binary special-round gate and badge only.
 - Keep replay compatibility through explicit `closing-print-v1` and legacy `faction-v0` event parsers.
 
+### 2026-07-29 - Keep Builds Off GitHub
+
+- GitHub is source control only for this project.
+- Do not compile, test, run browsers, or spend Actions minutes on GitHub.
+- Keep GitHub Actions disabled and run all verification on `/home/hendo420/projects/KeyGame`.
+
 ## Known Issues
 
 - Real Stock Token custody, player-funded prizes, account abstraction/gas sponsorship, and production compliance remain intentional PRD gates, not missing Stage 1 implementation.
 - Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
 - Robinhood Chain testnet deployment is ready but was not performed; it requires funded signer configuration, real token/treasury addresses, and explicit launch authorization.
-- GitHub Actions reports non-blocking warnings that some third-party action versions target Node.js 20 while the runner forces Node.js 24. All jobs pass.
+- GitHub Actions is intentionally disabled. Do not add or enable hosted workflows without explicit new user authorization.
 - The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
 - Contracts have extensive local tests but no independent security audit.
 - Original FoMo3D includes predictable airdrop randomness, block-stuffing exposure, contract-wallet exclusions, external-call dependencies, integer-boundary quirks, and several documented accounting/view defects.
