@@ -62,16 +62,9 @@ contract DeployLocal is ScriptBase {
                 bytes32("SPY"), address(spy), keccak256("SPY/USD")
             )
         ];
-        round =
-            new LastBellRound(
-                token,
-                paymentRouter,
-                verifier,
-                deployer,
-                deployer,
-                settings,
-                tickers
-            );
+        round = new LastBellRound(
+            token, paymentRouter, verifier, deployer, deployer, settings, tickers
+        );
         paymentRouter.setRoundAuthorization(address(round), true);
         token.mint(deployer, 1_000_000e6);
         token.approve(address(paymentRouter), 50e6);

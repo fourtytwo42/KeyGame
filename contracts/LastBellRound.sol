@@ -234,8 +234,7 @@ contract LastBellRound {
     ) {
         if (
             address(paymentToken_) == address(0)
-                || address(paymentRouter_) == address(0)
-                || operator_ == address(0)
+                || address(paymentRouter_) == address(0) || operator_ == address(0)
                 || treasury_ == address(0) || settings_.claimPrice == 0
                 || settings_.startDuration == 0 || settings_.extensionDuration == 0
                 || settings_.rugDuration == 0
