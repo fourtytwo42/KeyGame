@@ -29,4 +29,25 @@ export const robinhoodChainTestnet = defineChain({
   testnet: true,
 });
 
-export const supportedChains = [localDevnet, robinhoodChainTestnet] as const;
+export const robinhoodChainMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: [publicEnvironment.robinhoodMainnetRpcUrl],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Robinhood Chain Explorer",
+      url: "https://robinhoodchain.blockscout.com",
+    },
+  },
+});
+
+export const supportedChains = [
+  localDevnet,
+  robinhoodChainTestnet,
+  robinhoodChainMainnet,
+] as const;

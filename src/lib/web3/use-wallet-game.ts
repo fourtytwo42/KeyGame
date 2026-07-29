@@ -10,7 +10,11 @@ import type {
   TickerId,
 } from "@/lib/game/types";
 import { publicEnvironment } from "@/lib/env";
-import { localDevnet, robinhoodChainTestnet } from "./chains";
+import {
+  localDevnet,
+  robinhoodChainMainnet,
+  robinhoodChainTestnet,
+} from "./chains";
 import { devDollarAbi, lastBellAbi } from "./last-bell-abi";
 
 const deployment = deploymentJson as unknown as {
@@ -23,9 +27,14 @@ export const configuredRoundAddress =
   publicEnvironment.roundAddress || deployment.lastBellRound;
 export const configuredPaymentToken =
   publicEnvironment.devDollarAddress || deployment.devDollar;
-export const configuredPaymentRouter = deployment.paymentRouter;
+export const configuredPaymentRouter =
+  publicEnvironment.paymentRouterAddress || deployment.paymentRouter;
 export const configuredGameChain =
-  publicEnvironment.mode === "testnet" ? robinhoodChainTestnet : localDevnet;
+  publicEnvironment.mode === "mainnet"
+    ? robinhoodChainMainnet
+    : publicEnvironment.mode === "testnet"
+      ? robinhoodChainTestnet
+      : localDevnet;
 
 type WalletAction =
   | "idle"

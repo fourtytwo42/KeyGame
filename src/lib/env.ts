@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 
-type GameMode = "simulator" | "devnet" | "testnet";
+type GameMode = "simulator" | "devnet" | "testnet" | "mainnet";
 
 const literalError = (name: string, reason: string): never => {
   throw new Error(`LAST BELL CONFIGURATION ERROR: ${name} ${reason}`);
@@ -27,18 +27,53 @@ export function readPublicEnvironment(
   source: Partial<NodeJS.ProcessEnv> = process.env,
 ) {
   const mode = (source.NEXT_PUBLIC_GAME_MODE || "simulator") as GameMode;
-  if (!["simulator", "devnet", "testnet"].includes(mode)) {
+  if (!["simulator", "devnet", "testnet", "mainnet"].includes(mode)) {
     literalError(
       "NEXT_PUBLIC_GAME_MODE",
-      "must be simulator, devnet, or testnet.",
+      "must be simulator, devnet, testnet, or mainnet.",
     );
+  }
+
+  const appUrl =
+    optionalUrl("NEXT_PUBLIC_APP_URL", source.NEXT_PUBLIC_APP_URL) ||
+    "http://localhost:3000/";
+  const roundAddress = optionalAddress(
+    "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS",
+    source.NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS,
+  );
+  const devDollarAddress = optionalAddress(
+    "NEXT_PUBLIC_DEV_DOLLAR_ADDRESS",
+    source.NEXT_PUBLIC_DEV_DOLLAR_ADDRESS,
+  );
+  const paymentRouterAddress = optionalAddress(
+    "NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS",
+    source.NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS,
+  );
+
+  if (mode === "testnet" || mode === "mainnet") {
+    if (!roundAddress) {
+      literalError(
+        "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS",
+        `is required in ${mode} mode.`,
+      );
+    }
+    if (!devDollarAddress) {
+      literalError(
+        "NEXT_PUBLIC_DEV_DOLLAR_ADDRESS",
+        `is required in ${mode} mode.`,
+      );
+    }
+    if (!paymentRouterAddress) {
+      literalError(
+        "NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS",
+        `is required in ${mode} mode.`,
+      );
+    }
   }
 
   return {
     mode,
-    appUrl:
-      optionalUrl("NEXT_PUBLIC_APP_URL", source.NEXT_PUBLIC_APP_URL) ||
-      "http://localhost:3000/",
+    appUrl,
     localRpcUrl:
       optionalUrl(
         "NEXT_PUBLIC_LOCAL_RPC_URL",
@@ -48,15 +83,15 @@ export function readPublicEnvironment(
       optionalUrl(
         "NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL",
         source.NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL,
-      ) || "https://rpc.testnet.chain.robinhood.com/",
-    roundAddress: optionalAddress(
-      "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS",
-      source.NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS,
-    ),
-    devDollarAddress: optionalAddress(
-      "NEXT_PUBLIC_DEV_DOLLAR_ADDRESS",
-      source.NEXT_PUBLIC_DEV_DOLLAR_ADDRESS,
-    ),
+      ) || new URL("/api/rpc/testnet", appUrl).toString(),
+    robinhoodMainnetRpcUrl:
+      optionalUrl(
+        "NEXT_PUBLIC_ROBINHOOD_MAINNET_RPC_URL",
+        source.NEXT_PUBLIC_ROBINHOOD_MAINNET_RPC_URL,
+      ) || new URL("/api/rpc/mainnet", appUrl).toString(),
+    roundAddress,
+    devDollarAddress,
+    paymentRouterAddress,
     walletConnectProjectId:
       source.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() || undefined,
   };

@@ -10,7 +10,7 @@ Durable project context lives here. Update this file whenever information should
   deadline or automatic caller. The first valid $1 claim starts the exact
   45-second clock and passed contract, integration, Playwright, and in-app
   browser acceptance.
-- Next step: Configure production Robinhood Stock Token addresses, Chainlink Data Streams credentials/verifier, Reown WalletConnect project, and Robinhood Chain testnet deployment only when the user authorizes external deployment.
+- Next step: Configure production Robinhood Stock Token addresses, Chainlink Data Streams credentials/verifier, Reown WalletConnect project, funded deployment roles, and perform the Robinhood Chain testnet deployment when the user authorizes it.
 - Blockers: None documented.
 
 ## Current State
@@ -52,6 +52,13 @@ Durable project context lives here. Update this file whenever information should
 - `docs/design/screens/README.md` is the visual handoff for all twelve planned app screens; `screen-contact-sheet.png` is the at-a-glance review artifact and `prompt-set.md` records the ImageGen direction.
 - `docs/design/screens/desktop-live-on-air.png` is the desktop layout reference: a narrow center arena, rules and airtime on the left rail, and Trenches plus session controls on the right rail.
 - Robinhood Chain is the intended deployment target. Closing Print is the approved prototype architecture; production deployment remains gated.
+- Robinhood RPC traffic now uses server-side same-origin relays at
+  `/api/rpc/testnet` and `/api/rpc/mainnet`. LAN nodes
+  `192.168.50.117:8547` (testnet 46630) and `192.168.50.173:8547` (mainnet
+  4663) are primary. Private Alchemy endpoints are configured only in the VM's
+  untracked, mode-600 environment as fallbacks. The relay switches when the
+  primary is unavailable or more than five blocks behind and does not expose
+  provider credentials to browser JavaScript. Last verified 2026-07-29.
 
 ## User Preferences
 
@@ -191,6 +198,12 @@ When sources conflict, use this order:
 - 2026-07-29: First-claim timer-start verification passed on the VM: 17 Forge tests, 24 app tests, four live-Anvil integration tests, lint, typecheck, production build, and 14 applicable Playwright checks with two intentional skips. In-app browser UAT observed a waiting carried-seed round with no holder, then a successful first $1 claim at exactly 00:45. Devnet report generation now mines a fresh block before encoding deterministic reports so Anvil time offsets cannot expire the first post-rollover claim.
 - 2026-07-29: Final clean devnet handoff left deterministic round 4663 on the Entry Desk with a $50 seed pot, `startedAt == 0`, no holder, and zero claims across repeated checks. The keeper remains running but will not start the timer.
 - 2026-07-29: Added the prominent waiting-state `00:45` clock after user feedback that the pot and spread visually obscured the main mechanic. VM lint, typecheck, 24 app tests, production build, and 14 applicable Playwright checks passed with two intentional skips. In-app browser review confirmed the timer is visible at desktop and 390x844 mobile widths, desktop studio bottom equals the viewport bottom, and neither layout has horizontal overflow.
+- 2026-07-29: Added Robinhood Chain mainnet mode and a restricted same-origin
+  RPC relay with LAN-primary, Alchemy-fallback routing for testnet and mainnet.
+  Live relay checks returned chain IDs 46630 and 4663 through the LAN providers;
+  a forced invalid-primary test returned chain ID 4663 through the fallback.
+  VM ESLint, TypeScript, 27 Vitest tests, and production build passed. Provider
+  credentials remain untracked and server-only.
 
 ## Decisions
 
@@ -308,7 +321,8 @@ When sources conflict, use this order:
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
 - Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
-- Select real testnet payment token, treasury, operator, monitoring, and RPC-provider configuration before deployment.
+- Select real testnet payment token, treasury, operator, and monitoring before
+  deployment. RPC-provider routing is configured and verified.
 
 ## Do Not Forget
 

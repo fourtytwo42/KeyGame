@@ -120,6 +120,20 @@ application environment, build the app, and verify the deployment on the
 Robinhood Chain explorer. A production RPC provider is recommended because the
 public endpoint is rate-limited.
 
+### Production RPC routing
+
+The browser connects through `/api/rpc/testnet` or `/api/rpc/mainnet`. The app
+server uses the LAN full nodes as primary providers:
+
+- Testnet: `http://192.168.50.117:8547` (chain ID 46630)
+- Mainnet: `http://192.168.50.173:8547` (chain ID 4663)
+
+Set `ROBINHOOD_TESTNET_FALLBACK_RPC_URL` and
+`ROBINHOOD_MAINNET_FALLBACK_RPC_URL` to private provider endpoints in the
+untracked server environment. The relay checks both heads every ten seconds and
+uses the fallback when the LAN node is unavailable or more than five blocks
+behind. Never place provider credentials in a `NEXT_PUBLIC_` variable.
+
 ## Documentation
 
 - [PRD suite](docs/prd/README.md)

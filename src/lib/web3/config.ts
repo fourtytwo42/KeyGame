@@ -7,7 +7,11 @@ import {
   walletConnect,
 } from "wagmi/connectors";
 import { publicEnvironment } from "@/lib/env";
-import { localDevnet, robinhoodChainTestnet } from "./chains";
+import {
+  localDevnet,
+  robinhoodChainMainnet,
+  robinhoodChainTestnet,
+} from "./chains";
 
 const walletConnectProjectId = publicEnvironment.walletConnectProjectId;
 
@@ -34,11 +38,12 @@ if (walletConnectProjectId) {
 }
 
 export const walletConfig = createConfig({
-  chains: [localDevnet, robinhoodChainTestnet],
+  chains: [localDevnet, robinhoodChainTestnet, robinhoodChainMainnet],
   connectors,
   transports: {
     [localDevnet.id]: http(publicEnvironment.localRpcUrl),
     [robinhoodChainTestnet.id]: http(publicEnvironment.robinhoodTestnetRpcUrl),
+    [robinhoodChainMainnet.id]: http(publicEnvironment.robinhoodMainnetRpcUrl),
   },
   multiInjectedProviderDiscovery: true,
   ssr: true,
