@@ -58,4 +58,5 @@ jobs:
       - run: pnpm devnet:deploy
       - run: pnpm build
       - run: pnpm test:integration
+      - run: pnpm devnet:stop && pnpm devnet:start && pnpm devnet:deploy
       - run: pnpm test:e2e
