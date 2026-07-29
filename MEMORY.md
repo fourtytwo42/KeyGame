@@ -152,6 +152,7 @@ When sources conflict, use this order:
 - 2026-07-28: In-app browser UAT verified the authoritative entry/session state, revoke transition, automatic settlement, 50/30/15/5 allocations, holder and faction claims, canonical replay identity, and receipt chain/block/contract proof.
 - 2026-07-28: Pushed the reconciliation implementation as commit `5f25c956999fe491a95f3c8cc66af0a68f3a0675`; GitHub Actions run `30423038363` passed app, contracts, and browser jobs.
 - 2026-07-28: Replaced $5/$10/$25 max-spend sessions with a reusable $100 play-USDG allowance and a below-$10 refresh threshold. Local and VM unit/type/lint checks passed; 12 Foundry tests passed including allowance-constrained claims; 4 live Anvil integration tests passed including threshold refresh; production build passed; Playwright passed 11 tests with one deliberate duplicate mobile mutation skip; in-app browser UAT verified AAPL entry at $100 and a successful $1 claim reducing the allowance to $99.
+- 2026-07-28: Pushed the reusable-allowance implementation as commit `7fb21f6cdbdfc80468930def49f897147f36662f`; GitHub Actions run `30424178882` passed app, contracts, integration, and browser jobs.
 
 ## Decisions
 
