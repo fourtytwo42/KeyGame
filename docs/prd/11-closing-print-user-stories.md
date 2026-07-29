@@ -241,6 +241,21 @@ four verified feeds remain unavailable for 15 seconds.
 As a deployer, I supply the verifier proxy and canonical token/feed mapping for
 each network and do not depend on a hardcoded mainnet address.
 
+### `CP-OPS-006` Keep broadcasts running
+
+As a player, I see an eight-second Final Transmission and then the next
+numbered round starts automatically with the prior round's 15% seed.
+
+Acceptance:
+
+- Finalization and rollover continue when no browser is open.
+- The completed run is archived before the deployment pointer changes.
+- Only one rollover can run for a settled contract.
+- A partial rollover resumes without duplicating a round or losing the seed.
+- The player keeps one reusable payment-router approval across rounds.
+- The studio changes contract, round number, pot, and session state without an
+  application rebuild or restart.
+
 ## Accessibility and viewport
 
 ### `CP-A11Y-001` Play without color perception

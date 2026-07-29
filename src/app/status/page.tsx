@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
-import { getDevnetSnapshot, roundAddress } from "@/lib/web3/devnet";
+import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = { title: "Signal Status" };
 
@@ -60,7 +60,7 @@ export default async function StatusPage() {
         <div>
           <h2>Build and contract identity</h2>
           <p>Application version: 0.1.0</p>
-          <p>Round contract: {roundAddress}</p>
+          <p>Round contract: {snapshot?.contractAddress ?? "unavailable"}</p>
           <p>Latest verified block: {snapshot?.blockNumber ?? "unavailable"}</p>
         </div>
       </section>

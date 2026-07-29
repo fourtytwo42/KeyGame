@@ -14,7 +14,7 @@ import {
   devnetSessionPlayer,
   getDevnetSnapshot,
   getDevnetSession,
-  roundAddress,
+  paymentRouterAddress,
   sendDevnetAction,
 } from "@/lib/web3/devnet";
 import { localDevnet } from "@/lib/web3/chains";
@@ -71,7 +71,7 @@ describe("deployed local devnet", () => {
       address: devDollarAddress,
       abi: devDollarAbi,
       functionName: "approve",
-      args: [roundAddress, 5_000_000n],
+      args: [paymentRouterAddress, 5_000_000n],
     });
     await sendDevnetAction("demo-claim", "TSLA");
     await sendDevnetAction("claim", "AAPL");
@@ -80,7 +80,7 @@ describe("deployed local devnet", () => {
       address: devDollarAddress,
       abi: devDollarAbi,
       functionName: "allowance",
-      args: [devnetSessionPlayer, roundAddress],
+      args: [devnetSessionPlayer, paymentRouterAddress],
     });
     expect(allowance).toBe(99_000_000n);
   });

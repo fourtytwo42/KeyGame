@@ -4,8 +4,8 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: The faction prototype has been replaced by the approved Closing Print market-reactive game.
-- Last meaningful result: Contract, deterministic verifier, four-stock roster, signed-report flow, weighted scoring, Producer Pass, replay compatibility, responsive UI, PRDs, and full local-devnet acceptance are implemented and verified.
+- Current task: Closing Print is implemented and now runs continuous automatic rounds.
+- Last meaningful result: Automatic finalization, eight-second intermission, archived history, resumable 15% seed rollover, permanent payment-router approval, and dynamic current-round switching passed clean live VM and browser acceptance.
 - Next step: Configure production Robinhood Stock Token addresses, Chainlink Data Streams credentials/verifier, Reown WalletConnect project, and Robinhood Chain testnet deployment only when the user authorizes external deployment.
 - Blockers: None documented.
 
@@ -18,6 +18,14 @@ Durable project context lives here. Update this file whenever information should
 - The 30% pool is the Closing Print Pool and is paid proportionally to players' weighted contribution to the winning ticker. The 50% final-holder payout, 15% next-round seed, and 5% protocol allocation remain unchanged.
 - `docs/prd/10-closing-print-market-reactive.md` and `docs/prd/11-closing-print-user-stories.md` are the canonical current requirements. PRDs 01-09 remain historical/superseded context where marked.
 - The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
+- The reusable USDG allowance targets the permanent `PaymentRouter`, not an
+  individual round. Operator-authorized round contracts can pull only their
+  accepted claim fee, so a wallet does not approve again on rollover.
+- The VM round keeper finalizes unattended expired rounds, archives the
+  event-derived result, holds an eight-second Final Transmission, transfers the
+  15% seed, and opens the next numbered round without rebuilding the app.
+  Rollover is single-flight and uses `.devnet/round-rollover.json` to resume
+  safely after partial transaction sequences.
 - Desktop `/play/` routes use a fixed viewport-height studio. At widths above 820px the page footer is suppressed, the broadcast grid consumes only the space below the header/source bar, and height-aware sizing keeps the complete studio visible without vertical document scrolling.
 - `docs/prd/09-implementation-gap-audit.md` records implemented gaps, intentional product gates, and external launch prerequisites.
 - Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-29.
@@ -170,6 +178,8 @@ When sources conflict, use this order:
 - 2026-07-29: Rewrote `/rules` in plain high-school-level language. The page now leads with the three-step loop, explains market bands as +/-0.05% rather than basis points, describes both winners directly, and makes clear that the $100 approval is a limit rather than a charge. VM format, lint, typecheck, 23 tests, production build, and in-app browser review passed.
 - 2026-07-29: Replaced the separate marketing home with the live game at `/`, redirected legacy play URLs, removed Final Transmission receipt/replay buttons, and added a VM-local Historical Runs archive. The first real archived run recorded a $51 peak pot, `caller-70997`, NVDA, and one call; its replay resolved with canonical chain, contract, block, and event details. VM lint, typecheck, 24 tests, build, desktop/mobile browser checks, and archive-link UAT passed.
 - 2026-07-29: Removed Signal/System Status links from the primary navigation and footer. `/status` remains available by direct URL for operator health checks but is not advertised to players.
+- 2026-07-29: Continuous-round Playwright acceptance passed 14/14 applicable desktop and Pixel 7 checks with two intentional cross-profile skips after correcting the Historical Runs foreground fallback from the undefined `--paper` token to `--dead-air`. The VM's Chromium runtime libraries are locally extracted under `.devnet/playwright-root`; use that directory in `LD_LIBRARY_PATH` unless the dependencies are installed system-wide.
+- 2026-07-29: Final clean devnet handoff started round 4663 at the deterministic initial contract with a $51 pot and 45-second clock. The background keeper was running and will continue finalizing, archiving, carrying the 15% seed, and opening later rounds unattended.
 
 ## Decisions
 
@@ -255,6 +265,15 @@ When sources conflict, use this order:
 - 2026-07-28: Simplified entry authorization to one reusable $100 play-USDG approval, refresh below $10, removed the max-spend UI and contract mapping, updated the PRD/visual handoff, and retained wallet-controlled revocation.
 - 2026-07-29: Confined the desktop `/play/` studio to the browser viewport, removed its route-level footer, added compact-height rules for all arena states, retained the three-column studio down to 1181px, used a two-column arena/activity layout from 821px to 1180px, and added a Playwright vertical-overflow regression test.
 - 2026-07-29: Replaced factions with the complete Closing Print implementation across contract, market verifier, screening APIs, shared domain, simulator, replay, wallet writes, devnet deployment, UI, PRDs, and tests. Added mobile Closing Print standings after browser acceptance exposed their absence.
+- 2026-07-29: Added continuous rounds. Clean VM acceptance observed round
+  4663 move through Live, Rug, Settled, an eight-second countdown, and live
+  round 4664 with the exact $7.65 carry plus a $1 opening call. Browser UAT then
+  observed automatic round 4665, correct dynamic round/pot display, desktop
+  viewport fit, mobile no-overflow behavior, historical archives, and no
+  console errors. Added `PaymentRouter`; 14 Forge tests include one approval
+  across rounds and unauthorized-pull rejection, while 4 integration tests and
+  24 app tests pass. The complete Playwright pass reported 14 passed and two
+  intentional skips.
 
 ## Open Follow-ups
 

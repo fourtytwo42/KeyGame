@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { roundConfig } from "@/lib/game/constants";
-import { devDollarAddress, roundAddress } from "@/lib/web3/devnet";
+import { getCurrentDevnetDeployment } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = { title: "Rules" };
+export const dynamic = "force-dynamic";
 
 export default function RulesPage() {
+  const { roundAddress, devDollarAddress } = getCurrentDevnetDeployment();
   return (
     <InfoPage
       eyebrow="HOW TO PLAY / ROUND 4663"

@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import { IERC20 } from "./interfaces/IERC20.sol";
 import { IMarketDataVerifier } from "./interfaces/IMarketDataVerifier.sol";
+import { IPaymentRouter } from "./interfaces/IPaymentRouter.sol";
 
 /// @title Last Bell: Closing Print
 /// @notice A bounded last-holder game where every claim puts one ticker on air.
@@ -58,6 +59,7 @@ contract LastBellRound {
     uint8 public constant NO_TICKER = type(uint8).max;
 
     IERC20 public immutable paymentToken;
+    IPaymentRouter public immutable paymentRouter;
     IMarketDataVerifier public immutable marketVerifier;
     address public immutable operator;
     address public immutable treasury;
@@ -223,6 +225,7 @@ contract LastBellRound {
 
     constructor(
         IERC20 paymentToken_,
+        IPaymentRouter paymentRouter_,
         IMarketDataVerifier marketVerifier_,
         address operator_,
         address treasury_,
@@ -230,7 +233,9 @@ contract LastBellRound {
         TickerConfig[4] memory tickers_
     ) {
         if (
-            address(paymentToken_) == address(0) || operator_ == address(0)
+            address(paymentToken_) == address(0)
+                || address(paymentRouter_) == address(0)
+                || operator_ == address(0)
                 || treasury_ == address(0) || settings_.claimPrice == 0
                 || settings_.startDuration == 0 || settings_.extensionDuration == 0
                 || settings_.rugDuration == 0
@@ -262,6 +267,7 @@ contract LastBellRound {
         }
 
         paymentToken = paymentToken_;
+        paymentRouter = paymentRouter_;
         marketVerifier = marketVerifier_;
         operator = operator_;
         treasury = treasury_;
@@ -601,9 +607,7 @@ contract LastBellRound {
     }
 
     function _pull(address from, uint256 amount) internal {
-        if (!paymentToken.transferFrom(from, address(this), amount)) {
-            revert TransferFailed();
-        }
+        paymentRouter.pull(from, address(this), amount);
     }
 
     function _push(address to, uint256 amount) internal {

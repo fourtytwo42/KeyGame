@@ -8,7 +8,19 @@ export async function GET(
   { params }: { params: Promise<{ roundId: string }> },
 ) {
   const { roundId } = await params;
-  if (roundId !== "4663") {
+  let state: Awaited<ReturnType<typeof getDevnetSnapshot>>;
+  try {
+    state = await getDevnetSnapshot();
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Projection failed.",
+      },
+      { status: 503 },
+    );
+  }
+  if (roundId !== state.roundId) {
     return NextResponse.json(
       { ok: false, error: "Round is not deployed in this environment." },
       { status: 404 },
@@ -16,10 +28,7 @@ export async function GET(
   }
 
   try {
-    const [state, sessionState] = await Promise.all([
-      getDevnetSnapshot(),
-      getDevnetSession(),
-    ]);
+    const sessionState = await getDevnetSession();
     return NextResponse.json({
       ok: true,
       roundId,

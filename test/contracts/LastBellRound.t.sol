@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import { LastBellRound } from "../../contracts/LastBellRound.sol";
+import { PaymentRouter } from "../../contracts/PaymentRouter.sol";
 import {
     MockMarketDataVerifier
 } from "../../contracts/mocks/MockMarketDataVerifier.sol";
@@ -18,6 +19,7 @@ contract LastBellRoundTest is TestBase {
     address internal constant TREASURY = address(0x7EA5);
 
     MockUSDG internal token;
+    PaymentRouter internal paymentRouter;
     MockMarketDataVerifier internal verifier;
     MockStockToken[4] internal stocks;
     bytes32[4] internal feeds;
@@ -26,6 +28,7 @@ contract LastBellRoundTest is TestBase {
 
     function setUp() public {
         token = new MockUSDG();
+        paymentRouter = new PaymentRouter(token, address(this));
         verifier = new MockMarketDataVerifier();
         stocks[0] = new MockStockToken("NVDA");
         stocks[1] = new MockStockToken("AAPL");
@@ -39,7 +42,7 @@ contract LastBellRoundTest is TestBase {
         ];
         round = _deploy(LastBellRound.MarketMode.Verified, false);
         token.mint(address(this), SEED);
-        token.approve(address(round), SEED);
+        token.approve(address(paymentRouter), SEED);
         bytes[4] memory reports;
         for (uint8 index; index < 4; index++) {
             reports[index] = _report(index, opening[index], uint64(block.timestamp));
@@ -55,8 +58,8 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_ClaimSelectsTickerAndCanSwitchNextClaim() public {
-        _fund(ALICE, round);
-        _fund(BOB, round);
+        _fund(ALICE);
+        _fund(BOB);
         vm.prank(ALICE);
         round.claimBell(0, _freshReport(0, 100_060_000_00), 4);
         uint64 nextReportAt = round.startedAt() + 4;
@@ -75,10 +78,38 @@ contract LastBellRoundTest is TestBase {
         assertEq(round.tickerScore(0), 50_000, "green weighted score");
     }
 
+    function test_OneRouterApprovalWorksAcrossRounds() public {
+        LastBellRound next = _deploy(LastBellRound.MarketMode.Verified, false);
+        bytes[4] memory reports;
+        for (uint8 index; index < 4; index++) {
+            reports[index] = _report(index, opening[index], uint64(block.timestamp));
+        }
+        next.start(0, reports);
+
+        _fund(ALICE);
+        vm.prank(ALICE);
+        round.claimBell(0, _freshReport(0, 100_060_000_00), 4);
+        vm.prank(ALICE);
+        next.claimBell(1, _freshReport(1, 200_010_000_00), 4);
+
+        assertEq(round.paid(ALICE), UNIT, "first round charged");
+        assertEq(next.paid(ALICE), UNIT, "next round charged");
+    }
+
+    function test_PaymentRouterRejectsUnauthorizedCallers() public {
+        token.mint(ALICE, 10 * UNIT);
+        vm.prank(ALICE);
+        token.approve(address(paymentRouter), type(uint256).max);
+
+        vm.expectRevert(PaymentRouter.Unauthorized.selector);
+        vm.prank(BOB);
+        paymentRouter.pull(ALICE, BOB, UNIT);
+    }
+
     function test_ExactMarketBandBoundaries() public {
-        _fund(ALICE, round);
-        _fund(BOB, round);
-        _fund(CAROL, round);
+        _fund(ALICE);
+        _fund(BOB);
+        _fund(CAROL);
         vm.prank(ALICE);
         round.claimBell(0, _freshReport(0, 100_050_000_00), 4);
         assertEq(
@@ -109,7 +140,7 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_InvalidStaleMismatchedAndReplayedReportsNeverCharge() public {
-        _fund(ALICE, round);
+        _fund(ALICE);
         uint256 balance = token.balanceOf(ALICE);
         bytes memory valid = _freshReport(0, 100_060_000_00);
         vm.prank(ALICE);
@@ -133,7 +164,7 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_MissingReportCannotEscapeRedScoring() public {
-        _fund(ALICE, round);
+        _fund(ALICE);
         vm.prank(ALICE);
         vm.expectRevert(LastBellRound.InvalidMarketReport.selector);
         round.claimBell(0, "", 4);
@@ -143,11 +174,11 @@ contract LastBellRoundTest is TestBase {
     function test_FlatModeAcceptsNoReportAtOneTimesScore() public {
         LastBellRound flat = _deploy(LastBellRound.MarketMode.Flat, false);
         token.mint(address(this), SEED);
-        token.approve(address(flat), SEED);
+        token.approve(address(paymentRouter), SEED);
         bytes[4] memory emptyReports;
         flat.start(SEED, emptyReports);
-        _fund(ALICE, flat);
-        _fund(BOB, flat);
+        _fund(ALICE);
+        _fund(BOB);
         vm.prank(ALICE);
         flat.claimBell(0, "", 4);
         vm.warp(block.timestamp + 4);
@@ -159,10 +190,10 @@ contract LastBellRoundTest is TestBase {
     function test_ProducerPassIsBinaryAndRequiredOnlyForSpecialRounds() public {
         LastBellRound special = _deploy(LastBellRound.MarketMode.Flat, true);
         token.mint(address(this), SEED);
-        token.approve(address(special), SEED);
+        token.approve(address(paymentRouter), SEED);
         bytes[4] memory emptyReports;
         special.start(SEED, emptyReports);
-        _fund(ALICE, special);
+        _fund(ALICE);
         vm.prank(ALICE);
         vm.expectRevert(LastBellRound.ProducerPassRequired.selector);
         special.claimBell(0, "", 0);
@@ -174,8 +205,8 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_RugClaimChangesHolderWithoutExtension() public {
-        _fund(ALICE, round);
-        _fund(BOB, round);
+        _fund(ALICE);
+        _fund(BOB);
         vm.prank(ALICE);
         round.claimBell(0, _freshReport(0, 100_010_000_00), 4);
         uint64 rugReportAt = round.deadline() - 10;
@@ -188,7 +219,7 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_CurrentHolderCannotClaimAnotherTicker() public {
-        _fund(ALICE, round);
+        _fund(ALICE);
         vm.startPrank(ALICE);
         round.claimBell(0, _freshReport(0, 100_010_000_00), 4);
         vm.expectRevert(LastBellRound.CurrentHolder.selector);
@@ -197,9 +228,9 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_SettlementPaysHolderAndWeightedClosingPrintContributors() public {
-        _fund(ALICE, round);
-        _fund(BOB, round);
-        _fund(CAROL, round);
+        _fund(ALICE);
+        _fund(BOB);
+        _fund(CAROL);
         vm.prank(ALICE);
         round.claimBell(0, _freshReport(0, 100_060_000_00), 4);
         uint64 bobAt = round.startedAt() + 8;
@@ -227,7 +258,7 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_CancellationRefundsAcceptedFees() public {
-        _fund(ALICE, round);
+        _fund(ALICE);
         uint256 before = token.balanceOf(ALICE);
         vm.prank(ALICE);
         round.claimBell(0, _freshReport(0, 100_010_000_00), 4);
@@ -242,8 +273,8 @@ contract LastBellRoundTest is TestBase {
         uint8 bandSeed
     ) public {
         uint256 duration = bound(secondsHeld, 1, 20);
-        _fund(ALICE, round);
-        _fund(BOB, round);
+        _fund(ALICE);
+        _fund(BOB);
         uint256 price = bandSeed % 3 == 0
             ? 100_060_000_00
             : bandSeed % 3 == 1 ? 99_940_000_00 : 100_010_000_00;
@@ -291,14 +322,15 @@ contract LastBellRoundTest is TestBase {
             );
         }
         deployed = new LastBellRound(
-            token, verifier, address(this), TREASURY, settings, configs
+            token, paymentRouter, verifier, address(this), TREASURY, settings, configs
         );
+        paymentRouter.setRoundAuthorization(address(deployed), true);
     }
 
-    function _fund(address player, LastBellRound target) internal {
+    function _fund(address player) internal {
         token.mint(player, 100 * UNIT);
         vm.prank(player);
-        token.approve(address(target), type(uint256).max);
+        token.approve(address(paymentRouter), type(uint256).max);
     }
 
     function _freshReport(uint8 ticker, uint256 price)

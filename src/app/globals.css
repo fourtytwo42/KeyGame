@@ -643,7 +643,7 @@ main {
 .historicalRuns {
   padding: 70px clamp(22px, 7vw, 120px) 90px;
   color: var(--night-desk);
-  background: var(--paper);
+  background: var(--dead-air);
   border-top: 8px solid var(--prize-tape);
 }
 
@@ -1555,6 +1555,17 @@ main {
 .poolBreakdown {
   display: flex;
   gap: 18px;
+}
+
+.nextRoundNotice {
+  margin: 10px 0 0;
+  padding: 7px 11px;
+  font-family: var(--display);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--tube-white);
+  background: var(--night-desk);
 }
 
 .claimActions {

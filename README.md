@@ -19,6 +19,9 @@ script, product requirements, research, and automated test suites.
 - Exact-price $1 bell claims, 45-second round, 2-second extensions, 10-second
   Rug zone, and 180-second hard cap
 - 50% caller, 30% Closing Print, 15% next round, and 5% treasury settlement
+- Automatic settlement, eight-second Final Transmission, 15% seed transfer,
+  archive capture, and continuous next-round launch
+- One reusable USDG approval to a permanent payment router across rounds
 - GREEN 1.25×, FLAT 1×, and RED 0.75× signed-report scoring
 - Pull-based claims, cancellation refunds, and deterministic ticker ties
 - Local Anvil integration driven by real contract state and transactions
@@ -53,7 +56,10 @@ pnpm devnet:stop
 
 The devnet is disposable. Re-running `pnpm devnet:deploy` resets the chain and
 creates a fresh deterministic round with approved callers, mock Stock Tokens,
-and signed mock reports.
+and signed mock reports. `pnpm app:start` also launches the local round keeper.
+It finalizes expired rounds, archives the result, shows an eight-second
+intermission, transfers the 15% seed, and opens the next numbered round without
+rebuilding or restarting the application.
 
 ## Verification
 
@@ -98,6 +104,7 @@ export ROBINHOOD_TESTNET_RPC_URL=https://rpc.testnet.chain.robinhood.com
 export DEPLOYER_ADDRESS=0x...
 export TREASURY_ADDRESS=0x...
 export PAYMENT_TOKEN_ADDRESS=0x...
+export PAYMENT_ROUTER_ADDRESS=0x...
 export ROUND_ID=4663
 ```
 

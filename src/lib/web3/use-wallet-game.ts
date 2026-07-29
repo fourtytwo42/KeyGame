@@ -13,15 +13,17 @@ import { publicEnvironment } from "@/lib/env";
 import { localDevnet, robinhoodChainTestnet } from "./chains";
 import { devDollarAbi, lastBellAbi } from "./last-bell-abi";
 
-const deployment = deploymentJson as {
+const deployment = deploymentJson as unknown as {
   lastBellRound: `0x${string}`;
   devDollar: `0x${string}`;
+  paymentRouter: `0x${string}`;
 };
 
 export const configuredRoundAddress =
   publicEnvironment.roundAddress || deployment.lastBellRound;
 export const configuredPaymentToken =
   publicEnvironment.devDollarAddress || deployment.devDollar;
+export const configuredPaymentRouter = deployment.paymentRouter;
 export const configuredGameChain =
   publicEnvironment.mode === "testnet" ? robinhoodChainTestnet : localDevnet;
 
@@ -41,7 +43,9 @@ type ReportResponse = {
   error?: string;
 };
 
-export function useWalletGame() {
+export function useWalletGame(
+  activeRoundAddress: `0x${string}` = configuredRoundAddress,
+) {
   const { address, chainId, isConnected } = useAccount();
   const publicClient = usePublicClient({ chainId: configuredGameChain.id });
   const walletClient = useWalletClient({ chainId: configuredGameChain.id });
@@ -80,12 +84,12 @@ export function useWalletGame() {
       refundClaimed,
     ] = await Promise.all([
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "currentPhase",
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "paid",
         args: [address],
@@ -94,47 +98,47 @@ export function useWalletGame() {
         address: configuredPaymentToken,
         abi: devDollarAbi,
         functionName: "allowance",
-        args: [address, configuredRoundAddress],
+        args: [address, configuredPaymentRouter],
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "deadline",
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "holder",
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "winningTicker",
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "holderPool",
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "closingPrintPool",
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "holderRewardClaimed",
         args: [address],
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "closingPrintRewardClaimed",
         args: [address],
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "refundClaimed",
         args: [address],
@@ -143,13 +147,13 @@ export function useWalletGame() {
     const winnerIndex = Number(winner) < 4 ? Number(winner) : 0;
     const [playerScore, tickerScore, configs] = await Promise.all([
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "playerTickerScore",
         args: [address, winnerIndex],
       }),
       publicClient.readContract({
-        address: configuredRoundAddress,
+        address: activeRoundAddress,
         abi: lastBellAbi,
         functionName: "tickerScore",
         args: [winnerIndex],
@@ -157,7 +161,7 @@ export function useWalletGame() {
       Promise.all(
         [0n, 1n, 2n, 3n].map((index) =>
           publicClient.readContract({
-            address: configuredRoundAddress,
+            address: activeRoundAddress,
             abi: lastBellAbi,
             functionName: "tickerConfigs",
             args: [index],
@@ -215,7 +219,7 @@ export function useWalletGame() {
           : 0,
       refundUsd: Number(phase) === 5 && !refundClaimed ? spentUsd : 0,
     });
-  }, [address, publicClient]);
+  }, [activeRoundAddress, address, publicClient]);
 
   useEffect(() => {
     const initial = window.setTimeout(
@@ -239,7 +243,7 @@ export function useWalletGame() {
       address: configuredPaymentToken,
       abi: devDollarAbi,
       functionName: "allowance",
-      args: [address, configuredRoundAddress],
+      args: [address, configuredPaymentRouter],
     });
     if (allowance >= BigInt(sessionApproval.refreshBelowUsd * 1e6)) return;
     setAction("approving");
@@ -249,7 +253,7 @@ export function useWalletGame() {
       address: configuredPaymentToken,
       abi: devDollarAbi,
       functionName: "approve",
-      args: [configuredRoundAddress, BigInt(sessionApproval.amountUsd * 1e6)],
+      args: [configuredPaymentRouter, BigInt(sessionApproval.amountUsd * 1e6)],
     });
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") {
@@ -279,7 +283,7 @@ export function useWalletGame() {
         const hash = await walletClient.data.writeContract({
           account: address,
           chain: configuredGameChain,
-          address: configuredRoundAddress,
+          address: activeRoundAddress,
           abi: lastBellAbi,
           functionName: "claimBell",
           args: [market.tickerIndex, market.report, market.tickerIndex],
@@ -297,7 +301,15 @@ export function useWalletGame() {
         setAction("idle");
       }
     },
-    [address, ensureAllowance, publicClient, ready, refresh, walletClient.data],
+    [
+      activeRoundAddress,
+      address,
+      ensureAllowance,
+      publicClient,
+      ready,
+      refresh,
+      walletClient.data,
+    ],
   );
 
   const enter = useCallback(
@@ -326,7 +338,7 @@ export function useWalletGame() {
         address: configuredPaymentToken,
         abi: devDollarAbi,
         functionName: "approve",
-        args: [configuredRoundAddress, 0n],
+        args: [configuredPaymentRouter, 0n],
       });
       await publicClient.waitForTransactionReceipt({ hash });
       await refresh();
@@ -351,7 +363,7 @@ export function useWalletGame() {
         const hash = await walletClient.data.writeContract({
           account: address,
           chain: configuredGameChain,
-          address: configuredRoundAddress,
+          address: activeRoundAddress,
           abi: lastBellAbi,
           functionName,
         });
@@ -362,7 +374,7 @@ export function useWalletGame() {
         setAction("idle");
       }
     },
-    [address, publicClient, refresh, walletClient.data],
+    [activeRoundAddress, address, publicClient, refresh, walletClient.data],
   );
 
   return useMemo(

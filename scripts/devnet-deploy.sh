@@ -19,6 +19,7 @@ session_player="0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
 export PATH="$HOME/.foundry/bin:$PATH"
 export DEPLOYER_ADDRESS="$deployer"
 cd "$project_root"
+rm -f "$project_root/.devnet/round-rollover.json"
 
 send_checked() {
   local receipt
@@ -38,11 +39,12 @@ forge script script/DeployLocal.s.sol:DeployLocal \
 
 broadcast_file="$project_root/broadcast/DeployLocal.s.sol/31337/run-latest.json"
 token_address="$(jq -r '.transactions[] | select(.contractName == "MockUSDG") | .contractAddress' "$broadcast_file" | head -n1)"
+payment_router_address="$(jq -r '.transactions[] | select(.contractName == "PaymentRouter") | .contractAddress' "$broadcast_file" | head -n1)"
 verifier_address="$(jq -r '.transactions[] | select(.contractName == "MockMarketDataVerifier") | .contractAddress' "$broadcast_file" | head -n1)"
 mapfile -t stock_addresses < <(jq -r '.transactions[] | select(.contractName == "MockStockToken") | .contractAddress' "$broadcast_file")
 round_address="$(jq -r '.transactions[] | select(.contractName == "LastBellRound") | .contractAddress' "$broadcast_file" | head -n1)"
 
-if [[ -z "$token_address" || -z "$verifier_address" || ${#stock_addresses[@]} -ne 4 || -z "$round_address" || "$token_address" == "null" || "$round_address" == "null" ]]; then
+if [[ -z "$token_address" || -z "$payment_router_address" || -z "$verifier_address" || ${#stock_addresses[@]} -ne 4 || -z "$round_address" || "$token_address" == "null" || "$payment_router_address" == "null" || "$round_address" == "null" ]]; then
   echo "Could not recover deployed addresses from $broadcast_file." >&2
   exit 1
 fi
@@ -68,7 +70,7 @@ for index in "${!accounts[@]}"; do
   ticker="$((index % 4))"
   send_checked "$token_address" "mint(address,uint256)" "$account" 100000000 \
     --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
-  send_checked "$token_address" "approve(address,uint256)" "$round_address" 100000000 \
+  send_checked "$token_address" "approve(address,uint256)" "$payment_router_address" 100000000 \
     --rpc-url "$rpc_url" --unlocked --from "$account" --gas-limit 150000
   send_checked "${stock_addresses[$ticker]}" "mint(address,uint256)" "$account" 1 \
     --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
@@ -92,6 +94,7 @@ jq -n \
   --arg rpcUrl "$rpc_url" \
   --arg deployer "$deployer" \
   --arg token "$token_address" \
+  --arg paymentRouter "$payment_router_address" \
   --arg verifier "$verifier_address" \
   --arg round "$round_address" \
   --arg sessionPlayer "$session_player" \
@@ -102,6 +105,7 @@ jq -n \
     rpcUrl: $rpcUrl,
     deployer: $deployer,
     devDollar: $token,
+    paymentRouter: $paymentRouter,
     marketVerifier: $verifier,
     stockTokens: $stockTokens,
     lastBellRound: $round,
@@ -125,5 +129,6 @@ printf '%s\n' \
 
 echo "LastBellRound: $round_address"
 echo "MockUSDG:      $token_address"
+echo "PaymentRouter: $payment_router_address"
 echo "MockVerifier:  $verifier_address"
 echo "Deployment:    $project_root/deployments/31337.json"

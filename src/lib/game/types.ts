@@ -101,6 +101,7 @@ export interface ClaimEvent {
 }
 
 export interface RoundState {
+  roundId?: string;
   phase: RoundPhase;
   marketMode: MarketMode;
   broadcastLabel: "HEAT CHECK" | "VOLUME CHECK";
@@ -122,6 +123,8 @@ export interface RoundState {
   startedAt?: number;
   deadline?: number;
   hardEnd?: number;
+  settledAt?: number;
+  nextRoundStartsInSeconds?: number;
   winningTicker?: TickerId;
   pools?: {
     holderUsd: number;

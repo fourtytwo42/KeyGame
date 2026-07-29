@@ -112,13 +112,35 @@ Payout allocation must conserve the gross pot.
 ## Timer and economy
 
 - `$1` accepted-claim fee.
-- `$100` reusable allowance target, refreshed only below `$10`.
+- `$100` reusable allowance to the permanent payment router, refreshed only
+  below `$10`; changing round contracts does not require another approval.
 - 45-second opening clock.
 - Two-second accepted live extension.
 - Ten-second Rug Zone with no extension.
 - 180-second hard cap.
 - Pull payments and cancellation refunds.
 - No Stock Token custody or locking.
+
+## Continuous broadcasts
+
+A settled round never leaves the main game idle:
+
+1. Record the final event-derived snapshot in Historical Runs.
+2. Hold Final Transmission for eight seconds so the result is readable.
+3. Transfer the settled round's 15% `nextRoundPool` into the next round.
+4. Configure and start the next numbered round automatically.
+5. Move the studio to the new round without a page rebuild or app restart.
+
+The rollover is single-flight and resumable. A partial operator transaction
+sequence must not duplicate a round, lose the seed, or leave the public
+deployment pointer between contracts. Rewards remain pull payments in their
+original round contracts after the next broadcast starts.
+
+Players approve one permanent payment router rather than each round contract.
+Only operator-authorized round contracts may pull the exact accepted-claim fee.
+The local devnet uses an unattended keeper process. Testnet and production
+require an authenticated, monitored keeper with the same deterministic state
+machine.
 
 ## Producer Pass
 

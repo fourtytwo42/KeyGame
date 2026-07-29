@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import { LastBellRound } from "../contracts/LastBellRound.sol";
+import { PaymentRouter } from "../contracts/PaymentRouter.sol";
 import { MockMarketDataVerifier } from "../contracts/mocks/MockMarketDataVerifier.sol";
 import { MockStockToken } from "../contracts/mocks/MockStockToken.sol";
 import { MockUSDG } from "../contracts/mocks/MockUSDG.sol";
@@ -12,6 +13,7 @@ contract DeployLocal is ScriptBase {
         external
         returns (
             MockUSDG token,
+            PaymentRouter paymentRouter,
             MockMarketDataVerifier verifier,
             MockStockToken nvda,
             MockStockToken aapl,
@@ -24,6 +26,7 @@ contract DeployLocal is ScriptBase {
 
         vm.startBroadcast();
         token = new MockUSDG();
+        paymentRouter = new PaymentRouter(token, deployer);
         verifier = new MockMarketDataVerifier();
         nvda = new MockStockToken("NVDA");
         aapl = new MockStockToken("AAPL");
@@ -60,9 +63,18 @@ contract DeployLocal is ScriptBase {
             )
         ];
         round =
-            new LastBellRound(token, verifier, deployer, deployer, settings, tickers);
+            new LastBellRound(
+                token,
+                paymentRouter,
+                verifier,
+                deployer,
+                deployer,
+                settings,
+                tickers
+            );
+        paymentRouter.setRoundAuthorization(address(round), true);
         token.mint(deployer, 1_000_000e6);
-        token.approve(address(round), 50e6);
+        token.approve(address(paymentRouter), 50e6);
         vm.stopBroadcast();
     }
 }

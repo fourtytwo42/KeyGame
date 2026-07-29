@@ -13,6 +13,7 @@ import { shortAddress } from "@/lib/game/constants";
 import { walletConnectConfigured } from "@/lib/web3/config";
 import {
   configuredGameChain,
+  configuredPaymentRouter,
   configuredPaymentToken,
   configuredRoundAddress,
   useWalletGame,
@@ -20,13 +21,16 @@ import {
 
 export function WalletPanel() {
   const [open, setOpen] = useState(false);
+  const [currentRoundAddress, setCurrentRoundAddress] = useState(
+    configuredRoundAddress,
+  );
   const panelRef = useRef<HTMLDivElement>(null);
   const { address, chain, isConnected, status } = useAccount();
   const balance = useBalance({ address });
   const { connectors, connect, error, isPending } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: switching } = useSwitchChain();
-  const game = useWalletGame();
+  const game = useWalletGame(currentRoundAddress);
 
   useEffect(() => {
     if (!open) return;
@@ -36,6 +40,18 @@ export function WalletPanel() {
     window.addEventListener("keydown", onKey);
     panelRef.current?.focus();
     return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch("/api/devnet/snapshot", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload: { state?: { contractAddress?: `0x${string}` } }) => {
+        if (payload.state?.contractAddress) {
+          setCurrentRoundAddress(payload.state.contractAddress);
+        }
+      })
+      .catch(() => undefined);
   }, [open]);
 
   const uniqueConnectors = connectors.filter(
@@ -131,9 +147,11 @@ export function WalletPanel() {
                 </dl>
                 <div className="proofField">
                   <span>ROUND CONTRACT</span>
-                  <code>{configuredRoundAddress}</code>
+                  <code>{currentRoundAddress}</code>
                   <span>FEE TOKEN</span>
                   <code>{configuredPaymentToken}</code>
+                  <span>APPROVAL ROUTER</span>
+                  <code>{configuredPaymentRouter}</code>
                 </div>
                 {chain?.id !== configuredGameChain.id ? (
                   <button

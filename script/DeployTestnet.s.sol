@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import { LastBellRound } from "../contracts/LastBellRound.sol";
+import { PaymentRouter } from "../contracts/PaymentRouter.sol";
 import { IERC20 } from "../contracts/interfaces/IERC20.sol";
 import { IMarketDataVerifier } from "../contracts/interfaces/IMarketDataVerifier.sol";
 import { ScriptBase } from "./ScriptBase.sol";
@@ -33,14 +34,18 @@ contract DeployTestnet is ScriptBase {
         tickers[3] = _ticker(bytes32("SPY"), "TICKER_3_TOKEN", "TICKER_3_FEED_ID");
 
         vm.startBroadcast();
+        PaymentRouter paymentRouter =
+            PaymentRouter(vm.envAddress("PAYMENT_ROUTER_ADDRESS"));
         round = new LastBellRound(
             IERC20(vm.envAddress("PAYMENT_TOKEN_ADDRESS")),
+            paymentRouter,
             IMarketDataVerifier(vm.envAddress("MARKET_VERIFIER_ADDRESS")),
             deployer,
             vm.envAddress("TREASURY_ADDRESS"),
             settings,
             tickers
         );
+        paymentRouter.setRoundAuthorization(address(round), true);
         vm.stopBroadcast();
     }
 

@@ -48,7 +48,7 @@ export function LiveGame({
   const [announcement, setAnnouncement] = useState(
     "Live broadcast synchronized.",
   );
-  const walletGame = useWalletGame();
+  const walletGame = useWalletGame(state.contractAddress);
   const activeSession = walletGame.isConnected
     ? walletGame.session
     : guestSession;
@@ -388,7 +388,7 @@ export function LiveGame({
 
         <section className={`broadcastArena phase-${state.phase}`}>
           <div className="lowerThird">
-            <span>ROUND {roundConfig.roundId}</span>
+            <span>ROUND {state.roundId ?? roundConfig.roundId}</span>
             <strong>{formatUsd(state.potUsd)} POT</strong>
             <span className={`signalState signal-${state.freshness}`}>
               {state.freshness === "live" ? "LIVE DATA" : state.freshness}
@@ -790,6 +790,12 @@ function FinalTransmission({
         <span>NEXT ROUND · {formatUsd(nextRound)}</span>
         <span>PROTOCOL · {formatUsd(protocol)}</span>
       </div>
+      {typeof state.nextRoundStartsInSeconds === "number" ? (
+        <p className="nextRoundNotice" role="status">
+          NEXT BROADCAST STARTS AUTOMATICALLY IN{" "}
+          {state.nextRoundStartsInSeconds}s
+        </p>
+      ) : null}
       {claimable.holderUsd > 0 || claimable.closingPrintUsd > 0 ? (
         <div className="claimActions">
           {claimable.holderUsd > 0 ? (

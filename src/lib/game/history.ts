@@ -29,10 +29,11 @@ async function writeRuns(runs: HistoricalRun[]) {
 }
 
 function archiveId(state: RoundState) {
+  const roundId = state.roundId ?? roundConfig.roundId;
   const identity =
     state.settlementTx ??
     `${state.contractAddress ?? "sim"}-${state.blockNumber ?? "unknown"}`;
-  return `${roundConfig.roundId}-${identity.replace(/^0x/, "").slice(-12)}`;
+  return `${roundId}-${identity.replace(/^0x/, "").slice(-12)}`;
 }
 
 export async function recordCompletedRun(state: RoundState) {
@@ -45,7 +46,7 @@ export async function recordCompletedRun(state: RoundState) {
 
     runs.unshift({
       id,
-      roundId: roundConfig.roundId,
+      roundId: state.roundId ?? roundConfig.roundId,
       finishedAt: state.updatedAt,
       peakPotUsd: state.potUsd,
       finalHolder: state.holder?.displayName ?? "NO FINAL CALLER",

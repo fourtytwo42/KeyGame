@@ -1,3 +1,7 @@
+import { execFile } from "node:child_process";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 import {
   createPublicClient,
   createWalletClient,
@@ -27,6 +31,7 @@ type DevnetDeployment = {
   rpcUrl: string;
   deployer: Address;
   devDollar: Address;
+  paymentRouter: Address;
   marketVerifier?: Address;
   stockTokens?: Address[];
   lastBellRound: Address;
@@ -35,11 +40,13 @@ type DevnetDeployment = {
 };
 
 const deployment = deploymentJson as DevnetDeployment;
+const deploymentPath = path.join(process.cwd(), "deployments", "31337.json");
 const serverRpc = process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545";
-export const roundAddress = (process.env.NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS ||
+export let roundAddress = (process.env.NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS ||
   deployment.lastBellRound) as Address;
-export const devDollarAddress = (process.env.NEXT_PUBLIC_DEV_DOLLAR_ADDRESS ||
+export let devDollarAddress = (process.env.NEXT_PUBLIC_DEV_DOLLAR_ADDRESS ||
   deployment.devDollar) as Address;
+export let paymentRouterAddress = deployment.paymentRouter;
 const playerAddresses = deployment.players;
 export const devnetSessionPlayer =
   deployment.sessionPlayer ||
@@ -50,6 +57,25 @@ export const devnetPublicClient = createPublicClient({
   cacheTime: 0,
   transport: http(serverRpc),
 });
+
+function refreshDeployment() {
+  if (process.env.NEXT_PUBLIC_GAME_MODE !== "devnet") return;
+  const current = JSON.parse(
+    readFileSync(deploymentPath, "utf8"),
+  ) as DevnetDeployment;
+  roundAddress = current.lastBellRound;
+  devDollarAddress = current.devDollar;
+  paymentRouterAddress = current.paymentRouter;
+}
+
+export function getCurrentDevnetDeployment() {
+  refreshDeployment();
+  return {
+    roundAddress,
+    devDollarAddress,
+    paymentRouterAddress,
+  };
+}
 
 const tickerId = (value: number): TickerId =>
   tickerSlots[value]?.id ?? tickerSlots[0].id;
@@ -71,6 +97,7 @@ const unitsToUsd = (value: bigint) => Number(value) / 1e6;
 const reportPrice = (value: bigint) => Number(value) / 1e8;
 
 export async function createMockMarketReport(ticker: TickerId) {
+  refreshDeployment();
   const index = tickerSlots.findIndex((slot) => slot.id === ticker);
   if (index < 0) throw new Error("Unknown ticker.");
   const [config, opening, block, acceptedClaims, mode] = await Promise.all([
@@ -140,13 +167,16 @@ export async function createMockMarketReport(ticker: TickerId) {
 }
 
 export async function getDevnetSnapshot(): Promise<RoundState> {
+  refreshDeployment();
   const [
+    currentRoundId,
     phase,
     mode,
     passRequired,
     startedAt,
     deadline,
     hardEnd,
+    settledAt,
     pot,
     holder,
     holderTicker,
@@ -159,6 +189,11 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
     acceptedClaims,
     block,
   ] = await Promise.all([
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "roundId",
+    }),
     devnetPublicClient.readContract({
       address: roundAddress,
       abi: lastBellAbi,
@@ -188,6 +223,11 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       address: roundAddress,
       abi: lastBellAbi,
       functionName: "hardEnd",
+    }),
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "settledAt",
     }),
     devnetPublicClient.readContract({
       address: roundAddress,
@@ -408,6 +448,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
           : "live"
       : chainPhase;
   return {
+    roundId: currentRoundId.toString(),
     phase: displayedPhase,
     marketMode: Number(mode) === 1 ? "VERIFIED" : "FLAT",
     broadcastLabel: Number(mode) === 1 ? "HEAT CHECK" : "VOLUME CHECK",
@@ -455,6 +496,11 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
     startedAt: Number(startedAt),
     deadline: deadlineNumber,
     hardEnd: hardEndNumber,
+    settledAt: Number(settledAt) || undefined,
+    nextRoundStartsInSeconds:
+      displayedPhase === "settled"
+        ? Math.max(0, Number(settledAt) + DEVNET_INTERMISSION_SECONDS - now)
+        : undefined,
     winningTicker:
       Number(winningTicker) < 4 ? tickerId(Number(winningTicker)) : undefined,
     pools: {
@@ -485,7 +531,7 @@ export async function getDevnetSession(
         address: devDollarAddress,
         abi: devDollarAbi,
         functionName: "allowance",
-        args: [player, roundAddress],
+        args: [player, paymentRouterAddress],
       }),
       devnetPublicClient.readContract({
         address: roundAddress,
@@ -647,7 +693,7 @@ async function approveSession(account: Address, amount: bigint): Promise<Hash> {
     address: devDollarAddress,
     abi: devDollarAbi,
     functionName: "approve",
-    args: [roundAddress, amount],
+    args: [paymentRouterAddress, amount],
     gas: 150_000n,
   });
   await devnetPublicClient.waitForTransactionReceipt({ hash });
@@ -665,6 +711,7 @@ export type DevnetAction =
   | "claim-refund";
 
 export async function fundDevnetWallet(player: Address, amountUsd = 25) {
+  refreshDeployment();
   const account = deployment.deployer;
   const walletClient = createWalletClient({
     account,
@@ -691,6 +738,7 @@ export async function sendDevnetAction(
   action: DevnetAction,
   ticker?: TickerId,
 ) {
+  refreshDeployment();
   let hash: Hash;
   if (action === "enter" || action === "claim") {
     if (!tickerSlots.some((item) => item.id === ticker)) {
@@ -700,7 +748,7 @@ export async function sendDevnetAction(
       address: devDollarAddress,
       abi: devDollarAbi,
       functionName: "allowance",
-      args: [devnetSessionPlayer, roundAddress],
+      args: [devnetSessionPlayer, paymentRouterAddress],
     });
     if (allowance < BigInt(sessionApproval.refreshBelowUsd * 1e6)) {
       await approveSession(
@@ -745,4 +793,47 @@ export async function sendDevnetAction(
     state: await getDevnetSnapshot(),
     ...(await getDevnetSession()),
   };
+}
+
+export const DEVNET_INTERMISSION_SECONDS = 8;
+const execFileAsync = promisify(execFile);
+let progressionPromise: Promise<RoundState> | null = null;
+
+async function progressDevnetRound(state: RoundState): Promise<RoundState> {
+  let current = state;
+  if (current.phase === "finalizing") {
+    try {
+      current = (await sendDevnetAction("finalize")).state;
+    } catch {
+      current = await getDevnetSnapshot();
+      if (current.phase !== "settled")
+        throw new Error("Round finalization failed.");
+    }
+  }
+
+  if (
+    current.phase !== "settled" ||
+    (current.nextRoundStartsInSeconds ?? DEVNET_INTERMISSION_SECONDS) > 0
+  ) {
+    return current;
+  }
+
+  await execFileAsync("bash", ["scripts/devnet-next-round.sh"], {
+    cwd: process.cwd(),
+    env: process.env,
+    timeout: 120_000,
+    maxBuffer: 1024 * 1024,
+  });
+  refreshDeployment();
+  return getDevnetSnapshot();
+}
+
+export async function ensureDevnetRoundProgression(state: RoundState) {
+  if (state.phase !== "finalizing" && state.phase !== "settled") return state;
+  if (!progressionPromise) {
+    progressionPromise = progressDevnetRound(state).finally(() => {
+      progressionPromise = null;
+    });
+  }
+  return progressionPromise;
 }
