@@ -505,6 +505,14 @@ function EntryDesk({
         <h1>Pick the first print</h1>
         <p>Your first $1 call starts the 45-second broadcast clock.</p>
       </div>
+      <div
+        className="entryClock"
+        aria-label="Broadcast clock ready at 45 seconds"
+      >
+        <strong>00:45</strong>
+        <span>BROADCAST CLOCK</span>
+        <small>WAITING · FIRST $1 STARTS IT</small>
+      </div>
       <div className="factionGrid">
         {roundConfig.tickers.map((ticker) => (
           <button

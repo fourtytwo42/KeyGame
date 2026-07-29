@@ -177,6 +177,8 @@ Entry Desk:
 - local starter selection;
 - `ENTER WITH {TICKER} · $1`.
 - explicit notice that the first `$1` claim starts the timer.
+- a dominant `00:45` armed-clock display that remains fixed while waiting and
+  visually hands off to the live countdown after the first accepted claim.
 
 Live Studio:
 

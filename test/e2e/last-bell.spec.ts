@@ -24,10 +24,14 @@ test("real devnet starter ticker is the first paid claim", async ({
       .catch(() => false)
   ) {
     await expect(page.getByText("TIMER WAITS FOR YOU")).toBeVisible();
-    await expect(page.getByText("BROADCAST CLOCK")).not.toBeVisible();
+    await expect(page.locator(".entryClock")).toContainText("00:45");
+    await expect(page.locator(".entryClock")).toContainText(
+      "WAITING · FIRST $1 STARTS IT",
+    );
+    await expect(page.locator(".clockAssembly")).not.toBeVisible();
     await page.getByRole("button", { name: /AAPL.*FLAT/i }).click();
     await page.getByRole("button", { name: /ENTER WITH AAPL · \$1/i }).click();
-    await expect(page.getByText("BROADCAST CLOCK")).toBeVisible();
+    await expect(page.locator(".clockAssembly")).toBeVisible();
     await expect(page.locator(".clockAssembly strong")).toContainText("00:4");
     await expect(page.getByText(/PRODUCER PASS/i).first()).toBeVisible();
     await expect(page.getByText("$99").first()).toBeVisible();

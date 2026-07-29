@@ -32,6 +32,9 @@ Durable project context lives here. Update this file whenever information should
   claim starts the clock and does not receive the later-claim extension.
   Rollover is single-flight and uses `.devnet/round-rollover.json` to resume
   safely after partial transaction sequences.
+- The waiting Entry Desk makes the timer visually dominant with a fixed
+  `00:45` broadcast-clock slab labeled `WAITING · FIRST $1 STARTS IT`. The live
+  countdown replaces it after the opening claim.
 - Desktop `/play/` routes use a fixed viewport-height studio. At widths above 820px the page footer is suppressed, the broadcast grid consumes only the space below the header/source bar, and height-aware sizing keeps the complete studio visible without vertical document scrolling.
 - `docs/prd/09-implementation-gap-audit.md` records implemented gaps, intentional product gates, and external launch prerequisites.
 - Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-29.
@@ -187,6 +190,7 @@ When sources conflict, use this order:
 - 2026-07-29: Continuous-round Playwright acceptance passed 14/14 applicable desktop and Pixel 7 checks with two intentional cross-profile skips after correcting the Historical Runs foreground fallback from the undefined `--paper` token to `--dead-air`. The VM's Chromium runtime libraries are locally extracted under `.devnet/playwright-root`; use that directory in `LD_LIBRARY_PATH` unless the dependencies are installed system-wide.
 - 2026-07-29: First-claim timer-start verification passed on the VM: 17 Forge tests, 24 app tests, four live-Anvil integration tests, lint, typecheck, production build, and 14 applicable Playwright checks with two intentional skips. In-app browser UAT observed a waiting carried-seed round with no holder, then a successful first $1 claim at exactly 00:45. Devnet report generation now mines a fresh block before encoding deterministic reports so Anvil time offsets cannot expire the first post-rollover claim.
 - 2026-07-29: Final clean devnet handoff left deterministic round 4663 on the Entry Desk with a $50 seed pot, `startedAt == 0`, no holder, and zero claims across repeated checks. The keeper remains running but will not start the timer.
+- 2026-07-29: Added the prominent waiting-state `00:45` clock after user feedback that the pot and spread visually obscured the main mechanic. VM lint, typecheck, 24 app tests, production build, and 14 applicable Playwright checks passed with two intentional skips. In-app browser review confirmed the timer is visible at desktop and 390x844 mobile widths, desktop studio bottom equals the viewport bottom, and neither layout has horizontal overflow.
 
 ## Decisions
 
@@ -295,6 +299,9 @@ When sources conflict, use this order:
   initialization into the first accepted claim, added waiting-state copy and
   regression coverage, and hardened devnet report freshness across Anvil time
   offsets.
+- 2026-07-29: Promoted the timer above the ticker controls on the Entry Desk
+  with an armed `00:45` scoreboard that remains visually distinct from the pot
+  and Closing Print spread.
 
 ## Open Follow-ups
 

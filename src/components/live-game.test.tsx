@@ -33,6 +33,10 @@ describe("LiveGame", () => {
     expect(
       screen.getByText(/first \$1 call starts the 45-second broadcast clock/i),
     ).toBeInTheDocument();
+    expect(screen.getByText("00:45")).toBeInTheDocument();
+    expect(
+      screen.getByText(/WAITING · FIRST \$1 STARTS IT/i),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /AAPL.*FLAT/i }));
     fireEvent.click(
       screen.getByRole("button", { name: "ENTER WITH AAPL · $1" }),

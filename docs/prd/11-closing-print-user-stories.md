@@ -49,6 +49,8 @@ a transaction.
 As a new player, pressing `ENTER WITH {TICKER} · $1` checks allowance and
 submits the first bell claim without a separate entry transaction. That
 accepted claim starts the 45-second timer; configuration and waiting do not.
+Before entry, a prominent `00:45` armed clock makes the round duration and
+start trigger unmistakable.
 
 ### `CP-ENTRY-003` Use one reusable approval
 
