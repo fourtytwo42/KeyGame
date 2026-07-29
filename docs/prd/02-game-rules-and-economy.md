@@ -1,5 +1,9 @@
 # PRD 02: Game Rules and Economy
 
+> `D-020` override: ticker-per-claim market scoring in
+> [PRD 10](./10-closing-print-market-reactive.md) replaces all permanent
+> faction, separate-entry, lock, and faction-pool rules below.
+
 Status: Exact prototype specification. Four factions, timer values, `$1` test
 interaction, and 50/30/15/5 settlement are selected as configurable simulation
 defaults; production economics and Stock Token entry remain unapproved.

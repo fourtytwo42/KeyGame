@@ -1,5 +1,10 @@
 # Channel 4663 UI Design
 
+> Closing Print adaptation: retain this off-beat broadcast visual system, but
+> replace faction selection and airtime with four per-claim ticker buttons,
+> market bands, multipliers, and `THE CLOSING PRINT` in
+> [PRD 10](./prd/10-closing-print-market-reactive.md).
+
 Status: Selected visual and frontend direction for `Last Bell: Ticker Royale` on 2026-07-28.
 
 ## Decision
@@ -165,8 +170,9 @@ Do not continuously move essential text. The crawl updates in discrete readable 
 
 - Dead Air canvas.
 - Ticker contestants appear as numbered channels.
-- Two inputs only: `YOUR BAG` and `MAX SPEND`.
+- One input only: `YOUR BAG`.
 - Primary action: `ENTER ROUND`.
+- Supporting approval line: `$100 PLAY USDG · REFRESH BELOW $10 · REVOKE ANY TIME`.
 - Supporting line: `Your Stock Token unlocks after settlement.`
 
 ### On Air

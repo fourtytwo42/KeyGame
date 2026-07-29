@@ -1,5 +1,10 @@
 # PRD 08: Comprehensive User Stories
 
+> `D-020` override: current stories are the ticker-per-claim, report, weighted
+> score, Closing Print, and Producer Pass stories in
+> [PRD 10](./10-closing-print-market-reactive.md). Immutable-faction stories
+> below are retired and must not be implemented.
+
 Status: Stage 0 and Milestone 1 backlog approved for implementation. Stories
 still inherit the decision status of their source requirements and do not
 approve an open or gated production behavior.
@@ -159,29 +164,29 @@ actually occurred.
   - Once entry is accepted, the wallet cannot switch factions for that round.
 - **Trace:** `GAME-010`, `GAME-011`, `GAME-012`, `UX-A11Y-002`.
 
-### `US-ENTRY-002`: Understand the entry commitment
+### `US-ENTRY-002`: Understand the entry approval
 
-- **Story:** As a first-time player, I want to see my selected bag, maximum
-  spend, available actions, and any entry lock before authorizing so that I
+- **Story:** As a first-time player, I want to see my selected bag, $1 action
+  price, reusable allowance, and revocation rule before authorizing so that I
   understand the commitment.
 - **Priority / applicability:** `P0`, `Stage 0+`.
 - **Acceptance criteria:**
-  - The confirmation surface shows `YOUR BAG`, `MAX SPEND`, action count, entry
-    mode, withdrawal timing, and whether network gas is sponsored.
-  - Paid value, locked principal, and action budget are displayed as separate
+  - The confirmation surface shows `YOUR BAG`, the $100 play-USDG approval,
+    the $10 refresh threshold, entry mode, and whether network gas is sponsored.
+  - Paid value, locked principal, token allowance, and round spend are separate
     concepts.
 - **Trace:** `PRD-002`, `PRD-004`, `PRD-009`, `UX-002`, `TECH-036`.
 
-### `US-ENTRY-003`: Select a bounded maximum spend
+### `US-ENTRY-003`: Control the reusable allowance
 
-- **Story:** As a meme trader, I want to choose a hard session maximum before
-  play so that rapid taps cannot spend more than I intended.
+- **Story:** As a meme trader, I want the app to reuse one clear token approval
+  while leaving final approval control in my wallet.
 - **Priority / applicability:** `P0`, `Stage 1+`.
 - **Acceptance criteria:**
-  - The selected amount is translated into an exact maximum number of accepted
-    actions at the configured action price.
-  - The contract or session policy rejects an action that would exceed the
-    maximum even if the interface is stale or compromised.
+  - Entry requests a $100 play-USDG approval only when allowance is below $10.
+  - The player can reject, change, or revoke approval in the wallet.
+  - Each accepted claim consumes exactly $1 and allowance is never refreshed
+    without another wallet confirmation.
 - **Trace:** `PRD-002`, `PRD-004`, `TECH-030`, `TECH-033`, `QA-005`, `RISK-014`.
 
 ### `US-ENTRY-004`: Confirm an accepted entry
@@ -209,7 +214,7 @@ actually occurred.
 - **Trace:** `GAME-014`, `GAME-017`, `GAME-018`, `TECH-SEC-004`,
   `TECH-SEC-006`, `RISK-009`, `RISK-010`.
 
-## Epic 3: Wallet and bounded session
+## Epic 3: Wallet and reusable allowance
 
 ### `US-SESS-001`: Connect only when participation requires it
 
@@ -223,27 +228,28 @@ actually occurred.
     flow with the selected round context preserved.
 - **Trace:** `PRD-008`, `UX-001`, `TECH-PERF-006`.
 
-### `US-SESS-002`: Authorize one bounded round session
+### `US-SESS-002`: Authorize one reusable allowance
 
-- **Story:** As a funded participant, I want one narrowly scoped authorization
-  followed by one-tap claims so that play is fast without granting broad wallet
-  authority.
+- **Story:** As a funded participant, I want one reusable token approval
+  followed by one-tap claims so that normal play does not prompt on every call.
 - **Priority / applicability:** `P0`, `Stage 1+`.
 - **Acceptance criteria:**
-  - Authorization is scoped to one chain, round, contract, action function, fee
-    token, and maximum amount.
+  - Approval is scoped to the configured chain, round contract, fee token, and
+    $100 amount.
+  - Above $10 remaining allowance, claims do not request another approval.
+  - Below $10, the next claim requests a new $100 approval.
   - The normal path does not request unlimited token approval.
 - **Trace:** `PRD-002`, `TECH-002`, `TECH-030`, `TECH-034`.
 
 ### `US-SESS-003`: Inspect the active session
 
-- **Story:** As a player, I want to inspect the session scope and remaining
-  budget during a round so that I can verify what the app can still do.
+- **Story:** As a player, I want to inspect the remaining allowance and round
+  spend so that I can verify what the app can still do.
 - **Priority / applicability:** `P0`, `Stage 1+`.
 - **Acceptance criteria:**
-  - The session panel displays wallet identity, round, maximum spend, spent
-    amount, remaining amount and actions, expiry, fee token, and action scope.
-  - Session budget, wallet balance, locked principal, game fee, and network gas
+  - The session panel displays wallet identity, round, approved allowance,
+    round spend, remaining allowance and actions, expiry, and fee token.
+  - Token allowance, wallet balance, locked principal, game fee, and network gas
     are not combined into one number.
 - **Trace:** `UX-010`, `TECH-032`, `TECH-036`.
 
@@ -625,7 +631,7 @@ actually occurred.
 - **Acceptance criteria:**
   - The flow either explains a user-paid gas alternative before submission or
     stops submission.
-  - The session budget and `$1` game fee remain distinct from network gas.
+  - The token allowance, round spend, and `$1` game fee remain distinct from network gas.
 - **Trace:** `TECH-037`, `TECH-036`.
 
 ### `US-INC-004`: Recover from round cancellation

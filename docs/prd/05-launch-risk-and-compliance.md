@@ -1,5 +1,9 @@
 # PRD 05: Launch, Risk, and Compliance
 
+> `D-020` override: Stock Tokens are never deposited or locked. Producer Pass
+> is a binary balance check, and production remains gated as specified in
+> [PRD 10](./10-closing-print-market-reactive.md).
+
 Status: Risk framework and launch gates. This is a product requirement, not legal advice.
 
 ## Launch principle
@@ -38,7 +42,7 @@ Scope:
 - Sponsored test gas.
 - Synthetic ticker factions.
 - Faucet-issued or non-transferable action units that mimic the $1 interaction.
-- Bounded session authorization.
+- Explicit reusable token allowance, visible remaining approval, threshold refresh confirmation, and revocation.
 - Public replay and receipts.
 
 Exit gates:

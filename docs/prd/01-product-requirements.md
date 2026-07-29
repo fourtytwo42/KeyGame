@@ -1,5 +1,9 @@
 # PRD 01: Product Requirements
 
+> `D-020` override: Closing Print replaces permanent ticker factions. Use
+> [PRD 10](./10-closing-print-market-reactive.md) for current requirements;
+> faction passages below are retained as superseded decision history.
+
 Status: Stage 0 implementation baseline approved. The first public MVP is
 Robinhood Chain testnet points; value-bearing stages remain gated.
 
@@ -24,7 +28,7 @@ Last Bell must create:
 - A meaningful onchain action with visible ordering.
 - A social faction identity connected to Stock Tokens.
 - A result worth sharing whether the player won or got rugged.
-- A transparent spend ceiling and public replay.
+- A transparent, revocable play-token allowance and public replay.
 
 ## Product hypothesis
 
@@ -74,9 +78,9 @@ Needs transparent round scheduling, supported-asset controls, incident visibilit
 | ID | Goal |
 |---|---|
 | `PRD-001` | A first-time visitor can state the action cost, primary win condition, and current holder within five seconds. |
-| `PRD-002` | A funded participant can enter with one bounded authorization and make later round actions with one tap. |
+| `PRD-002` | A funded participant can enter with one reusable $100 play-USDG approval and make later round actions with one tap; approval is requested again only below a $10 allowance threshold. |
 | `PRD-003` | Every accepted state transition is reconstructible from public events. |
-| `PRD-004` | The player always sees the remaining round budget or number of actions. |
+| `PRD-004` | The player can inspect the remaining USDG allowance or equivalent number of actions in the session panel. |
 | `PRD-005` | Every round ends no later than its published hard end. |
 | `PRD-006` | The main mobile arena remains usable at 320 CSS pixels. |
 | `PRD-007` | Wins, losses, rugs, snipes, and comebacks produce deterministic share receipts. |
@@ -113,9 +117,9 @@ Slang decorates an already-understood event:
 
 The final holder is the headline winner. The faction pool is visibly secondary.
 
-### Bounded loss
+### Explicit reusable allowance
 
-The player chooses a maximum session budget before play. The interface never hides remaining spend.
+The player approves $100 of play USDG once. Each accepted action consumes $1. When the allowance falls below $10, the next action asks the player to refresh it to $100. The player may reject, change, or revoke the approval through the wallet.
 
 ### Public truth
 
@@ -145,7 +149,7 @@ If Stock Token entry is enabled, the deposited token amount is not used to fund 
 - Points or non-transferable test rewards.
 - Faucet-issued or non-transferable test action units mirroring the $1 production interaction.
 - Sponsored test gas.
-- Bounded session authorization.
+- Reusable $100 play-USDG approval with a $10 refresh threshold and explicit revocation.
 - Live event ingestion and replay.
 - No canonical Stock Token custody.
 - No player-funded prize.
@@ -162,7 +166,7 @@ If Stock Token entry is enabled, the deposited token amount is not used to fund 
 
 | ID | Requirement | Priority |
 |---|---|---|
-| `PRD-011` | The first arena viewport must show the rule, pot, countdown, holder, ticker, action price, and remaining budget without opening another view. | P0 |
+| `PRD-011` | The first arena viewport must show the rule, pot, countdown, holder, ticker, and action price; remaining allowance is available in the session panel. | P0 |
 | `PRD-012` | The user must be able to choose one of exactly four factions offered by the round. | P0 |
 | `PRD-013` | A user's faction cannot change after the round entry is accepted. | P0 |
 | `PRD-014` | The action control must show `APE FOR THE BELL` and the exact charge before submission. | P0 |
@@ -185,7 +189,7 @@ The testnet MVP is ready for a limited pilot when:
 - At least 85% of moderated first-time testers answer the five comprehension questions correctly without coaching.
 - At least 95% of observed accepted claims appear in the correct UI order during load testing.
 - The user never sees a false accepted-holder state in end-to-end tests.
-- At least 90% of test participants can set and explain their session budget.
+- At least 90% of test participants can explain the reusable allowance, $1 consumption, refresh threshold, and revocation.
 - All P0 acceptance tests in PRD 06 pass.
 
 Retention and sharing targets are hypotheses, not launch blockers, and are defined in PRD 06.

@@ -1,5 +1,9 @@
 # PRD 03: Experience and Interface
 
+> `D-020` override: Entry is the first paid ticker claim, Live Studio has four
+> one-tap ticker controls, and `THE CLOSING PRINT` replaces faction airtime.
+> See [PRD 10](./10-closing-print-market-reactive.md).
+
 Status: Channel 4663 direction is selected. Detailed flows are implementation requirements for MVP-0 and MVP-1.
 
 Visual reference: [complete ImageGen screen gallery](../design/screens/README.md).
@@ -23,7 +27,7 @@ The live arena hierarchy is fixed:
 3. Current holder and ticker.
 4. Pot and exact action price.
 5. Main action.
-6. Remaining session budget.
+6. Remaining USDG allowance or action count.
 7. Faction airtime bonus.
 8. The Trenches activity.
 9. Secondary navigation and wallet details.
@@ -51,13 +55,12 @@ Outcome: the spectator understands the state without a wallet prompt.
 Flow:
 
 1. Select `YOUR BAG`.
-2. Select `MAX SPEND`, initially $5, $10, or $25.
-3. See entry asset, lock amount, action price, maximum number of actions, gas treatment, and withdrawal rule.
-4. Select `ENTER ROUND`.
-5. Complete one bounded authorization.
-6. Receive a confirmed faction and session-budget state.
+2. See the $1 action price, reusable $100 play-USDG approval, $10 refresh threshold, gas treatment, and revocation rule.
+3. Select `ENTER ROUND`.
+4. Approve $100 only if the current allowance is below $10.
+5. Receive a confirmed faction and allowance state.
 
-The player-facing entry setup reads as one bounded operation even if wallet, token, and session steps require multiple internal calls.
+The entry page does not ask the player to choose a maximum spend. The wallet owns the approval decision, and the player may reject, alter, or revoke it.
 
 ### Claim the bell
 
@@ -109,15 +112,15 @@ Flow:
 | ID | Screen | Requirements |
 |---|---|---|
 | `UX-001` | Home / next broadcast | Next round, current live round, five-second rules, spectate action, no forced wallet prompt. |
-| `UX-002` | Entry / Off Air | Four factions, lock or eligibility explanation, max-spend choice, action count, one enter action. |
-| `UX-003` | Live / On Air | Rule, pot, countdown, current caller, ticker, airtime, $1 action, remaining budget, Trenches. |
+| `UX-002` | Entry / Off Air | Four factions, lock or eligibility explanation, one reusable-approval disclosure, action count, one enter action. |
+| `UX-003` | Live / On Air | Rule, pot, countdown, current caller, ticker, airtime, $1 action, remaining allowance, Trenches. |
 | `UX-004` | Rug Zone | No-extension state, accepted-order warning, send-it action, exact remaining time. |
 | `UX-005` | Finalizing | Frozen zero clock, no winner animation until settlement evidence, readable pending state. |
 | `UX-006` | Final transmission | Final holder first, exact reward, faction result second, separate claimable balances. |
 | `UX-007` | Replay | Canonical ordered claims, holder intervals, timer changes, final derivation, transaction links. |
 | `UX-008` | Receipt | Shareable 4:5 and 9:16 result, plain result plus meme phrase, round and replay identity. |
 | `UX-009` | Rules | Human rules, exact constants, pot sources, payout split, contract and asset addresses. |
-| `UX-010` | Wallet / session | Active round authorization, maximum and remaining spend, expiration, revoke action. |
+| `UX-010` | Wallet / session | Current play-token allowance, amount spent, estimated calls, refresh rule, and revoke action. |
 | `UX-011` | Supported assets | Canonical address, ticker, status, feed status, entry availability, restriction notice. |
 | `UX-012` | Dead Air / incident | Literal failure explanation, fee status, recovery action, status link. |
 
@@ -127,6 +130,9 @@ These concepts are the implementation-facing visual reference for Channel 4663.
 They define composition, hierarchy, visual language, and responsive intent.
 Requirement tables and current game constants remain authoritative if
 illustrative values inside an image differ from the written PRD.
+The generated concepts predate the reusable-allowance decision: any visible
+max-spend picker or bounded-session copy in those images is superseded by the
+$100 approval, refresh-below-$10, and wallet-revocation requirements above.
 
 ### Design-system reference
 
@@ -234,7 +240,7 @@ are references for implementation, not raster UI assets.
 | Internal state | Broadcast label | Literal explanation |
 |---|---|---|
 | Ready | `STUDIO SWITCH READY` | `Steal the bell for $1.` |
-| Awaiting wallet/session | `LINE CHECK` | `Authorize this round and maximum spend.` |
+| Awaiting wallet/session | `LINE CHECK` | `Approve play USDG to enter; you can revoke it any time.` |
 | Submitted | `CALL IN PROGRESS` | `Submitted. You do not hold the bell yet.` |
 | Accepted | `YOU'RE ON THE BELL` | `Accepted onchain. $1 was added to the pot.` |
 | Replaced by another accepted claim | `RUGGED` | `@name stole the bell from you.` |
@@ -319,7 +325,7 @@ The experience passes design acceptance when:
 
 1. Five first-time-rule questions reach the target in PRD 06.
 2. A player can distinguish submitted from accepted without instruction.
-3. A player can identify the remaining maximum spend throughout the round.
+3. A player can inspect remaining allowance and round spend throughout the round.
 4. A spectator can explain the final-holder and faction awards.
 5. A keyboard-only tester can complete entry, play, result review, and withdrawal.
 6. A 320-pixel test has no horizontal overflow.

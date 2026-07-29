@@ -4,24 +4,34 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: VM and repository provisioning are complete; application implementation has not begun.
-- Last meaningful change: Authenticated GitHub CLI as `fourtytwo42`, created the private repository `https://github.com/fourtytwo42/KeyGame`, and pushed the verified initial `main` commit from the VM.
-- Next step: Begin `DEL-BOOT-001` on the VM by scaffolding the pnpm Next.js application with strict checks and CI, then implement the typed domain model and `QA-FIX-001` through `QA-FIX-010`.
+- Current task: The faction prototype has been replaced by the approved Closing Print market-reactive game.
+- Last meaningful result: Contract, deterministic verifier, four-stock roster, signed-report flow, weighted scoring, Producer Pass, replay compatibility, responsive UI, PRDs, and full local-devnet acceptance are implemented and verified.
+- Next step: Configure production Robinhood Stock Token addresses, Chainlink Data Streams credentials/verifier, Reown WalletConnect project, and Robinhood Chain testnet deployment only when the user authorizes external deployment.
 - Blockers: None documented.
 
 ## Current State
 
-- The repository currently contains research and agent guidance only; there is no application source, package manifest, build command, test suite, or `.git` directory at this level.
+- The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
+- The complete responsive application, Foundry contracts, deterministic Anvil controller, CI, and testnet deployment workflow are implemented.
+- Permanent factions are removed. Every accepted $1 claim selects one of four configured ticker slots; the current holder cannot claim again.
+- VERIFIED rounds lock GREEN/FLAT/RED scoring at 1.25x/1.0x/0.75x for each holder interval. FLAT rounds require no report and score every interval at 1.0x.
+- The 30% pool is the Closing Print Pool and is paid proportionally to players' weighted contribution to the winning ticker. The 50% final-holder payout, 15% next-round seed, and 5% protocol allocation remain unchanged.
+- `docs/prd/10-closing-print-market-reactive.md` and `docs/prd/11-closing-print-user-stories.md` are the canonical current requirements. PRDs 01-09 remain historical/superseded context where marked.
+- The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
+- Desktop `/play/` routes use a fixed viewport-height studio. At widths above 820px the page footer is suppressed, the broadcast grid consumes only the space below the header/source bar, and height-aware sizing keeps the complete studio visible without vertical document scrolling.
+- `docs/prd/09-implementation-gap-audit.md` records implemented gaps, intentional product gates, and external launch prerequisites.
+- Local devnet is running on the VM at `http://192.168.50.138:3000`; Anvil chain ID `31337` is exposed at port `8545`. Last verified 2026-07-29.
+- Deterministic local addresses are recorded in `deployments/31337.json`; the deployment script recreates a fresh funded round without storing private keys.
 - The authoritative build workspace is VM `192.168.50.138`, user `hendo420`, path `/home/hendo420/projects/KeyGame`.
 - The VM repository uses branch `main`, tracks `origin/main`, and pushes to the private GitHub repository `https://github.com/fourtytwo42/KeyGame`.
 - `docs/fomo3d-game-logic-research.md` is the current technical baseline for original FoMo3D rules, formulas, accounting, timing, edge cases, and historical attacks.
 - `docs/last-bell-product-concept.md` is the current proposed modern product synthesis, including the round state machine, payout model, mobile screen, meme vocabulary, Stock Token role, share loop, and staged launch.
 - `docs/channel-4663-ui-design.md` is the selected palette, UI grammar, typography, motion, mascot, accessibility, responsive, and Next.js frontend direction.
 - `docs/prd/README.md` indexes the implementation-facing PRD suite and is the requirements entrypoint.
-- `docs/prd/08-user-stories.md` is the implementation backlog source for spectator, player, operator, support, audit, accessibility, compliance, and measurement stories.
+- `docs/prd/11-closing-print-user-stories.md` is the current implementation backlog; `docs/prd/08-user-stories.md` is the superseded faction-era backlog.
 - `docs/design/screens/README.md` is the visual handoff for all twelve planned app screens; `screen-contact-sheet.png` is the at-a-glance review artifact and `prompt-set.md` records the ImageGen direction.
 - `docs/design/screens/desktop-live-on-air.png` is the desktop layout reference: a narrow center arena, rules and airtime on the left rail, and Trenches plus session controls on the right rail.
-- Robinhood Chain is the intended target for a modern reinterpretation. The working concept is a proposal, not an approved architecture.
+- Robinhood Chain is the intended deployment target. Closing Print is the approved prototype architecture; production deployment remains gated.
 
 ## User Preferences
 
@@ -51,7 +61,10 @@ When sources conflict, use this order:
 
 ## Setup And Commands
 
-- No application setup or build commands exist yet.
+- Frontend commands: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, and `pnpm test:all`.
+- Devnet commands: `pnpm devnet:start`, `pnpm devnet:deploy`, `pnpm devnet:stop`, `pnpm app:start`, and `pnpm app:stop`.
+- Contract commands: `forge fmt --check`, `forge test -vvv`, `pnpm contracts:deploy:local`, and `pnpm contracts:deploy:testnet`.
+- `README.md` is the current local-devnet, wallet, verification, and Robinhood Chain testnet runbook.
 - Research verification used the verified deployed source, public Ethereum JSON-RPC storage reads, and independent BigInt reproduction of the key curves.
 - VM last verified 2026-07-28: Ubuntu 24.04 LTS at `192.168.50.138`, SSH user `hendo420`, project path `/home/hendo420/projects/KeyGame`.
 - Dedicated local SSH key: `C:\Users\hendo420\.ssh\keygame_vm_ed25519`. Do not store the VM password in this repository or memory.
@@ -75,7 +88,12 @@ When sources conflict, use this order:
 
 ## Architecture Notes
 
-- No application architecture has been selected.
+- Implemented architecture: Next.js App Router and Server Components for public routes, narrowly scoped Client Components for simulator, replay, receipt sharing, wallet state, and live interactions; shared typed domain under `src/lib/game`; Wagmi/Viem under `src/lib/web3`; one global Channel 4663 CSS system.
+- `contracts/LastBellRound.sol` implements ticker-per-claim control, verified/flat market modes, locked interval weighting, Producer Pass gating, Closing Print settlement, cancellation refunds, and pull payments.
+- `contracts/mocks/MockUSDG.sol`, `MockMarketDataVerifier.sol`, and `MockStockToken.sol` are devnet-only.
+- Devnet mode reads the deployed contract and events through `src/lib/web3/devnet.ts`; the development action API selects prejoined deterministic Anvil accounts and submits real transactions.
+- Wallet configuration includes injected EIP-6963 wallets, MetaMask, Coinbase Wallet, Safe, and optional WalletConnect through a Reown project ID. No extension connection has been claimed as tested.
+- Robinhood Chain testnet is configured as chain ID `46630`; `script/DeployTestnet.s.sol` consumes environment configuration and does not embed a signing key.
 - The research separates the economic state machine into players/vaults, per-round key balances and masks, key-price curves, timer/leader updates, external distributions, airdrop state, and settlement.
 - Original FoMo3D behavior contains known vulnerabilities and accounting defects. Historical fidelity and production-safe behavior must be treated as separate modes or designs.
 - Proposed direction, not yet approved: “Last Bell,” a short market-arena round where users lock canonical Stock Tokens, pay a small explicit USDG action fee to claim control, accrue time-weighted control score, receive locked principal back after settlement, and compete for a fee/sponsor-funded prize. A final-leader bonus preserves countdown tension without making one last transaction the whole outcome.
@@ -84,16 +102,15 @@ When sources conflict, use this order:
 - Memeability proposal, not yet approved: make a single three-minute “Flash Bell” the primary loop, reduce play to pick a ticker plus tap `APE`, use a final capped “Cope Zone,” and show faction control time plus the final bell holder as the two instantly understandable outcomes.
 - Build sharing into the state machine: crown thefts, losses, comebacks, and wins produce deterministic vertical meme receipts/Open Graph cards. Use ticker factions, rotating community mascots, cosmetic seasons, and raid links without monetary referral rewards.
 - Meme-language proposal, not yet approved: use a fixed semantic lexicon rather than interchangeable slang. Proposed core: `APE` = take the claim action, `COOKING` = building control momentum, `COOKED` = losing badly or eliminated, `RUGGED` = ordinary bell theft, `SNIPED` = final-seconds theft, `BAG SECURED` = win, `THE TRENCHES` = live arena/feed, and `SEND IT` = high-stakes confirmation. Keep `jeet`, `exit liquidity`, `honeypot`, and `rug pull` out of official product copy because they are derogatory or imply protocol fraud.
-- Consolidated round proposal, not yet approved: lock a minimum canonical Stock Token value to choose a four-ticker faction; open with 45 seconds; charge a fixed $1 USDG per accepted bell claim; add two seconds per normal-phase claim up to a three-minute hard end; make the last ten seconds a non-extendable `RUG ZONE`; score faction and player control by accepted onchain time; and return the same locked token amount after settlement.
-- Consolidated payout proposal, not yet approved: 50% to the final bell holder as the obvious headline winner, 30% to the control-winning faction split by personal bell-control time, 15% to seed the next round, and 5% to protocol operations. Locked Stock Tokens are kept separate from the prize pot.
-- Comprehension rule approved in principle by user feedback: every first-time surface should reduce the game to `Pick a bag`, `Pay $1 to steal the bell`, and `Hold it at zero to win 50%`. Pair meme language with literal explanations, use `APE FOR THE BELL · $1` as the primary action, show the remaining session budget or number of actions, and reduce entry to `YOUR BAG`, `MAX SPEND`, and one `ENTER ROUND` authorization.
+- Approved round: four automatically selected ticker slots, 45-second opening clock, $1 accepted claim, two-second normal extension, 180-second hard cap, ten-second non-extendable Rug Zone, and no Stock Token custody.
+- Approved payout: 50% to the final holder, 30% to weighted contributors to the winning Closing Print ticker, 15% next-round seed, and 5% protocol operations.
+- Comprehension rule: `Pick a stock. Pay $1 to put it on air and steal the bell. Market momentum boosts its airtime. Hold the bell at zero to win 50%.`
 - Selected visual direction: `Channel 4663`, a fictional late-night public-access market game show named for Robinhood Chain ID 4663. Use broadcast identifiers, teletext-density score strips, a studio-switch action, transmission receipts, square/clipped color slabs, awkward three-color mascots, and the `Dead Channel` palette. Avoid dark-green fintech, neon cyberpunk, glassmorphism, neo-brutalism, casino/gacha polish, generic shadcn dashboards, gradients, glows, card stacks, and corporate ticker branding.
 - Selected frontend direction: Next.js 16.2.x App Router with strict TypeScript, React Server Components by default, narrowly scoped Client Components for the live arena, CSS Modules plus global tokens, `next/font`, native CSS/Web Animations, and `viem`. Do not use Tailwind, shadcn/ui, a dashboard template, or Framer Motion as the default implementation.
-- Approved MVP baseline: build the Next.js Channel 4663 static shell and deterministic simulator first, followed by Robinhood Chain testnet points with synthetic factions, sponsored test gas, and faucet-issued or non-transferable test units. Player-funded prizes and Stock Token custody remain excluded.
-- Approved prototype constants: four factions, a one-USD-equivalent test action, 45-second initial deadline, two-second normal extension, 180-second hard end, final-ten-second Rug Zone, final-two-second snipe label, and 50/30/15/5 illustrative settlement. These remain configurable and are not production economic approval.
+- Approved prototype constants: four ticker slots, one-USD-equivalent test action, 45-second initial deadline, two-second normal extension, 180-second hard end, final-ten-second Rug Zone, +/-5 basis-point bands, 1.25/1.0/0.75 multipliers, and 50/30/15/5 settlement. These remain configurable between rounds and immutable during a round.
 - Approved engineering bootstrap: Git, pnpm, pinned compatible active-LTS Node metadata, strict TypeScript, ESLint, Prettier, typed environment validation, Vitest plus React Testing Library, Playwright, axe-core, screenshot regression, and blocking CI checks.
 - Approved implementation order: shared typed domain model and ten deterministic fixture scenarios before stateful screen logic; then the complete static Home through Dead Air screen slice across mobile, desktop, keyboard, and reduced-motion states.
-- Same-faction theft, late entry, control-time precision, and faction tie-breaking remain configurable/open until simulation evidence supports a decision.
+- Players may change ticker on every accepted claim; same-holder claims revert. Ticker-score ties use the most recent accepted acquisition, then the lower configured ticker index.
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
 
 ## Verification Ledger
@@ -126,6 +143,25 @@ When sources conflict, use this order:
 - 2026-07-28: Installed and verified GitHub CLI, build-essential, jq, unzip, nvm, Node v24.18.0, and pnpm 11.17.0; added dedicated key-based SSH access.
 - 2026-07-28: Copied 31 project files totaling about 22.9 MB to `/home/hendo420/projects/KeyGame`; SHA-256 verification found 31 matching files, zero mismatches, and zero extras before Git initialization.
 - 2026-07-28: Created initial commit `2d74289b8aead3d62e7f6f0dea201b35f0ce1daf`, created private repository `fourtytwo42/KeyGame`, pushed `main`, and verified the local and remote commit hashes matched.
+- 2026-07-28: Generated `docs/design/assets/last-bell-mascot.png` with built-in ImageGen from the approved Channel 4663 reference, removed a keyed magenta background, inspected the transparent result, and derived favicon, Apple icon, app icons, and Open Graph assets.
+- 2026-07-28: Verified the first application slice on the VM with `pnpm typecheck`, `pnpm lint`, six deterministic simulator tests, and `pnpm build`; all passed. The build emitted only non-blocking fallback-metric warnings for two Google fonts.
+- 2026-07-28: Final frontend gates passed on the authoritative VM: Prettier, TypeScript, ESLint, 11 Vitest unit/component tests, and the Next.js production build.
+- 2026-07-28: Final Foundry suite passed 11 contract tests, including 512 fuzz runs for Rug Zone non-extension, payout conservation, pull claims, refunds, self-claim rejection, hard-cap enforcement, and deterministic faction settlement.
+- 2026-07-28: Real Anvil integration suite passed 3 tests covering snapshot reads, a browser-equivalent claim, Rug Zone behavior, and finalization.
+- 2026-07-28: Playwright passed 12/12 tests in installed Chrome across desktop and Pixel 7 profiles: five-second comprehension, real devnet claim, wallet panel, all public routes, axe serious/critical checks, and horizontal-overflow checks.
+- 2026-07-28: In-app browser UAT verified the live Anvil source, the $1 claim action, deterministic NVDA tie leader, wallet choices and WalletConnect configuration notice, mobile 390x844 layout with no horizontal overflow, literal rules/constants, and zero browser console errors.
+- 2026-07-28: GitHub Actions run `30421210958` passed all three hosted jobs: app, contracts, and browser. The browser job independently installed Chromium, deployed Anvil, ran integration tests, reset the chain, and passed all Playwright tests.
+- 2026-07-28: Corrected a CI-only timing assumption by comparing contract deadlines instead of snapshot countdowns, then isolated stateful integration and E2E suites with a fresh devnet deployment.
+- 2026-07-28: Reconciled the full PRD suite against the app and implemented immutable faction entry, $5/$10/$25 onchain spend ceilings, allowance revocation, wallet writes, holder/faction/refund pull claims, correct 15% next-round seed semantics, enriched canonical events, and deployed-state replay/receipts.
+- 2026-07-28: Final reconciliation gates passed on the VM: TypeScript, ESLint, 14 Vitest tests, 12 Foundry tests including 512 fuzz runs, 3 live Anvil integration tests, production build, and 11 Playwright desktop/mobile tests with one deliberate duplicate-mutation skip.
+- 2026-07-28: In-app browser UAT verified the authoritative entry/session state, revoke transition, automatic settlement, 50/30/15/5 allocations, holder and faction claims, canonical replay identity, and receipt chain/block/contract proof.
+- 2026-07-28: Pushed the reconciliation implementation as commit `5f25c956999fe491a95f3c8cc66af0a68f3a0675`; GitHub Actions run `30423038363` passed app, contracts, and browser jobs.
+- 2026-07-28: Replaced $5/$10/$25 max-spend sessions with a reusable $100 play-USDG allowance and a below-$10 refresh threshold. Local and VM unit/type/lint checks passed; 12 Foundry tests passed including allowance-constrained claims; 4 live Anvil integration tests passed including threshold refresh; production build passed; Playwright passed 11 tests with one deliberate duplicate mobile mutation skip; in-app browser UAT verified AAPL entry at $100 and a successful $1 claim reducing the allowance to $99.
+- 2026-07-28: Pushed the reusable-allowance implementation as commit `7fb21f6cdbdfc80468930def49f897147f36662f`; GitHub Actions run `30424178882` passed app, contracts, integration, and browser jobs.
+- 2026-07-29: Measured the reported in-app browser viewport at 1522x911; the pre-fix studio document was 1090px tall, producing 179px of vertical overflow. After the CSS correction, document scroll height equals viewport height at both 1522x911 and 1280x720, with entry and final-state actions visible. Formatting, TypeScript, ESLint, 14 unit/component tests, production build, and Playwright passed; Playwright reported 12 passed and 2 intentional skips.
+- 2026-07-29: Closing Print final verification passed on the authoritative VM: formatting, ESLint, TypeScript, 23 Vitest tests, production build, 12 Foundry tests including 512 fuzz runs, and four live-Anvil integration tests.
+- 2026-07-29: Playwright against the VM devnet passed 14 desktop/Pixel 7 checks with two intentional cross-profile skips. It covered first paid entry, four ticker claim controls, visible market bands, mobile Closing Print standings, public proof routes, WCAG serious/critical checks, and overflow.
+- 2026-07-29: In-app browser UAT verified the live Anvil source, all four market-labeled controls, visible Closing Print state, exact 1280x720 desktop viewport fit, and mobile 390x844 horizontal fit. A fresh round was left running for handoff.
 
 ## Decisions
 
@@ -156,9 +192,29 @@ When sources conflict, use this order:
 - Build the frontend with Next.js 16.2.x App Router, TypeScript, CSS Modules, `next/font`, and narrowly scoped client-side arena components.
 - Reject generic fintech, Web3, casino, neo-brutalist, glassmorphic, and pre-skinned dashboard patterns.
 
+### 2026-07-28 - Use One Reusable Play-Token Approval
+
+- The first starter-ticker claim ensures a $100 play-USDG allowance and charges exactly $1; there is no separate entry transaction or max-spend picker.
+- Each successful bell claim still transfers exactly $1.
+- Before a claim, the client requests a fresh $100 approval only when the existing allowance is below $10.
+- ERC-20 allowance and balance are the onchain spend constraints. The player may edit or reject the approval in the wallet and may revoke it from the app or wallet.
+
+### 2026-07-29 - Replace Factions With Closing Print
+
+- Remove permanent faction membership and select a ticker on every accepted claim.
+- Configure exactly four canonical ticker slots per round, each with a Stock Token address, stream ID, visuals, and immutable opening reference.
+- VERIFIED claims require a fresh matching signed report and lock GREEN/FLAT/RED weighting for the full holder interval. FLAT rounds use 1.0x without reports.
+- Stock Token balances are never custody or score weight. Producer Pass is a binary special-round gate and badge only.
+- Keep replay compatibility through explicit `closing-print-v1` and legacy `faction-v0` event parsers.
+
 ## Known Issues
 
-- There is no game implementation to run or test.
+- Real Stock Token custody, player-funded prizes, account abstraction/gas sponsorship, and production compliance remain intentional PRD gates, not missing Stage 1 implementation.
+- Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
+- Robinhood Chain testnet deployment is ready but was not performed; it requires funded signer configuration, real token/treasury addresses, and explicit launch authorization.
+- GitHub Actions reports non-blocking warnings that some third-party action versions target Node.js 20 while the runner forces Node.js 24. All jobs pass.
+- The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
+- Contracts have extensive local tests but no independent security audit.
 - Original FoMo3D includes predictable airdrop randomness, block-stuffing exposure, contract-wallet exclusions, external-call dependencies, integer-boundary quirks, and several documented accounting/view defects.
 - Any real-money implementation would require security and current legal/regulatory review.
 - Robinhood Stock Tokens are unavailable to U.S. persons and restricted in other jurisdictions. A permissionless contract plus frontend geo-block is not automatically a sufficient compliance design.
@@ -177,18 +233,21 @@ When sources conflict, use this order:
 - 2026-07-28: Created `docs/prd/08-user-stories.md`, added it to the PRD index, and made it the backlog source in the delivery plan.
 - 2026-07-28: Updated PRDs 01, 02, 03, 04, 06, 07, 08, and the PRD index with the approved build kickoff, testnet-points MVP, configurable prototype constants, pnpm/CI/test stack, shared domain model, visual implementation rules, ten-fixture matrix, and three-slice implementation plan.
 - 2026-07-28: Provisioned the Ubuntu KeyGame VM, expanded its root volume, installed the toolchain, transferred the project, initialized Git, authenticated GitHub CLI, created the private GitHub repository, and pushed `main`.
+- 2026-07-28: Added the Next.js application foundation, full responsive Channel 4663 screen system, deterministic simulator, custom Wagmi wallet panel, and ImageGen-derived production brand/icon assets.
+- 2026-07-28: Implemented `LastBellRound`, `MockUSDG`, Foundry deployment scripts, complete contract tests, and a deterministic local Anvil lifecycle.
+- 2026-07-28: Wired the live UI to real devnet contract state and transactions, added testnet-ready chain/deployment configuration, and documented wallet/testnet operation.
+- 2026-07-28: Added CI and completed unit, component, contract, fuzz, integration, accessibility, desktop/mobile Playwright, and in-app browser UAT.
+- 2026-07-28: Closed the PRD implementation gaps and added `docs/prd/09-implementation-gap-audit.md` as the explicit handoff boundary.
+- 2026-07-28: Simplified entry authorization to one reusable $100 play-USDG approval, refresh below $10, removed the max-spend UI and contract mapping, updated the PRD/visual handoff, and retained wallet-controlled revocation.
+- 2026-07-29: Confined the desktop `/play/` studio to the browser viewport, removed its route-level footer, added compact-height rules for all arena states, retained the three-column studio down to 1181px, used a two-column arena/activity layout from 821px to 1180px, and added a Playwright vertical-overflow regression test.
+- 2026-07-29: Replaced factions with the complete Closing Print implementation across contract, market verifier, screening APIs, shared domain, simulator, replay, wallet writes, devnet deployment, UI, PRDs, and tests. Added mobile Closing Print standings after browser acceptance exposed their absence.
 
 ## Open Follow-ups
 
-- Approve, revise, or reject the consolidated `Last Bell: Ticker Royale` design in `docs/last-bell-product-concept.md`.
-- Decide whether the MVP is points-only testnet, sponsor-funded USDG mainnet, or actual player-funded prizes.
-- Decide whether actual Stock Tokens are locked in the MVP or used only as canonical themes/oracle data until eligibility controls exist.
-- Decide whether the primary payout should reward sustained faction control, the final bell holder, or a clearly displayed split between both.
-- Approve the core meme vocabulary and decide whether `THE TRENCHES` is the live feed, a high-volatility mode, or neither.
-- Review the twelve-screen gallery and identify any screen-specific visual changes before treating it as the frontend implementation target.
-- Review the remaining PRD decision ledger after simulation, especially same-faction theft, late entry, timer/scoring precision, production timer constants, and production payout economics.
-- Use simulation evidence to resolve same-faction theft, late entry, control-time precision, faction ties, production timer constants, and production payout economics.
+- Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
+- Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
+- Select real testnet payment token, treasury, operator, monitoring, and RPC-provider configuration before deployment.
 
 ## Do Not Forget
 

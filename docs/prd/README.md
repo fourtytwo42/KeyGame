@@ -1,5 +1,16 @@
 # Last Bell PRD Suite
 
+> `D-020` (2026-07-29): Closing Print is the implemented product.
+> [10-closing-print-market-reactive.md](./10-closing-print-market-reactive.md)
+> supersedes every permanent-faction, asset-lock, separate-entry, and
+> `joinFaction` requirement elsewhere in this suite. Older faction passages
+> are decision history, not acceptance criteria.
+
+Current implementation documents:
+
+- [PRD 10: Closing Print market-reactive specification](./10-closing-print-market-reactive.md)
+- [PRD 11: Closing Print user stories](./11-closing-print-user-stories.md)
+
 Status: Product baseline approved for Stage 0 implementation and a testnet-points
 first public MVP. Value-bearing and Stock Token stages remain gated.
 
@@ -24,6 +35,7 @@ The complete mobile and desktop concept set is embedded in
 | [06 Analytics, QA, and Acceptance](06-analytics-qa-and-acceptance.md) | Success metrics, telemetry, experiments, testing layers, invariants, UAT, and release acceptance | `DATA`, `QA` |
 | [07 Delivery Plan](07-delivery-plan.md) | Milestones, dependencies, ownership, decision gates, prioritized backlog, and definitions of done | `DEL` |
 | [08 Comprehensive User Stories](08-user-stories.md) | Traceable stories and acceptance criteria for spectators, players, operators, support, auditors, accessibility, compliance, and product learning | `US` |
+| [09 Implementation Gap Audit](09-implementation-gap-audit.md) | Reconciliation of requirements against the working application, deliberate gates, and external prerequisites | `AUDIT` |
 
 ## Status vocabulary
 
@@ -42,7 +54,7 @@ The complete mobile and desktop concept set is embedded in
 |---|---|---|---|
 | `D-001` | Product is `Last Bell`; primary mode is `Ticker Royale`. | `DECIDED` | Channel 4663 is the visual world, not the product name. |
 | `D-002` | Target Robinhood Chain, chain ID `4663`. | `DECIDED` | External chain facts were last verified 2026-07-28. |
-| `D-003` | Main action copy is `APE FOR THE BELL · $1`. | `SELECTED FOR PROTOTYPE` | Stage 0 and Stage 1 use a test unit mirroring one USD; actual USDG is later gated scope. |
+| `D-003` | Main action copy is `SEND IT FOR THE BELL · $1`; `ape` remains supporting meme vocabulary. | `SELECTED FOR PROTOTYPE` | Stage 0 and Stage 1 use a test unit mirroring one USD; actual USDG is later gated scope. |
 | `D-004` | Final holder receives 50%; control-winning faction receives 30%; 15% seeds the next round; 5% funds operations. | `SELECTED FOR PROTOTYPE` | Use for fixtures and simulation; production still requires economic validation and approval. |
 | `D-005` | Four ticker factions per round. | `SELECTED FOR PROTOTYPE` | Use four synthetic factions in Stage 0 and Stage 1; later ticker rosters remain configurable. |
 | `D-006` | Stock Token principal is separate from the prize pot and the same token amount becomes withdrawable after settlement. | `PROPOSED` | Value can still change while locked. |
@@ -52,10 +64,11 @@ The complete mobile and desktop concept set is embedded in
 | `D-010` | Exclude a native token, ICO, affiliate tree, random airdrop, key curve, holder dividends, and unlimited overtime. | `DECIDED` | Historical FoMo3D mechanics remain research only. |
 | `D-011` | Actual Stock Token locking and value-bearing play require jurisdiction, eligibility, security, and product-counsel gates. | `GATE` | Frontend geo-blocking alone is not assumed sufficient. |
 | `D-012` | Clock and control-time precision require simulation before the payout model is production-final. | `OPEN` | Second-level EVM timestamps may produce zero-duration rapid holds. |
-| `D-013` | Gas sponsorship and session-key implementation. | `OPEN` | The UX requirement is one bounded authorization followed by one-tap play. |
+| `D-013` | Approval UX uses a reusable $100 play-USDG allowance and requests refresh only below $10. | `DECIDED` | The player may reject, change, or revoke approval; account abstraction and gas sponsorship remain open. |
 | `D-014` | Begin with MVP-0 and Milestone 1: a static Channel 4663 shell against typed deterministic fixtures. | `DECIDED` | Wallet, contract, indexer, USDG, and Stock Token custody work are excluded from the initial scaffold. |
 | `D-015` | Use the current `GAME-CFG-*` timer and payout values as configurable simulation defaults. | `SELECTED FOR PROTOTYPE` | Prototype selection does not approve production economics. |
 | `D-016` | Keep same-faction theft, late entry, control-time precision, and faction tie-breaking configurable until simulation produces evidence. | `DECIDED` | Components consume typed configuration and cannot hard-code an unresolved outcome. |
+| `D-020` | Replace permanent factions with a ticker selected on every paid claim and market-weight the 30% Closing Print contest. | `IMPLEMENTED STAGE 1` | Use `closing-print-v1`; no separate entry transaction or Stock Token custody. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, strict checks, and CI before feature branches expand. | `DECIDED` | See PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |

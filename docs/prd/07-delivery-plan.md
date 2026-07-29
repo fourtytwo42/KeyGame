@@ -1,5 +1,9 @@
 # PRD 07: Delivery Plan
 
+> `D-020` override: the Stage 1 implementation target is `closing-print-v1`.
+> Permanent-faction milestones below are superseded by
+> [PRD 10](./10-closing-print-market-reactive.md).
+
 Status: Stage 0 and Milestone 1 implementation approved. Later milestones remain
 ordered recommendations with their existing gates. No dates or staffing
 commitments are assumed.
@@ -11,7 +15,7 @@ Build evidence in increasing order of financial and external risk:
 1. Prove comprehension.
 2. Prove deterministic gameplay.
 3. Prove onchain accounting.
-4. Prove bounded authorization and live ordering.
+4. Prove reusable allowance refresh behavior and live ordering.
 5. Prove operations and legal readiness.
 6. Add value.
 7. Add Stock Token custody last.
@@ -99,7 +103,7 @@ Exit criteria:
 Deliverables:
 
 - Wallet or smart-account connection.
-- Bounded session authorization.
+- Reusable $100 allowance with a $10 refresh threshold and revocation.
 - Sponsored test gas.
 - Live subscription and direct-read fallback.
 - Indexer and deterministic replay.
@@ -112,7 +116,7 @@ Exit criteria:
 - All `QA-001` through `QA-012` pass.
 - Canonical event ordering and replay parity are 100% in the test corpus.
 - No false holder crown.
-- Session budget is contract-enforced.
+- Each accepted claim consumes exactly $1 of token allowance; refresh requires wallet confirmation below the threshold.
 
 ## Milestone 5: Limited points pilot
 
