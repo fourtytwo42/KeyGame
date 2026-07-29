@@ -63,27 +63,6 @@ contract DeployLocal is ScriptBase {
             new LastBellRound(token, verifier, deployer, deployer, settings, tickers);
         token.mint(deployer, 1_000_000e6);
         token.approve(address(round), 50e6);
-        bytes[4] memory reports = [
-            _report(tickers[0].feedId, 100e8),
-            _report(tickers[1].feedId, 200e8),
-            _report(tickers[2].feedId, 250e8),
-            _report(tickers[3].feedId, 500e8)
-        ];
-        round.start(50e6, reports);
         vm.stopBroadcast();
-    }
-
-    function _report(bytes32 feedId, uint256 price)
-        internal
-        view
-        returns (bytes memory)
-    {
-        return abi.encode(
-            feedId,
-            price,
-            uint64(block.timestamp),
-            uint64(block.timestamp),
-            uint64(block.timestamp + 30)
-        );
     }
 }

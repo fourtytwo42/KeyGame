@@ -46,6 +46,22 @@ if [[ -z "$token_address" || -z "$verifier_address" || ${#stock_addresses[@]} -n
   exit 1
 fi
 
+observed_hex="$(cast block latest --rpc-url "$rpc_url" --json | jq -r '.timestamp')"
+observed_at="$(cast to-dec "$observed_hex")"
+symbols=("NVDA" "AAPL" "TSLA" "SPY")
+opening_prices=(10000000000 20000000000 25000000000 50000000000)
+opening_reports=()
+for index in "${!symbols[@]}"; do
+  feed_id="$(cast keccak "${symbols[$index]}/USD")"
+  opening_reports+=(
+    "$(cast abi-encode 'f(bytes32,uint256,uint64,uint64,uint64)' \
+      "$feed_id" "${opening_prices[$index]}" "$observed_at" "$observed_at" "$((observed_at + 30))")"
+  )
+done
+opening_report_array="[$(IFS=,; echo "${opening_reports[*]}")]"
+send_checked "$round_address" "start(uint256,bytes[4])" 50000000 "$opening_report_array" \
+  --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 1000000
+
 for index in "${!accounts[@]}"; do
   account="${accounts[$index]}"
   ticker="$((index % 4))"
