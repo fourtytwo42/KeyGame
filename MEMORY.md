@@ -4,8 +4,8 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Complete. Last Bell is implemented, tested, and running against the authoritative VM devnet.
-- Last meaningful change: Finished the contracts, real Anvil wiring, testnet workflow, CI, runbook, full automated suite, and in-app browser UAT. Fixed the discovered zero-airtime faction tie mismatch so UI and contract both prefer NVDA by configured faction order.
+- Current task: Complete. Last Bell is implemented, pushed, tested, and running against the authoritative VM devnet.
+- Last meaningful change: Hosted GitHub CI passed all app, contract, integration, and browser jobs after making integration assertions use authoritative contract deadlines and resetting shared devnet state before Playwright.
 - Next step: Obtain an independent contract audit and legal review before any value-bearing deployment. For wallet UAT, add a real Reown project ID and test browser extensions on Robinhood Chain testnet.
 - Blockers: None documented.
 
@@ -143,7 +143,8 @@ When sources conflict, use this order:
 - 2026-07-28: Real Anvil integration suite passed 3 tests covering snapshot reads, a browser-equivalent claim, Rug Zone behavior, and finalization.
 - 2026-07-28: Playwright passed 12/12 tests in installed Chrome across desktop and Pixel 7 profiles: five-second comprehension, real devnet claim, wallet panel, all public routes, axe serious/critical checks, and horizontal-overflow checks.
 - 2026-07-28: In-app browser UAT verified the live Anvil source, the $1 claim action, deterministic NVDA tie leader, wallet choices and WalletConnect configuration notice, mobile 390x844 layout with no horizontal overflow, literal rules/constants, and zero browser console errors.
-- 2026-07-28: CI workflow added for frontend, Foundry, integration, and Playwright gates. It is committed configuration; the first GitHub Actions execution remains external verification.
+- 2026-07-28: GitHub Actions run `30421210958` passed all three hosted jobs: app, contracts, and browser. The browser job independently installed Chromium, deployed Anvil, ran integration tests, reset the chain, and passed all Playwright tests.
+- 2026-07-28: Corrected a CI-only timing assumption by comparing contract deadlines instead of snapshot countdowns, then isolated stateful integration and E2E suites with a fresh devnet deployment.
 
 ## Decisions
 
@@ -178,7 +179,7 @@ When sources conflict, use this order:
 
 - Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
 - Robinhood Chain testnet deployment is ready but was not performed; it requires funded signer configuration, real token/treasury addresses, and explicit launch authorization.
-- CI configuration is present but its first hosted GitHub Actions run has not yet been observed.
+- GitHub Actions reports non-blocking warnings that some third-party action versions target Node.js 20 while the runner forces Node.js 24. All jobs pass.
 - The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
 - Contracts have extensive local tests but no independent security audit.
 - Original FoMo3D includes predictable airdrop randomness, block-stuffing exposure, contract-wallet exclusions, external-call dependencies, integer-boundary quirks, and several documented accounting/view defects.
