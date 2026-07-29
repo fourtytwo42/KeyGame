@@ -149,6 +149,7 @@ When sources conflict, use this order:
 - 2026-07-28: Reconciled the full PRD suite against the app and implemented immutable faction entry, $5/$10/$25 onchain spend ceilings, allowance revocation, wallet writes, holder/faction/refund pull claims, correct 15% next-round seed semantics, enriched canonical events, and deployed-state replay/receipts.
 - 2026-07-28: Final reconciliation gates passed on the VM: TypeScript, ESLint, 14 Vitest tests, 12 Foundry tests including 512 fuzz runs, 3 live Anvil integration tests, production build, and 11 Playwright desktop/mobile tests with one deliberate duplicate-mutation skip.
 - 2026-07-28: In-app browser UAT verified the authoritative entry/session state, revoke transition, automatic settlement, 50/30/15/5 allocations, holder and faction claims, canonical replay identity, and receipt chain/block/contract proof.
+- 2026-07-28: Pushed the reconciliation implementation as commit `5f25c956999fe491a95f3c8cc66af0a68f3a0675`; GitHub Actions run `30423038363` passed app, contracts, and browser jobs.
 
 ## Decisions
 
@@ -214,7 +215,6 @@ When sources conflict, use this order:
 ## Open Follow-ups
 
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
-- Observe the new hosted GitHub Actions run for the PRD-reconciliation commit and correct any environment-only discrepancy.
 - Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
 - Select real testnet payment token, treasury, operator, monitoring, and RPC-provider configuration before deployment.
