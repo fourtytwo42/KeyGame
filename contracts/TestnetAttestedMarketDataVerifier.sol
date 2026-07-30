@@ -29,8 +29,7 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
     bytes32 public constant REPORT_TYPEHASH = keccak256(
         "DexObservation(bytes32 marketId,address pool,int24 twapTick,uint256 price,uint256 sourceChainId,uint64 sourceBlockNumber,bytes32 sourceBlockHash,uint64 validFrom,uint64 observedAt,uint64 expiresAt,address round,bytes32 sourceReportHash)"
     );
-    bytes32 private constant NAME_HASH =
-        keccak256("Last Bell Testnet DEX Attestation");
+    bytes32 private constant NAME_HASH = keccak256("Last Bell Testnet DEX Attestation");
     bytes32 private constant VERSION_HASH = keccak256("1");
     uint256 private constant SECP256K1_HALF_N =
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
@@ -103,9 +102,8 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
         if (
             report.round != msg.sender || report.marketId != expectedMarketId
                 || report.pool == address(0) || report.sourceChainId != 4663
-                || report.sourceBlockNumber == 0
-                || report.sourceBlockHash == bytes32(0) || report.price == 0
-                || report.sourceReportHash == bytes32(0)
+                || report.sourceBlockNumber == 0 || report.sourceBlockHash == bytes32(0)
+                || report.price == 0 || report.sourceReportHash == bytes32(0)
         ) revert InvalidAttestation();
 
         bytes32 structHash = keccak256(

@@ -55,9 +55,9 @@ contract RoundManagerV4 {
         address treasury_
     ) {
         if (
-            address(paymentToken_) == address(0)
-                || address(swapAdapter_) == address(0) || admin_ == address(0)
-                || keeper_ == address(0) || treasury_ == address(0)
+            address(paymentToken_) == address(0) || address(swapAdapter_) == address(0)
+                || admin_ == address(0) || keeper_ == address(0)
+                || treasury_ == address(0)
         ) revert Unauthorized();
         paymentToken = paymentToken_;
         swapAdapter = swapAdapter_;
@@ -124,15 +124,13 @@ contract RoundManagerV4 {
     ) external onlyKeeper returns (LastBellRoundV4 next) {
         next = preparedRound;
         if (address(next) == address(0)) revert InvalidTransition();
-        uint256[4] memory activationSeed = _prepareSeed(
-            sellMinimums, buyMinimums, quoteDeadline
-        );
+        uint256[4] memory activationSeed =
+            _prepareSeed(sellMinimums, buyMinimums, quoteDeadline);
         for (uint8 i; i < 4; i++) {
             if (
                 activationSeed[i] != 0
-                    && !IERC20(preparedTokens[i]).transfer(
-                        address(next), activationSeed[i]
-                    )
+                    && !IERC20(preparedTokens[i])
+                        .transfer(address(next), activationSeed[i])
             ) revert TransferFailed();
         }
         lifetimeVault.openRound(next.roundId(), address(next));
@@ -150,7 +148,7 @@ contract RoundManagerV4 {
         round.finalize();
         seedAmounts = round.transferNextRoundSeed(address(this));
         for (uint8 i; i < 4; i++) {
-            (, , seedTokens[i]) = round.tickerConfigs(i);
+            (,, seedTokens[i]) = round.tickerConfigs(i);
         }
         emit ActiveRoundFinalized(round.roundId(), address(round));
     }
@@ -161,7 +159,7 @@ contract RoundManagerV4 {
         round.cancel(reason);
         round.recoverCancelledSeed(address(this));
         for (uint8 i; i < 4; i++) {
-            (, , seedTokens[i]) = round.tickerConfigs(i);
+            (,, seedTokens[i]) = round.tickerConfigs(i);
             seedAmounts[i] = IERC20(seedTokens[i]).balanceOf(address(this));
         }
         emit ActiveRoundCancelled(round.roundId(), address(round), reason);
@@ -188,11 +186,7 @@ contract RoundManagerV4 {
                 revert TransferFailed();
             }
             swapAdapter.swapStockForUsdg(
-                seedTokens[i],
-                amount,
-                sellMinimums[i],
-                quoteDeadline,
-                address(this)
+                seedTokens[i], amount, sellMinimums[i], quoteDeadline, address(this)
             );
         }
         uint256 proceeds = paymentToken.balanceOf(address(this)) - usdgBefore;

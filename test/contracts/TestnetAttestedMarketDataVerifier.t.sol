@@ -73,8 +73,7 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         token.approve(address(router), type(uint256).max);
 
         bytes32 sourceHash = keccak256("mainnet-dex-observation");
-        bytes memory claimReport =
-            _report(MARKET, 101e18, address(round), sourceHash);
+        bytes memory claimReport = _report(MARKET, 101e18, address(round), sourceHash);
         vm.prank(address(0xA11CE));
         round.claimBell(0, claimReport, type(uint8).max);
         assertEq(round.holderSourceReportHash(), sourceHash, "source hash");

@@ -165,17 +165,15 @@ contract LastBellRoundV4 {
             address(paymentToken_) == address(0)
                 || address(paymentRouter_) == address(0)
                 || address(swapAdapter_) == address(0)
-                || address(lifetimeVault_) == address(0)
-                || operator_ == address(0) || treasury_ == address(0)
-                || settings_.startDuration == 0
+                || address(lifetimeVault_) == address(0) || operator_ == address(0)
+                || treasury_ == address(0) || settings_.startDuration == 0
                 || settings_.rugDuration >= settings_.startDuration
                 || settings_.hardCapDuration < settings_.startDuration
                 || settings_.heatTarget == 0
         ) revert InvalidConfiguration();
         for (uint8 i; i < 4; i++) {
             if (
-                tickers_[i].symbol == bytes32(0)
-                    || tickers_[i].assetId == bytes32(0)
+                tickers_[i].symbol == bytes32(0) || tickers_[i].assetId == bytes32(0)
                     || tickers_[i].token == address(0)
             ) revert InvalidConfiguration();
             tickerConfigs[i] = tickers_[i];
@@ -231,11 +229,7 @@ contract LastBellRoundV4 {
         }
     }
 
-    function currentMultiplierBps(uint8 ticker)
-        public
-        view
-        returns (uint16)
-    {
+    function currentMultiplierBps(uint8 ticker) public view returns (uint16) {
         uint256 volume = recentVolume(ticker);
         if (volume >= heatTarget) return MAX_MULTIPLIER_BPS;
         uint256 ratio = (volume * 1e18) / heatTarget;
@@ -261,7 +255,12 @@ contract LastBellRoundV4 {
         uint8 passTokenIndex
     ) external nonReentrant {
         Phase phase = currentPhase();
-        if (!initialized || (phase != Phase.Scheduled && phase != Phase.Live && phase != Phase.Rug)) {
+        if (
+            !initialized
+                || (phase != Phase.Scheduled
+                    && phase != Phase.Live
+                    && phase != Phase.Rug)
+        ) {
             revert InvalidPhase();
         }
         if (ticker >= 4) revert InvalidTicker();
@@ -286,9 +285,8 @@ contract LastBellRoundV4 {
             quoteDeadline,
             address(this)
         );
-        uint256 delta =
-            IERC20(tickerConfigs[ticker].token).balanceOf(address(this))
-                - beforeBalance;
+        uint256 delta = IERC20(tickerConfigs[ticker].token).balanceOf(address(this))
+            - beforeBalance;
         if (delta != stockReceived || delta < minimumStockOut) {
             revert TransferFailed();
         }
@@ -347,7 +345,8 @@ contract LastBellRoundV4 {
             tokens[i] = tickerConfigs[i].token;
             lifetimeRewards[i] = lifetimePool[i];
             if (lifetimePool[i] != 0) {
-                if (!IERC20(tokens[i]).transfer(address(lifetimeVault), lifetimePool[i])) {
+                if (!IERC20(tokens[i])
+                        .transfer(address(lifetimeVault), lifetimePool[i])) {
                     revert TransferFailed();
                 }
             }
@@ -410,10 +409,7 @@ contract LastBellRoundV4 {
         emit BasketRewardClaimed(roundId, player, "CANCEL_REFUND", amounts);
     }
 
-    function claimProtocolBasket(address recipient)
-        external
-        nonReentrant
-    {
+    function claimProtocolBasket(address recipient) external nonReentrant {
         if (!settled || msg.sender != treasury || recipient == address(0)) {
             revert Unauthorized();
         }
@@ -439,7 +435,9 @@ contract LastBellRoundV4 {
         if (settled || cancelled) revert InvalidPhase();
         cancelled = true;
         bytes32[4] memory assets;
-        for (uint8 i; i < 4; i++) assets[i] = tickerConfigs[i].assetId;
+        for (uint8 i; i < 4; i++) {
+            assets[i] = tickerConfigs[i].assetId;
+        }
         lifetimeVault.cancelRound(roundId, assets);
         emit RoundCancelled(roundId, reason);
     }
@@ -460,7 +458,9 @@ contract LastBellRoundV4 {
         uint8 slot = uint8(epoch % 6);
         if (volumeBucketEpoch[slot] != epoch) {
             volumeBucketEpoch[slot] = epoch;
-            for (uint8 i; i < 4; i++) volumeBuckets[slot][i] = 0;
+            for (uint8 i; i < 4; i++) {
+                volumeBuckets[slot][i] = 0;
+            }
         }
         volumeBuckets[slot][ticker] += amount;
     }
@@ -469,11 +469,9 @@ contract LastBellRoundV4 {
         for (uint8 i = 1; i < 4; i++) {
             if (
                 tickerPoints[i] > tickerPoints[leader]
-                    || (
-                        tickerPoints[i] == tickerPoints[leader]
-                            && lastTickerContributionAt[i]
-                                > lastTickerContributionAt[leader]
-                    )
+                    || (tickerPoints[i] == tickerPoints[leader]
+                        && lastTickerContributionAt[i]
+                            > lastTickerContributionAt[leader])
             ) leader = i;
         }
     }
@@ -487,9 +485,7 @@ contract LastBellRoundV4 {
         return IERC20(tickerConfigs[index].token).balanceOf(player) > 0;
     }
 
-    function _transferBasket(address recipient, uint256[4] memory amounts)
-        internal
-    {
+    function _transferBasket(address recipient, uint256[4] memory amounts) internal {
         for (uint8 i; i < 4; i++) {
             if (
                 amounts[i] != 0
@@ -501,19 +497,42 @@ contract LastBellRoundV4 {
     function _sqrt(uint256 value) internal pure returns (uint256 result) {
         if (value == 0) return 0;
         result = 1 << ((255 - _clz(value)) >> 1);
-        for (uint8 i; i < 7; i++) result = (result + value / result) >> 1;
+        for (uint8 i; i < 7; i++) {
+            result = (result + value / result) >> 1;
+        }
         uint256 roundedDown = value / result;
         return result < roundedDown ? result : roundedDown;
     }
 
     function _clz(uint256 x) private pure returns (uint256 n) {
-        if (x >> 128 == 0) { n += 128; x <<= 128; }
-        if (x >> 192 == 0) { n += 64; x <<= 64; }
-        if (x >> 224 == 0) { n += 32; x <<= 32; }
-        if (x >> 240 == 0) { n += 16; x <<= 16; }
-        if (x >> 248 == 0) { n += 8; x <<= 8; }
-        if (x >> 252 == 0) { n += 4; x <<= 4; }
-        if (x >> 254 == 0) { n += 2; x <<= 2; }
+        if (x >> 128 == 0) {
+            n += 128;
+            x <<= 128;
+        }
+        if (x >> 192 == 0) {
+            n += 64;
+            x <<= 64;
+        }
+        if (x >> 224 == 0) {
+            n += 32;
+            x <<= 32;
+        }
+        if (x >> 240 == 0) {
+            n += 16;
+            x <<= 16;
+        }
+        if (x >> 248 == 0) {
+            n += 8;
+            x <<= 8;
+        }
+        if (x >> 252 == 0) {
+            n += 4;
+            x <<= 4;
+        }
+        if (x >> 254 == 0) {
+            n += 2;
+            x <<= 2;
+        }
         if (x >> 255 == 0) n += 1;
     }
 }

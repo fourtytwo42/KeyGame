@@ -80,7 +80,13 @@ contract DexTwapMarketDataVerifier is IMarketDataVerifier {
     {
         return keccak256(
             abi.encode(
-                block.chainid, address(factory), pool, stockToken, usdg, fee, TWAP_WINDOW
+                block.chainid,
+                address(factory),
+                pool,
+                stockToken,
+                usdg,
+                fee,
+                TWAP_WINDOW
             )
         );
     }
@@ -91,7 +97,9 @@ contract DexTwapMarketDataVerifier is IMarketDataVerifier {
         uint24 fee,
         uint128 minimumLiquidity
     ) external returns (bytes32 marketId) {
-        if (msg.sender != admin || minimumLiquidity == 0) revert Unauthorized();
+        if (msg.sender != admin || minimumLiquidity == 0) {
+            revert Unauthorized();
+        }
         if (
             factory.getPool(stockToken, usdg, fee) != pool
                 || IUniswapV3Pool(pool).fee() != fee
@@ -100,20 +108,17 @@ contract DexTwapMarketDataVerifier is IMarketDataVerifier {
         ) revert InvalidMarket();
         address token0 = IUniswapV3Pool(pool).token0();
         address token1 = IUniswapV3Pool(pool).token1();
-        if (
-            !(
-                (token0 == stockToken && token1 == usdg)
-                    || (token0 == usdg && token1 == stockToken)
-            )
-        ) revert InvalidMarket();
+        if (!((token0 == stockToken && token1 == usdg)
+                    || (token0 == usdg && token1 == stockToken))) revert InvalidMarket();
         marketId = computeMarketId(pool, stockToken, fee);
-        markets[marketId] =
-            Market(pool, stockToken, fee, minimumLiquidity, true);
+        markets[marketId] = Market(pool, stockToken, fee, minimumLiquidity, true);
         emit MarketConfigured(marketId, pool, stockToken, fee, minimumLiquidity);
     }
 
     function setAuthorizer(address authorizer_) external {
-        if (msg.sender != admin || authorizer != address(0) || authorizer_ == address(0)) {
+        if (
+            msg.sender != admin || authorizer != address(0) || authorizer_ == address(0)
+        ) {
             revert Unauthorized();
         }
         authorizer = authorizer_;
@@ -162,8 +167,9 @@ contract DexTwapMarketDataVerifier is IMarketDataVerifier {
         int56 delta = cumulatives[2] - cumulatives[1];
         int24 meanTick = int24(delta / int56(uint56(TWAP_WINDOW)));
         if (delta < 0 && delta % int56(uint56(TWAP_WINDOW)) != 0) meanTick--;
-        uint24 deviation =
-            spotTick >= meanTick ? uint24(spotTick - meanTick) : uint24(meanTick - spotTick);
+        uint24 deviation = spotTick >= meanTick
+            ? uint24(spotTick - meanTick)
+            : uint24(meanTick - spotTick);
         if (deviation > MAX_SPOT_DEVIATION_TICKS) revert UnsafeMarket();
 
         price = _quoteOneStock(meanTick, market.stockToken);
@@ -200,8 +206,7 @@ contract DexTwapMarketDataVerifier is IMarketDataVerifier {
                 ? FullMath.mulDiv(ratioX192, 1e18, 1 << 192)
                 : FullMath.mulDiv(1 << 192, 1e18, ratioX192);
         } else {
-            uint256 ratioX128 =
-                FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
             usdgRaw = stockToken < usdg
                 ? FullMath.mulDiv(ratioX128, 1e18, 1 << 128)
                 : FullMath.mulDiv(1 << 128, 1e18, ratioX128);

@@ -578,11 +578,7 @@ contract LastBellRound {
 
     function _marketState(uint8 ticker, bytes calldata report)
         internal
-        returns (
-            MarketEvidence memory evidence,
-            MarketBand band,
-            uint16 multiplier
-        )
+        returns (MarketEvidence memory evidence, MarketBand band, uint16 multiplier)
     {
         if (marketMode == MarketMode.Flat) {
             if (report.length != 0) revert InvalidMarketReport();
@@ -595,22 +591,12 @@ contract LastBellRound {
         uint256 greenBoundary = referencePrice * (BPS + marketThresholdBps);
         uint256 redBoundary = referencePrice * (BPS - marketThresholdBps);
         if (scaled >= greenBoundary) {
-            return (
-                evidence,
-                MarketBand.Green,
-                greenMultiplierBps
-            );
+            return (evidence, MarketBand.Green, greenMultiplierBps);
         }
         if (scaled <= redBoundary) {
-            return (
-                evidence,
-                MarketBand.Red,
-                redMultiplierBps
-            );
+            return (evidence, MarketBand.Red, redMultiplierBps);
         }
-        return (
-            evidence, MarketBand.Flat, flatMultiplierBps
-        );
+        return (evidence, MarketBand.Flat, flatMultiplierBps);
     }
 
     function _verifyReport(uint8 ticker, bytes calldata report, bool consume)

@@ -88,8 +88,7 @@ contract LifetimePointsVault {
 
     function openRound(uint256 roundId, address round) external onlyManager {
         if (
-            roundId <= currentRoundId || round == address(0)
-                || roundState[roundId] != 0
+            roundId <= currentRoundId || round == address(0) || roundState[roundId] != 0
         ) revert InvalidTransition();
         currentRoundId = roundId;
         roundState[roundId] = 1;
@@ -98,11 +97,7 @@ contract LifetimePointsVault {
         emit RoundOpened(roundId, round);
     }
 
-    function recordPending(
-        address player,
-        bytes32 assetId,
-        uint256 points
-    ) external {
+    function recordPending(address player, bytes32 assetId, uint256 points) external {
         uint256 roundId = currentRoundId;
         if (
             !authorizedRound[msg.sender] || msg.sender != roundContract[roundId]
@@ -130,8 +125,7 @@ contract LifetimePointsVault {
     ) external {
         if (
             roundId != currentRoundId || roundState[roundId] != 1
-                || !authorizedRound[msg.sender]
-                || msg.sender != roundContract[roundId]
+                || !authorizedRound[msg.sender] || msg.sender != roundContract[roundId]
         ) revert Unauthorized();
         uint256 eligible = totalActivePoints;
         for (uint8 i; i < 4; i++) {
@@ -146,9 +140,7 @@ contract LifetimePointsVault {
                 accRewardPerPoint[token] += increment;
             }
             activationIndex[roundId][token] = accRewardPerPoint[token];
-            emit LifetimeRewardAdded(
-                roundId, token, rewards[i], eligible, increment
-            );
+            emit LifetimeRewardAdded(roundId, token, rewards[i], eligible, increment);
         }
         uint256 promoted = totalPendingPoints;
         totalActivePoints += promoted;
@@ -157,13 +149,10 @@ contract LifetimePointsVault {
         emit RoundPointsSettled(roundId, promoted);
     }
 
-    function cancelRound(uint256 roundId, bytes32[4] calldata assetIds)
-        external
-    {
+    function cancelRound(uint256 roundId, bytes32[4] calldata assetIds) external {
         if (
             roundId != currentRoundId || roundState[roundId] != 1
-                || !authorizedRound[msg.sender]
-                || msg.sender != roundContract[roundId]
+                || !authorizedRound[msg.sender] || msg.sender != roundContract[roundId]
         ) revert Unauthorized();
         uint256 discarded = totalPendingPoints;
         totalPendingPoints = 0;
@@ -202,11 +191,7 @@ contract LifetimePointsVault {
         return value;
     }
 
-    function claimable(address player, address token)
-        public
-        view
-        returns (uint256)
-    {
+    function claimable(address player, address token) public view returns (uint256) {
         uint256 current = accRewardPerPoint[token];
         uint256 amount = storedReward[player][token];
         uint256 debt = rewardDebt[player][token];
@@ -217,10 +202,8 @@ contract LifetimePointsVault {
             pendingPoints[player] != 0 && roundState[roundId] == 2
                 && current > activationIndex[roundId][token]
         ) {
-            amount += (
-                pendingPoints[player]
-                    * (current - activationIndex[roundId][token])
-            ) / ACC_SCALE;
+            amount += (pendingPoints[player]
+                    * (current - activationIndex[roundId][token])) / ACC_SCALE;
         }
         return amount;
     }
@@ -258,13 +241,12 @@ contract LifetimePointsVault {
             if (accumulated > debt) {
                 storedReward[player][token] += accumulated - debt;
             }
-            if (
-                state == 2 && pending != 0
-                    && current > activationIndex[roundId][token]
-            ) {
-                storedReward[player][token] += (
-                    pending * (current - activationIndex[roundId][token])
-                ) / ACC_SCALE;
+            if (state == 2 && pending != 0 && current > activationIndex[roundId][token])
+            {
+                storedReward[
+                        player
+                    ][token] += (pending * (current - activationIndex[roundId][token]))
+                    / ACC_SCALE;
             }
         }
         if (state == 2) {

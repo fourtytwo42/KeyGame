@@ -375,10 +375,8 @@ contract LastBellRoundTest is TestBase {
 
         vm.warp(startAt + firstDuration);
         uint64 bobAt = startAt + firstDuration;
-        bytes memory firstBobReport =
-            _report(1, _bandPrice(1, secondBandSeed), bobAt);
-        bytes memory secondBobReport =
-            _report(1, _bandPrice(1, firstBandSeed), bobAt);
+        bytes memory firstBobReport = _report(1, _bandPrice(1, secondBandSeed), bobAt);
+        bytes memory secondBobReport = _report(1, _bandPrice(1, firstBandSeed), bobAt);
         vm.prank(BOB);
         round.claimBell(1, firstBobReport, 4);
         vm.prank(BOB);
@@ -404,12 +402,8 @@ contract LastBellRoundTest is TestBase {
         assertEq(round.pot(), comparison.pot(), "same fees and seed");
         assertEq(round.holderPool(), comparison.holderPool(), "holder invariant");
         assertEq(round.airtimePool(), comparison.airtimePool(), "airtime invariant");
-        assertEq(
-            round.nextRoundPool(), comparison.nextRoundPool(), "seed invariant"
-        );
-        assertEq(
-            round.protocolPool(), comparison.protocolPool(), "protocol invariant"
-        );
+        assertEq(round.nextRoundPool(), comparison.nextRoundPool(), "seed invariant");
+        assertEq(round.protocolPool(), comparison.protocolPool(), "protocol invariant");
         assertEq(
             round.totalControlTime(),
             comparison.totalControlTime(),
@@ -421,9 +415,7 @@ contract LastBellRoundTest is TestBase {
             "alice control invariant"
         );
         assertEq(
-            round.controlTime(BOB),
-            comparison.controlTime(BOB),
-            "bob control invariant"
+            round.controlTime(BOB), comparison.controlTime(BOB), "bob control invariant"
         );
         assertEq(
             round.controlTime(CAROL),
@@ -432,11 +424,7 @@ contract LastBellRoundTest is TestBase {
         );
     }
 
-    function _bandPrice(uint8 ticker, uint8 seed)
-        internal
-        view
-        returns (uint256)
-    {
+    function _bandPrice(uint8 ticker, uint8 seed) internal view returns (uint256) {
         if (seed % 3 == 0) return opening[ticker] * 10_006 / 10_000;
         if (seed % 3 == 1) return opening[ticker] * 9_994 / 10_000;
         return opening[ticker];

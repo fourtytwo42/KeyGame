@@ -59,8 +59,7 @@ contract DeployNextLocal is ScriptBase {
         for (uint8 index; index < 4; index++) {
             (bytes32 symbol, address token, bytes32 marketId) =
                 previous.tickerConfigs(index);
-            tickers[index] =
-                LastBellRound.TickerConfig(symbol, token, marketId);
+            tickers[index] = LastBellRound.TickerConfig(symbol, token, marketId);
         }
     }
 }

@@ -7,14 +7,10 @@ import {
 import { TestBase } from "./TestBase.sol";
 
 contract RobinhoodMainnetForkTest is TestBase {
-    address private constant FACTORY =
-        0x1f7d7550B1b028f7571E69A784071F0205FD2EfA;
-    address private constant USDG =
-        0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168;
-    address private constant NVDA =
-        0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC;
-    address private constant NVDA_POOL =
-        0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3;
+    address private constant FACTORY = 0x1f7d7550B1b028f7571E69A784071F0205FD2EfA;
+    address private constant USDG = 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168;
+    address private constant NVDA = 0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC;
+    address private constant NVDA_POOL = 0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3;
 
     function test_ReadsLiveTenMinuteNvdaUsdgTwap() public {
         if (!vm.envOr("RUN_ROBINHOOD_MAINNET_FORK", false)) return;

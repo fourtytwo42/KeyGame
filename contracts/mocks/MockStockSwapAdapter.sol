@@ -63,8 +63,7 @@ contract MockStockSwapAdapter is IStockSwapAdapter {
         amountOut = (amountIn * 1e6) / rate;
         if (amountOut < minimumOut) revert InvalidQuote();
         require(
-            IERC20(stock).transferFrom(msg.sender, address(this), amountIn),
-            "STOCK"
+            IERC20(stock).transferFrom(msg.sender, address(this), amountIn), "STOCK"
         );
         usdg.mint(recipient, amountOut);
     }

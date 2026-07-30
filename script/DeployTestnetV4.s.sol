@@ -37,19 +37,20 @@ contract DeployTestnetV4 is ScriptBase {
             new MockStockToken("TSLA"),
             new MockStockToken("SPY")
         ];
-        for (uint8 i; i < 4; i++) adapter.setRate(address(stocks[i]), 1e18);
+        for (uint8 i; i < 4; i++) {
+            adapter.setRate(address(stocks[i]), 1e18);
+        }
         manager = new RoundManagerV4(usdg, adapter, deployer, keeper, treasury);
         rewardRouter = new RewardRouterV4(manager.lifetimeVault());
-        LastBellRoundV4.RoundSettings memory settings =
-            LastBellRoundV4.RoundSettings({
-                roundId: vm.envUint("INITIAL_ROUND_ID"),
-                startDuration: 45,
-                extensionDuration: 2,
-                rugDuration: 10,
-                hardCapDuration: 180,
-                heatTarget: 4_000e6,
-                producerPassRequired: false
-            });
+        LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
+            roundId: vm.envUint("INITIAL_ROUND_ID"),
+            startDuration: 45,
+            extensionDuration: 2,
+            rugDuration: 10,
+            hardCapDuration: 180,
+            heatTarget: 4_000e6,
+            producerPassRequired: false
+        });
         bytes32[4] memory symbols =
             [bytes32("NVDA"), bytes32("AAPL"), bytes32("TSLA"), bytes32("SPY")];
         LastBellRoundV4.TickerConfig[4] memory tickers;

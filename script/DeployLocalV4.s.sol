@@ -38,20 +38,18 @@ contract DeployLocalV4 is ScriptBase {
             swapAdapter.setRate(address(stocks[i]), 1e18);
         }
 
-        manager =
-            new RoundManagerV4(usdg, swapAdapter, deployer, deployer, deployer);
+        manager = new RoundManagerV4(usdg, swapAdapter, deployer, deployer, deployer);
         rewardRouter = new RewardRouterV4(manager.lifetimeVault());
 
-        LastBellRoundV4.RoundSettings memory settings =
-            LastBellRoundV4.RoundSettings({
-                roundId: 4663,
-                startDuration: 45,
-                extensionDuration: 2,
-                rugDuration: 10,
-                hardCapDuration: 180,
-                heatTarget: 4_000e6,
-                producerPassRequired: false
-            });
+        LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
+            roundId: 4663,
+            startDuration: 45,
+            extensionDuration: 2,
+            rugDuration: 10,
+            hardCapDuration: 180,
+            heatTarget: 4_000e6,
+            producerPassRequired: false
+        });
         bytes32[4] memory symbols =
             [bytes32("NVDA"), bytes32("AAPL"), bytes32("TSLA"), bytes32("SPY")];
         LastBellRoundV4.TickerConfig[4] memory tickers;

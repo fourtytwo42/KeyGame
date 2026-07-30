@@ -87,17 +87,14 @@ contract DexTwapMarketDataVerifierTest is TestBase {
         usdg = new MockUSDG();
         stock = new MockStockToken("DEX");
         factory = new MockV3Factory();
-        address token0 =
-            address(stock) < address(usdg) ? address(stock) : address(usdg);
-        address token1 =
-            address(stock) < address(usdg) ? address(usdg) : address(stock);
+        address token0 = address(stock) < address(usdg) ? address(stock) : address(usdg);
+        address token1 = address(stock) < address(usdg) ? address(usdg) : address(stock);
         pool = new MockV3Pool(token0, token1, 3000);
         factory.setPool(address(stock), address(usdg), 3000, address(pool));
         verifier = new DexTwapMarketDataVerifier(
             address(factory), address(usdg), address(this)
         );
-        marketId =
-            verifier.configureMarket(address(pool), address(stock), 3000, 1);
+        marketId = verifier.configureMarket(address(pool), address(stock), 3000, 1);
         verifier.setAuthorizer(address(this));
         verifier.authorizeCaller(address(this));
     }
