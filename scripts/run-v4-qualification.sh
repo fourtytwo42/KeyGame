@@ -40,5 +40,10 @@ pnpm v4-soak:run
 pnpm v4-soak:status
 pnpm v4-soak:reconcile
 pnpm v4-soak:report
-sleep 10
+kill "$(cat .devnet/indexer.pid)"
+wait "$(cat .devnet/indexer.pid)" 2>/dev/null || true
+KEYGAME_CHAIN_ID=31337 INDEXER_CONFIRMATIONS=0 \
+  nohup pnpm service:indexer >.devnet/indexer.log 2>&1 &
+echo "$!" >.devnet/indexer.pid
+sleep 15
 pnpm exec tsx scripts/check-v4-indexer.ts
