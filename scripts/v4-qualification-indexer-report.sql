@@ -8,6 +8,12 @@ SELECT count(*) AS rounds,min(round_id),max(round_id)
 FROM rounds
 WHERE chain_id=31337;
 
+SELECT round_id,deployment_block,contract_address
+FROM rounds
+WHERE chain_id=31337
+ORDER BY round_id
+LIMIT 8;
+
 SELECT event_name,count(*)
 FROM chain_events
 WHERE chain_id=31337

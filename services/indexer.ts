@@ -131,6 +131,7 @@ async function indexedAddresses() {
 
 async function indexBatch(fromBlock: bigint, toBlock: bigint) {
   const addresses = await indexedAddresses();
+  const discoveredRounds: Address[] = [];
   const managerLogs = await client.getLogs({
     address: manifest.contracts.manager,
     fromBlock,
@@ -159,19 +160,42 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
           )
         ) {
           addresses.push(round as Address);
+          discoveredRounds.push(round as Address);
         }
       }
     } catch {
       // Manager events from archived versions are decoded in the main pass.
     }
   }
-  const logs = addresses.length
+  const bulkLogs = addresses.length
     ? await client.getLogs({ address: addresses, fromBlock, toBlock })
     : [];
+  const discoveredLogs = (
+    await Promise.all(
+      discoveredRounds.map((address) =>
+        client.getLogs({ address, fromBlock, toBlock }),
+      ),
+    )
+  ).flat();
+  const uniqueLogs = new Map(
+    [...bulkLogs, ...discoveredLogs].map((log) => [
+      `${log.transactionHash}:${log.logIndex}`,
+      log,
+    ]),
+  );
+  const logs = [...uniqueLogs.values()].sort(
+    (left, right) =>
+      Number(left.blockNumber - right.blockNumber) ||
+      Number(left.logIndex - right.logIndex),
+  );
   const blocks = [];
   for (let number = fromBlock; number <= toBlock; number += 1n) {
     blocks.push(await client.getBlock({ blockNumber: number }));
   }
+  const rewindBlock =
+    discoveredRounds.length > 0
+      ? await client.getBlock({ blockNumber: fromBlock - 1n })
+      : null;
 
   const connection = await pool.connect();
   try {
@@ -397,7 +421,7 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
         }
       }
     }
-    const tip = blocks.at(-1);
+    const tip = rewindBlock ?? blocks.at(-1);
     if (!tip?.hash) throw new Error("Batch has no canonical tip");
     await connection.query(
       `INSERT INTO indexer_checkpoints(deployment_key,chain_id,service,block_number,block_hash)
