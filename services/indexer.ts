@@ -443,6 +443,7 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
 async function run() {
   await registerDeployment();
   await rollbackIfReorged();
+  let reconciledRoundCount = 0;
   for (;;) {
     try {
       const head = await client.getBlockNumber();
@@ -464,6 +465,34 @@ async function run() {
           head: head.toString(),
         });
         continue;
+      }
+      const knownRounds = await pool.query<{
+        deployment_block: string;
+      }>(
+        `SELECT deployment_block::text FROM rounds
+         WHERE deployment_key=$1 ORDER BY round_id`,
+        [deploymentKey],
+      );
+      const knownRoundCount = knownRounds.rows.length;
+      if (knownRoundCount > reconciledRoundCount) {
+        const firstNew =
+          knownRounds.rows[reconciledRoundCount]?.deployment_block;
+        if (firstNew) {
+          const rewindNumber = BigInt(firstNew) - 1n;
+          const rewind = await client.getBlock({ blockNumber: rewindNumber });
+          await pool.query(
+            `UPDATE indexer_checkpoints
+             SET block_number=$2,block_hash=$3,updated_at=now()
+             WHERE deployment_key=$1 AND service='chain-indexer'`,
+            [
+              deploymentKey,
+              rewindNumber.toString(),
+              rewind.hash,
+            ],
+          );
+          reconciledRoundCount = knownRoundCount;
+          continue;
+        }
       }
       await heartbeat("chain-indexer", manifest.chainId, "ok", {
         indexedBlock: current.toString(),
