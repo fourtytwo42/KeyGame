@@ -131,6 +131,40 @@ async function indexedAddresses() {
 
 async function indexBatch(fromBlock: bigint, toBlock: bigint) {
   const addresses = await indexedAddresses();
+  const managerLogs = await client.getLogs({
+    address: manifest.contracts.manager,
+    fromBlock,
+    toBlock,
+  });
+  for (const log of managerLogs) {
+    try {
+      const decoded = decodeEventLog({
+        abi: [...roundManagerAbi, ...roundManagerV4Abi],
+        data: log.data,
+        topics: log.topics,
+        strict: false,
+      });
+      if (
+        decoded.eventName === "RoundPrepared" &&
+        decoded.args &&
+        typeof decoded.args === "object" &&
+        "round" in decoded.args
+      ) {
+        const round = decoded.args.round;
+        if (
+          typeof round === "string" &&
+          round !== zeroAddress &&
+          !addresses.some(
+            (address) => address.toLowerCase() === round.toLowerCase(),
+          )
+        ) {
+          addresses.push(round as Address);
+        }
+      }
+    } catch {
+      // Manager events from archived versions are decoded in the main pass.
+    }
+  }
   const logs = addresses.length
     ? await client.getLogs({ address: addresses, fromBlock, toBlock })
     : [];
