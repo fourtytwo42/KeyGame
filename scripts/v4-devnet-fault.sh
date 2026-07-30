@@ -36,7 +36,7 @@ fi
 auth_digest="$(tr -d '\r\n' <"$SOAK_CONTROL_TOKEN_FILE" | sha256sum | awk '{print $1}')"
 fault_id="$(
   psql "$DATABASE_URL" -v run_id="$run_id" -v fault="$fault_type" \
-    -v digest="$auth_digest" -v duration="$duration_seconds" -At <<'SQL'
+    -v digest="$auth_digest" -v duration="$duration_seconds" -qAt <<'SQL'
 INSERT INTO soak_faults(
   run_id,fault_type,auth_digest,state,scheduled_at,activated_at,parameters)
 VALUES(:'run_id',:'fault',:'digest','active',now(),now(),
