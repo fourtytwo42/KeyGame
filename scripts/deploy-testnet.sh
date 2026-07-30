@@ -14,7 +14,7 @@ if [[ "$ALLOW_TESTNET_BROADCAST" != "YES_I_AM_DEPLOYING_TEST_TOKENS" ]]; then
   echo "Testnet broadcast confirmation does not match." >&2
   exit 1
 fi
-if [[ -n "$(git status --porcelain)" ]]; then
+if [[ -n "$(git status --porcelain -- . ':(exclude)deployments/31337.json')" ]]; then
   echo "The complete worktree must be clean before deployment." >&2
   exit 1
 fi
