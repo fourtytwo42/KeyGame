@@ -17,6 +17,19 @@ contract DeployTestnet is ScriptBase {
     );
 
     error WrongChain();
+    error InvalidSeed();
+
+    uint256 internal constant PAYMENT_TOKEN_SCALE = 1e6;
+    uint256 internal constant MAX_INITIAL_SEED_USD = 1_000_000;
+
+    function initialSeedRaw(uint256 initialSeedUsd)
+        public
+        pure
+        returns (uint256)
+    {
+        if (initialSeedUsd > MAX_INITIAL_SEED_USD) revert InvalidSeed();
+        return initialSeedUsd * PAYMENT_TOKEN_SCALE;
+    }
 
     function run()
         external
@@ -35,7 +48,7 @@ contract DeployTestnet is ScriptBase {
         address attestor = vm.envAddress("ATTESTOR_ADDRESS");
         address faucet = vm.envAddress("FAUCET_ADDRESS");
         address treasury = vm.envAddress("TREASURY_ADDRESS");
-        uint256 initialSeed = vm.envUint("INITIAL_SEED_USDG");
+        uint256 initialSeed = initialSeedRaw(vm.envUint("INITIAL_SEED_USD"));
 
         vm.startBroadcast();
         token = new TestnetMockUSDG(deployer);

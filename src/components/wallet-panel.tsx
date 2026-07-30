@@ -154,7 +154,12 @@ export function WalletPanel() {
                   <span>APPROVAL ROUTER</span>
                   <code>{configuredPaymentRouter}</code>
                 </div>
-                <UatControls address={address} />
+                <UatControls
+                  address={address}
+                  onFunded={async () => {
+                    await Promise.all([balance.refetch(), game.refresh()]);
+                  }}
+                />
                 {chain?.id !== configuredGameChain.id ? (
                   <button
                     className="secondaryAction fullWidth"

@@ -4,7 +4,13 @@ import { useState } from "react";
 import type { Address } from "viem";
 import { useDisconnect } from "wagmi";
 
-export function UatControls({ address }: { address: Address }) {
+export function UatControls({
+  address,
+  onFunded,
+}: {
+  address: Address;
+  onFunded?: () => void | Promise<void>;
+}) {
   const { disconnect } = useDisconnect();
   const [funding, setFunding] = useState(false);
   const [message, setMessage] = useState("");
@@ -33,6 +39,7 @@ export function UatControls({ address }: { address: Address }) {
             if (!response.ok) {
               throw new Error(payload.error || "Funding failed.");
             }
+            await onFunded?.();
             setMessage("Test ETH and mock USDG funded.");
           } catch (cause) {
             setMessage(
