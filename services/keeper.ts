@@ -15,6 +15,7 @@ import {
 } from "./keeper-payload";
 import {
   heartbeat,
+  deploymentKeyFor,
   loadManifest,
   pool,
   publicClientFor,
@@ -22,6 +23,7 @@ import {
 } from "./common";
 
 const manifest = await loadManifest();
+const deploymentKey = deploymentKeyFor(manifest);
 const client = publicClientFor(manifest);
 const wallet = await walletClientFor(manifest, "keeper");
 const manager = manifest.contracts.manager;
@@ -88,10 +90,8 @@ async function loadRoster() {
             marketId: asset.market_id,
             poolAddress: asset.pool_address,
             stockTokenAddress: asset.canonical_address,
-            quoteTokenAddress:
-              "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-            factoryAddress:
-              "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+            quoteTokenAddress: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+            factoryAddress: "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
             feeTier: asset.fee_tier,
             sourceChainId: 4663,
             twap: { seconds: 600, requiredHistorySeconds: 1800 },
@@ -100,9 +100,7 @@ async function loadRoster() {
               usdgDepth: Number(asset.pool_usdg_depth ?? 0),
               buyImpactBps: Number(asset.buy_impact_bps ?? 0),
               sellImpactBps: Number(asset.sell_impact_bps ?? 0),
-              spotTwapDeviationBps: Number(
-                asset.spot_twap_deviation_bps ?? 0,
-              ),
+              spotTwapDeviationBps: Number(asset.spot_twap_deviation_bps ?? 0),
               sampleCount: bySymbol.get(asset.symbol)?.length ?? 0,
               reasons: asset.dex_safety_reasons ?? [],
             },
@@ -198,10 +196,11 @@ async function prepareIfNeeded() {
     { symbol: Hex; token: Address; marketId: Hex },
   ];
   await pool.query(
-    `INSERT INTO keeper_jobs(chain_id,idempotency_key,job_type,payload)
-     VALUES($1,$2,'prepare',$3)
-     ON CONFLICT(chain_id,idempotency_key) DO NOTHING`,
+    `INSERT INTO keeper_jobs(deployment_key,chain_id,idempotency_key,job_type,payload)
+     VALUES($1,$2,$3,'prepare',$4)
+     ON CONFLICT(deployment_key,idempotency_key) DO NOTHING`,
     [
+      deploymentKey,
       manifest.chainId,
       `prepare:${manager.toLowerCase()}:${settings.roundId}`,
       JSON.stringify({
@@ -233,10 +232,11 @@ async function finalizeIfNeeded() {
       functionName: "roundId",
     });
     await pool.query(
-      `INSERT INTO keeper_jobs(chain_id,idempotency_key,job_type,payload)
-       VALUES($1,$2,'finalize',$3)
-       ON CONFLICT(chain_id,idempotency_key) DO NOTHING`,
+      `INSERT INTO keeper_jobs(deployment_key,chain_id,idempotency_key,job_type,payload)
+       VALUES($1,$2,$3,'finalize',$4)
+       ON CONFLICT(deployment_key,idempotency_key) DO NOTHING`,
       [
+        deploymentKey,
         manifest.chainId,
         `finalize:${active.toLowerCase()}`,
         JSON.stringify({ roundId: roundId.toString(), round: active }),
@@ -287,10 +287,11 @@ async function cancelForReportOutage() {
     now - state.details.outageSince >= 15
   ) {
     await pool.query(
-      `INSERT INTO keeper_jobs(chain_id,idempotency_key,job_type,payload)
-       VALUES($1,$2,'cancel',$3)
-       ON CONFLICT(chain_id,idempotency_key) DO NOTHING`,
+      `INSERT INTO keeper_jobs(deployment_key,chain_id,idempotency_key,job_type,payload)
+       VALUES($1,$2,$3,'cancel',$4)
+       ON CONFLICT(deployment_key,idempotency_key) DO NOTHING`,
       [
+        deploymentKey,
         manifest.chainId,
         `cancel:market-data:${active.toLowerCase()}`,
         JSON.stringify({
@@ -321,9 +322,9 @@ async function processJob() {
       };
     }>(
       `SELECT id,state,transaction_hash,job_type,payload FROM keeper_jobs
-       WHERE chain_id=$1 AND state IN ('pending','broadcasting') ORDER BY id
+       WHERE deployment_key=$1 AND state IN ('pending','broadcasting') ORDER BY id
        FOR UPDATE SKIP LOCKED LIMIT 1`,
-      [manifest.chainId],
+      [deploymentKey],
     );
     if (!result.rowCount) {
       await connection.query("COMMIT");
@@ -404,11 +405,12 @@ async function processJob() {
         functionName: "preparedRound",
       });
       await pool.query(
-        `INSERT INTO rounds(chain_id,round_id,contract_address,state,roster)
-         VALUES($1,$2,$3,'prepared',$4)
-         ON CONFLICT(chain_id,round_id) DO UPDATE SET
+        `INSERT INTO rounds(deployment_key,chain_id,round_id,contract_address,state,roster)
+         VALUES($1,$2,$3,$4,'prepared',$5)
+         ON CONFLICT(deployment_key,round_id) DO UPDATE SET
            contract_address=excluded.contract_address,roster=excluded.roster`,
         [
+          deploymentKey,
           manifest.chainId,
           job.payload.roundId,
           roundAddress,

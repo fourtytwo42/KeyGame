@@ -11,10 +11,7 @@ test("the main page opens directly into the game and archive", async ({
   ).toBeAttached();
 });
 
-test("real devnet starter ticker is the first paid claim", async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name === "mobile-chromium");
+test("real devnet starter ticker is the first paid claim", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
   if (
@@ -66,7 +63,7 @@ test("wallet panel exposes major connector paths and config state", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "TUNE WALLET" }).click();
+  await page.getByRole("button", { name: "CONNECT WALLET" }).click();
   await expect(
     page.getByRole("dialog", { name: "Wallet & session" }),
   ).toBeVisible();
@@ -76,6 +73,50 @@ test("wallet panel exposes major connector paths and config state", async ({
   await expect(
     page.getByText(/WALLETCONNECT NEEDS A PROJECT ID/),
   ).toBeVisible();
+});
+
+test("projected rewards and earning units are immediately understandable", async ({
+  page,
+}) => {
+  await page.goto("/?scenario=live");
+  await expect(page.getByText("IF THE BELL RANG NOW")).toBeAttached();
+  await expect(page.getByText(/FINAL CALLER · 50%/)).toBeAttached();
+  await expect(page.getByText(/CLOSING PRINT · 30%/)).toBeAttached();
+  await expect(page.getByText(/PTS\/SEC/)).toBeAttached();
+  await expect(page.getByText(/FINAL AMOUNTS SETTLE ONCHAIN/)).toBeAttached();
+});
+
+test("financial and interactive labels respect the 11px floor", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const tooSmall = await page.evaluate(() => {
+    const selectors = [
+      ".walletTrigger",
+      ".primaryAction",
+      ".secondaryAction",
+      ".textButton",
+      ".entryTerms",
+      ".actionFinePrint",
+      ".lowerThird",
+      ".airtimeMetrics small",
+      ".factionChoice small",
+      ".apeButton small",
+      ".sessionPanel dt",
+      ".sessionPanel dd",
+    ];
+    return [...document.querySelectorAll<HTMLElement>(selectors.join(","))]
+      .filter((element) => {
+        const box = element.getBoundingClientRect();
+        return box.width > 0 && box.height > 0;
+      })
+      .map((element) => ({
+        text: element.textContent?.trim().slice(0, 50),
+        size: Number.parseFloat(getComputedStyle(element).fontSize),
+      }))
+      .filter((item) => item.size < 11);
+  });
+  expect(tooSmall).toEqual([]);
 });
 
 test("all trust and proof routes render without a wallet", async ({ page }) => {

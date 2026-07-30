@@ -49,17 +49,23 @@ export function HistoricalRuns() {
       {runs.length ? (
         <div className="historicalRunGrid">
           {runs.map((run) => (
-            <Link
-              className="historicalRunCard"
-              href={`/replay/${run.id}`}
-              key={run.id}
-            >
+            <article className="historicalRunCard" key={run.id}>
               <span>ROUND {run.roundId}</span>
-              <strong>{formatUsd(run.peakPotUsd)} PEAK POT</strong>
+              <Link href={`/replay/${run.id}`}>
+                <strong>{formatUsd(run.peakPotUsd)} PEAK POT</strong>
+              </Link>
               <dl>
                 <div>
                   <dt>Final caller</dt>
-                  <dd>{run.finalHolder}</dd>
+                  <dd>
+                    {run.finalHolderHandle ? (
+                      <Link href={`/profile/${run.finalHolderHandle}`}>
+                        {run.finalHolder}
+                      </Link>
+                    ) : (
+                      run.finalHolder
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt>Closing Print</dt>
@@ -70,8 +76,10 @@ export function HistoricalRuns() {
                   <dd>{run.claimCount}</dd>
                 </div>
               </dl>
-              <small>OPEN FULL RUN →</small>
-            </Link>
+              <Link href={`/replay/${run.id}`}>
+                <small>OPEN FULL RUN →</small>
+              </Link>
+            </article>
           ))}
         </div>
       ) : (

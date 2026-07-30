@@ -1,6 +1,6 @@
 import "server-only";
 import { database, databaseHealth } from "./db";
-import { loadServerDeployment } from "./deployment";
+import { loadServerDeploymentWithKey } from "./deployment";
 import { deploymentPublicClient } from "./rpc-client";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
 
@@ -37,7 +37,7 @@ export async function getSystemStatus() {
   if (mode !== "testnet" && mode !== "mainnet") {
     return { ok: true, mode, checkedAt: new Date().toISOString() };
   }
-  const manifest = await loadServerDeployment();
+  const { manifest, deploymentKey } = await loadServerDeploymentWithKey();
   const client = deploymentPublicClient(manifest);
   const [
     block,
@@ -49,33 +49,32 @@ export async function getSystemStatus() {
     latestReport,
     primary,
     fallback,
-  ] =
-    await Promise.all([
-      client.getBlockNumber(),
-      databaseHealth(),
-      database.query<{
-        service: string;
-        status: string;
-        details: Record<string, unknown>;
-        observed_at: Date;
-      }>(
-        `SELECT service,status,details,observed_at FROM service_heartbeats
+  ] = await Promise.all([
+    client.getBlockNumber(),
+    databaseHealth(),
+    database.query<{
+      service: string;
+      status: string;
+      details: Record<string, unknown>;
+      observed_at: Date;
+    }>(
+      `SELECT service,status,details,observed_at FROM service_heartbeats
          WHERE chain_id=$1 AND service <> 'data-streams-adapter'
          ORDER BY service`,
-        [manifest.chainId],
-      ),
-      database.query<{ block_number: string; updated_at: Date }>(
-        `SELECT block_number,updated_at FROM indexer_checkpoints
-         WHERE chain_id=$1 AND service='chain-indexer'`,
-        [manifest.chainId],
-      ),
-      database.query<{
-        assets: string;
-        complete: string;
-        safe: string;
-        newest_sample: Date | null;
-      }>(
-        `SELECT count(DISTINCT symbol)::text AS assets,
+      [manifest.chainId],
+    ),
+    database.query<{ block_number: string; updated_at: Date }>(
+      `SELECT block_number,updated_at FROM indexer_checkpoints
+         WHERE deployment_key=$1 AND service='chain-indexer'`,
+      [deploymentKey],
+    ),
+    database.query<{
+      assets: string;
+      complete: string;
+      safe: string;
+      newest_sample: Date | null;
+    }>(
+      `SELECT count(DISTINCT symbol)::text AS assets,
           count(DISTINCT symbol) FILTER (
             WHERE symbol IN (
               SELECT symbol FROM market_samples
@@ -89,22 +88,22 @@ export async function getSystemStatus() {
             WHERE source='uniswap-v3-twap'
           ) AS newest_sample
         FROM market_assets LEFT JOIN market_samples USING(symbol)`,
-      ),
-      getLiveSnapshot().catch(() => null),
-      database.query<{ observed_at: Date }>(
-        "SELECT observed_at FROM market_reports ORDER BY observed_at DESC LIMIT 1",
-      ),
-      probe(manifest.rpc.primary).catch((error) => ({
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      })),
-      manifest.rpc.fallback
-        ? probe(manifest.rpc.fallback).catch((error) => ({
-            ok: false,
-            error: error instanceof Error ? error.message : String(error),
-          }))
-        : Promise.resolve({ ok: false, error: "not configured" }),
-    ]);
+    ),
+    getLiveSnapshot().catch(() => null),
+    database.query<{ observed_at: Date }>(
+      "SELECT observed_at FROM market_reports ORDER BY observed_at DESC LIMIT 1",
+    ),
+    probe(manifest.rpc.primary).catch((error) => ({
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    })),
+    manifest.rpc.fallback
+      ? probe(manifest.rpc.fallback).catch((error) => ({
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        }))
+      : Promise.resolve({ ok: false, error: "not configured" }),
+  ]);
   const indexedBlock = checkpoint.rowCount
     ? Number(checkpoint.rows[0].block_number)
     : manifest.deploymentBlock - 1;
@@ -115,6 +114,7 @@ export async function getSystemStatus() {
     block: Number(block),
     sourceCommit: manifest.sourceCommit,
     deploymentBlock: manifest.deploymentBlock,
+    deploymentKey,
     contracts: manifest.contracts,
     mockOnly: manifest.mockOnly,
     rpc: { primary, fallback },
@@ -129,8 +129,7 @@ export async function getSystemStatus() {
       completeStreams: Number(market.rows[0]?.complete || 0),
       safeDexMarkets: Number(market.rows[0]?.safe || 0),
       newestSample: market.rows[0]?.newest_sample?.toISOString(),
-      latestDexObservation:
-        latestReport.rows[0]?.observed_at?.toISOString(),
+      latestDexObservation: latestReport.rows[0]?.observed_at?.toISOString(),
       currentRoster: currentRound?.tickerScores ?? [],
     },
     round: currentRound

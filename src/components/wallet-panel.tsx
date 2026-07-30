@@ -11,6 +11,7 @@ import {
 } from "wagmi";
 import { shortAddress } from "@/lib/game/constants";
 import { UatControls } from "@/components/uat-controls-runtime";
+import { ProfileControls } from "@/components/profile-controls";
 import { walletConnectConfigured } from "@/lib/web3/config";
 import {
   configuredGameChain,
@@ -69,7 +70,7 @@ export function WalletPanel() {
         aria-haspopup="dialog"
       >
         <span className="statusDot" data-online={isConnected} />
-        {isConnected && address ? shortAddress(address) : "TUNE WALLET"}
+        {isConnected && address ? shortAddress(address) : "CONNECT WALLET"}
       </button>
       {open ? (
         <div className="modalScrim" role="presentation">
@@ -159,6 +160,10 @@ export function WalletPanel() {
                   onFunded={async () => {
                     await Promise.all([balance.refetch(), game.refresh()]);
                   }}
+                />
+                <ProfileControls
+                  address={address}
+                  chainId={chain?.id ?? configuredGameChain.id}
                 />
                 {chain?.id !== configuredGameChain.id ? (
                   <button

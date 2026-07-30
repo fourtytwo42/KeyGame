@@ -105,6 +105,7 @@ export interface MarketReport {
 export interface BellHolder {
   address: `0x${string}`;
   displayName: string;
+  profileHandle?: string;
   ticker: TickerId;
   claimNumber: number;
   band: MarketBand;
@@ -127,8 +128,63 @@ export interface TickerScore {
   currentBand: MarketBand;
   multiplierBps: number;
   payoutAirtimeSeconds?: number;
+  openingPrice?: number;
   currentPrice?: number;
   poolSafety?: PoolSafety;
+  volatilityRank?: number;
+  realizedMovementBps?: number;
+  estimatedBand?: MarketBand;
+  estimatedMultiplierBps?: number;
+  observationAt?: number;
+}
+
+export interface LiveEarningRate {
+  ticker: TickerId;
+  band: MarketBand;
+  multiplierBps: number;
+  pointsPerSecond: number;
+  rawAirtimeSeconds: number;
+  weightedPoints: number;
+}
+
+export interface EstimatedMarketBand {
+  ticker: TickerId;
+  band: MarketBand;
+  multiplierBps: number;
+  observedAt: number;
+  freshness: DataFreshness;
+}
+
+export interface RoundProjection {
+  snapshotBlock?: number;
+  snapshotTime: number;
+  finalHolder: `0x${string}` | null;
+  finalHolderDisplayName: string | null;
+  holderPoolUsd: number;
+  winningTicker: TickerId | null;
+  closingPrintPoolUsd: number;
+  currentEarning: LiveEarningRate | null;
+  estimatedBands: EstimatedMarketBand[];
+  isEstimate: true;
+}
+
+export interface PlayerRoundProjection {
+  address: `0x${string}`;
+  roundId: string;
+  snapshotBlock?: number;
+  snapshotTime: number;
+  perTicker: Array<{
+    ticker: TickerId;
+    rawAirtimeSeconds: number;
+    weightedPoints: number;
+    pendingRawSeconds: number;
+    pendingWeightedPoints: number;
+  }>;
+  projectedHolderRewardUsd: number;
+  projectedClosingPrintRewardUsd: number;
+  projectedTotalRewardUsd: number;
+  isCurrentHolder: boolean;
+  isEstimate: true;
 }
 
 export interface ClaimEvent {
@@ -195,7 +251,47 @@ export interface RoundState {
     nextRoundUsd: number;
     protocolUsd: number;
   };
+  projection?: RoundProjection;
   cancellationReason?: string;
+}
+
+export type RaidCampaignState =
+  "GATHERING" | "COUNTDOWN" | "LIVE" | "COOLDOWN" | "EXPIRED";
+
+export interface RaidCampaign {
+  id: string;
+  deploymentKey: string;
+  state: RaidCampaignState;
+  eligibleVoters: number;
+  threshold: number;
+  voteCount: number;
+  viewerEligible: boolean;
+  viewerVoted: boolean;
+  gatheringExpiresAt: string;
+  countdownStartsAt?: string;
+  liveStartsAt?: string;
+  liveEndsAt?: string;
+  cooldownEndsAt?: string;
+  discrepancy?: string;
+}
+
+export interface PlayerProfile {
+  address: `0x${string}`;
+  handle: string;
+  displayName: string;
+  favoriteTicker?: TickerId;
+  avatarSeed: string;
+  createdAt: string;
+  updatedAt: string;
+  stats: {
+    calls: number;
+    roundsPlayed: number;
+    finalBells: number;
+    winningTickerContributions: number;
+    totalRawAirtimeSeconds: number;
+    topTicker?: TickerId;
+    claimedRewardsUsd: number;
+  };
 }
 
 export interface SessionBudget {

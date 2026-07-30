@@ -2,6 +2,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Address } from "viem";
+import { deploymentKeyFor } from "@/lib/deployment-key";
 
 export type ServerDeployment = {
   schemaVersion: number;
@@ -42,4 +43,9 @@ export async function loadServerDeployment(): Promise<ServerDeployment> {
     throw new Error("The active deployment manifest is incomplete.");
   }
   return manifest;
+}
+
+export async function loadServerDeploymentWithKey() {
+  const manifest = await loadServerDeployment();
+  return { manifest, deploymentKey: deploymentKeyFor(manifest) };
 }

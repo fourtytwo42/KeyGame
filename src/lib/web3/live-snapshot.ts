@@ -2,7 +2,7 @@ import "server-only";
 import { hexToString, type Address, zeroAddress } from "viem";
 import type { ClaimEvent, RoundState, TickerId } from "@/lib/game/types";
 import { database } from "@/lib/server/db";
-import { loadServerDeployment } from "@/lib/server/deployment";
+import { loadServerDeploymentWithKey } from "@/lib/server/deployment";
 import { deploymentPublicClient } from "@/lib/server/rpc-client";
 import { lastBellAbi, roundManagerAbi } from "./last-bell-abi";
 
@@ -21,6 +21,8 @@ type EventRow = {
   log_index: number;
   block_number: string;
   args: Record<string, string | number | boolean>;
+  display_name: string | null;
+  handle: string | null;
 };
 
 type IndexedClaim = ClaimEvent & { acceptedAt: number };
@@ -28,7 +30,7 @@ type IndexedClaim = ClaimEvent & { acceptedAt: number };
 export async function getLiveSnapshot(
   requestedRoundAddress?: Address,
 ): Promise<RoundState> {
-  const manifest = await loadServerDeployment();
+  const { manifest, deploymentKey } = await loadServerDeploymentWithKey();
   const client = deploymentPublicClient(manifest);
   const [active, prepared, block] = await Promise.all([
     client.readContract({
@@ -69,6 +71,7 @@ export async function getLiveSnapshot(
     winner,
     acceptedClaims,
     configs,
+    openingPrices,
     raw,
     scores,
     acquired,
@@ -175,6 +178,16 @@ export async function getLiveSnapshot(
       ),
     ),
     Promise.all(
+      [0n, 1n, 2n, 3n].map((index) =>
+        client.readContract({
+          address: roundAddress,
+          abi: lastBellAbi,
+          functionName: "openingPrices",
+          args: [index],
+        }),
+      ),
+    ),
+    Promise.all(
       [0, 1, 2, 3].map((index) =>
         client.readContract({
           address: roundAddress,
@@ -227,12 +240,15 @@ export async function getLiveSnapshot(
   );
   const eventResult = await database
     .query<EventRow>(
-      `SELECT transaction_hash,log_index,block_number,args
-       FROM chain_events
-       WHERE chain_id=$1 AND lower(contract_address)=lower($2)
-         AND event_name='BellClaimed'
-       ORDER BY block_number,log_index`,
-      [manifest.chainId, roundAddress],
+      `SELECT e.transaction_hash,e.log_index,e.block_number,e.args,
+              p.display_name,p.handle
+       FROM chain_events e
+       LEFT JOIN player_profiles p
+         ON lower(p.address)=lower(e.args->>'player')
+       WHERE e.deployment_key=$1 AND lower(e.contract_address)=lower($2)
+         AND e.event_name='BellClaimed'
+       ORDER BY e.block_number,e.log_index`,
+      [deploymentKey, roundAddress],
     )
     .catch(() => ({ rows: [] as EventRow[] }));
   const indexedClaims: IndexedClaim[] = eventResult.rows.map((event) => {
@@ -245,7 +261,8 @@ export async function getLiveSnapshot(
       atSeconds: Number(args.acceptedAt) - Number(startedAt),
       claimant: {
         address: claimant,
-        displayName: `caller-${claimant.slice(2, 7)}`,
+        displayName: event.display_name ?? `caller-${claimant.slice(2, 7)}`,
+        profileHandle: event.handle ?? undefined,
         ticker: tickers[tickerIndex],
         claimNumber: Number(args.sequence),
         band: bandName(Number(args.marketBand)),
@@ -370,7 +387,10 @@ export async function getLiveSnapshot(
         ? null
         : {
             address: holderAddress,
-            displayName: `caller-${holderAddress.slice(2, 7)}`,
+            displayName:
+              latest?.claimant.displayName ??
+              `caller-${holderAddress.slice(2, 7)}`,
+            profileHandle: latest?.claimant.profileHandle,
             ticker: tickers[Number(holderTicker)],
             claimNumber: Number(acceptedClaims),
             band: bandName(Number(holderBand)),
@@ -392,6 +412,7 @@ export async function getLiveSnapshot(
         Number(holderTicker) === index ? bandName(Number(holderBand)) : "FLAT",
       multiplierBps:
         Number(holderTicker) === index ? Number(holderMultiplier) : 10_000,
+      openingPrice: price(openingPrices[index]),
     })),
     claims,
     freshness: "live",

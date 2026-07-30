@@ -4,15 +4,18 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: replace Chainlink scoring with direct Uniswap V3 Stock
-  Token/USDG 10-minute TWAP scoring and supersede the chain-46630 deployment.
-- Last meaningful result: the DEX contracts and services are deployed and
-  explorer-verified on Robinhood testnet. Browser UAT completed FLAT rollover,
-  automatic DEX roster preparation, reusable allowance, and a real
-  mainnet-observation/testnet-attestation claim in round 4. The Bags page now
-  uses team-style stock cards focused on point speed, heat, and game impact.
-- Next step: run the required 24-hour/100-round failure-injection soak, finish
-  audit/economic/legal gates, and conduct later manual extension-wallet UAT.
+- Current task: implement PRD 14 reward clarity, SIWE caller profiles,
+  community-triggered raids, deployment-aware history, and mainnet-readiness
+  evidence without changing round economics.
+- Last meaningful result: the local workspace implements round and player
+  projections, estimated DEX entry bands, an 11px interactive-copy floor, SIWE
+  sessions and profiles, public chain-derived stats, featured raid campaigns,
+  deployment-key migration/backfill, Reown mainnet guards, and economic/latency
+  evidence scripts. Local TypeScript, ESLint, 45 Vitest tests, and the
+  production build pass.
+- Next step: migrate and build both modes on the authoritative VM, restart the
+  services, run Foundry/integration/Playwright/browser UAT, and start or
+  document the remaining 24-hour testnet soak.
 - Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
   depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
   checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.

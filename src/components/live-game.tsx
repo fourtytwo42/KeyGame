@@ -13,6 +13,7 @@ import { scenarioIds, scenarios, tickerById } from "@/lib/game/scenarios";
 import { claimBell, leadingTicker, settle, tick } from "@/lib/game/simulator";
 import type {
   ClaimableBalances,
+  PlayerRoundProjection,
   RoundState,
   SessionBudget,
   SimulationScenarioId,
@@ -48,6 +49,8 @@ export function LiveGame({
     refundUsd: 0,
   });
   const [actionStatus, setActionStatus] = useState<ActionStatus>("idle");
+  const [playerProjection, setPlayerProjection] =
+    useState<PlayerRoundProjection | null>(null);
   const [announcement, setAnnouncement] = useState(
     "Live broadcast synchronized.",
   );
@@ -117,6 +120,35 @@ export function LiveGame({
       window.clearInterval(poller);
     };
   }, []);
+
+  useEffect(() => {
+    if (!walletGame.address || !chainMode) {
+      const clear = window.setTimeout(() => setPlayerProjection(null), 0);
+      return () => window.clearTimeout(clear);
+    }
+    const controller = new AbortController();
+    const refresh = async () => {
+      try {
+        const response = await fetch(
+          `/api/players/${walletGame.address}/round-projection`,
+          { cache: "no-store", signal: controller.signal },
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          projection?: PlayerRoundProjection;
+        };
+        if (payload.projection) setPlayerProjection(payload.projection);
+      } catch {
+        // The public game remains usable when a wallet projection is unavailable.
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 2_000);
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+    };
+  }, [walletGame.address, state.roundId]);
 
   useEffect(() => {
     if (chainMode || (state.phase !== "live" && state.phase !== "rug")) return;
@@ -342,7 +374,7 @@ export function LiveGame({
     (
       activeSession?.player ?? (!chainMode ? demoAddresses.player : undefined)
     )?.toLowerCase() === state.holder?.address.toLowerCase();
-  const entryRequired = state.freshness === "live" && state.phase === "entry";
+  const entryRequired = state.phase === "entry";
   const hasChainClaimPath = walletGame.isConnected
     ? walletGame.ready
     : devnetMode && joined && (activeSession?.availableActions ?? 0) > 0;
@@ -490,15 +522,9 @@ export function LiveGame({
                 : void requestDevnetAction("revoke")
             }
           />
+          <ProjectionPanel state={state} player={playerProjection} />
+          <RaidPanel />
           <Trenches state={state} />
-          <section className="railCard nextCard">
-            <span className="railLabel">NEXT TRANSMISSION</span>
-            <strong>
-              ROUND {Number(state.roundId ?? roundConfig.roundId) + 1}
-            </strong>
-            <span>Four fresh tickers. Same bad instincts.</span>
-            <Link href="/rules">READ THE FINE PRINT →</Link>
-          </section>
         </aside>
       </div>
     </>
@@ -525,7 +551,7 @@ function EntryDesk({
       <div className="segmentTitle">
         <span>
           {state.marketMode === "DEX"
-            ? "ONCHAIN MOMENTUM · 10M TWAP"
+            ? "ONCHAIN MOMENTUM"
             : "FLAT ROUND · DEX HISTORY WARMING UP"}
         </span>
         <h1>Pick the first print</h1>
@@ -543,6 +569,14 @@ function EntryDesk({
       <div className="factionGrid">
         {state.tickerScores.map((score, index) => {
           const ticker = tickerById(score.ticker);
+          const band =
+            state.marketMode === "FLAT"
+              ? "FLAT"
+              : (score.estimatedBand ?? score.currentBand);
+          const multiplier =
+            state.marketMode === "FLAT"
+              ? 10_000
+              : (score.estimatedMultiplierBps ?? score.multiplierBps);
           return (
             <button
               type="button"
@@ -559,16 +593,19 @@ function EntryDesk({
             >
               <span className="tickerBadge">{score.ticker}</span>
               <strong>
-                {score.currentBand} ·{" "}
-                {(score.multiplierBps / 10_000).toFixed(2)}×
+                {state.marketMode === "DEX" ? "EST. " : ""}
+                {band} · {(multiplier / 10_000).toFixed(2)}×
               </strong>
               <small>
                 {score.currentPrice
-                  ? `10M TWAP ${formatUsd(score.currentPrice)} · ONCHAIN MOMENTUM`
-                  : "10M TWAP WARMING UP · FLAT SCORING"}
+                  ? `10M TWAP ${formatUsd(score.currentPrice)}`
+                  : "10M TWAP WARMING UP"}
               </small>
               <small>
-                #{index + 1} ROSTER ·{" "}
+                HEAT #{score.volatilityRank || index + 1} · 30M MOVE{" "}
+                {(score.realizedMovementBps ?? 0).toFixed(1)} BPS
+              </small>
+              <small>
                 {gameMode === "testnet"
                   ? "TESTNET MOCK · NO VALUE"
                   : gameMode === "devnet"
@@ -591,11 +628,13 @@ function EntryDesk({
         type="button"
         className="primaryAction"
         onClick={onEnter}
-        disabled={status === "submitted"}
+        disabled={status === "submitted" || state.freshness !== "live"}
       >
-        {status === "submitted"
-          ? "TUNING THE LINE…"
-          : `ENTER WITH ${selected} · $1`}
+        {state.freshness !== "live"
+          ? "WAITING FOR FRESH DEX DATA"
+          : status === "submitted"
+            ? "TUNING THE LINE…"
+            : `ENTER WITH ${selected} · $1`}
       </button>
       <p className="actionFinePrint">
         {walletConnected
@@ -652,12 +691,27 @@ function LiveArena({
             >
               {state.holder?.ticker ?? "—"}
             </span>
-            <strong>{state.holder?.displayName ?? "Nobody has called"}</strong>
+            <strong>
+              {state.holder?.profileHandle ? (
+                <Link href={`/profile/${state.holder.profileHandle}`}>
+                  {state.holder.displayName}
+                </Link>
+              ) : (
+                (state.holder?.displayName ?? "Nobody has called")
+              )}
+            </strong>
             <small>
               CLAIM #{state.holder?.claimNumber ?? 0} ·{" "}
               {state.holder?.band ?? "FLAT"} ·{" "}
               {((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×
             </small>
+            {state.projection?.currentEarning ? (
+              <span className="earningRate">
+                {state.projection.currentEarning.ticker} ·{" "}
+                {state.projection.currentEarning.pointsPerSecond.toFixed(2)}{" "}
+                PTS/SEC
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -781,7 +835,15 @@ function Trenches({ state }: { state: RoundState }) {
                 }}
               />
               <p>
-                <strong>{claim.claimant.displayName}</strong>
+                <strong>
+                  {claim.claimant.profileHandle ? (
+                    <Link href={`/profile/${claim.claimant.profileHandle}`}>
+                      {claim.claimant.displayName}
+                    </Link>
+                  ) : (
+                    claim.claimant.displayName
+                  )}
+                </strong>
                 <span>
                   {claim.accepted
                     ? ` PUT ${claim.claimant.ticker} ON AIR · ${claim.marketBand} ${(claim.multiplierBps / 10_000).toFixed(2)}×`
@@ -795,6 +857,131 @@ function Trenches({ state }: { state: RoundState }) {
           <p className="emptyTape">Phone lines are quiet. Suspicious.</p>
         )}
       </div>
+    </section>
+  );
+}
+
+function ProjectionPanel({
+  state,
+  player,
+}: {
+  state: RoundState;
+  player: PlayerRoundProjection | null;
+}) {
+  const projection = state.projection;
+  if (!projection) return null;
+  return (
+    <section className="railCard projectionCard">
+      <span className="railLabel">IF THE BELL RANG NOW</span>
+      <dl>
+        <div>
+          <dt>FINAL CALLER · 50%</dt>
+          <dd>
+            <span>{projection.finalHolderDisplayName ?? "NO CALLER"}</span>
+            <strong>{formatUsd(projection.holderPoolUsd)}</strong>
+          </dd>
+        </div>
+        <div>
+          <dt>CLOSING PRINT · 30%</dt>
+          <dd>
+            <span>{projection.winningTicker ?? "NO PRINT"}</span>
+            <strong>{formatUsd(projection.closingPrintPoolUsd)}</strong>
+          </dd>
+        </div>
+      </dl>
+      {player ? (
+        <p>
+          YOUR EST. CLAIM{" "}
+          <strong>{formatUsd(player.projectedTotalRewardUsd)}</strong>
+        </p>
+      ) : (
+        <p>CONNECT TO SEE YOUR EST. CLAIM</p>
+      )}
+      <small>ESTIMATE · FINAL AMOUNTS SETTLE ONCHAIN</small>
+    </section>
+  );
+}
+
+function RaidPanel() {
+  const [raid, setRaid] = useState<{
+    state: string;
+    voteCount: number;
+    threshold: number;
+    viewerEligible: boolean;
+    viewerVoted: boolean;
+    secondsRemaining?: number;
+  } | null>(null);
+  const [message, setMessage] = useState("");
+
+  const refresh = async () => {
+    try {
+      const response = await fetch("/api/raids/current", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const payload = (await response.json()) as {
+        campaign?: typeof raid;
+      };
+      if (payload.campaign) setRaid(payload.campaign);
+    } catch {
+      // Raids are an optional attention layer and never block the game.
+    }
+  };
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => void refresh(), 0);
+    const timer = window.setInterval(() => void refresh(), 5_000);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
+    // The polling closure intentionally owns its latest response state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!raid) return null;
+  const vote = async () => {
+    const response = await fetch("/api/raids/vote", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    const payload = (await response.json()) as { error?: string };
+    setMessage(
+      response.ok
+        ? "Your signal joined the raid."
+        : payload.error || "Vote failed.",
+    );
+    await refresh();
+  };
+  return (
+    <section className="railCard raidCard" data-state={raid.state}>
+      <span className="railLabel">FEATURED RAID</span>
+      <div>
+        <strong>{raid.state}</strong>
+        <span>
+          {raid.voteCount}/{raid.threshold} UNIQUE CALLERS
+        </span>
+      </div>
+      <progress value={raid.voteCount} max={Math.max(raid.threshold, 1)} />
+      {raid.secondsRemaining !== undefined ? (
+        <b>{raid.secondsRemaining}s</b>
+      ) : null}
+      {raid.state === "GATHERING" ? (
+        <button
+          type="button"
+          className="textButton"
+          disabled={!raid.viewerEligible || raid.viewerVoted}
+          onClick={() => void vote()}
+        >
+          {raid.viewerVoted
+            ? "SIGNAL COUNTED"
+            : raid.viewerEligible
+              ? "VOTE TO SOUND THE RAID"
+              : "SIGN IN · MAKE A CALL TO VOTE"}
+        </button>
+      ) : null}
+      {message ? <small role="status">{message}</small> : null}
     </section>
   );
 }

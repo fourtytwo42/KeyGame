@@ -4,9 +4,16 @@ import {
   legacyClosingPrintEventAbi,
   roundManagerAbi,
 } from "../src/lib/web3/last-bell-abi";
-import { heartbeat, loadManifest, pool, publicClientFor } from "./common";
+import {
+  deploymentKeyFor,
+  heartbeat,
+  loadManifest,
+  pool,
+  publicClientFor,
+} from "./common";
 
 const manifest = await loadManifest();
+const deploymentKey = deploymentKeyFor(manifest);
 const client = publicClientFor(manifest);
 const confirmations = BigInt(process.env.INDEXER_CONFIRMATIONS || 3);
 const batchSize = BigInt(process.env.INDEXER_BATCH_SIZE || 100);
@@ -27,8 +34,8 @@ async function rollbackIfReorged() {
     block_number: string;
     block_hash: string;
   }>(
-    "SELECT block_number,block_hash FROM indexer_checkpoints WHERE chain_id=$1 AND service='chain-indexer'",
-    [manifest.chainId],
+    "SELECT block_number,block_hash FROM indexer_checkpoints WHERE deployment_key=$1 AND service='chain-indexer'",
+    [deploymentKey],
   );
   if (!checkpoint.rowCount) return;
   let number = BigInt(checkpoint.rows[0].block_number);
@@ -58,8 +65,8 @@ async function rollbackIfReorged() {
       await pool.query("BEGIN");
       try {
         await pool.query(
-          "DELETE FROM chain_events WHERE chain_id=$1 AND block_number>$2",
-          [manifest.chainId, number.toString()],
+          "DELETE FROM chain_events WHERE deployment_key=$1 AND block_number>$2",
+          [deploymentKey, number.toString()],
         );
         await pool.query(
           "DELETE FROM canonical_blocks WHERE chain_id=$1 AND number>$2",
@@ -67,8 +74,8 @@ async function rollbackIfReorged() {
         );
         await pool.query(
           `UPDATE indexer_checkpoints SET block_number=$2,block_hash=$3,updated_at=now()
-           WHERE chain_id=$1 AND service='chain-indexer'`,
-          [manifest.chainId, number.toString(), canonical.hash],
+           WHERE deployment_key=$1 AND service='chain-indexer'`,
+          [deploymentKey, number.toString(), canonical.hash],
         );
         await pool.query("COMMIT");
       } catch (error) {
@@ -84,8 +91,8 @@ async function rollbackIfReorged() {
 
 async function indexedAddresses() {
   const rounds = await pool.query<{ contract_address: Address }>(
-    "SELECT contract_address FROM rounds WHERE chain_id=$1",
-    [manifest.chainId],
+    "SELECT contract_address FROM rounds WHERE deployment_key=$1",
+    [deploymentKey],
   );
   return [
     manifest.contracts.manager,
@@ -143,11 +150,12 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
       }
       await connection.query(
         `INSERT INTO chain_events(
-           chain_id,transaction_hash,log_index,block_number,block_hash,
+           deployment_key,chain_id,transaction_hash,log_index,block_number,block_hash,
            contract_address,event_name,args,topics,data)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         ON CONFLICT(chain_id,transaction_hash,log_index) DO NOTHING`,
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         ON CONFLICT(deployment_key,transaction_hash,log_index) DO NOTHING`,
         [
+          deploymentKey,
           manifest.chainId,
           log.transactionHash,
           log.logIndex,
@@ -164,11 +172,12 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
         const prepared = args as { roundId?: string; round?: string };
         if (prepared.roundId && prepared.round) {
           await connection.query(
-            `INSERT INTO rounds(chain_id,round_id,contract_address,state,deployment_block)
-             VALUES($1,$2,$3,'prepared',$4)
-             ON CONFLICT(chain_id,round_id) DO UPDATE SET
+            `INSERT INTO rounds(deployment_key,chain_id,round_id,contract_address,state,deployment_block)
+             VALUES($1,$2,$3,$4,'prepared',$5)
+             ON CONFLICT(deployment_key,round_id) DO UPDATE SET
                contract_address=excluded.contract_address`,
             [
+              deploymentKey,
               manifest.chainId,
               prepared.roundId,
               prepared.round,
@@ -182,8 +191,8 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
         if (activated.roundId) {
           await connection.query(
             `UPDATE rounds SET state='active',activated_at=now()
-             WHERE chain_id=$1 AND round_id=$2`,
-            [manifest.chainId, activated.roundId],
+             WHERE deployment_key=$1 AND round_id=$2`,
+            [deploymentKey, activated.roundId],
           );
         }
       }
@@ -197,13 +206,14 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
           await connection.query(
             `UPDATE rounds SET state=$3,
                settled_at=(SELECT block_time FROM canonical_blocks
-                           WHERE chain_id=$1 AND number=$4)
-             WHERE chain_id=$1 AND round_id=$2`,
+                           WHERE chain_id=$5 AND number=$4)
+             WHERE deployment_key=$1 AND round_id=$2`,
             [
-              manifest.chainId,
+              deploymentKey,
               completed.roundId,
               eventName === "RoundSettled" ? "settled" : "cancelled",
               log.blockNumber.toString(),
+              manifest.chainId,
             ],
           );
         }
@@ -212,12 +222,12 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
     const tip = blocks.at(-1);
     if (!tip?.hash) throw new Error("Batch has no canonical tip");
     await connection.query(
-      `INSERT INTO indexer_checkpoints(chain_id,service,block_number,block_hash)
-       VALUES($1,'chain-indexer',$2,$3)
-       ON CONFLICT(chain_id,service) DO UPDATE SET
+      `INSERT INTO indexer_checkpoints(deployment_key,chain_id,service,block_number,block_hash)
+       VALUES($1,$2,'chain-indexer',$3,$4)
+       ON CONFLICT(deployment_key,service) DO UPDATE SET
          block_number=excluded.block_number,block_hash=excluded.block_hash,
          updated_at=now()`,
-      [manifest.chainId, tip.number.toString(), tip.hash],
+      [deploymentKey, manifest.chainId, tip.number.toString(), tip.hash],
     );
     await connection.query("COMMIT");
   } catch (error) {
@@ -235,8 +245,8 @@ async function run() {
       const head = await client.getBlockNumber();
       const safeHead = head > confirmations ? head - confirmations : 0n;
       const checkpoint = await pool.query<{ block_number: string }>(
-        "SELECT block_number FROM indexer_checkpoints WHERE chain_id=$1 AND service='chain-indexer'",
-        [manifest.chainId],
+        "SELECT block_number FROM indexer_checkpoints WHERE deployment_key=$1 AND service='chain-indexer'",
+        [deploymentKey],
       );
       const current = checkpoint.rowCount
         ? BigInt(checkpoint.rows[0].block_number)

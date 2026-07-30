@@ -960,8 +960,248 @@ main {
 }
 
 .airtimeMetrics small {
-  font-size: 0.4rem;
+  font-size: 0.6875rem;
   font-weight: 900;
+}
+
+.earningRate {
+  width: fit-content;
+  margin-top: 6px;
+  padding: 4px 7px;
+  color: var(--tube-white);
+  background: var(--night-desk);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.projectionCard {
+  padding-bottom: 12px;
+  background: var(--prize-tape);
+}
+
+.projectionCard dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.projectionCard dl > div {
+  padding-bottom: 5px;
+  border-bottom: 2px solid var(--night-desk);
+}
+
+.projectionCard dt,
+.projectionCard > small {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.projectionCard dd {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 0;
+  font-family: var(--display);
+  font-size: 1.05rem;
+}
+
+.projectionCard dd span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectionCard dd strong {
+  white-space: nowrap;
+}
+
+.projectionCard p {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 4px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.raidCard {
+  background: var(--tube-white);
+}
+
+.raidCard[data-state="COUNTDOWN"],
+.raidCard[data-state="LIVE"] {
+  background: var(--hot-mic);
+  box-shadow: 5px 5px 0 var(--night-desk);
+}
+
+.raidCard > div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.raidCard > div strong {
+  font-family: var(--display);
+  font-size: 1.25rem;
+}
+
+.raidCard > div span,
+.raidCard small {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.raidCard progress {
+  width: 100%;
+  height: 13px;
+  margin: 7px 0 4px;
+  accent-color: var(--green-room);
+}
+
+.raidCard b {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.65rem;
+}
+
+.raidCard .textButton {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.profileControls {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background: var(--caller-lilac);
+  border: 3px solid var(--night-desk);
+}
+
+.profileControls > p {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+}
+
+.profileSummary {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 9px;
+  align-items: center;
+}
+
+.profileSummary > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+}
+
+.profileSummary strong,
+.profileSummary a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileAvatar {
+  width: 44px;
+  height: 44px;
+  display: block;
+  background:
+    linear-gradient(135deg, var(--avatar-seed) 0 45%, transparent 45%),
+    repeating-linear-gradient(
+      90deg,
+      var(--night-desk) 0 5px,
+      var(--prize-tape) 5px 10px
+    );
+  border: 3px solid var(--night-desk);
+  border-radius: 50%;
+}
+
+.profileForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.profileForm label:last-of-type,
+.profileForm button {
+  grid-column: 1 / -1;
+}
+
+.profileForm label {
+  display: grid;
+  gap: 3px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.profileForm input {
+  min-width: 0;
+  padding: 8px;
+  border: 2px solid var(--night-desk);
+  font: inherit;
+}
+
+.profilePage {
+  max-width: 1000px;
+  margin: auto;
+}
+
+.profileHero {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 24px;
+  align-items: center;
+  padding: 28px;
+  background: var(--caller-lilac);
+  border: 5px solid var(--night-desk);
+}
+
+.profileAvatarLarge {
+  width: 150px;
+  height: 150px;
+  border-width: 7px;
+}
+
+.profileHero > div {
+  display: grid;
+  gap: 7px;
+}
+
+.profileHero strong {
+  font-family: var(--display);
+  font-size: 2.2rem;
+}
+
+.profileStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 24px 0;
+  border: 4px solid var(--night-desk);
+}
+
+.profileStats div {
+  padding: 18px;
+  background: var(--tube-white);
+  border-right: 2px solid var(--night-desk);
+  border-bottom: 2px solid var(--night-desk);
+}
+
+.profileStats dt {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.profileStats dd {
+  margin: 5px 0 0;
+  font-family: var(--display);
+  font-size: 1.8rem;
 }
 
 .airtimeTrack {
@@ -3170,6 +3410,20 @@ main {
   .receiptActions > * {
     width: 100%;
   }
+
+  .profileHero {
+    grid-template-columns: 86px 1fr;
+    padding: 16px;
+  }
+
+  .profileAvatarLarge {
+    width: 86px;
+    height: 86px;
+  }
+
+  .profileStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 480px) {
@@ -3252,4 +3506,27 @@ main {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Financial, status, and interactive copy must remain readable at every size. */
+.walletTrigger,
+.primaryAction,
+.secondaryAction,
+.textButton,
+.entryTerms,
+.actionFinePrint,
+.lowerThird,
+.airtimeTicker small,
+.airtimeMetrics small,
+.clockAssembly small,
+.callerVisual > div > small,
+.miniFactionSwitch small,
+.entryClock small,
+.factionChoice small,
+.apeButton small,
+.connectorButton small,
+.sessionPanel dt,
+.sessionPanel dd,
+.signalState {
+  font-size: max(0.6875rem, 11px);
 }

@@ -16,6 +16,7 @@ import {
   robinhoodChainMainnet,
   robinhoodChainTestnet,
 } from "../src/lib/web3/chains";
+import { deploymentKeyFor } from "../src/lib/deployment-key";
 
 export type DeploymentManifest = {
   schemaVersion: number;
@@ -58,6 +59,8 @@ export async function loadManifest(): Promise<DeploymentManifest> {
   if (fallback) manifest.rpc.fallback = fallback;
   return manifest;
 }
+
+export { deploymentKeyFor };
 
 export function chainFor(chainId: number): Chain {
   if (chainId === 31337) return localDevnet;

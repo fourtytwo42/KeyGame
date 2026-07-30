@@ -37,6 +37,18 @@ export function readPublicEnvironment(
   const appUrl =
     optionalUrl("NEXT_PUBLIC_APP_URL", source.NEXT_PUBLIC_APP_URL) ||
     "http://localhost:3000/";
+  const walletConnectProjectId =
+    source.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() || undefined;
+  const walletConnectAllowedOrigins = (
+    source.NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS || ""
+  )
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) =>
+      optionalUrl("NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS", origin)!,
+    )
+    .map((origin) => new URL(origin).origin);
   const roundAddress = optionalAddress(
     "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS",
     source.NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS,
@@ -74,6 +86,20 @@ export function readPublicEnvironment(
       );
     }
   }
+  if (mode === "mainnet") {
+    if (!walletConnectProjectId) {
+      literalError(
+        "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID",
+        "is required for a mainnet build.",
+      );
+    }
+    if (!walletConnectAllowedOrigins.includes(new URL(appUrl).origin)) {
+      literalError(
+        "NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS",
+        "must include NEXT_PUBLIC_APP_URL for a mainnet build.",
+      );
+    }
+  }
 
   return {
     mode,
@@ -97,8 +123,8 @@ export function readPublicEnvironment(
     devDollarAddress,
     paymentRouterAddress,
     roundManagerAddress,
-    walletConnectProjectId:
-      source.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() || undefined,
+    walletConnectProjectId,
+    walletConnectAllowedOrigins,
   };
 }
 
@@ -122,4 +148,6 @@ export const publicEnvironment = readPublicEnvironment({
     process.env.NEXT_PUBLIC_ROBINHOOD_MAINNET_RPC_URL,
   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID:
     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+  NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS:
+    process.env.NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS,
 });
