@@ -3,6 +3,8 @@ import { database, databaseHealth } from "./db";
 import { loadServerDeploymentWithKey } from "./deployment";
 import { deploymentPublicClient } from "./rpc-client";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
+import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
+import { isV4DevnetRuntime } from "./runtime-deployment";
 
 async function probe(url: string) {
   const started = Date.now();
@@ -168,7 +170,9 @@ export async function getSystemStatus() {
           ) AS newest_sample
         FROM market_assets LEFT JOIN market_samples USING(symbol)`,
     ),
-    getLiveSnapshot().catch(() => null),
+    (isV4DevnetRuntime() ? getV4DevnetSnapshot() : getLiveSnapshot()).catch(
+      () => null,
+    ),
     database.query<{ observed_at: Date }>(
       "SELECT observed_at FROM market_reports ORDER BY observed_at DESC LIMIT 1",
     ),

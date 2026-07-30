@@ -49,6 +49,7 @@ const rpcUrl = process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545";
 const client = createPublicClient({
   chain: localDevnet,
   cacheTime: 0,
+  pollingInterval: 100,
   transport: http(rpcUrl),
 });
 
@@ -74,9 +75,11 @@ const tickerId = (index: number): TickerId =>
 const usd = (raw: bigint) => Number(raw) / 1e6;
 const stock = (raw: bigint) => Number(raw) / 1e18;
 
-export async function getV4DevnetSnapshot(): Promise<RoundState> {
+export async function getV4DevnetSnapshot(
+  roundAddress?: Address,
+): Promise<RoundState> {
   const d = deployment();
-  const address = await activeRoundAddress(d);
+  const address = roundAddress ?? (await activeRoundAddress(d));
   const [
     roundId,
     phase,
