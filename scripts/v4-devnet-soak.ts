@@ -404,6 +404,33 @@ async function finishRoundClock(round: Address, natural: boolean) {
   }
 }
 
+async function waitForKeeperRollover(round: Address, timeoutMs = 30_000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const [phase, active] = await Promise.all([
+        client.readContract({
+          address: round,
+          abi: lastBellV4Abi,
+          functionName: "currentPhase",
+        }),
+        client.readContract({
+          address: manager,
+          abi: roundManagerV4Abi,
+          functionName: "activeRound",
+        }),
+      ]);
+      if (Number(phase) === 4 && active.toLowerCase() !== round.toLowerCase()) {
+        return;
+      }
+    } catch {
+      // A scheduled RPC interruption is allowed to clear before polling again.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`Keeper did not roll ${round} within ${timeoutMs}ms.`);
+}
+
 async function managerCall(
   runId: string,
   actionId: string,
@@ -774,16 +801,20 @@ async function runSettledRound(
     );
   }
   await finishRoundClock(round, natural);
-  await managerCall(
-    runId,
-    actionId,
-    `round:${ordinal}:finalize`,
-    "finalizeActive",
-  );
+  if (natural) {
+    await waitForKeeperRollover(round);
+  } else {
+    await managerCall(
+      runId,
+      actionId,
+      `round:${ordinal}:finalize`,
+      "finalizeActive",
+    );
+  }
   const discrepancies = await reconcileRound(runId, round, false);
   if (discrepancies) throw new Error(`Round ${ordinal} did not conserve.`);
   await claimSettledRewards(runId, actionId, round, ordinal);
-  await prepareAndActivate(runId, actionId, round);
+  if (!natural) await prepareAndActivate(runId, actionId, round);
 }
 
 async function runCancelledRound(

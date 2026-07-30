@@ -51,6 +51,25 @@ export NVM_DIR="$HOME/.nvm"
 source "$NVM_DIR/nvm.sh"
 cd "$project_root"
 
+stop_managed_process() {
+  local pid_file="$1"
+  local pid
+  pid="$(cat "$pid_file")"
+  if ! kill -0 "$pid" 2>/dev/null; then
+    rm -f "$pid_file"
+    return
+  fi
+  local session_id
+  session_id="$(ps -o sid= -p "$pid" | tr -d ' ')"
+  if [[ "$session_id" == "$pid" ]]; then
+    kill -- "-$pid"
+  else
+    kill "$pid"
+  fi
+  wait "$pid" 2>/dev/null || true
+  rm -f "$pid_file"
+}
+
 case "$fault_type" in
   rpc-pause)
     anvil_pid="$(cat "$runtime_dir/anvil.pid")"
@@ -59,29 +78,20 @@ case "$fault_type" in
     kill -CONT "$anvil_pid"
     ;;
   keeper-restart)
-    keeper_pid="$(cat "$runtime_dir/round-keeper.pid")"
-    kill "$keeper_pid"
-    wait "$keeper_pid" 2>/dev/null || true
-    rm -f "$runtime_dir/round-keeper.pid"
-    nohup pnpm service:v4-devnet-keeper \
+    stop_managed_process "$runtime_dir/round-keeper.pid"
+    nohup setsid pnpm service:v4-devnet-keeper \
       >"$runtime_dir/round-keeper.log" 2>&1 &
     echo "$!" >"$runtime_dir/round-keeper.pid"
     ;;
   indexer-restart)
-    indexer_pid="$(cat "$runtime_dir/indexer.pid")"
-    kill "$indexer_pid"
-    wait "$indexer_pid" 2>/dev/null || true
-    rm -f "$runtime_dir/indexer.pid"
-    INDEXER_CONFIRMATIONS=0 nohup pnpm service:indexer \
+    stop_managed_process "$runtime_dir/indexer.pid"
+    INDEXER_CONFIRMATIONS=0 nohup setsid pnpm service:indexer \
       >"$runtime_dir/indexer.log" 2>&1 &
     echo "$!" >"$runtime_dir/indexer.pid"
     ;;
   web-restart)
-    app_pid="$(cat "$runtime_dir/app.pid")"
-    kill "$app_pid"
-    wait "$app_pid" 2>/dev/null || true
-    rm -f "$runtime_dir/app.pid"
-    nohup node node_modules/next/dist/bin/next start --hostname 0.0.0.0 \
+    stop_managed_process "$runtime_dir/app.pid"
+    nohup setsid node node_modules/next/dist/bin/next start --hostname 0.0.0.0 \
       >"$runtime_dir/app.log" 2>&1 &
     echo "$!" >"$runtime_dir/app.pid"
     pnpm exec wait-on --timeout 30000 http://127.0.0.1:3000/api/status
