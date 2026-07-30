@@ -40,3 +40,5 @@ pnpm v4-soak:run
 pnpm v4-soak:status
 pnpm v4-soak:reconcile
 pnpm v4-soak:report
+sleep 10
+pnpm exec tsx scripts/check-v4-indexer.ts
