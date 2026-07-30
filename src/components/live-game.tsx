@@ -342,13 +342,10 @@ export function LiveGame({
     (
       activeSession?.player ?? (!chainMode ? demoAddresses.player : undefined)
     )?.toLowerCase() === state.holder?.address.toLowerCase();
-  const entryRequired =
-    state.freshness === "live" && state.phase === "entry";
+  const entryRequired = state.freshness === "live" && state.phase === "entry";
   const hasChainClaimPath = walletGame.isConnected
     ? walletGame.ready
-    : devnetMode &&
-      joined &&
-      (activeSession?.availableActions ?? 0) > 0;
+    : devnetMode && joined && (activeSession?.availableActions ?? 0) > 0;
   const canAct =
     state.freshness === "live" &&
     (state.phase === "live" || state.phase === "rug") &&
