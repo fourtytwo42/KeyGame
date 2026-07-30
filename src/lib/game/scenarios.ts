@@ -85,7 +85,7 @@ const makeClaim = (
   previousTicker: sequence === 38 ? "TSLA" : "NVDA",
   feeUsd: 1,
   phase: timeAfterSeconds <= 10 ? "rug" : "live",
-  contractVersion: "closing-print-v1",
+  contractVersion: "closing-print-v3-airtime",
   accepted: true,
   potAfterUsd: 51 + sequence,
   timeAfterSeconds,
@@ -119,7 +119,7 @@ const baseState: RoundState = {
   claims,
   freshness: "live",
   updatedAt: "2026-07-28T20:46:03.000Z",
-  contractVersion: "closing-print-v1",
+  contractVersion: "closing-print-v3-airtime",
 };
 
 const stateFor = (
@@ -240,7 +240,7 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
       winningTicker: "NVDA",
       pools: {
         holderUsd: 44.5,
-        closingPrintUsd: 26.7,
+        airtimeUsd: 26.7,
         nextRoundUsd: 13.35,
         protocolUsd: 4.45,
       },

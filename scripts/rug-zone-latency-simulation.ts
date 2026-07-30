@@ -62,7 +62,7 @@ process.stdout.write(
       automatedAdvantageRatio:
         human.winRate > 0 ? automated.winRate / human.winRate : null,
       disposition:
-        "Product approval is required before audit freeze. This simulation does not claim fair ordering or eliminate sequencer advantage.",
+        "Accepted FCFS product property. Automated wallets may be faster; the last accepted call wins 50%. Continue monitoring and disclosure without blocking freeze solely for automation advantage.",
     },
     null,
     2,

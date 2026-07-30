@@ -2,6 +2,10 @@
 
 Status: `IMPLEMENTED IN STAGES / MAINNET GATED`
 
+> `D-024` override: PRD 15 replaces the paid Closing Print outcome with a
+> nonfinancial Crown and distributes the 30% Airtime Pool across every caller
+> by total raw control time.
+
 This document is the canonical specification for reward clarity, caller
 identity, featured raids, deployment-aware history, and the remaining audit
 candidate gates. It extends PRD 13 without changing round economics.

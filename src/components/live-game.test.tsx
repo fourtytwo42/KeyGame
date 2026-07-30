@@ -6,7 +6,7 @@ vi.mock("@/lib/web3/use-wallet-game", () => ({
   useWalletGame: () => ({
     isConnected: false,
     session: null,
-    claimable: { holderUsd: 0, closingPrintUsd: 0, refundUsd: 0 },
+    claimable: { holderUsd: 0, airtimeUsd: 0, refundUsd: 0 },
     enter: vi.fn(),
     claim: vi.fn(),
     revoke: vi.fn(),
@@ -25,7 +25,7 @@ describe("LiveGame", () => {
     expect(
       screen.getByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
     ).toBeEnabled();
-    expect(screen.getAllByText(/THE CLOSING PRINT/i)).toHaveLength(2);
+    expect(screen.getAllByText(/CLOSING PRINT CROWN/i)).toHaveLength(3);
   });
 
   it("turns the starter ticker into the first paid claim", () => {

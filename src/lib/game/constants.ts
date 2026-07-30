@@ -85,7 +85,7 @@ export const roundConfig: RoundConfig = {
   producerPassRequired: false,
   payoutBps: {
     holder: 5000,
-    closingPrint: 3000,
+    airtime: 3000,
     nextRound: 1500,
     protocol: 500,
   },

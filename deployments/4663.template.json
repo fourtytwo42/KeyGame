@@ -5,7 +5,18 @@
   "deploymentBlock": 0,
   "sourceCommit": "REQUIRED_AFTER_AUDIT",
   "mockOnly": false,
+  "contractVersion": "closing-print-v3-airtime",
   "broadcastLocked": true,
+  "roles": {
+    "managerAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
+    "verifierAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
+    "treasurySafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
+    "commonOwners": [
+      "REQUIRED_OWNER_1",
+      "REQUIRED_OWNER_2",
+      "REQUIRED_OWNER_3"
+    ]
+  },
   "contracts": {
     "manager": "0x0000000000000000000000000000000000000000",
     "paymentRouter": "0x0000000000000000000000000000000000000000",

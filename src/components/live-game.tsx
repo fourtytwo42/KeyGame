@@ -45,7 +45,7 @@ export function LiveGame({
   const [guestSession, setGuestSession] = useState<SessionBudget | null>(null);
   const [guestClaimable, setGuestClaimable] = useState<ClaimableBalances>({
     holderUsd: 0,
-    closingPrintUsd: 0,
+    airtimeUsd: 0,
     refundUsd: 0,
   });
   const [actionStatus, setActionStatus] = useState<ActionStatus>("idle");
@@ -504,6 +504,8 @@ export function LiveGame({
               <span>NO CHARTS WERE HARMED IN THIS BROADCAST</span>
               <span>ONE DOLLAR CHANGES THE CALLER</span>
               <span>RUG ZONE ADDS ZERO SECONDS</span>
+              <span>RUG ZONE IS FCFS</span>
+              <span>AUTOMATED WALLETS MAY BE FASTER</span>
               <span>THE CHAIN SETTLES THE TAPE</span>
             </div>
           </div>
@@ -672,6 +674,13 @@ function LiveArena({
         </strong>
         <small>HARD STOP {state.hardTimeLeftSeconds}s</small>
       </div>
+      {state.phase === "rug" ? (
+        <div className="rugDisclosure" role="note">
+          <strong>RUG ZONE IS FCFS</strong>
+          <span>AUTOMATED WALLETS MAY BE FASTER</span>
+          <span>LAST ACCEPTED CALL WINS 50%</span>
+        </div>
+      ) : null}
       <div className="callerCard">
         <span className="callerLabel">CALLER HOLDING THE BELL</span>
         <div className="callerVisual">
@@ -775,7 +784,7 @@ function ClosingPrintBoard({
   return (
     <section className="railCard airtimeCard">
       <span className="railLabel closingPrintLabel">
-        <strong>THE CLOSING PRINT</strong>
+        <strong>CLOSING PRINT CROWN</strong>
         <small>
           {state.marketMode === "DEX" ? "10M MOMENTUM" : "FLAT · 1.00×"}
         </small>
@@ -880,13 +889,13 @@ function ProjectionPanel({
       ? state.pools.holderUsd
       : (state.potUsd * roundConfig.payoutBps.holder) / 10_000);
   const projectedTicker =
-    projection?.winningTicker ??
+    projection?.closingPrintCrown.ticker ??
     (state.tickerScores.length ? leadingTicker(state) : null);
-  const projectedPrintPool =
-    projection?.closingPrintPoolUsd ??
+  const projectedAirtimePool =
+    projection?.airtimePoolUsd ??
     (state.phase === "settled" && state.pools
-      ? state.pools.closingPrintUsd
-      : (state.potUsd * roundConfig.payoutBps.closingPrint) / 10_000);
+      ? state.pools.airtimeUsd
+      : (state.potUsd * roundConfig.payoutBps.airtime) / 10_000);
   return (
     <section className="railCard projectionCard">
       <span className="railLabel">IF THE BELL RANG NOW</span>
@@ -899,10 +908,22 @@ function ProjectionPanel({
           </dd>
         </div>
         <div>
-          <dt>CLOSING PRINT · 30%</dt>
+          <dt>CLOSING PRINT CROWN · PRESTIGE</dt>
           <dd>
             <span>{projectedTicker ?? "NO PRINT"}</span>
-            <strong>{formatUsd(projectedPrintPool)}</strong>
+            <strong>
+              {projection?.closingPrintCrown.weightedPoints.toFixed(1) ?? "0.0"}{" "}
+              PTS
+            </strong>
+          </dd>
+        </div>
+        <div>
+          <dt>AIRTIME POOL · 30%</dt>
+          <dd>
+            <span>
+              {projection?.totalRawAirtimeSeconds.toFixed(0) ?? "0"} TOTAL SEC
+            </span>
+            <strong>{formatUsd(projectedAirtimePool)}</strong>
           </dd>
         </div>
       </dl>
@@ -1031,10 +1052,10 @@ function FinalTransmission({
 }: {
   state: RoundState;
   claimable: ClaimableBalances;
-  onClaim: (kind: "holder" | "print") => void;
+  onClaim: (kind: "holder" | "airtime") => void;
 }) {
   const holderPayout = state.pools?.holderUsd ?? state.potUsd * 0.5;
-  const printPayout = state.pools?.closingPrintUsd ?? state.potUsd * 0.3;
+  const airtimePayout = state.pools?.airtimeUsd ?? state.potUsd * 0.3;
   const nextRound = state.pools?.nextRoundUsd ?? state.potUsd * 0.15;
   const protocol = state.pools?.protocolUsd ?? state.potUsd * 0.05;
   return (
@@ -1055,10 +1076,18 @@ function FinalTransmission({
           <strong>{formatUsd(holderPayout)}</strong>
         </div>
         <div className="payoutTape">
-          <span>CLOSING PRINT · 30%</span>
+          <span>CLOSING PRINT CROWN · PRESTIGE</span>
           <strong>
-            {state.winningTicker ?? "—"} · {formatUsd(printPayout)}
+            {state.winningTicker ?? "—"} ·{" "}
+            {state.tickerScores
+              .find((score) => score.ticker === state.winningTicker)
+              ?.weightedScore.toFixed(1) ?? "0.0"}{" "}
+            PTS
           </strong>
+        </div>
+        <div className="payoutTape">
+          <span>AIRTIME POOL · 30% · ALL CALLERS</span>
+          <strong>{formatUsd(airtimePayout)}</strong>
         </div>
       </div>
       <div className="poolBreakdown">
@@ -1071,7 +1100,7 @@ function FinalTransmission({
           {state.nextRoundStartsInSeconds}s
         </p>
       ) : null}
-      {claimable.holderUsd > 0 || claimable.closingPrintUsd > 0 ? (
+      {claimable.holderUsd > 0 || claimable.airtimeUsd > 0 ? (
         <div className="claimActions">
           {claimable.holderUsd > 0 ? (
             <button
@@ -1082,13 +1111,13 @@ function FinalTransmission({
               CLAIM HOLDER {formatUsd(claimable.holderUsd)}
             </button>
           ) : null}
-          {claimable.closingPrintUsd > 0 ? (
+          {claimable.airtimeUsd > 0 ? (
             <button
               type="button"
               className="secondaryAction"
-              onClick={() => onClaim("print")}
+              onClick={() => onClaim("airtime")}
             >
-              CLAIM CLOSING PRINT {formatUsd(claimable.closingPrintUsd)}
+              CLAIM AIRTIME {formatUsd(claimable.airtimeUsd)}
             </button>
           ) : null}
         </div>

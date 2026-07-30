@@ -18,6 +18,14 @@ describe("versioned replay parser", () => {
     expect(parsed).toEqual([]);
   });
 
+  it("preserves the v3 Crown and Airtime discriminator", () => {
+    const parsed = parseVersionedReplay({
+      contractVersion: "closing-print-v3-airtime",
+      claims: [],
+    });
+    expect(parsed).toEqual([]);
+  });
+
   it("normalizes legacy faction events without treating them as verified", () => {
     const parsed = parseVersionedReplay({
       contractVersion: "faction-v0",

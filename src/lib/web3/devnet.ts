@@ -342,16 +342,13 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       ),
     ),
     Promise.all(
-      ["holderPool", "closingPrintPool", "nextRoundPool", "protocolPool"].map(
+      ["holderPool", "airtimePool", "nextRoundPool", "protocolPool"].map(
         (functionName) =>
           devnetPublicClient.readContract({
             address: roundAddress,
             abi: lastBellAbi,
             functionName: functionName as
-              | "holderPool"
-              | "closingPrintPool"
-              | "nextRoundPool"
-              | "protocolPool",
+              "holderPool" | "airtimePool" | "nextRoundPool" | "protocolPool",
           }),
       ),
     ),
@@ -440,7 +437,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       transactionHash: log.transactionHash,
       blockNumber: Number(log.blockNumber),
       logIndex: log.logIndex,
-      contractVersion: "closing-print-v2-dex",
+      contractVersion: "closing-print-v3-airtime",
       accepted: true,
       potAfterUsd: unitsToUsd(args.pot ?? 0n),
       timeAfterSeconds: Math.max(
@@ -520,7 +517,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
     settlementTx: settlement?.transactionHash,
     chainId: localDevnet.id,
     contractAddress: roundAddress,
-    contractVersion: "closing-print-v2-dex",
+    contractVersion: "closing-print-v3-airtime",
     blockNumber: Number(block.number),
     startedAt: Number(startedAt),
     deadline: deadlineNumber,
@@ -534,7 +531,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       Number(winningTicker) < 4 ? tickerId(Number(winningTicker)) : undefined,
     pools: {
       holderUsd: unitsToUsd(pools[0]),
-      closingPrintUsd: unitsToUsd(pools[1]),
+      airtimeUsd: unitsToUsd(pools[1]),
       nextRoundUsd: unitsToUsd(pools[2]),
       protocolUsd: unitsToUsd(pools[3]),
     },
@@ -548,60 +545,67 @@ export async function getDevnetSession(
   player: Address = devnetSessionPlayer,
 ): Promise<{ session: SessionBudget; claimable: ClaimableBalances }> {
   const snapshot = await getDevnetSnapshot();
-  const [spent, allowance, holderClaimed, printClaimed, refundClaimed] =
-    await Promise.all([
-      devnetPublicClient.readContract({
-        address: roundAddress,
-        abi: lastBellAbi,
-        functionName: "paid",
-        args: [player],
-      }),
-      devnetPublicClient.readContract({
-        address: devDollarAddress,
-        abi: devDollarAbi,
-        functionName: "allowance",
-        args: [player, paymentRouterAddress],
-      }),
-      devnetPublicClient.readContract({
-        address: roundAddress,
-        abi: lastBellAbi,
-        functionName: "holderRewardClaimed",
-        args: [player],
-      }),
-      devnetPublicClient.readContract({
-        address: roundAddress,
-        abi: lastBellAbi,
-        functionName: "closingPrintRewardClaimed",
-        args: [player],
-      }),
-      devnetPublicClient.readContract({
-        address: roundAddress,
-        abi: lastBellAbi,
-        functionName: "refundClaimed",
-        args: [player],
-      }),
-    ]);
-  const winnerIndex = snapshot.winningTicker
-    ? tickerSlots.findIndex((ticker) => ticker.id === snapshot.winningTicker)
-    : 0;
-  const [playerAirtime, tokenConfigs] = await Promise.all([
+  const [
+    spent,
+    allowance,
+    holderClaimed,
+    airtimeClaimed,
+    refundClaimed,
+    playerAirtime,
+    totalAirtime,
+  ] = await Promise.all([
     devnetPublicClient.readContract({
       address: roundAddress,
       abi: lastBellAbi,
-      functionName: "playerTickerAirtime",
-      args: [player, winnerIndex],
+      functionName: "paid",
+      args: [player],
     }),
-    Promise.all(
-      [0n, 1n, 2n, 3n].map((index) =>
-        devnetPublicClient.readContract({
-          address: roundAddress,
-          abi: lastBellAbi,
-          functionName: "tickerConfigs",
-          args: [index],
-        }),
-      ),
-    ),
+    devnetPublicClient.readContract({
+      address: devDollarAddress,
+      abi: devDollarAbi,
+      functionName: "allowance",
+      args: [player, paymentRouterAddress],
+    }),
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderRewardClaimed",
+      args: [player],
+    }),
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "airtimeRewardClaimed",
+      args: [player],
+    }),
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "refundClaimed",
+      args: [player],
+    }),
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "controlTime",
+      args: [player],
+    }),
+    devnetPublicClient.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "totalControlTime",
+    }),
   ]);
+  const tokenConfigs = await Promise.all(
+    [0n, 1n, 2n, 3n].map((index) =>
+      devnetPublicClient.readContract({
+        address: roundAddress,
+        abi: lastBellAbi,
+        functionName: "tickerConfigs",
+        args: [index],
+      }),
+    ),
+  );
   const tokenBalances = await Promise.all(
     tokenConfigs.map((config) =>
       devnetPublicClient.readContract({
@@ -619,10 +623,6 @@ export async function getDevnetSession(
   const firstClaim = snapshot.claims.find(
     (claim) => claim.claimant.address.toLowerCase() === player.toLowerCase(),
   );
-  const winningTotal =
-    snapshot.tickerScores.find(
-      (score) => score.ticker === snapshot.winningTicker,
-    )?.rawSeconds ?? 0;
   return {
     session: {
       player,
@@ -651,14 +651,13 @@ export async function getDevnetSession(
         !holderClaimed
           ? snapshot.pools?.holderUsd || 0
           : 0,
-      closingPrintUsd:
+      airtimeUsd:
         snapshot.phase === "settled" &&
         playerAirtime > 0n &&
-        winningTotal > 0 &&
-        !printClaimed
-          ? ((snapshot.pools?.closingPrintUsd || 0) *
-              Number(playerAirtime)) /
-            winningTotal
+        totalAirtime > 0n &&
+        !airtimeClaimed
+          ? ((snapshot.pools?.airtimeUsd || 0) * Number(playerAirtime)) /
+            Number(totalAirtime)
           : 0,
       refundUsd:
         snapshot.phase === "cancelled" && !refundClaimed ? spentUsd : 0,
@@ -672,7 +671,7 @@ async function sendRound(
     | "claimBell"
     | "finalize"
     | "claimHolderReward"
-    | "claimClosingPrintReward"
+    | "claimAirtimeReward"
     | "claimCancellationRefund",
   ticker?: TickerId,
 ): Promise<Hash> {
@@ -805,12 +804,12 @@ export async function sendDevnetAction(
     const functionName = {
       finalize: "finalize",
       "claim-holder": "claimHolderReward",
-      "claim-print": "claimClosingPrintReward",
+      "claim-print": "claimAirtimeReward",
       "claim-refund": "claimCancellationRefund",
     }[action] as
       | "finalize"
       | "claimHolderReward"
-      | "claimClosingPrintReward"
+      | "claimAirtimeReward"
       | "claimCancellationRefund";
     hash = await sendRound(
       action === "finalize" ? playerAddresses[0] : devnetSessionPlayer,

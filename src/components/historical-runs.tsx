@@ -68,7 +68,7 @@ export function HistoricalRuns() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Closing Print</dt>
+                  <dt>Closing Print Crown</dt>
                   <dd>{run.winningTicker ?? "NO WINNER"}</dd>
                 </div>
                 <div>

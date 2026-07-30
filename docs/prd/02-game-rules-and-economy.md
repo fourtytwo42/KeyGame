@@ -1,5 +1,9 @@
 # PRD 02: Game Rules and Economy
 
+> `D-024` override: PRD 15 is authoritative for the current
+> `closing-print-v3-airtime` economy. DEX momentum awards a nonfinancial Crown;
+> all callers split the 30% Airtime Pool by total raw control time.
+
 > `D-020` override: ticker-per-claim market scoring in
 > [PRD 10](./10-closing-print-market-reactive.md) replaces all permanent
 > faction, separate-entry, lock, and faction-pool rules below.

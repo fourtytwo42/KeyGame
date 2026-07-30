@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${KEYGAME_CHAIN_ID:?KEYGAME_CHAIN_ID is required}"
+: "${SOAK_RUN_ID:?SOAK_RUN_ID is required}"
+: "${SOAK_CONTROL_TOKEN_FILE:?SOAK_CONTROL_TOKEN_FILE is required}"
+: "${DATABASE_URL:=postgresql:///keygame?host=/var/run/postgresql}"
+
+if [[ "$KEYGAME_CHAIN_ID" != "46630" ]]; then
+  echo "Fault injection is testnet-only." >&2
+  exit 1
+fi
+if [[ ! -r "$SOAK_CONTROL_TOKEN_FILE" ]]; then
+  echo "The owner-only soak control token is unavailable." >&2
+  exit 1
+fi
+
+digest="$(tr -d '\r\n' <"$SOAK_CONTROL_TOKEN_FILE" | sha256sum | awk '{print $1}')"
+fault_id="${1:?fault id is required}"
+if [[ ! "$fault_id" =~ ^[0-9]+$ ]]; then
+  echo "Fault id must be numeric." >&2
+  exit 1
+fi
+row="$(psql "$DATABASE_URL" -Atc \
+  "SELECT fault_type || '|' || auth_digest || '|' || coalesce((parameters->>'durationSeconds'),'0')
+     FROM soak_faults
+    WHERE id=$fault_id AND run_id=${SOAK_RUN_ID@Q} AND state='scheduled'
+      AND scheduled_at <= now()")"
+IFS='|' read -r fault_type expected_digest duration_seconds <<<"$row"
+if [[ -z "${fault_type:-}" || "$digest" != "$expected_digest" ]]; then
+  echo "Fault authorization failed." >&2
+  exit 1
+fi
+
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+  "UPDATE soak_faults SET state='active',activated_at=now() WHERE id=$fault_id"
+
+restore() {
+  if [[ "$fault_type" == "rpc-primary-failure" ]]; then
+    sudo ip route del prohibit 192.168.50.117/32 2>/dev/null || true
+  fi
+  psql "$DATABASE_URL" -c \
+    "UPDATE soak_faults SET state='restored',restored_at=now() WHERE id=$fault_id" \
+    >/dev/null
+}
+trap restore EXIT
+
+case "$fault_type" in
+  rpc-primary-failure)
+    sudo ip route add prohibit 192.168.50.117/32
+    sleep "$duration_seconds"
+    ;;
+  dex-stale|unsafe-market)
+    sleep "$duration_seconds"
+    ;;
+  keeper-restart)
+    sudo systemctl restart keygame-keeper.service
+    ;;
+  indexer-restart)
+    sudo systemctl restart keygame-indexer.service
+    ;;
+  web-restart)
+    sudo systemctl restart keygame-uat-web.service
+    ;;
+  stale-attestation|replayed-attestation|isolated-reorg-fixture|duplicate-round-fixture)
+    echo "$fault_type is executed by the isolated integration fixture runner."
+    ;;
+  *)
+    echo "Unsupported fault type: $fault_type" >&2
+    exit 1
+    ;;
+esac

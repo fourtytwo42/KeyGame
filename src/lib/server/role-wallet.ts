@@ -24,15 +24,11 @@ export async function loadRoleWallet(
     readFile(passwordPath, "utf8"),
   ]);
   const decrypted = await Wallet.fromEncryptedJson(keystore, password.trim());
-  const account = privateKeyToAccount(
-    decrypted.privateKey as `0x${string}`,
-  );
+  const account = privateKeyToAccount(decrypted.privateKey as `0x${string}`);
   return createWalletClient({
     account,
     chain:
-      manifest.chainId === 4663
-        ? robinhoodChainMainnet
-        : robinhoodChainTestnet,
+      manifest.chainId === 4663 ? robinhoodChainMainnet : robinhoodChainTestnet,
     transport: fallback([
       http(manifest.rpc.primary, { timeout: 3_000 }),
       ...(manifest.rpc.fallback

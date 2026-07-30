@@ -22,6 +22,7 @@ import {
   pool,
   publicClientFor,
 } from "./common";
+import { activeSoakFault } from "./soak-faults";
 import { mainnetDexClient, readDexObservation } from "./dex-observation";
 
 const attestorAbi = [
@@ -55,6 +56,9 @@ async function acquire(marketId: Hex, round: Address, symbol?: string) {
   const manifest = await loadManifest();
   if (manifest.chainId !== 46630 || !manifest.mockOnly) {
     throw new Error("DEX attestations are restricted to mock-only testnet.");
+  }
+  if (await activeSoakFault(pool, "dex-stale")) {
+    throw new Error("Injected testnet-only stale DEX observation fault.");
   }
   const market = marketById.get(marketId.toLowerCase());
   if (!market) throw new Error("The market is not in the pinned DEX manifest.");
@@ -212,7 +216,9 @@ async function handle(url: URL) {
   }
   const ticker = url.searchParams.get("ticker")?.toUpperCase();
   if (!ticker) throw new Error("A ticker is required.");
-  const market = pinnedDexMarkets.find((candidate) => candidate.symbol === ticker);
+  const market = pinnedDexMarkets.find(
+    (candidate) => candidate.symbol === ticker,
+  );
   if (!market) throw new Error(`${ticker} has no safe direct DEX market.`);
   return acquire(dexMarketId(market), round, ticker);
 }

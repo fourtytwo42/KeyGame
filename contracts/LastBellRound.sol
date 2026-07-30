@@ -5,9 +5,9 @@ import { IERC20 } from "./interfaces/IERC20.sol";
 import { IMarketDataVerifier } from "./interfaces/IMarketDataVerifier.sol";
 import { IPaymentRouter } from "./interfaces/IPaymentRouter.sol";
 
-/// @title Last Bell: Closing Print
+/// @title Last Bell: Closing Print Crown + Airtime Pool
 /// @notice A bounded last-holder game where every claim puts one ticker on air.
-/// @dev Market reports affect only Closing Print score, never fee, timer, or holder payout.
+/// @dev Market reports affect only the nonfinancial Crown, never any payout.
 contract LastBellRound {
     enum Phase {
         Scheduled,
@@ -62,11 +62,12 @@ contract LastBellRound {
     }
 
     uint16 public constant HOLDER_BPS = 5_000;
-    uint16 public constant CLOSING_PRINT_BPS = 3_000;
+    uint16 public constant AIRTIME_BPS = 3_000;
     uint16 public constant NEXT_ROUND_BPS = 1_500;
     uint16 public constant PROTOCOL_BPS = 500;
     uint16 public constant BPS = 10_000;
     uint8 public constant NO_TICKER = type(uint8).max;
+    bytes32 public constant CONTRACT_VERSION = "closing-print-v3-airtime";
 
     IERC20 public immutable paymentToken;
     IPaymentRouter public immutable paymentRouter;
@@ -118,9 +119,12 @@ contract LastBellRound {
     uint256 public acceptedClaims;
     uint256 public pot;
     uint256 public holderPool;
-    uint256 public closingPrintPool;
+    uint256 public airtimePool;
     uint256 public nextRoundPool;
     uint256 public protocolPool;
+    uint256 public totalControlTime;
+    uint256 public claimedControlTime;
+    uint256 public airtimePoolPaid;
 
     mapping(address => uint256) public paid;
     mapping(address => uint256) public controlTime;
@@ -131,7 +135,7 @@ contract LastBellRound {
     mapping(address => mapping(uint8 => uint256)) public playerTickerScore;
     mapping(bytes32 => bool) public usedReport;
     mapping(address => bool) public holderRewardClaimed;
-    mapping(address => bool) public closingPrintRewardClaimed;
+    mapping(address => bool) public airtimeRewardClaimed;
     mapping(address => bool) public refundClaimed;
 
     event RoundConfigured(
@@ -199,9 +203,22 @@ contract LastBellRound {
         uint256 winningTickerScore,
         uint256 grossPot,
         uint256 holderPool,
-        uint256 closingPrintPool,
+        uint256 airtimePool,
         uint256 nextRoundPool,
-        uint256 protocolPool
+        uint256 protocolPool,
+        uint256 totalRawControlTime,
+        bytes32 contractVersion
+    );
+    event AirtimeRewardClaimed(
+        uint256 indexed roundId,
+        address indexed player,
+        uint8 indexed crownTicker,
+        uint256 crownScore,
+        uint256 eligibleRawSeconds,
+        uint256 claimedRawSeconds,
+        uint256 amount,
+        uint256 totalAirtimePool,
+        bytes32 contractVersion
     );
     event RewardClaimed(
         uint256 indexed roundId,
@@ -454,9 +471,9 @@ contract LastBellRound {
 
         winningTicker = _leadingTicker();
         holderPool = (pot * HOLDER_BPS) / BPS;
-        closingPrintPool = (pot * CLOSING_PRINT_BPS) / BPS;
+        airtimePool = (pot * AIRTIME_BPS) / BPS;
         nextRoundPool = (pot * NEXT_ROUND_BPS) / BPS;
-        protocolPool = pot - holderPool - closingPrintPool - nextRoundPool;
+        protocolPool = pot - holderPool - airtimePool - nextRoundPool;
         settled = true;
         settledAt = uint64(block.timestamp);
 
@@ -467,9 +484,11 @@ contract LastBellRound {
             tickerScore[winningTicker],
             pot,
             holderPool,
-            closingPrintPool,
+            airtimePool,
             nextRoundPool,
-            protocolPool
+            protocolPool,
+            totalControlTime,
+            CONTRACT_VERSION
         );
     }
 
@@ -483,18 +502,34 @@ contract LastBellRound {
         emit RewardClaimed(roundId, msg.sender, "FINAL_HOLDER", holderPool);
     }
 
-    function claimClosingPrintReward() external nonReentrant {
-        if (
-            !settled || closingPrintRewardClaimed[msg.sender]
-                || playerTickerAirtime[msg.sender][winningTicker] == 0
-        ) revert NothingToClaim();
+    function claimAirtimeReward() external nonReentrant {
+        uint256 playerSeconds = controlTime[msg.sender];
+        if (!settled || airtimeRewardClaimed[msg.sender] || playerSeconds == 0) {
+            revert NothingToClaim();
+        }
 
-        closingPrintRewardClaimed[msg.sender] = true;
-        uint256 amount =
-            (closingPrintPool * playerTickerAirtime[msg.sender][winningTicker])
-                / tickerAirtime[winningTicker];
+        airtimeRewardClaimed[msg.sender] = true;
+        claimedControlTime += playerSeconds;
+        uint256 amount;
+        if (claimedControlTime == totalControlTime) {
+            amount = airtimePool - airtimePoolPaid;
+        } else {
+            amount = (airtimePool * playerSeconds) / totalControlTime;
+        }
+        airtimePoolPaid += amount;
         _push(msg.sender, amount);
-        emit RewardClaimed(roundId, msg.sender, "CLOSING_PRINT", amount);
+        emit AirtimeRewardClaimed(
+            roundId,
+            msg.sender,
+            winningTicker,
+            tickerScore[winningTicker],
+            totalControlTime,
+            playerSeconds,
+            amount,
+            airtimePool,
+            CONTRACT_VERSION
+        );
+        emit RewardClaimed(roundId, msg.sender, "AIRTIME", amount);
     }
 
     function cancel(bytes32 reason) external onlyOperator {
@@ -538,7 +573,7 @@ contract LastBellRound {
     }
 
     function payoutSum() external view returns (uint256) {
-        return holderPool + closingPrintPool + nextRoundPool + protocolPool;
+        return holderPool + airtimePool + nextRoundPool + protocolPool;
     }
 
     function _marketState(uint8 ticker, bytes calldata report)
@@ -657,6 +692,7 @@ contract LastBellRound {
         uint256 duration = until - lastClaimAt;
         uint256 score = duration * holderMultiplierBps;
         controlTime[holder] += duration;
+        totalControlTime += duration;
         weightedControl[holder] += score;
         tickerAirtime[holderTicker] += duration;
         tickerScore[holderTicker] += score;

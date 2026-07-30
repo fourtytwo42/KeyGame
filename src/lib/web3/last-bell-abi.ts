@@ -2,6 +2,7 @@ import { parseAbi } from "viem";
 
 export const lastBellAbi = parseAbi([
   "function currentPhase() view returns (uint8)",
+  "function CONTRACT_VERSION() view returns (bytes32)",
   "function roundId() view returns (uint256)",
   "function paymentToken() view returns (address)",
   "function marketMode() view returns (uint8)",
@@ -39,22 +40,30 @@ export const lastBellAbi = parseAbi([
   "function tickerScore(uint8) view returns (uint256)",
   "function playerTickerScore(address,uint8) view returns (uint256)",
   "function paid(address) view returns (uint256)",
+  "function controlTime(address) view returns (uint256)",
+  "function totalControlTime() view returns (uint256)",
   "function holderPool() view returns (uint256)",
-  "function closingPrintPool() view returns (uint256)",
+  "function airtimePool() view returns (uint256)",
+  "function claimedControlTime() view returns (uint256)",
+  "function airtimePoolPaid() view returns (uint256)",
   "function nextRoundPool() view returns (uint256)",
   "function protocolPool() view returns (uint256)",
   "function holderRewardClaimed(address) view returns (bool)",
+  "function airtimeRewardClaimed(address) view returns (bool)",
+  "function closingPrintPool() view returns (uint256)",
   "function closingPrintRewardClaimed(address) view returns (bool)",
   "function refundClaimed(address) view returns (bool)",
   "function claimBell(uint8 ticker,bytes marketProof,uint8 passTokenIndex)",
   "function finalize()",
   "function claimHolderReward()",
+  "function claimAirtimeReward()",
   "function claimClosingPrintReward()",
   "function claimCancellationRefund()",
   "function transferNextRoundSeed(address recipient)",
   "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,bytes32 sourceReportHash,address sourcePool,uint256 sourceChainId,uint64 sourceBlockNumber,bytes32 sourceBlockHash,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
   "event ControlCredited(uint256 indexed roundId,address indexed player,uint8 indexed ticker,uint64 intervalStart,uint64 intervalEnd,uint256 duration,uint16 multiplierBps,uint256 weightedScore)",
-  "event RoundSettled(uint256 indexed roundId,address indexed finalHolder,uint8 indexed winningTicker,uint256 winningTickerScore,uint256 grossPot,uint256 holderPool,uint256 closingPrintPool,uint256 nextRoundPool,uint256 protocolPool)",
+  "event RoundSettled(uint256 indexed roundId,address indexed finalHolder,uint8 indexed winningTicker,uint256 winningTickerScore,uint256 grossPot,uint256 holderPool,uint256 airtimePool,uint256 nextRoundPool,uint256 protocolPool,uint256 totalRawControlTime,bytes32 contractVersion)",
+  "event AirtimeRewardClaimed(uint256 indexed roundId,address indexed player,uint8 indexed crownTicker,uint256 crownScore,uint256 eligibleRawSeconds,uint256 claimedRawSeconds,uint256 amount,uint256 totalAirtimePool,bytes32 contractVersion)",
   "event RoundCancelled(uint256 indexed roundId,bytes32 reason,uint256 refundablePot)",
   "event RewardClaimed(uint256 indexed roundId,address indexed player,bytes32 indexed rewardType,uint256 amount)",
   "event RefundClaimed(uint256 indexed roundId,address indexed player,uint256 amount)",
@@ -64,6 +73,11 @@ export const lastBellAbi = parseAbi([
 // source pool/block evidence to BellClaimed, which changes the event topic.
 export const legacyClosingPrintEventAbi = parseAbi([
   "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,bytes32 sourceReportHash,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
+]);
+
+// Retained for archived closing-print-v2-dex settlements and reward reads.
+export const legacyDexPayoutEventAbi = parseAbi([
+  "event RoundSettled(uint256 indexed roundId,address indexed finalHolder,uint8 indexed winningTicker,uint256 winningTickerScore,uint256 grossPot,uint256 holderPool,uint256 closingPrintPool,uint256 nextRoundPool,uint256 protocolPool)",
 ]);
 
 export const roundManagerAbi = parseAbi([

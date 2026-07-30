@@ -2,6 +2,7 @@ import { decodeEventLog, type Address, zeroAddress } from "viem";
 import {
   lastBellAbi,
   legacyClosingPrintEventAbi,
+  legacyDexPayoutEventAbi,
   roundManagerAbi,
 } from "../src/lib/web3/last-bell-abi";
 import {
@@ -138,6 +139,7 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
             ...roundManagerAbi,
             ...lastBellAbi,
             ...legacyClosingPrintEventAbi,
+            ...legacyDexPayoutEventAbi,
           ],
           data: log.data,
           topics: log.topics,

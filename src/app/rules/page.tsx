@@ -69,19 +69,31 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">05</span>
         <div>
-          <h2>There are two main winners</h2>
+          <h2>The Crown is for bragging rights. Airtime pays.</h2>
           <p>
             The person holding the bell when the clock reaches zero wins 50% of
-            the pot. The stock with the most market-adjusted points wins the 30%
-            Closing Print Pool. Only callers for that stock qualify, but their
-            shares are based on raw seconds holding the bell, not multiplied
-            points. Another 15% starts the next round, and 5% goes to the
-            protocol.
+            the pot. The stock with the most market-adjusted points gets the
+            Closing Print Crown. The Crown is a title, not a cash prize. Every
+            caller shares the 30% Airtime Pool based only on how many raw
+            seconds they held the bell across all stocks. Multipliers never
+            change anyone&apos;s payout. Another 15% starts the next round, and
+            5% goes to the protocol.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">06</span>
+        <div>
+          <h2>Rug Zone is first come, first served</h2>
+          <p>
+            RUG ZONE IS FCFS. Automated wallets may be faster. The last accepted
+            call before zero wins the full 50% final-holder prize. Calls in Rug
+            Zone add no time.
+          </p>
+        </div>
+      </section>
+      <section>
+        <span className="chapterNumber">07</span>
         <div>
           <h2>Your wallet gives one approval</h2>
           <p>

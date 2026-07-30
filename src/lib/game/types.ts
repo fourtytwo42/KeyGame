@@ -79,7 +79,7 @@ export interface RoundConfig {
   producerPassRequired: boolean;
   payoutBps: {
     holder: number;
-    closingPrint: number;
+    airtime: number;
     nextRound: number;
     protocol: number;
   };
@@ -161,8 +161,12 @@ export interface RoundProjection {
   finalHolder: `0x${string}` | null;
   finalHolderDisplayName: string | null;
   holderPoolUsd: number;
-  winningTicker: TickerId | null;
-  closingPrintPoolUsd: number;
+  closingPrintCrown: {
+    ticker: TickerId | null;
+    weightedPoints: number;
+  };
+  airtimePoolUsd: number;
+  totalRawAirtimeSeconds: number;
   currentEarning: LiveEarningRate | null;
   estimatedBands: EstimatedMarketBand[];
   isEstimate: true;
@@ -181,7 +185,9 @@ export interface PlayerRoundProjection {
     pendingWeightedPoints: number;
   }>;
   projectedHolderRewardUsd: number;
-  projectedClosingPrintRewardUsd: number;
+  playerRawAirtimeSeconds: number;
+  projectedAirtimeShareBps: number;
+  projectedAirtimeRewardUsd: number;
   projectedTotalRewardUsd: number;
   isCurrentHolder: boolean;
   isEstimate: true;
@@ -199,7 +205,11 @@ export interface ClaimEvent {
   transactionHash?: `0x${string}`;
   blockNumber?: number;
   logIndex?: number;
-  contractVersion?: "closing-print-v2-dex" | "closing-print-v1" | "faction-v0";
+  contractVersion?:
+    | "closing-print-v3-airtime"
+    | "closing-print-v2-dex"
+    | "closing-print-v1"
+    | "faction-v0";
   accepted: boolean;
   reason?: string;
   potAfterUsd: number;
@@ -237,7 +247,11 @@ export interface RoundState {
   settlementTx?: `0x${string}`;
   chainId?: number;
   contractAddress?: `0x${string}`;
-  contractVersion: "closing-print-v2-dex" | "closing-print-v1" | "faction-v0";
+  contractVersion:
+    | "closing-print-v3-airtime"
+    | "closing-print-v2-dex"
+    | "closing-print-v1"
+    | "faction-v0";
   blockNumber?: number;
   startedAt?: number;
   deadline?: number;
@@ -247,7 +261,8 @@ export interface RoundState {
   winningTicker?: TickerId;
   pools?: {
     holderUsd: number;
-    closingPrintUsd: number;
+    airtimeUsd: number;
+    historicalClosingPrintPoolUsd?: number;
     nextRoundUsd: number;
     protocolUsd: number;
   };
@@ -287,7 +302,7 @@ export interface PlayerProfile {
     calls: number;
     roundsPlayed: number;
     finalBells: number;
-    winningTickerContributions: number;
+    closingPrintCrownContributions: number;
     totalRawAirtimeSeconds: number;
     topTicker?: TickerId;
     claimedRewardsUsd: number;
@@ -310,7 +325,7 @@ export interface SessionBudget {
 
 export interface ClaimableBalances {
   holderUsd: number;
-  closingPrintUsd: number;
+  airtimeUsd: number;
   refundUsd: number;
 }
 
@@ -318,7 +333,11 @@ export interface Receipt {
   roundId: string;
   player: BellHolder;
   placement:
-    "FINAL HOLDER" | "TOP CALLER" | "CLOSING PRINT WINNER" | "EXIT LIQUIDITY";
+    | "FINAL HOLDER"
+    | "TOP CALLER"
+    | "AIRTIME CALLER"
+    | "CLOSING PRINT CROWN"
+    | "EXIT LIQUIDITY";
   amountUsd: number;
   memeLine: string;
   replayPath: string;

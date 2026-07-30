@@ -4,9 +4,6 @@ import {
   QUOTE_NOTIONAL_USDG,
 } from "../src/lib/game/dex-config";
 
-const maximumPotUsd = Number(process.env.MAXIMUM_REVIEWED_POT_USD || 100);
-const affectedPoolUsd = maximumPotUsd * 0.3;
-const requiredAttackCostUsd = affectedPoolUsd * 10;
 const targetBandBps = 5;
 
 const results = [];
@@ -32,11 +29,9 @@ for (const market of pinnedDexMarkets) {
     observedThousandDollarImpactBps: observedImpactBps,
     estimatedCapitalUsd,
     estimatedRoundTripCostUsd,
-    requiredAttackCostUsd,
-    passesTenTimesPayout:
-      observation.safe && estimatedRoundTripCostUsd >= requiredAttackCostUsd,
+    crownIntegrity: observation.safe ? "screened" : "exclude",
     caveat:
-      "Screening estimate only. A forked sequential-swap model and independent economic review remain required.",
+      "Crown-integrity estimate only. DEX movement cannot change any v3 financial allocation.",
   });
 }
 
@@ -44,11 +39,10 @@ process.stdout.write(
   `${JSON.stringify(
     {
       generatedAt: new Date().toISOString(),
-      maximumPotUsd,
-      affectedClosingPrintPoolUsd: affectedPoolUsd,
-      requiredAttackCostUsd,
+      purpose: "closing-print-crown-integrity",
+      financialPayoutExposureUsd: 0,
       results,
-      releaseBlocked: results.some((result) => !result.passesTenTimesPayout),
+      releaseBlocked: results.some((result) => !result.safe),
     },
     null,
     2,

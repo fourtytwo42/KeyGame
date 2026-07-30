@@ -67,8 +67,8 @@ export default async function ProfilePage({
           <dd>{stats.finalBells}</dd>
         </div>
         <div>
-          <dt>WINNING PRINT CALLS</dt>
-          <dd>{stats.winningTickerContributions}</dd>
+          <dt>CROWN TICKER CALLS</dt>
+          <dd>{stats.closingPrintCrownContributions}</dd>
         </div>
         <div>
           <dt>RAW AIRTIME</dt>

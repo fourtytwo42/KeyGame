@@ -1,5 +1,10 @@
 # Last Bell Implementation Gap Audit
 
+> `D-024` update: PRD 15 is authoritative. The v3 model removes DEX influence
+> from every financial allocation. Remaining release gates are the v3 testnet
+> redeployment, complete wallet evidence, 24-hour/100-round soak, verified Safe
+> roles, audit, legal review, and explicit mainnet authorization.
+
 > Updated 2026-07-30. PRD 13 is the current DEX game specification. PRD 14 is
 > the current product-retention and mainnet-readiness specification. Faction
 > and Chainlink behavior is retained only in versioned replay parsers.

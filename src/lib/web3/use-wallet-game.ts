@@ -54,14 +54,19 @@ type ReportResponse = {
 
 export function useWalletGame(
   activeRoundAddress: `0x${string}` = configuredRoundAddress,
+  contractVersion:
+    | "closing-print-v3-airtime"
+    | "closing-print-v2-dex"
+    | "closing-print-v1" = "closing-print-v3-airtime",
 ) {
+  const legacyPayout = contractVersion !== "closing-print-v3-airtime";
   const { address, chainId, isConnected } = useAccount();
   const publicClient = usePublicClient({ chainId: configuredGameChain.id });
   const walletClient = useWalletClient({ chainId: configuredGameChain.id });
   const [session, setSession] = useState<SessionBudget | null>(null);
   const [claimable, setClaimable] = useState<ClaimableBalances>({
     holderUsd: 0,
-    closingPrintUsd: 0,
+    airtimeUsd: 0,
     refundUsd: 0,
   });
   const [action, setAction] = useState<WalletAction>("idle");
@@ -85,12 +90,12 @@ export function useWalletGame(
       allowance,
       deadline,
       holder,
-      winner,
       holderPool,
-      closingPrintPool,
+      airtimePool,
       holderClaimed,
-      printClaimed,
+      poolClaimed,
       refundClaimed,
+      winner,
     ] = await Promise.all([
       publicClient.readContract({
         address: activeRoundAddress,
@@ -122,17 +127,12 @@ export function useWalletGame(
       publicClient.readContract({
         address: activeRoundAddress,
         abi: lastBellAbi,
-        functionName: "winningTicker",
-      }),
-      publicClient.readContract({
-        address: activeRoundAddress,
-        abi: lastBellAbi,
         functionName: "holderPool",
       }),
       publicClient.readContract({
         address: activeRoundAddress,
         abi: lastBellAbi,
-        functionName: "closingPrintPool",
+        functionName: legacyPayout ? "closingPrintPool" : "airtimePool",
       }),
       publicClient.readContract({
         address: activeRoundAddress,
@@ -143,7 +143,9 @@ export function useWalletGame(
       publicClient.readContract({
         address: activeRoundAddress,
         abi: lastBellAbi,
-        functionName: "closingPrintRewardClaimed",
+        functionName: legacyPayout
+          ? "closingPrintRewardClaimed"
+          : "airtimeRewardClaimed",
         args: [address],
       }),
       publicClient.readContract({
@@ -152,32 +154,22 @@ export function useWalletGame(
         functionName: "refundClaimed",
         args: [address],
       }),
+      publicClient.readContract({
+        address: activeRoundAddress,
+        abi: lastBellAbi,
+        functionName: "winningTicker",
+      }),
     ] as const);
-    const winnerIndex = Number(winner) < 4 ? Number(winner) : 0;
-    const [playerAirtime, tickerAirtime, configs] = await Promise.all([
-      publicClient.readContract({
-        address: activeRoundAddress,
-        abi: lastBellAbi,
-        functionName: "playerTickerAirtime",
-        args: [address, winnerIndex],
-      }),
-      publicClient.readContract({
-        address: activeRoundAddress,
-        abi: lastBellAbi,
-        functionName: "tickerAirtime",
-        args: [winnerIndex],
-      }),
-      Promise.all(
-        [0n, 1n, 2n, 3n].map((index) =>
-          publicClient.readContract({
-            address: activeRoundAddress,
-            abi: lastBellAbi,
-            functionName: "tickerConfigs",
-            args: [index],
-          }),
-        ),
+    const configs = await Promise.all(
+      [0n, 1n, 2n, 3n].map((index) =>
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellAbi,
+          functionName: "tickerConfigs",
+          args: [index],
+        }),
       ),
-    ]);
+    );
     const balances = await Promise.all(
       configs.map((config) =>
         publicClient.readContract({
@@ -188,6 +180,35 @@ export function useWalletGame(
         }),
       ),
     );
+    const winnerIndex = Number(winner) < 4 ? Number(winner) : 0;
+    const [playerControlTime, totalControlTime] = legacyPayout
+      ? await Promise.all([
+          publicClient.readContract({
+            address: activeRoundAddress,
+            abi: lastBellAbi,
+            functionName: "playerTickerAirtime",
+            args: [address, winnerIndex],
+          }),
+          publicClient.readContract({
+            address: activeRoundAddress,
+            abi: lastBellAbi,
+            functionName: "tickerAirtime",
+            args: [winnerIndex],
+          }),
+        ])
+      : await Promise.all([
+          publicClient.readContract({
+            address: activeRoundAddress,
+            abi: lastBellAbi,
+            functionName: "controlTime",
+            args: [address],
+          }),
+          publicClient.readContract({
+            address: activeRoundAddress,
+            abi: lastBellAbi,
+            functionName: "totalControlTime",
+          }),
+        ]);
     const spentUsd = Number(spent) / 1e6;
     const allowanceUsd = Number(allowance) / 1e6;
     const expired = Number(phase) >= 4;
@@ -218,17 +239,17 @@ export function useWalletGame(
         !holderClaimed
           ? Number(holderPool) / 1e6
           : 0,
-      closingPrintUsd:
+      airtimeUsd:
         Number(phase) === 4 &&
-        playerAirtime > 0n &&
-        tickerAirtime > 0n &&
-        !printClaimed
-          ? (Number(closingPrintPool) / 1e6) *
-            (Number(playerAirtime) / Number(tickerAirtime))
+        playerControlTime > 0n &&
+        totalControlTime > 0n &&
+        !poolClaimed
+          ? (Number(airtimePool) / 1e6) *
+            (Number(playerControlTime) / Number(totalControlTime))
           : 0,
       refundUsd: Number(phase) === 5 && !refundClaimed ? spentUsd : 0,
     });
-  }, [activeRoundAddress, address, publicClient]);
+  }, [activeRoundAddress, address, legacyPayout, publicClient]);
 
   useEffect(() => {
     const initial = window.setTimeout(
@@ -357,7 +378,7 @@ export function useWalletGame(
   }, [address, publicClient, refresh, walletClient.data]);
 
   const claimReward = useCallback(
-    async (kind: "holder" | "print" | "refund") => {
+    async (kind: "holder" | "airtime" | "refund") => {
       if (!address || !publicClient || !walletClient.data) {
         throw new Error("Connect the wallet first.");
       }
@@ -366,8 +387,10 @@ export function useWalletGame(
         const functionName =
           kind === "holder"
             ? "claimHolderReward"
-            : kind === "print"
-              ? "claimClosingPrintReward"
+            : kind === "airtime"
+              ? legacyPayout
+                ? "claimClosingPrintReward"
+                : "claimAirtimeReward"
               : "claimCancellationRefund";
         const hash = await walletClient.data.writeContract({
           account: address,
@@ -383,7 +406,14 @@ export function useWalletGame(
         setAction("idle");
       }
     },
-    [activeRoundAddress, address, publicClient, refresh, walletClient.data],
+    [
+      activeRoundAddress,
+      address,
+      legacyPayout,
+      publicClient,
+      refresh,
+      walletClient.data,
+    ],
   );
 
   return useMemo(

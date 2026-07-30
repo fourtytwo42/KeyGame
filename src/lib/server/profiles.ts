@@ -93,7 +93,7 @@ async function statsFor(address: string) {
     calls: Number(basics.rows[0]?.calls ?? 0),
     roundsPlayed: Number(basics.rows[0]?.rounds ?? 0),
     finalBells: Number(finalBells.rows[0]?.count ?? 0),
-    winningTickerContributions: Number(
+    closingPrintCrownContributions: Number(
       winningContributions.rows[0]?.count ?? 0,
     ),
     totalRawAirtimeSeconds: Number(airtime.rows[0]?.total_seconds ?? 0),

@@ -63,6 +63,7 @@ const manifest = {
     encoding: "utf8",
   }).trim(),
   mockOnly: true,
+  contractVersion: "closing-print-v3-airtime",
   contracts: {
     manager,
     paymentRouter,

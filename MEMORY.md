@@ -4,17 +4,18 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: PRD 14 implementation is complete through testnet browser UAT
-  at commit `504c4e2`; do not freeze or deploy mainnet.
-- Last meaningful result: two isolated built-in wallets completed funded,
-  signed Robinhood testnet calls, reusable approvals, a cross-ticker bell
-  steal, settlement/rollover, SIWE profile creation, deployment-aware history,
-  and the deciding raid vote. The raid entered its five-minute `COUNTDOWN` at
-  `2/2 UNIQUE CALLERS`.
-- Next step: run the required 24-hour/100-round soak, obtain a real Reown
-  project ID for extension-wallet UAT, resolve the failed DEX manipulation
-  economics and measured Rug Zone automation advantage, then proceed to
-  independent audit/legal/multisig release work.
+- Current task: implement the `closing-print-v3-airtime` audit candidate,
+  redeploy Robinhood testnet, verify two-wallet browser UAT, and prepare the
+  24-hour/100-round soak. Do not freeze or deploy mainnet.
+- Last meaningful result: the local candidate now makes DEX momentum
+  nonfinancial, pays the 30% Airtime Pool to all callers by total raw control
+  time, gives the last Airtime claimant integer dust, preserves the
+  nonfinancial Closing Print Crown, and adds explicit FCFS Rug disclosure.
+  Local TypeScript, ESLint, and 48 Vitest tests pass. VM/Foundry verification
+  and testnet redeployment remain next. Last verified 2026-07-30.
+- Next step: verify Foundry on the VM, commit/push/pull locally, migrate the
+  database, redeploy v3 testnet, restart services, run browser UAT, then begin
+  the resumable soak after two external soak wallets are funded.
 - Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
   depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
   checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.
@@ -27,10 +28,13 @@ Durable project context lives here. Update this file whenever information should
 - DEX rounds lock GREEN/FLAT/RED scoring at 1.25x/1.0x/0.75x from a
   10-minute Uniswap V3 TWAP for each holder interval. FLAT rounds require no
   report and score every interval at 1.0x.
-- Weighted points select the Closing Print ticker. The winning ticker's 30%
-  pool is divided by each contributor's raw airtime on that ticker. The 50%
-  final-holder payout, 15% next-round seed, and 5% protocol allocation remain
-  unchanged.
+- Weighted points select the nonfinancial Closing Print Crown. The 30% Airtime
+  Pool is divided across every caller by total raw control time across all
+  tickers. DEX price, band, and multiplier cannot change any financial
+  allocation. The 50% final-holder payout, 15% next-round seed, and 5% protocol
+  allocation remain unchanged.
+- `docs/prd/15-audit-candidate-airtime-pool.md` is authoritative for current
+  payout, FCFS disclosure, Safe, wallet, soak, and audit-freeze requirements.
 - `docs/prd/10-closing-print-market-reactive.md` and `docs/prd/11-closing-print-user-stories.md` are the canonical current requirements. PRDs 01-09 remain historical/superseded context where marked.
 - The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
 - The reusable USDG allowance targets the permanent `PaymentRouter`, not an
@@ -158,7 +162,10 @@ When sources conflict, use this order:
 ## Architecture Notes
 
 - Implemented architecture: Next.js App Router and Server Components for public routes, narrowly scoped Client Components for simulator, replay, receipt sharing, wallet state, and live interactions; shared typed domain under `src/lib/game`; Wagmi/Viem under `src/lib/web3`; one global Channel 4663 CSS system.
-- `contracts/LastBellRound.sol` implements ticker-per-claim control, verified/flat market modes, locked interval weighting, Producer Pass gating, Closing Print settlement, cancellation refunds, and pull payments.
+- `contracts/LastBellRound.sol` implements ticker-per-claim control, DEX/flat
+  modes, locked nonfinancial Crown weighting, Producer Pass gating, all-caller
+  raw-time Airtime settlement, exact remainder conservation, cancellation
+  refunds, and pull payments.
 - `contracts/mocks/MockUSDG.sol`, `MockMarketDataVerifier.sol`, and `MockStockToken.sol` are devnet-only.
 - Devnet mode reads the deployed contract and events through `src/lib/web3/devnet.ts`; the development action API selects prejoined deterministic Anvil accounts and submits real transactions.
 - Wallet configuration includes injected EIP-6963 wallets, MetaMask, Coinbase Wallet, Safe, and optional WalletConnect through a Reown project ID. No extension connection has been claimed as tested.
@@ -172,7 +179,9 @@ When sources conflict, use this order:
 - Build sharing into the state machine: crown thefts, losses, comebacks, and wins produce deterministic vertical meme receipts/Open Graph cards. Use ticker factions, rotating community mascots, cosmetic seasons, and raid links without monetary referral rewards.
 - Meme-language proposal, not yet approved: use a fixed semantic lexicon rather than interchangeable slang. Proposed core: `APE` = take the claim action, `COOKING` = building control momentum, `COOKED` = losing badly or eliminated, `RUGGED` = ordinary bell theft, `SNIPED` = final-seconds theft, `BAG SECURED` = win, `THE TRENCHES` = live arena/feed, and `SEND IT` = high-stakes confirmation. Keep `jeet`, `exit liquidity`, `honeypot`, and `rug pull` out of official product copy because they are derogatory or imply protocol fraud.
 - Approved round: four automatically selected ticker slots, 45-second opening clock, $1 accepted claim, two-second normal extension, 180-second hard cap, ten-second non-extendable Rug Zone, and no Stock Token custody.
-- Approved payout: 50% to the final holder, 30% to weighted contributors to the winning Closing Print ticker, 15% next-round seed, and 5% protocol operations.
+- Approved payout: 50% to the final holder, 30% to all callers by total raw
+  control time, 15% next-round seed, and 5% protocol operations. Weighted DEX
+  points award only the nonfinancial Closing Print Crown.
 - Comprehension rule: `Pick a stock. Pay $1 to put it on air and steal the bell. Market momentum boosts its airtime. Hold the bell at zero to win 50%.`
 - Selected visual direction: `Channel 4663`, a fictional late-night public-access market game show named for Robinhood Chain ID 4663. Use broadcast identifiers, teletext-density score strips, a studio-switch action, transmission receipts, square/clipped color slabs, awkward three-color mascots, and the `Dead Channel` palette. Avoid dark-green fintech, neon cyberpunk, glassmorphism, neo-brutalism, casino/gacha polish, generic shadcn dashboards, gradients, glows, card stacks, and corporate ticker branding.
 - Selected frontend direction: Next.js 16.2.x App Router with strict TypeScript, React Server Components by default, narrowly scoped Client Components for the live arena, CSS Modules plus global tokens, `next/font`, native CSS/Web Animations, and `viem`. Do not use Tailwind, shadcn/ui, a dashboard template, or Framer Motion as the default implementation.

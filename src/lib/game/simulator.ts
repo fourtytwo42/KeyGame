@@ -80,7 +80,7 @@ export function claimBell(
     previousTicker: state.holder?.ticker,
     feeUsd: rejectedReason ? 0 : roundConfig.claimPriceUsd,
     phase: state.phase === "rug" ? "rug" : "live",
-    contractVersion: "closing-print-v1",
+    contractVersion: "closing-print-v3-airtime",
     accepted: !rejectedReason,
     reason: rejectedReason,
     potAfterUsd: state.potUsd,
@@ -162,7 +162,7 @@ export function settle(state: RoundState): RoundState {
     winningTicker: leadingTicker(state),
     pools: {
       holderUsd: state.potUsd * 0.5,
-      closingPrintUsd: state.potUsd * 0.3,
+      airtimeUsd: state.potUsd * 0.3,
       nextRoundUsd: state.potUsd * 0.15,
       protocolUsd: state.potUsd * 0.05,
     },

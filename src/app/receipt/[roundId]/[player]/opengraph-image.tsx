@@ -35,7 +35,7 @@ export default async function Image({
         </span>
       </div>
       <b style={{ fontSize: 34 }}>
-        THE CHAIN SETTLED THE TAPE · NO REFERRAL REWARD
+        RAW AIRTIME PAYS · MOMENTUM WEARS THE CROWN
       </b>
     </div>,
     size,

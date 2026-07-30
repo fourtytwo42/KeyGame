@@ -7,11 +7,12 @@ import {
 } from "./projections";
 
 describe("round projections", () => {
-  it("projects holder and Closing Print pools without replacing settlement", () => {
+  it("separates the nonfinancial Crown from the Airtime Pool", () => {
     const projection = buildRoundProjection(scenarios.live.state);
     expect(projection.finalHolder).toBe(scenarios.live.state.holder?.address);
     expect(projection.holderPoolUsd).toBe(44.5);
-    expect(projection.closingPrintPoolUsd).toBe(26.7);
+    expect(projection.airtimePoolUsd).toBe(26.7);
+    expect(projection.closingPrintCrown.ticker).toBeTruthy();
     expect(projection.currentEarning?.pointsPerSecond).toBe(1.25);
     expect(projection.isEstimate).toBe(true);
   });
@@ -51,6 +52,8 @@ describe("round projections", () => {
     expect(projection.perTicker[0].rawAirtimeSeconds).toBe(14);
     expect(projection.perTicker[0].pendingWeightedPoints).toBe(5);
     expect(projection.projectedHolderRewardUsd).toBe(44.5);
+    expect(projection.playerRawAirtimeSeconds).toBe(14);
+    expect(projection.projectedAirtimeRewardUsd).toBeGreaterThan(0);
     expect(projection.projectedTotalRewardUsd).toBeGreaterThan(44.5);
   });
 
@@ -69,13 +72,13 @@ describe("round projections", () => {
     state.potUsd = 1.21;
     state.pools = {
       holderUsd: 0,
-      closingPrintUsd: 0,
+      airtimeUsd: 0,
       nextRoundUsd: 0,
       protocolUsd: 0,
     };
     const projection = buildRoundProjection(state);
     expect(projection.holderPoolUsd).toBeCloseTo(0.605);
-    expect(projection.closingPrintPoolUsd).toBeCloseTo(0.363);
+    expect(projection.airtimePoolUsd).toBeCloseTo(0.363);
   });
 
   it("stops showing a live earning rate after settlement", () => {

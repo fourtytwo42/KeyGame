@@ -1331,7 +1331,7 @@ main {
 .clockAssembly small,
 .callerLabel {
   font-family: var(--mono);
-  font-size: 0.58rem;
+  font-size: 0.6875rem;
   font-weight: 900;
   letter-spacing: 0.1em;
 }
@@ -1347,6 +1347,27 @@ main {
 .phase-rug .clockAssembly strong {
   color: var(--tube-white);
   text-shadow: 5px 5px 0 var(--night-desk);
+}
+
+.rugDisclosure {
+  display: grid;
+  gap: 2px;
+  width: min(94%, 560px);
+  padding: 7px 10px;
+  color: var(--tube-white);
+  background: var(--night-desk);
+  border: 3px solid var(--prize-tape);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.rugDisclosure strong {
+  color: var(--prize-tape);
+  font-family: var(--display);
+  font-size: 1.1rem;
 }
 
 .callerCard {
@@ -1880,7 +1901,7 @@ main {
 .winnerSummary {
   width: min(100%, 560px);
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 

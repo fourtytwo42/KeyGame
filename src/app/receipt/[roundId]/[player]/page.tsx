@@ -35,6 +35,35 @@ export default async function ReceiptPage({
   const isWinner =
     state.holder?.address.toLowerCase() === player.toLowerCase() ||
     player === "demo";
+  const isAirtimeVersion = state.contractVersion === "closing-print-v3-airtime";
+  const callerClaims = state.claims.filter(
+    (claim) =>
+      player === "demo" ||
+      claim.claimant.address.toLowerCase() === player.toLowerCase(),
+  );
+  const playerRawSeconds = callerClaims.reduce(
+    (total, claim) => total + (claim.intervalSeconds ?? 0),
+    0,
+  );
+  const totalRawSeconds = state.claims.reduce(
+    (total, claim) => total + (claim.intervalSeconds ?? 0),
+    0,
+  );
+  const legacyEligibleSeconds = callerClaims
+    .filter((claim) => claim.claimant.ticker === state.winningTicker)
+    .reduce((total, claim) => total + (claim.intervalSeconds ?? 0), 0);
+  const legacyTotalSeconds = state.claims
+    .filter((claim) => claim.claimant.ticker === state.winningTicker)
+    .reduce((total, claim) => total + (claim.intervalSeconds ?? 0), 0);
+  const eligibleSeconds = isAirtimeVersion
+    ? playerRawSeconds
+    : legacyEligibleSeconds;
+  const eligibleTotal = isAirtimeVersion ? totalRawSeconds : legacyTotalSeconds;
+  const airtimeReward =
+    eligibleTotal > 0
+      ? (state.potUsd * 0.3 * eligibleSeconds) / eligibleTotal
+      : 0;
+  const receiptReward = (isWinner ? state.potUsd * 0.5 : 0) + airtimeReward;
 
   return (
     <div className="receiptPage">
@@ -52,7 +81,7 @@ export default async function ReceiptPage({
             height={210}
           />
           <span className="eyebrow">
-            {isWinner ? "FINAL HOLDER" : "ON THE TAPE"}
+            {isWinner ? "FINAL HOLDER" : "AIRTIME CALLER"}
           </span>
           <h1>
             {isWinner ? "Bag secured.\nBell kept." : "Cooked.\nStill on tape."}
@@ -64,8 +93,8 @@ export default async function ReceiptPage({
           </p>
         </div>
         <div className="receiptAmount">
-          <span>{isWinner ? "BROADCAST PAYOUT" : "BROADCAST PAYOUT"}</span>
-          <strong>{formatUsd(isWinner ? state.potUsd * 0.5 : 0)}</strong>
+          <span>PROJECTED BROADCAST PAYOUT</span>
+          <strong>{formatUsd(receiptReward)}</strong>
         </div>
         <dl className="receiptDetails">
           <div>
@@ -83,6 +112,16 @@ export default async function ReceiptPage({
                 ? `${state.holder?.band} · ${((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×`
                 : "—"}
             </dd>
+          </div>
+          <div>
+            <dt>Airtime Pool seconds</dt>
+            <dd>
+              {eligibleSeconds}s / {eligibleTotal}s
+            </dd>
+          </div>
+          <div>
+            <dt>Closing Print Crown</dt>
+            <dd>{state.winningTicker ?? "—"}</dd>
           </div>
           <div>
             <dt>Final pot</dt>

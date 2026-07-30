@@ -10,17 +10,17 @@ const EPSILON = 1e-9;
 
 function projectedPools(state: RoundState) {
   if (state.phase === "cancelled") {
-    return { holderUsd: 0, closingPrintUsd: 0 };
+    return { holderUsd: 0, airtimeUsd: 0 };
   }
   if (state.phase === "settled") {
     return {
       holderUsd: state.pools?.holderUsd ?? state.potUsd * 0.5,
-      closingPrintUsd: state.pools?.closingPrintUsd ?? state.potUsd * 0.3,
+      airtimeUsd: state.pools?.airtimeUsd ?? state.potUsd * 0.3,
     };
   }
   return {
     holderUsd: state.potUsd * 0.5,
-    closingPrintUsd: state.potUsd * 0.3,
+    airtimeUsd: state.potUsd * 0.3,
   };
 }
 
@@ -65,14 +65,25 @@ export function buildRoundProjection(state: RoundState): RoundProjection {
     }),
   );
   const pools = projectedPools(state);
+  const crownScore =
+    state.tickerScores.find((score) => score.ticker === winner)
+      ?.weightedScore ?? 0;
+  const totalRawAirtimeSeconds = state.tickerScores.reduce(
+    (total, score) => total + score.rawSeconds,
+    0,
+  );
   return {
     snapshotBlock: state.blockNumber,
     snapshotTime,
     finalHolder: state.holder?.address ?? null,
     finalHolderDisplayName: state.holder?.displayName ?? null,
     holderPoolUsd: pools.holderUsd,
-    winningTicker: winner,
-    closingPrintPoolUsd: pools.closingPrintUsd,
+    closingPrintCrown: {
+      ticker: winner,
+      weightedPoints: crownScore,
+    },
+    airtimePoolUsd: pools.airtimeUsd,
+    totalRawAirtimeSeconds,
     currentEarning:
       state.holder &&
       currentScore &&
@@ -123,19 +134,26 @@ export function buildPlayerRoundProjection(input: {
       pendingWeightedPoints: pendingWeighted,
     };
   });
-  const winner = projectedWinningTicker(state.tickerScores);
-  const winnerIndex = state.tickerScores.findIndex(
-    (score) => score.ticker === winner,
+  const totalRawAirtimeSeconds = state.tickerScores.reduce(
+    (total, score) => total + score.rawSeconds,
+    0,
   );
-  const winningRaw = state.tickerScores[winnerIndex]?.rawSeconds ?? 0;
-  const playerWinningRaw =
-    winnerIndex >= 0 ? perTicker[winnerIndex].rawAirtimeSeconds : 0;
+  const playerRawAirtimeSeconds = perTicker.reduce(
+    (total, score) => total + score.rawAirtimeSeconds,
+    0,
+  );
   const pools = projectedPools(state);
   const holderPool = pools.holderUsd;
-  const printPool = pools.closingPrintUsd;
+  const airtimePool = pools.airtimeUsd;
   const projectedHolderRewardUsd = isCurrentHolder ? holderPool : 0;
-  const projectedClosingPrintRewardUsd =
-    winningRaw > 0 ? (printPool * playerWinningRaw) / winningRaw : 0;
+  const projectedAirtimeShareBps =
+    totalRawAirtimeSeconds > 0
+      ? (playerRawAirtimeSeconds * 10_000) / totalRawAirtimeSeconds
+      : 0;
+  const projectedAirtimeRewardUsd =
+    totalRawAirtimeSeconds > 0
+      ? (airtimePool * playerRawAirtimeSeconds) / totalRawAirtimeSeconds
+      : 0;
   return {
     address,
     roundId: state.roundId ?? "0",
@@ -143,9 +161,11 @@ export function buildPlayerRoundProjection(input: {
     snapshotTime: Math.floor(new Date(state.updatedAt).getTime() / 1_000),
     perTicker,
     projectedHolderRewardUsd,
-    projectedClosingPrintRewardUsd,
+    playerRawAirtimeSeconds,
+    projectedAirtimeShareBps,
+    projectedAirtimeRewardUsd,
     projectedTotalRewardUsd:
-      projectedHolderRewardUsd + projectedClosingPrintRewardUsd,
+      projectedHolderRewardUsd + projectedAirtimeRewardUsd,
     isCurrentHolder,
     isEstimate: true,
   };

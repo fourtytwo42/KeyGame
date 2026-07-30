@@ -21,6 +21,7 @@ import {
   publicClientFor,
   walletClientFor,
 } from "./common";
+import { activeSoakFault } from "./soak-faults";
 
 const manifest = await loadManifest();
 const deploymentKey = deploymentKeyFor(manifest);
@@ -30,6 +31,7 @@ const manager = manifest.contracts.manager;
 const lockId = BigInt(manifest.chainId) * 10_000n + 4663n;
 
 async function loadRoster() {
+  const unsafeMarketFault = await activeSoakFault(pool, "unsafe-market");
   const assets = await pool.query<{
     symbol: string;
     name: string;
@@ -77,7 +79,7 @@ async function loadRoster() {
     });
     bySymbol.set(sample.symbol, values);
   }
-  const screening: ScreeningAsset[] = assets.rows.map((asset) => ({
+  const screening: ScreeningAsset[] = assets.rows.map((asset, index) => ({
     ticker: asset.symbol,
     name: asset.name,
     tokenAddress: asset.testnet_mock_address,
@@ -96,13 +98,16 @@ async function loadRoster() {
             sourceChainId: 4663,
             twap: { seconds: 600, requiredHistorySeconds: 1800 },
             safety: {
-              eligible: asset.dex_safe,
+              eligible: asset.dex_safe && !(unsafeMarketFault && index === 0),
               usdgDepth: Number(asset.pool_usdg_depth ?? 0),
               buyImpactBps: Number(asset.buy_impact_bps ?? 0),
               sellImpactBps: Number(asset.sell_impact_bps ?? 0),
               spotTwapDeviationBps: Number(asset.spot_twap_deviation_bps ?? 0),
               sampleCount: bySymbol.get(asset.symbol)?.length ?? 0,
-              reasons: asset.dex_safety_reasons ?? [],
+              reasons:
+                unsafeMarketFault && index === 0
+                  ? [...(asset.dex_safety_reasons ?? []), "injected-soak-fault"]
+                  : (asset.dex_safety_reasons ?? []),
             },
           }
         : undefined,

@@ -26,12 +26,13 @@ const poolAbi = parseAbi([
   "function slot0() view returns (uint160 sqrtPriceX96,int24 tick,uint16 observationIndex,uint16 observationCardinality,uint16 observationCardinalityNext,uint8 feeProtocol,bool unlocked)",
   "function observe(uint32[] secondsAgos) view returns (int56[] tickCumulatives,uint160[] secondsPerLiquidityCumulativeX128s)",
 ]);
-const erc20Abi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
+const erc20Abi = parseAbi([
+  "function balanceOf(address) view returns (uint256)",
+]);
 const quoterAbi = parseAbi([
   "function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)",
 ]);
-const QUOTER =
-  "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7" as Address;
+const QUOTER = "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7" as Address;
 
 export type DexObservationResult = {
   marketId: Hex;
@@ -162,10 +163,8 @@ export async function readDexObservation(
     ]);
     const bought = Number(formatUnits(buy.result[0], 18));
     const soldFor = Number(formatUnits(sell.result[0], 6));
-    buyImpactBps =
-      Math.abs(QUOTE_NOTIONAL_USDG / bought / price - 1) * 10_000;
-    sellImpactBps =
-      Math.abs(soldFor / QUOTE_NOTIONAL_USDG - 1) * 10_000;
+    buyImpactBps = Math.abs(QUOTE_NOTIONAL_USDG / bought / price - 1) * 10_000;
+    sellImpactBps = Math.abs(soldFor / QUOTE_NOTIONAL_USDG - 1) * 10_000;
   } catch {
     reasons.push("two-sided 1,000 USDG quote unavailable");
   }

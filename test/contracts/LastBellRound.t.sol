@@ -259,7 +259,7 @@ contract LastBellRoundTest is TestBase {
         vm.stopPrank();
     }
 
-    function test_WeightedTickerWinsButRawAirtimeDividesClosingPrint() public {
+    function test_WeightedTickerWinsButEveryCallerSharesAirtimePool() public {
         _fund(ALICE);
         _fund(BOB);
         _fund(CAROL);
@@ -280,16 +280,38 @@ contract LastBellRoundTest is TestBase {
 
         assertEq(round.payoutSum(), round.pot(), "payout conservation");
         assertEq(uint256(round.winningTicker()), 0, "weighted ticker winner");
-        uint256 before = token.balanceOf(ALICE);
+        assertEq(round.totalControlTime(), 49, "all intervals count");
+
+        uint256 aliceBefore = token.balanceOf(ALICE);
         vm.prank(ALICE);
-        round.claimClosingPrintReward();
-        uint256 expected = round.closingPrintPool() * round.playerTickerAirtime(
-            ALICE, 0
-        ) / round.tickerAirtime(0);
-        assertEq(token.balanceOf(ALICE) - before, expected, "raw-airtime share");
+        round.claimAirtimeReward();
+        assertEq(
+            token.balanceOf(ALICE) - aliceBefore,
+            round.airtimePool() * round.controlTime(ALICE) / round.totalControlTime(),
+            "alice all-ticker airtime share"
+        );
+
+        uint256 bobBefore = token.balanceOf(BOB);
         vm.prank(BOB);
-        vm.expectRevert(LastBellRound.NothingToClaim.selector);
-        round.claimClosingPrintReward();
+        round.claimAirtimeReward();
+        assertEq(
+            token.balanceOf(BOB) - bobBefore,
+            round.airtimePool() * round.controlTime(BOB) / round.totalControlTime(),
+            "losing ticker still earns"
+        );
+
+        uint256 carolBefore = token.balanceOf(CAROL);
+        vm.prank(CAROL);
+        round.claimAirtimeReward();
+        assertEq(
+            round.airtimePoolPaid(), round.airtimePool(), "last caller receives dust"
+        );
+        assertEq(
+            round.claimedControlTime(),
+            round.totalControlTime(),
+            "all control time claimed"
+        );
+        assertTrue(token.balanceOf(CAROL) > carolBefore, "carol paid");
     }
 
     function test_CancellationRefundsAcceptedFees() public {
@@ -323,6 +345,87 @@ contract LastBellRoundTest is TestBase {
         vm.prank(BOB);
         round.claimBell(1, bobReport, 4);
         assertEq(round.tickerScore(0), duration * multiplier, "locked score");
+    }
+
+    function testFuzz_DexBandsCannotChangeFinancialAllocation(
+        uint16 firstSeconds,
+        uint16 secondSeconds,
+        uint8 firstBandSeed,
+        uint8 secondBandSeed
+    ) public {
+        uint64 firstDuration = uint64(bound(firstSeconds, 1, 15));
+        uint64 secondDuration = uint64(bound(secondSeconds, 1, 15));
+        LastBellRound comparison = _deploy(LastBellRound.MarketMode.Dex, false);
+        token.mint(address(this), SEED);
+        token.approve(address(paymentRouter), type(uint256).max);
+        bytes[4] memory reports;
+        for (uint8 index; index < 4; index++) {
+            reports[index] = _report(index, opening[index], uint64(block.timestamp));
+        }
+        comparison.start(SEED, reports);
+
+        _fund(ALICE);
+        _fund(BOB);
+        _fund(CAROL);
+        uint64 startAt = uint64(block.timestamp);
+        vm.prank(ALICE);
+        round.claimBell(0, _report(0, _bandPrice(0, firstBandSeed), startAt), 4);
+        vm.prank(ALICE);
+        comparison.claimBell(0, _report(0, _bandPrice(0, secondBandSeed), startAt), 4);
+
+        vm.warp(startAt + firstDuration);
+        vm.prank(BOB);
+        round.claimBell(
+            1,
+            _report(1, _bandPrice(1, secondBandSeed), uint64(block.timestamp)),
+            4
+        );
+        vm.prank(BOB);
+        comparison.claimBell(
+            1,
+            _report(1, _bandPrice(1, firstBandSeed), uint64(block.timestamp)),
+            4
+        );
+
+        vm.warp(startAt + firstDuration + secondDuration);
+        vm.prank(CAROL);
+        round.claimBell(2, _freshReport(2, _bandPrice(2, firstBandSeed + 1)), 4);
+        vm.prank(CAROL);
+        comparison.claimBell(
+            2, _freshReport(2, _bandPrice(2, secondBandSeed + 1)), 4
+        );
+
+        vm.warp(round.deadline());
+        round.finalize();
+        comparison.finalize();
+
+        assertEq(round.pot(), comparison.pot(), "same fees and seed");
+        assertEq(round.holderPool(), comparison.holderPool(), "holder invariant");
+        assertEq(round.airtimePool(), comparison.airtimePool(), "airtime invariant");
+        assertEq(
+            round.nextRoundPool(), comparison.nextRoundPool(), "seed invariant"
+        );
+        assertEq(
+            round.protocolPool(), comparison.protocolPool(), "protocol invariant"
+        );
+        assertEq(
+            round.totalControlTime(),
+            comparison.totalControlTime(),
+            "control-time invariant"
+        );
+        assertEq(round.controlTime(ALICE), comparison.controlTime(ALICE));
+        assertEq(round.controlTime(BOB), comparison.controlTime(BOB));
+        assertEq(round.controlTime(CAROL), comparison.controlTime(CAROL));
+    }
+
+    function _bandPrice(uint8 ticker, uint8 seed)
+        internal
+        view
+        returns (uint256)
+    {
+        if (seed % 3 == 0) return opening[ticker] * 10_006 / 10_000;
+        if (seed % 3 == 1) return opening[ticker] * 9_994 / 10_000;
+        return opening[ticker];
     }
 
     function _deploy(LastBellRound.MarketMode mode, bool passRequired)

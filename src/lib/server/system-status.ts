@@ -107,6 +107,17 @@ export async function getSystemStatus() {
   const indexedBlock = checkpoint.rowCount
     ? Number(checkpoint.rows[0].block_number)
     : manifest.deploymentBlock - 1;
+  const warningPotUsd = Number(process.env.OPERATIONS_POT_WARNING_USD || 1_000);
+  const criticalPotUsd = Number(
+    process.env.OPERATIONS_POT_CRITICAL_USD || 5_000,
+  );
+  const currentPotUsd = currentRound?.potUsd ?? 0;
+  const potAlert =
+    currentPotUsd >= criticalPotUsd
+      ? "critical"
+      : currentPotUsd >= warningPotUsd
+        ? "warning"
+        : "normal";
   return {
     ok: true,
     mode,
@@ -137,6 +148,14 @@ export async function getSystemStatus() {
           id: currentRound.roundId,
           state: currentRound.phase,
           address: currentRound.contractAddress,
+          potUsd: currentPotUsd,
+          operationsPotAlert: {
+            level: potAlert,
+            warningPotUsd,
+            criticalPotUsd,
+            informationalOnly: true,
+            claimsBlocked: false,
+          },
         }
       : null,
     services: services.rows.map((service) => ({

@@ -37,6 +37,12 @@ export function ReplayPlayer({ state }: { state: RoundState }) {
           PUTS IT ON AIR · {event.marketBand} ·{" "}
           {(event.multiplierBps / 10_000).toFixed(2)}×
         </p>
+        {state.contractVersion === "closing-print-v3-airtime" ? (
+          <p>
+            CROWN: WEIGHTED POINTS · PAYOUT: {event.intervalSeconds ?? 0} RAW
+            AIRTIME SEC
+          </p>
+        ) : null}
         <dl className="replayProof">
           <div>
             <dt>Locked interval</dt>

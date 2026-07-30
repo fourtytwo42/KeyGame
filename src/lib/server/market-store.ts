@@ -62,12 +62,9 @@ export async function loadScreeningAssets(): Promise<ScreeningAsset[]> {
       name: asset.name,
       tokenAddress: (asset.testnet_mock_address ??
         asset.canonical_address) as `0x${string}`,
-      canonicalAddress: asset.canonical_address as
-        | `0x${string}`
-        | undefined,
+      canonicalAddress: asset.canonical_address as `0x${string}` | undefined,
       testnetMockAddress: asset.testnet_mock_address as
-        | `0x${string}`
-        | undefined,
+        `0x${string}` | undefined,
       marketId: (asset.market_id || undefined) as `0x${string}` | undefined,
       dexMarket:
         asset.market_id &&
@@ -78,10 +75,8 @@ export async function loadScreeningAssets(): Promise<ScreeningAsset[]> {
               marketId: asset.market_id as `0x${string}`,
               poolAddress: asset.pool_address as `0x${string}`,
               stockTokenAddress: asset.canonical_address as `0x${string}`,
-              quoteTokenAddress:
-                "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-              factoryAddress:
-                "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+              quoteTokenAddress: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+              factoryAddress: "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
               feeTier: asset.fee_tier,
               sourceChainId: asset.source_chain_id ?? 4663,
               twap: {

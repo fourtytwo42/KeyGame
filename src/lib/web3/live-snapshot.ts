@@ -50,6 +50,32 @@ export async function getLiveSnapshot(
   if (roundAddress === zeroAddress) {
     throw new Error("No active or prepared broadcast is deployed.");
   }
+  const reportedVersion = await client
+    .readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "CONTRACT_VERSION",
+    })
+    .then((value) => hexToString(value, { size: 32 }).replace(/\0/g, ""))
+    .catch(async () => {
+      const evidence = await database.query<{ dex: boolean }>(
+        `SELECT coalesce((args ? 'sourcePool'),false) AS dex
+         FROM chain_events
+         WHERE deployment_key=$1 AND lower(contract_address)=lower($2)
+           AND event_name='BellClaimed'
+         ORDER BY block_number DESC,log_index DESC LIMIT 1`,
+        [deploymentKey, roundAddress],
+      );
+      return evidence.rows[0]?.dex
+        ? "closing-print-v2-dex"
+        : "closing-print-v1";
+    });
+  const contractVersion =
+    reportedVersion === "closing-print-v3-airtime"
+      ? ("closing-print-v3-airtime" as const)
+      : reportedVersion === "closing-print-v1"
+        ? ("closing-print-v1" as const)
+        : ("closing-print-v2-dex" as const);
 
   const [
     roundId,
@@ -221,7 +247,9 @@ export async function getLiveSnapshot(
       (
         [
           "holderPool",
-          "closingPrintPool",
+          contractVersion === "closing-print-v3-airtime"
+            ? "airtimePool"
+            : "closingPrintPool",
           "nextRoundPool",
           "protocolPool",
         ] as const
@@ -285,7 +313,7 @@ export async function getLiveSnapshot(
       transactionHash: event.transaction_hash,
       blockNumber: Number(event.block_number),
       logIndex: event.log_index,
-      contractVersion: "closing-print-v2-dex",
+      contractVersion,
       accepted: true,
       potAfterUsd: Number(args.pot) / 1e6,
       timeAfterSeconds: Number(args.deadline) - Number(args.acceptedAt),
@@ -419,7 +447,7 @@ export async function getLiveSnapshot(
     updatedAt: new Date(now * 1000).toISOString(),
     chainId: manifest.chainId,
     contractAddress: roundAddress,
-    contractVersion: "closing-print-v2-dex",
+    contractVersion,
     blockNumber: Number(block.number),
     startedAt: Number(startedAt),
     deadline: deadlineNumber,
@@ -428,7 +456,12 @@ export async function getLiveSnapshot(
     winningTicker: Number(winner) < 4 ? tickers[Number(winner)] : undefined,
     pools: {
       holderUsd: usd(pools[0]),
-      closingPrintUsd: usd(pools[1]),
+      airtimeUsd:
+        contractVersion === "closing-print-v3-airtime" ? usd(pools[1]) : 0,
+      historicalClosingPrintPoolUsd:
+        contractVersion !== "closing-print-v3-airtime"
+          ? usd(pools[1])
+          : undefined,
       nextRoundUsd: usd(pools[2]),
       protocolUsd: usd(pools[3]),
     },

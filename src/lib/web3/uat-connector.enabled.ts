@@ -36,9 +36,7 @@ export const uatConnector = createConnector<EIP1193Provider>((config) => {
         return [account.address];
       }
       if (method === "wallet_switchEthereumChain") {
-        const requested = Number(
-          (params as [{ chainId: Hex }])?.[0]?.chainId,
-        );
+        const requested = Number((params as [{ chainId: Hex }])?.[0]?.chainId);
         if (requested !== CHAIN_ID) {
           throw new Error("The UAT wallet is restricted to chain 46630.");
         }
@@ -53,9 +51,9 @@ export const uatConnector = createConnector<EIP1193Provider>((config) => {
         return account.signTypedData(JSON.parse(typedData));
       }
       if (method === "eth_sendTransaction") {
-        const transaction = (params as [
-          { to?: Address; data?: Hex; value?: Hex },
-        ])[0];
+        const transaction = (
+          params as [{ to?: Address; data?: Hex; value?: Hex }]
+        )[0];
         const response = await fetch("/api/rpc/testnet", {
           method: "POST",
           headers: { "content-type": "application/json" },

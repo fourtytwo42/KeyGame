@@ -78,7 +78,9 @@ export async function collectOnce() {
       )
     )
       .filter(
-        (result): result is PromiseFulfilledResult<
+        (
+          result,
+        ): result is PromiseFulfilledResult<
           Awaited<ReturnType<typeof readDexObservation>>
         > => result.status === "fulfilled",
       )
@@ -179,7 +181,9 @@ export async function collectOnce() {
         JSON.stringify(
           dex?.reasons ??
             (pinned
-              ? [`${REQUIRED_HISTORY_SECONDS}-second DEX observation unavailable`]
+              ? [
+                  `${REQUIRED_HISTORY_SECONDS}-second DEX observation unavailable`,
+                ]
               : ["No pinned direct Stock Token/USDG market"]),
         ),
         dex ? new Date(dex.observedAt * 1000) : null,

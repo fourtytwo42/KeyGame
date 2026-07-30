@@ -6,11 +6,17 @@ import type { RoundState } from "@/lib/game/types";
 import { useWalletGame } from "@/lib/web3/use-wallet-game";
 
 export function RoundRewardPanel({ state }: { state: RoundState }) {
-  const wallet = useWalletGame(state.contractAddress);
+  const wallet = useWalletGame(
+    state.contractAddress,
+    state.contractVersion === "closing-print-v2-dex" ||
+      state.contractVersion === "closing-print-v1"
+      ? state.contractVersion
+      : "closing-print-v3-airtime",
+  );
   const [message, setMessage] = useState("");
   const busy = wallet.action !== "idle";
 
-  const claim = async (kind: "holder" | "print") => {
+  const claim = async (kind: "holder" | "airtime") => {
     setMessage("");
     try {
       await wallet.claimReward(kind);
@@ -27,7 +33,7 @@ export function RoundRewardPanel({ state }: { state: RoundState }) {
       {!wallet.isConnected ? (
         <p>Connect the winning wallet in the header to check and withdraw.</p>
       ) : wallet.claimable.holderUsd === 0 &&
-        wallet.claimable.closingPrintUsd === 0 ? (
+        wallet.claimable.airtimeUsd === 0 ? (
         <p>No unclaimed reward is available for this connected wallet.</p>
       ) : (
         <div>
@@ -41,15 +47,17 @@ export function RoundRewardPanel({ state }: { state: RoundState }) {
               CLAIM FINAL HOLDER · {formatUsd(wallet.claimable.holderUsd)}
             </button>
           ) : null}
-          {wallet.claimable.closingPrintUsd > 0 ? (
+          {wallet.claimable.airtimeUsd > 0 ? (
             <button
               className="secondaryAction"
               type="button"
               disabled={busy}
-              onClick={() => void claim("print")}
+              onClick={() => void claim("airtime")}
             >
-              CLAIM CLOSING PRINT ·{" "}
-              {formatUsd(wallet.claimable.closingPrintUsd)}
+              {state.contractVersion !== "closing-print-v3-airtime"
+                ? "CLAIM LEGACY CLOSING PRINT"
+                : "CLAIM AIRTIME POOL"}{" "}
+              · {formatUsd(wallet.claimable.airtimeUsd)}
             </button>
           ) : null}
         </div>

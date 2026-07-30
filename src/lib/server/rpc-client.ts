@@ -9,9 +9,7 @@ import type { ServerDeployment } from "./deployment";
 export function deploymentPublicClient(manifest: ServerDeployment) {
   return createPublicClient({
     chain:
-      manifest.chainId === 4663
-        ? robinhoodChainMainnet
-        : robinhoodChainTestnet,
+      manifest.chainId === 4663 ? robinhoodChainMainnet : robinhoodChainTestnet,
     transport: fallback([
       http(manifest.rpc.primary, { timeout: 3_000 }),
       ...(manifest.rpc.fallback
