@@ -66,6 +66,10 @@ Durable project context lives here. Update this file whenever information should
   UAT web services are running against the corrected deployment. Round rollover
   is continuous, but every prepared round remains at `startedAt == 0` until its
   first accepted $1 claim.
+- User lingering is enabled for `hendo420`, so the user-level collector,
+  adapter, indexer, keeper, and UAT web services can start and remain active
+  without an interactive login. All five were active after enabling it. Last
+  verified 2026-07-29.
 - Separate encrypted deployer, keeper, attestor, and faucet keystores exist
   outside the repository under the VM user's private configuration. Public
   addresses are recorded in the 2026-07-29 production-readiness entry below;
