@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { screenRoster } from "@/lib/game/market-screen";
+import { loadScreeningAssets } from "@/lib/server/market-store";
 import {
   getDevnetSession,
   getDevnetSnapshot,
@@ -25,6 +27,19 @@ export async function GET() {
       );
     }
     const state = await getLiveSnapshot();
+    const assets = await loadScreeningAssets().catch(() => []);
+    const byTicker = new Map(assets.map((asset) => [asset.ticker, asset]));
+    const roster = screenRoster(assets);
+    state.marketExplanation = roster.reason;
+    state.tickerScores = state.tickerScores.map((score) => {
+      const asset = byTicker.get(score.ticker);
+      const latest = asset?.samples[asset.samples.length - 1];
+      return {
+        ...score,
+        currentPrice: latest?.price,
+        poolSafety: asset?.dexMarket?.safety,
+      };
+    });
     return NextResponse.json({ ok: true, chainId: state.chainId, state });
   } catch (error) {
     return NextResponse.json(

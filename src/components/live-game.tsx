@@ -526,9 +526,14 @@ function EntryDesk({
   return (
     <div className="entryDesk">
       <div className="segmentTitle">
-        <span>OPEN PHONE LINES</span>
+        <span>
+          {state.marketMode === "DEX"
+            ? "ONCHAIN MOMENTUM · 10M TWAP"
+            : "FLAT ROUND · DEX HISTORY WARMING UP"}
+        </span>
         <h1>Pick the first print</h1>
         <p>Your first $1 call starts the 45-second broadcast clock.</p>
+        {state.marketExplanation ? <p>{state.marketExplanation}</p> : null}
       </div>
       <div
         className="entryClock"
@@ -561,7 +566,9 @@ function EntryDesk({
                 {(score.multiplierBps / 10_000).toFixed(2)}×
               </strong>
               <small>
-                10M TWAP {formatUsd(ticker.currentPrice)} · ONCHAIN MOMENTUM
+                {score.currentPrice
+                  ? `10M TWAP ${formatUsd(score.currentPrice)} · ONCHAIN MOMENTUM`
+                  : "10M TWAP WARMING UP · FLAT SCORING"}
               </small>
               <small>
                 #{index + 1} ROSTER ·{" "}
@@ -596,7 +603,7 @@ function EntryDesk({
       <p className="actionFinePrint">
         {walletConnected
           ? `Approves ${formatUsd(sessionApproval.amountUsd)} play USDG only when allowance is below ${formatUsd(sessionApproval.refreshBelowUsd)}. You can change or revoke it in your wallet.`
-          : `Devnet guest mode uses the same ${formatUsd(sessionApproval.amountUsd)} reusable play-USDG approval. No real value is used.`}
+          : `${gameMode === "testnet" ? "The built-in testnet wallet" : "Devnet guest mode"} uses the same ${formatUsd(sessionApproval.amountUsd)} reusable play-USDG approval. No real value is used.`}
       </p>
     </div>
   );
@@ -714,7 +721,9 @@ function ClosingPrintBoard({
   return (
     <section className="railCard airtimeCard">
       <span className="railLabel">
-        ONCHAIN MOMENTUM · 10M TWAP · THE CLOSING PRINT
+        {state.marketMode === "DEX"
+          ? "ONCHAIN MOMENTUM · 10M TWAP · THE CLOSING PRINT"
+          : "FLAT ROUND · 1.00× · THE CLOSING PRINT"}
       </span>
       {state.tickerScores.map((score) => {
         const ticker = tickerById(score.ticker);

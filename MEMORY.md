@@ -6,13 +6,12 @@ Durable project context lives here. Update this file whenever information should
 
 - Current task: replace Chainlink scoring with direct Uniswap V3 Stock
   Token/USDG 10-minute TWAP scoring and supersede the chain-46630 deployment.
-- Last meaningful result: the DEX contracts, attestation adapter, collector,
-  services, APIs, UI, PRD, and legacy replay discriminator are implemented.
-  The VM passed 28 Forge tests, a live Robinhood mainnet-fork NVDA TWAP read,
-  34 app tests, lint, typecheck, and the production build.
-- Next step: commit and push the verified source, deploy the new testnet
-  verifier/manager/router/mock USDG package, switch the user services from the
-  old Data Streams adapter to the DEX adapter, and complete browser UAT.
+- Last meaningful result: the DEX contracts and services are deployed and
+  explorer-verified on Robinhood testnet. Browser UAT completed FLAT rollover,
+  automatic DEX roster preparation, reusable allowance, and a real
+  mainnet-observation/testnet-attestation claim in round 4.
+- Next step: run the required 24-hour/100-round failure-injection soak, finish
+  audit/economic/legal gates, and conduct later manual extension-wallet UAT.
 - Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
   depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
   checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.
@@ -58,16 +57,16 @@ Durable project context lives here. Update this file whenever information should
 - `/` is the one-game entrypoint and opens directly into the active studio. Legacy `/play/{roundId}` routes redirect to `/`.
 - Completed devnet runs are stored as event-derived snapshots in `.devnet/round-history.json`, survive Anvil resets, and appear beneath the main studio with peak pot, final caller, Closing Print ticker, call count, and a full replay link. No fake history is seeded.
 - GitHub Actions is disabled for this repository and no workflow is committed. All compilation and testing must run locally on the project VM. Last verified 2026-07-29.
-- Production-shaped testnet infrastructure now uses native PostgreSQL and four
-  independent systemd service templates: market collector, Data Streams
-  adapter, indexer, and keeper. The chain-46630 core deployment is recorded in
-  `deployments/46630.json`.
-- The active chain-46630 deployment at block `95079292` uses manager
-  `0xfe0504A9eBd6f9A4FF03b1778Fd7435c536fBa0b`, router
-  `0x4141D7CD735b2Fe20F9ea1E47fd139A3E23Ba10f`, mock USDG
-  `0x78931e3c4729Dd0a4D3ff83D4B47558997A16721`, and verifier
-  `0x03a380b412EbD6DD319A506fA725aD0C3E10C0E3`. The earlier deployment is
-  superseded and archived under `deployments/archive/`.
+- Production-shaped testnet infrastructure uses native PostgreSQL and four
+  independent systemd services: market collector, DEX market adapter, indexer,
+  and keeper. The old Data Streams service is disabled and retired.
+- The active chain-46630 DEX deployment at block `95124915` uses manager
+  `0x73efd21ee56bafce2f286511a66702e74c7133fe`, router
+  `0xc9A28Fb0Cac73F07038078e25645cd7E8B9A9baB`, mock USDG
+  `0x0bbe0774147a2530b7328f09979b51804bc0b844`, and verifier
+  `0x6083abe0b26e3ac1409eab2ccb4aeb908febb894`. All four contracts are
+  explorer-verified. The Chainlink-attested deployment is archived under
+  `deployments/archive/`.
 - Native PostgreSQL plus collector, attestation adapter, indexer, keeper, and
   UAT web services are running against the corrected deployment. Round rollover
   is continuous, but every prepared round remains at `startedAt == 0` until its
@@ -178,6 +177,15 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-30: Deployed and explorer-verified the DEX-attested package on
+  Robinhood testnet at block `95124915`. Browser UAT proved round 2 settlement,
+  round 3 FLAT fallback and rollover, round 4 automatic DEX preparation, one
+  reusable approval across rounds, and an accepted NVDA claim backed by
+  mainnet pool `0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3`, source chain 4663,
+  and persisted source block/hash evidence. The live collector had 100+ samples
+  for all five safe markets. Fixed the news-crawl click overlay,
+  deployment-scoped keeper idempotency, stale archived service health, and
+  status round selection. App tests: 34 passed.
 - 2026-07-29: Implemented the DEX-powered onchain momentum replacement. VM
   verification passed 28 Forge tests, including a live mainnet-fork read of
   NVDA/USDG's 10-minute Uniswap V3 TWAP, plus lint, typecheck, 34 Vitest tests,
@@ -444,11 +452,9 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Supersede the current Chainlink-attested testnet deployment with the verified
-  DEX-attested ABI, switch the adapter service, and accumulate at least 100
-  genuine 15-second DEX samples before the first DEX-mode UAT round.
-- Complete two-context browser UAT against the DEX deployment and the
-  24-hour/100-round interruption soak.
+- Complete the required 24-hour/100-round testnet soak with DEX read failures,
+  stale attestations, keeper/indexer restarts, liquidity failures, and RPC
+  failover. Reconcile every observation and payout from chain events.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.

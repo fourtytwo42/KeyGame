@@ -203,7 +203,7 @@ async function prepareIfNeeded() {
      ON CONFLICT(chain_id,idempotency_key) DO NOTHING`,
     [
       manifest.chainId,
-      `prepare:${settings.roundId}`,
+      `prepare:${manager.toLowerCase()}:${settings.roundId}`,
       JSON.stringify({
         roundId: settings.roundId.toString(),
         settings: persistRoundSettings(settings),

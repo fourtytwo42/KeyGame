@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { WalletPanel } from "./wallet-panel";
 
 export function StationShell({ children }: { children: ReactNode }) {
+  const mode = process.env.NEXT_PUBLIC_GAME_MODE || "simulator";
   return (
     <div className="stationFrame">
       <a className="skipLink" href="#main-content">
@@ -36,9 +37,10 @@ export function StationShell({ children }: { children: ReactNode }) {
       <main id="main-content">{children}</main>
       <footer className="stationFooter">
         <p>
-          Last Bell is experimental software. Devnet tokens have no monetary
-          value. Stock Token references are synthetic unless explicitly marked
-          otherwise.
+          Last Bell is experimental software.{" "}
+          {mode === "mainnet"
+            ? "Stock Token markets are identified onchain."
+            : `${mode === "testnet" ? "Testnet" : "Devnet"} tokens have no monetary value. Stock Token references are synthetic unless explicitly marked otherwise.`}
         </p>
         <nav aria-label="Footer">
           <Link href="/rules">Rules</Link>

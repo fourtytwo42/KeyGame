@@ -127,6 +127,8 @@ export interface TickerScore {
   currentBand: MarketBand;
   multiplierBps: number;
   payoutAirtimeSeconds?: number;
+  currentPrice?: number;
+  poolSafety?: PoolSafety;
 }
 
 export interface ClaimEvent {
@@ -165,6 +167,7 @@ export interface RoundState {
   phase: RoundPhase;
   marketMode: MarketMode;
   broadcastLabel: "HEAT CHECK" | "VOLUME CHECK";
+  marketExplanation?: string;
   producerPassRequired: boolean;
   timeLeftSeconds: number;
   elapsedSeconds: number;

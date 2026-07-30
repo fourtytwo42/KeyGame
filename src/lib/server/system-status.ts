@@ -2,6 +2,7 @@ import "server-only";
 import { database, databaseHealth } from "./db";
 import { loadServerDeployment } from "./deployment";
 import { deploymentPublicClient } from "./rpc-client";
+import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
 
 async function probe(url: string) {
   const started = Date.now();
@@ -59,7 +60,8 @@ export async function getSystemStatus() {
         observed_at: Date;
       }>(
         `SELECT service,status,details,observed_at FROM service_heartbeats
-         WHERE chain_id=$1 ORDER BY service`,
+         WHERE chain_id=$1 AND service <> 'data-streams-adapter'
+         ORDER BY service`,
         [manifest.chainId],
       ),
       database.query<{ block_number: string; updated_at: Date }>(
@@ -88,17 +90,7 @@ export async function getSystemStatus() {
           ) AS newest_sample
         FROM market_assets LEFT JOIN market_samples USING(symbol)`,
       ),
-      database.query<{
-        round_id: string;
-        state: string;
-        roster: unknown;
-        contract_address: string;
-      }>(
-        `SELECT round_id,state,roster,contract_address FROM rounds
-         WHERE chain_id=$1 AND state IN ('active','prepared')
-         ORDER BY round_id DESC LIMIT 1`,
-        [manifest.chainId],
-      ),
+      getLiveSnapshot().catch(() => null),
       database.query<{ observed_at: Date }>(
         "SELECT observed_at FROM market_reports ORDER BY observed_at DESC LIMIT 1",
       ),
@@ -139,13 +131,13 @@ export async function getSystemStatus() {
       newestSample: market.rows[0]?.newest_sample?.toISOString(),
       latestDexObservation:
         latestReport.rows[0]?.observed_at?.toISOString(),
-      currentRoster: currentRound.rows[0]?.roster ?? [],
+      currentRoster: currentRound?.tickerScores ?? [],
     },
-    round: currentRound.rows[0]
+    round: currentRound
       ? {
-          id: currentRound.rows[0].round_id,
-          state: currentRound.rows[0].state,
-          address: currentRound.rows[0].contract_address,
+          id: currentRound.roundId,
+          state: currentRound.phase,
+          address: currentRound.contractAddress,
         }
       : null,
     services: services.rows.map((service) => ({
