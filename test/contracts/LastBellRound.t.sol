@@ -388,12 +388,15 @@ contract LastBellRoundTest is TestBase {
         );
 
         vm.warp(startAt + firstDuration + secondDuration);
+        uint64 carolAt = uint64(block.timestamp);
+        bytes memory firstCarolReport =
+            _report(2, _bandPrice(2, firstBandSeed + 1), carolAt);
+        bytes memory secondCarolReport =
+            _report(2, _bandPrice(2, secondBandSeed + 1), carolAt);
         vm.prank(CAROL);
-        round.claimBell(2, _freshReport(2, _bandPrice(2, firstBandSeed + 1)), 4);
+        round.claimBell(2, firstCarolReport, 4);
         vm.prank(CAROL);
-        comparison.claimBell(
-            2, _freshReport(2, _bandPrice(2, secondBandSeed + 1)), 4
-        );
+        comparison.claimBell(2, secondCarolReport, 4);
 
         vm.warp(round.deadline());
         round.finalize();
