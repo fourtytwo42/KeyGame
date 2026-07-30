@@ -4,18 +4,18 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: implement the `closing-print-v3-airtime` audit candidate,
-  redeploy Robinhood testnet, verify two-wallet browser UAT, and prepare the
-  24-hour/100-round soak. Do not freeze or deploy mainnet.
-- Last meaningful result: the local candidate now makes DEX momentum
-  nonfinancial, pays the 30% Airtime Pool to all callers by total raw control
-  time, gives the last Airtime claimant integer dust, preserves the
-  nonfinancial Closing Print Crown, and adds explicit FCFS Rug disclosure.
-  Local TypeScript, ESLint, and 48 Vitest tests pass. VM/Foundry verification
-  and testnet redeployment remain next. Last verified 2026-07-30.
-- Next step: verify Foundry on the VM, commit/push/pull locally, migrate the
-  database, redeploy v3 testnet, restart services, run browser UAT, then begin
-  the resumable soak after two external soak wallets are funded.
+- Current task: monitor and complete the active `closing-print-v3-airtime`
+  24-hour/100-round Robinhood testnet soak. Do not freeze or deploy mainnet.
+- Last meaningful result: v3 is explorer-verified on Robinhood testnet, all six
+  production-shaped services are active, full two-wallet browser UAT passed,
+  and soak run `soak-2026-07-30T14-58-01-684Z` is running with one confirmed
+  action, zero failed actions, and 99 scheduled actions. Four completed v3
+  rounds reconciled with zero discrepancy. Last verified 2026-07-30.
+- Next step: let the soak run for at least 24 hours and 100 completed rounds,
+  verify every scheduled fault and exact final reconciliation, then package
+  the evidence. Audit freeze, Safe configuration, Reown production setup,
+  extension-wallet UAT, legal approval, and mainnet authorization remain
+  separate gates.
 - Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
   depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
   checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.
@@ -71,13 +71,14 @@ Durable project context lives here. Update this file whenever information should
 - Production-shaped testnet infrastructure uses native PostgreSQL and four
   independent systemd services: market collector, DEX market adapter, indexer,
   and keeper. The old Data Streams service is disabled and retired.
-- The active chain-46630 DEX deployment at block `95124915` uses manager
-  `0x73efd21ee56bafce2f286511a66702e74c7133fe`, router
-  `0xc9A28Fb0Cac73F07038078e25645cd7E8B9A9baB`, mock USDG
-  `0x0bbe0774147a2530b7328f09979b51804bc0b844`, and verifier
-  `0x6083abe0b26e3ac1409eab2ccb4aeb908febb894`. All four contracts are
-  explorer-verified. The Chainlink-attested deployment is archived under
-  `deployments/archive/`.
+- The active chain-46630 `closing-print-v3-airtime` deployment at block
+  `95286752` uses manager
+  `0x3c8e37ac53c9fcd869339313799cec1a3ecc71b5`, router
+  `0x2840675D424943867c7b5E122972c328BFA2A88f`, mock USDG
+  `0x360908e1a7A95B26ec4B098762b61d080d7C9Aba`, and verifier
+  `0x8a6fb950579cdf1990260E489b057D1F229A3Ee0`. All four contracts are
+  explorer-verified. The v2 DEX-payout deployment and older Chainlink
+  deployment are archived under `deployments/archive/`.
 - Native PostgreSQL plus collector, attestation adapter, indexer, keeper, and
   UAT web services are running against the corrected deployment. Round rollover
   is continuous, but every prepared round remains at `startedAt == 0` until its
@@ -211,12 +212,20 @@ When sources conflict, use this order:
   raid interval SQL typing, zero live-pot projections, numeric ticker labels,
   final-holder airtime reconstruction, missing legacy earning-rate fallback,
   and compact desktop/mobile clipping.
-- 2026-07-30: Mainnet-readiness simulations remain blocking. The DEX economic
-  screen marked all five eligible pools below the required 10x manipulation
-  cost relative to a $100 maximum pot, and the 100,000-round Rug Zone latency
-  model measured an automated-wallet win rate of 90.796% versus 9.204% for the
-  modeled human wallet, a 9.865x advantage. These are evidence for economic and
-  product review, not approval to freeze.
+- 2026-07-30: The earlier v2 simulations found all five eligible pools below a
+  10x manipulation-cost margin at a modeled $100 pot and measured a 9.865x
+  automated-wallet Rug advantage. V3 removes DEX influence from every financial
+  allocation, so pool manipulation evidence now gates Crown integrity rather
+  than payout security. FCFS automation is an accepted disclosed product
+  property. Audit, legal, Safe, Reown, canonical-map, incident-owner, soak, and
+  explicit release gates still block mainnet.
+- 2026-07-30: V3 final verification passed 29 Forge tests, 48 Vitest tests,
+  four live-Anvil integration tests, the mainnet-fork TWAP test, protected
+  bundle scanning at commit `f246a7d`, and browser acceptance at 1280x720 and
+  390x844. Testnet UAT settled and withdrew both all-caller Airtime shares with
+  exact dust conservation. The active 24-hour soak has persisted its first two
+  approvals and two calls and currently reports one confirmed action, zero
+  failures, and 99 scheduled actions.
 - 2026-07-30: Removed the Bags card diagonal corner pseudo-element after live
   browser inspection showed it crossing the upper-right momentum badge. Devnet
   and testnet production builds passed; browser verification confirmed all four
@@ -376,8 +385,9 @@ When sources conflict, use this order:
 - Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
 - Robinhood Chain testnet core contracts are live and use KeyGame mock USDG plus
   a testnet-attested verifier. No round has been prepared or activated yet.
-- Chainlink Data Streams credentials/feed IDs are missing, so genuine-report
-  UAT and the 24-hour soak cannot yet pass.
+- Chainlink Data Streams are no longer a runtime dependency. Testnet uses
+  domain-bound attestations of genuine Robinhood mainnet Uniswap V3 TWAP
+  observations; mainnet is designed to read the configured pool directly.
 - The user's funding wallet received 5 each of TSLA, AMZN, PLTR, NFLX, and AMD
   from testnet token contracts that differ from the pinned Robyn mock catalog.
   Their provenance and compatibility must be verified before replacing or
@@ -391,6 +401,39 @@ When sources conflict, use this order:
 - First-come/first-served sequencing reduces gas-price queue jumping but does not eliminate latency advantages, Sybil activity, sequencer censorship risk, or automated play.
 
 ## Completed Work
+
+- 2026-07-30: Implemented and deployed the `closing-print-v3-airtime` audit
+  candidate. Weighted DEX points now select only the nonfinancial Closing Print
+  Crown; the 30% Airtime Pool pays every caller by total raw control time, and
+  the final claimant receives exact integer dust. Foundry passed 29 tests,
+  including 512-run payout-independence and scoring fuzz tests plus the
+  Robinhood mainnet-fork TWAP test. VM application gates passed TypeScript,
+  ESLint, 48 Vitest tests, four live-Anvil integration tests, production/UAT
+  builds, and the protected-bundle scan.
+- 2026-07-30: Deployed the v3 Robinhood testnet package from source commit
+  `6b0b8479bbbabc75b34bafbfcd6d6f538602914e` at block `95286752`.
+  Blockscout verified mock USDG `0x360908e1a7A95B26ec4B098762b61d080d7C9Aba`,
+  verifier `0x8a6fb950579cdf1990260E489b057D1F229A3Ee0`, manager
+  `0x3c8e37ac53c9fcd869339313799cec1a3ecC71b5`, and router
+  `0x2840675D424943867c7b5E122972c328BFA2A88f`. Live role and seed checks
+  passed. The old v2 deployment is archived explicitly.
+- 2026-07-30: Completed v3 browser UAT with two isolated session wallets:
+  corrected a stale v2 client token address before funding; verified reusable
+  allowances, first-call timer start, cross-wallet ticker stealing, visible
+  FCFS Rug disclosure, settlement, replay, profile creation, and a two-voter
+  raid entering COUNTDOWN. The final wallet withdrew its 50% holder reward and
+  26/47 Airtime share; the other caller withdrew 21/47. Live reads showed
+  `claimedControlTime == totalControlTime == 47` and
+  `airtimePoolPaid == airtimePool == 989250`. Desktop 1280x720 and mobile
+  390x844 had no horizontal overflow, clipped buttons, sub-11px financial
+  labels, or console errors.
+- 2026-07-30: Added the PostgreSQL-backed durable soak controller, testnet-only
+  authenticated fault schedule, isolated reorg/duplicate fixtures, unprivileged
+  reversible RPC-primary failure marker, encrypted external soak wallets, gas
+  reserve handling, persisted transaction hashes, and reconciliation. Active
+  run `soak-2026-07-30T14-58-01-684Z` began at 14:58 UTC with 100 actions
+  spread over 24 hours. The first action confirmed two approvals and two calls
+  with all four transaction hashes persisted; six services report active.
 
 - 2026-07-29: Implemented the Robinhood testnet production-readiness
   architecture: versioned manifests, RoundManager, testnet attested verifier,
@@ -507,14 +550,16 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Complete the required 24-hour/100-round testnet soak with DEX read failures,
-  stale attestations, keeper/indexer restarts, liquidity failures, and RPC
-  failover. Reconcile every observation and payout from chain events.
-- Resolve the economic screen before mainnet: exclude unsafe pools or adopt an
-  independently reviewed pot/scoring design that satisfies the required 10x
-  manipulation-cost margin.
-- Obtain explicit product approval for the measured Rug Zone automation
-  advantage or revise the final-holder mechanics and repeat the latency model.
+- Complete active soak run `soak-2026-07-30T14-58-01-684Z` after at least 24
+  hours and 100 completed rounds. Verify every fault restoration, zero duplicate
+  broadcasts, and exact canonical event reconciliation before packaging
+  evidence.
+- Retain DEX safety screening for Closing Print Crown integrity. DEX momentum
+  is nonfinancial in v3, and Foundry fuzzing proves arbitrary price bands and
+  multipliers cannot change financial allocations for the same control-time
+  sequence.
+- Keep Rug Zone latency evidence current and disclose FCFS automation advantage.
+  Automation advantage is an accepted product property, not a freeze failure.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
