@@ -2,7 +2,7 @@ import type { RoundConfig, TickerSlot } from "./types";
 
 const address = (suffix: string) =>
   `0x${suffix.padStart(40, "0")}` as `0x${string}`;
-const feed = (suffix: string) =>
+const marketId = (suffix: string) =>
   `0x${suffix.padStart(64, "0")}` as `0x${string}`;
 
 export const tickerSlots: TickerSlot[] = [
@@ -13,7 +13,7 @@ export const tickerSlots: TickerSlot[] = [
     color: "#55C6A9",
     secondary: "#183D36",
     tokenAddress: address("11"),
-    feedId: feed("11"),
+    marketId: marketId("11"),
     volatilityRank: 1,
     realizedMovementBps: 188,
     dailyVolume: 286_400_000,
@@ -29,7 +29,7 @@ export const tickerSlots: TickerSlot[] = [
     color: "#B5A6D8",
     secondary: "#3A3157",
     tokenAddress: address("12"),
-    feedId: feed("12"),
+    marketId: marketId("12"),
     volatilityRank: 3,
     realizedMovementBps: 121,
     dailyVolume: 68_200_000,
@@ -45,7 +45,7 @@ export const tickerSlots: TickerSlot[] = [
     color: "#F15D4C",
     secondary: "#5B211B",
     tokenAddress: address("13"),
-    feedId: feed("13"),
+    marketId: marketId("13"),
     volatilityRank: 2,
     realizedMovementBps: 164,
     dailyVolume: 121_700_000,
@@ -61,7 +61,7 @@ export const tickerSlots: TickerSlot[] = [
     color: "#5261A8",
     secondary: "#242B5D",
     tokenAddress: address("14"),
-    feedId: feed("14"),
+    marketId: marketId("14"),
     volatilityRank: 4,
     realizedMovementBps: 95,
     dailyVolume: 79_500_000,
@@ -79,7 +79,7 @@ export const roundConfig: RoundConfig = {
   extensionSeconds: 2,
   rugZoneSeconds: 10,
   hardCapSeconds: 180,
-  marketMode: "VERIFIED",
+  marketMode: "DEX",
   marketThresholdBps: 5,
   multipliersBps: { GREEN: 12_500, FLAT: 10_000, RED: 7_500 },
   producerPassRequired: false,

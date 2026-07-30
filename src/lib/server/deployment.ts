@@ -17,7 +17,7 @@ export type ServerDeployment = {
     marketVerifier: Address;
   };
   rpc: { primary: string; fallback?: string };
-  verifier: { type: "mock" | "testnet-attested" | "chainlink" };
+  verifier: { type: "mock" | "testnet-dex-attested" | "dex-onchain" };
 };
 
 export async function loadServerDeployment(): Promise<ServerDeployment> {

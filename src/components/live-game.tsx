@@ -561,6 +561,9 @@ function EntryDesk({
                 {(score.multiplierBps / 10_000).toFixed(2)}×
               </strong>
               <small>
+                10M TWAP {formatUsd(ticker.currentPrice)} · ONCHAIN MOMENTUM
+              </small>
+              <small>
                 #{index + 1} ROSTER ·{" "}
                 {gameMode === "testnet"
                   ? "TESTNET MOCK · NO VALUE"
@@ -681,7 +684,8 @@ function LiveArena({
                 : `PUT ${score.ticker} ON AIR · $1`}
               <small>
                 {score.currentBand} ·{" "}
-                {(score.multiplierBps / 10_000).toFixed(2)}×
+                {(score.multiplierBps / 10_000).toFixed(2)}× ·{" "}
+                {score.weightedScore.toFixed(1)} POINTS
               </small>
             </button>
           );
@@ -709,7 +713,9 @@ function ClosingPrintBoard({
   );
   return (
     <section className="railCard airtimeCard">
-      <span className="railLabel">THE CLOSING PRINT · 30% POOL</span>
+      <span className="railLabel">
+        ONCHAIN MOMENTUM · 10M TWAP · THE CLOSING PRINT
+      </span>
       {state.tickerScores.map((score) => {
         const ticker = tickerById(score.ticker);
         return (
@@ -726,7 +732,10 @@ function ClosingPrintBoard({
                 }}
               />
             </div>
-            <b>{score.weightedScore.toFixed(1)}pt</b>
+            <b>
+              {score.weightedScore.toFixed(1)}pt · {score.rawSeconds}s payout
+              airtime
+            </b>
           </div>
         );
       })}

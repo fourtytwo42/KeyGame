@@ -4,26 +4,31 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Robinhood testnet production-readiness sprint.
-- Last meaningful result: The corrected production-shaped core contracts are
-  deployed and explorer-verified on Robinhood testnet from commit `f793296`.
-  The manager holds exactly 50.000000 mock USDG, user administration and
-  treasury ownership are set, and keeper/UAT faucet gas reserves are funded.
-- Next step: Configure genuine Chainlink credentials/feed IDs, validate the
-  user's faucet Stock Token provenance, enable service persistence, and begin
-  the controlled 24-hour/100-round interruption soak.
-- Market-price direction under evaluation: prefer manipulation-resistant
-  Robinhood Chain DEX TWAPs for canonical Stock Token/USDG pools instead of
-  requiring Chainlink credentials. Confirm live pool addresses, observation
-  support, and minimum liquidity before replacing the existing verifier.
+- Current task: replace Chainlink scoring with direct Uniswap V3 Stock
+  Token/USDG 10-minute TWAP scoring and supersede the chain-46630 deployment.
+- Last meaningful result: the DEX contracts, attestation adapter, collector,
+  services, APIs, UI, PRD, and legacy replay discriminator are implemented.
+  The VM passed 28 Forge tests, a live Robinhood mainnet-fork NVDA TWAP read,
+  34 app tests, lint, typecheck, and the production build.
+- Next step: commit and push the verified source, deploy the new testnet
+  verifier/manager/router/mock USDG package, switch the user services from the
+  old Data Streams adapter to the DEX adapter, and complete browser UAT.
+- Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
+  depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
+  checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.
 
 ## Current State
 
 - The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
 - The complete responsive application, Foundry contracts, deterministic Anvil controller, local VM verification, and testnet deployment workflow are implemented.
 - Permanent factions are removed. Every accepted $1 claim selects one of four configured ticker slots; the current holder cannot claim again.
-- VERIFIED rounds lock GREEN/FLAT/RED scoring at 1.25x/1.0x/0.75x for each holder interval. FLAT rounds require no report and score every interval at 1.0x.
-- The 30% pool is the Closing Print Pool and is paid proportionally to players' weighted contribution to the winning ticker. The 50% final-holder payout, 15% next-round seed, and 5% protocol allocation remain unchanged.
+- DEX rounds lock GREEN/FLAT/RED scoring at 1.25x/1.0x/0.75x from a
+  10-minute Uniswap V3 TWAP for each holder interval. FLAT rounds require no
+  report and score every interval at 1.0x.
+- Weighted points select the Closing Print ticker. The winning ticker's 30%
+  pool is divided by each contributor's raw airtime on that ticker. The 50%
+  final-holder payout, 15% next-round seed, and 5% protocol allocation remain
+  unchanged.
 - `docs/prd/10-closing-print-market-reactive.md` and `docs/prd/11-closing-print-user-stories.md` are the canonical current requirements. PRDs 01-09 remain historical/superseded context where marked.
 - The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
 - The reusable USDG allowance targets the permanent `PaymentRouter`, not an
@@ -173,6 +178,13 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-29: Implemented the DEX-powered onchain momentum replacement. VM
+  verification passed 28 Forge tests, including a live mainnet-fork read of
+  NVDA/USDG's 10-minute Uniswap V3 TWAP, plus lint, typecheck, 34 Vitest tests,
+  and the Next.js production build. Migration `004_dex_onchain_momentum.sql`
+  applied successfully. A live collector pass persisted safe TWAP observations
+  for AAPL, AMZN, NVDA, SPY, and TSLA; each pool exceeded 10,000 USDG depth and
+  stayed below the configured 1% two-sided 1,000 USDG impact limit.
 - 2026-07-12: Read `AGENTS.md` and `MEMORY.md`; identified stale project-specific memory and preserved the repository-local instruction logic.
 - 2026-07-12: Checked the workspace root; confirmed `AGENTS.md` and `MEMORY.md` are present and no `.git` directory is present at this level.
 - 2026-07-28: Cross-checked FoMo3D Long at `0xA62142888ABa8370742bE823c1782D17A0389Da1` against its verified Solidity 0.4.24 source.
@@ -432,13 +444,11 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Discover and verify canonical Robinhood Chain DEX pools for the supported
-  Stock Tokens, measure usable USDG liquidity and TWAP observation history, and
-  specify manipulation/deviation guards. If coverage is insufficient, retain
-  Chainlink Data Streams as a fallback rather than trusting instantaneous spot.
-- Complete two-context browser UAT against the corrected deployment, enable
-  user-service persistence with `sudo loginctl enable-linger hendo420`, and
-  complete the 24-hour/100-round interruption soak.
+- Supersede the current Chainlink-attested testnet deployment with the verified
+  DEX-attested ABI, switch the adapter service, and accumulate at least 100
+  genuine 15-second DEX samples before the first DEX-mode UAT round.
+- Complete two-context browser UAT against the DEX deployment and the
+  24-hour/100-round interruption soak.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.

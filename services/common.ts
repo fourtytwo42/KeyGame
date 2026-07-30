@@ -32,7 +32,7 @@ export type DeploymentManifest = {
   };
   rpc: { primary: string; fallback?: string };
   verifier: {
-    type: "mock" | "testnet-attested" | "chainlink";
+    type: "mock" | "testnet-dex-attested" | "dex-onchain";
     proxy?: Address;
   };
 };

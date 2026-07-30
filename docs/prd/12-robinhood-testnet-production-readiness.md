@@ -1,5 +1,9 @@
 # PRD 12: Robinhood Testnet Production Readiness
 
+> `D-022` override: Chainlink credentials, feeds, and the Data Streams adapter
+> are removed. Testnet signs genuine mainnet Uniswap V3 TWAP observations as
+> specified in PRD 13.
+
 Status: implementation complete; live acceptance gates blocked where noted.
 
 This is the handoff for the production-shaped chain 46630 sprint. It does not

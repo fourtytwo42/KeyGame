@@ -70,6 +70,7 @@ export async function getSystemStatus() {
       database.query<{
         assets: string;
         complete: string;
+        safe: string;
         newest_sample: Date | null;
       }>(
         `SELECT count(DISTINCT symbol)::text AS assets,
@@ -77,10 +78,14 @@ export async function getSystemStatus() {
             WHERE symbol IN (
               SELECT symbol FROM market_samples
               WHERE sampled_at >= now() - interval '30 minutes'
+                AND source='uniswap-v3-twap'
               GROUP BY symbol HAVING count(*) >= 100
             )
           )::text AS complete,
-          max(sampled_at) AS newest_sample
+          count(DISTINCT symbol) FILTER (WHERE dex_safe)::text AS safe,
+          max(sampled_at) FILTER (
+            WHERE source='uniswap-v3-twap'
+          ) AS newest_sample
         FROM market_assets LEFT JOIN market_samples USING(symbol)`,
       ),
       database.query<{
@@ -130,8 +135,9 @@ export async function getSystemStatus() {
     market: {
       assets: Number(market.rows[0]?.assets || 0),
       completeStreams: Number(market.rows[0]?.complete || 0),
+      safeDexMarkets: Number(market.rows[0]?.safe || 0),
       newestSample: market.rows[0]?.newest_sample?.toISOString(),
-      latestVerifiedReport:
+      latestDexObservation:
         latestReport.rows[0]?.observed_at?.toISOString(),
       currentRoster: currentRound.rows[0]?.roster ?? [],
     },

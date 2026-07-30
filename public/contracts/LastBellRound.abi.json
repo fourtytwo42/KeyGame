@@ -115,7 +115,7 @@
             "internalType": "address"
           },
           {
-            "name": "feedId",
+            "name": "marketId",
             "type": "bytes32",
             "internalType": "bytes32"
           }
@@ -560,6 +560,58 @@
         "name": "",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "holderSourceBlockHash",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "holderSourceBlockNumber",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "holderSourceChainId",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "holderSourcePool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -1065,7 +1117,7 @@
         "internalType": "address"
       },
       {
-        "name": "feedId",
+        "name": "marketId",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -1252,6 +1304,30 @@
       },
       {
         "name": "sourceReportHash",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "sourcePool",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "sourceChainId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "sourceBlockNumber",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "sourceBlockHash",
         "type": "bytes32",
         "indexed": false,
         "internalType": "bytes32"
@@ -1515,7 +1591,7 @@
         "internalType": "address[4]"
       },
       {
-        "name": "feedIds",
+        "name": "marketIds",
         "type": "bytes32[4]",
         "indexed": false,
         "internalType": "bytes32[4]"

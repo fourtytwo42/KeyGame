@@ -70,7 +70,11 @@ const manifest = {
     marketVerifier: addressOf("TestnetAttestedMarketDataVerifier"),
   },
   rpc: { primary: "http://192.168.50.117:8547" },
-  verifier: { type: "testnet-attested" },
+  verifier: {
+    type: "testnet-dex-attested",
+    sourceChainId: 4663,
+    twapWindowSeconds: 600,
+  },
   assetCatalog: "config/testnet-stock-token-mocks.json",
 };
 await writeFile(

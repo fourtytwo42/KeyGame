@@ -154,17 +154,17 @@ export function useWalletGame(
       }),
     ] as const);
     const winnerIndex = Number(winner) < 4 ? Number(winner) : 0;
-    const [playerScore, tickerScore, configs] = await Promise.all([
+    const [playerAirtime, tickerAirtime, configs] = await Promise.all([
       publicClient.readContract({
         address: activeRoundAddress,
         abi: lastBellAbi,
-        functionName: "playerTickerScore",
+        functionName: "playerTickerAirtime",
         args: [address, winnerIndex],
       }),
       publicClient.readContract({
         address: activeRoundAddress,
         abi: lastBellAbi,
-        functionName: "tickerScore",
+        functionName: "tickerAirtime",
         args: [winnerIndex],
       }),
       Promise.all(
@@ -220,11 +220,11 @@ export function useWalletGame(
           : 0,
       closingPrintUsd:
         Number(phase) === 4 &&
-        playerScore > 0n &&
-        tickerScore > 0n &&
+        playerAirtime > 0n &&
+        tickerAirtime > 0n &&
         !printClaimed
           ? (Number(closingPrintPool) / 1e6) *
-            (Number(playerScore) / Number(tickerScore))
+            (Number(playerAirtime) / Number(tickerAirtime))
           : 0,
       refundUsd: Number(phase) === 5 && !refundClaimed ? spentUsd : 0,
     });

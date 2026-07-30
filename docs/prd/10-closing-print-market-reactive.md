@@ -1,5 +1,9 @@
 # Closing Print Market-Reactive Specification
 
+> `D-022` override: PRD 13 replaces Chainlink Data Streams with direct
+> ten-minute DEX TWAPs and replaces weighted contributor shares with raw
+> winning-ticker airtime. All unaffected timer and payout percentages remain.
+
 Status: Implemented Stage 1 specification
 
 Decision: `D-020`

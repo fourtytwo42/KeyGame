@@ -16,7 +16,9 @@
     "fallback": "SERVER_ONLY_REQUIRED"
   },
   "verifier": {
-    "type": "testnet-attested"
+    "type": "testnet-dex-attested",
+    "sourceChainId": 4663,
+    "twapWindowSeconds": 600
   },
   "assetCatalog": "config/testnet-stock-token-mocks.json"
 }

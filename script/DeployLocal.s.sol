@@ -45,7 +45,7 @@ contract DeployLocal is ScriptBase {
             greenMultiplierBps: 12_500,
             flatMultiplierBps: 10_000,
             redMultiplierBps: 7_500,
-            marketMode: LastBellRound.MarketMode.Verified,
+            marketMode: LastBellRound.MarketMode.Dex,
             producerPassRequired: false
         });
         LastBellRound.TickerConfig[4] memory tickers = [

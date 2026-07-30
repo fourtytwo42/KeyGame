@@ -10,7 +10,7 @@ export default function SupportedAssetsPage() {
     <InfoPage
       eyebrow="PROP DEPARTMENT / SYNTHETIC INVENTORY"
       title="Tonight’s bags"
-      intro="Every bell claim chooses one roster ticker. Market momentum affects only Closing Print points, never the fee, timer, or final-caller prize."
+      intro="Every bell claim chooses one roster ticker. A direct 10-minute DEX average drives Onchain Momentum points, never the fee, timer, or final-caller prize."
     >
       <div className="assetGrid">
         {tickerSlots.map((ticker) => (
@@ -26,6 +26,10 @@ export default function SupportedAssetsPage() {
               <div>
                 <dt>Environment</dt>
                 <dd>Local devnet</dd>
+              </div>
+              <div>
+                <dt>Price source</dt>
+                <dd>Direct Stock Token/USDG · 10M TWAP</dd>
               </div>
               <div>
                 <dt>Current band</dt>

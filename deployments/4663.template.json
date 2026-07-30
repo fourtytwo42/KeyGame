@@ -17,7 +17,9 @@
     "fallback": "SERVER_ONLY_REQUIRED"
   },
   "verifier": {
-    "type": "chainlink",
-    "proxy": "0xcE73c8ad08CBDEaCa6078BF0627C8fe0a9a536E7"
+    "type": "dex-onchain",
+    "factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "quoteToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "twapWindowSeconds": 600
   }
 }

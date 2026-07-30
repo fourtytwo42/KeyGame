@@ -1,6 +1,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { heartbeat, pool } from "./common";
+import {
+  pinnedDexMarkets,
+  pinnedMarketBySymbol,
+  REQUIRED_HISTORY_SECONDS,
+  ROBINHOOD_MAINNET_CHAIN_ID,
+  TWAP_WINDOW_SECONDS,
+} from "../src/lib/game/dex-config";
+import { mainnetDexClient, readDexObservation } from "./dex-observation";
 
 type Catalog = {
   sourceGitCommit: string;
@@ -45,10 +53,6 @@ const catalog = JSON.parse(
   ),
 ) as Catalog;
 
-const feedMap = JSON.parse(
-  process.env.DATA_STREAMS_FEED_MAP_JSON || "{}",
-) as Record<string, string>;
-
 async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url, {
     cache: "no-store",
@@ -65,6 +69,20 @@ export async function collectOnce() {
   );
   const official = new Map(
     assetsPayload.assets.map((asset) => [asset.tokenSymbol, asset]),
+  );
+  const dexClient = mainnetDexClient();
+  const observations = new Map(
+    (
+      await Promise.allSettled(
+        pinnedDexMarkets.map((market) => readDexObservation(market, dexClient)),
+      )
+    )
+      .filter(
+        (result): result is PromiseFulfilledResult<
+          Awaited<ReturnType<typeof readDexObservation>>
+        > => result.status === "fulfilled",
+      )
+      .map((result) => [result.value.symbol, result.value]),
   );
 
   let collected = 0;
@@ -88,8 +106,10 @@ export async function collectOnce() {
       multiplier <= 0
     )
       continue;
-    const rawMid = (bid + ask) / 2;
-    const adjustedMid = rawMid * multiplier;
+    const dex = observations.get(mapped.symbol);
+    const pinned = pinnedMarketBySymbol.get(
+      mapped.symbol as Parameters<typeof pinnedMarketBySymbol.get>[0],
+    );
     const canonicalAddress =
       asset.deployments.find((deployment) => deployment.chainId === 4663)
         ?.contractAddress ?? mapped.mainnetAddress;
@@ -103,24 +123,38 @@ export async function collectOnce() {
          symbol,name,canonical_address,testnet_mock_address,feed_id,active,halted,
          current_multiplier,pending_multiplier,pending_multiplier_effective_at,
          daily_volume,last_bid,last_ask,quote_generated_at,metadata_checked_at,
-         source_provenance)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now(),$15)
+         source_provenance,market_id,pool_address,fee_tier,twap_window_seconds,
+         source_chain_id,pool_usdg_depth,buy_impact_bps,sell_impact_bps,
+         spot_twap_deviation_bps,pool_liquidity,dex_safe,dex_safety_reasons,
+         dex_observed_at)
+       VALUES($1,$2,$3,$4,NULL,$5,$6,$7,$8,$9,$10,$11,$12,$13,now(),$14,
+         $15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
        ON CONFLICT(symbol) DO UPDATE SET
          name=excluded.name,canonical_address=excluded.canonical_address,
          testnet_mock_address=excluded.testnet_mock_address,
-         feed_id=excluded.feed_id,active=excluded.active,halted=excluded.halted,
+         feed_id=NULL,active=excluded.active,halted=excluded.halted,
          current_multiplier=excluded.current_multiplier,
          pending_multiplier=excluded.pending_multiplier,
          pending_multiplier_effective_at=excluded.pending_multiplier_effective_at,
          daily_volume=excluded.daily_volume,last_bid=excluded.last_bid,
          last_ask=excluded.last_ask,quote_generated_at=excluded.quote_generated_at,
-         metadata_checked_at=now(),source_provenance=excluded.source_provenance`,
+         metadata_checked_at=now(),source_provenance=excluded.source_provenance,
+         market_id=excluded.market_id,pool_address=excluded.pool_address,
+         fee_tier=excluded.fee_tier,
+         twap_window_seconds=excluded.twap_window_seconds,
+         source_chain_id=excluded.source_chain_id,
+         pool_usdg_depth=excluded.pool_usdg_depth,
+         buy_impact_bps=excluded.buy_impact_bps,
+         sell_impact_bps=excluded.sell_impact_bps,
+         spot_twap_deviation_bps=excluded.spot_twap_deviation_bps,
+         pool_liquidity=excluded.pool_liquidity,dex_safe=excluded.dex_safe,
+         dex_safety_reasons=excluded.dex_safety_reasons,
+         dex_observed_at=excluded.dex_observed_at`,
       [
         mapped.symbol,
         asset.tokenName || mapped.name,
         canonicalAddress,
         mapped.testnetMockAddress,
-        feedMap[mapped.symbol] || null,
         asset.status === "ASSET_STATUS_ACTIVE",
         quote.isTradingHalt,
         multiplier,
@@ -131,24 +165,47 @@ export async function collectOnce() {
         ask,
         quote.generatedAt,
         JSON.stringify(provenance),
+        dex?.marketId ?? null,
+        pinned?.pool ?? null,
+        pinned?.feeTier ?? null,
+        pinned ? TWAP_WINDOW_SECONDS : null,
+        pinned ? ROBINHOOD_MAINNET_CHAIN_ID : null,
+        dex?.usdgDepth ?? null,
+        Number.isFinite(dex?.buyImpactBps) ? dex?.buyImpactBps : null,
+        Number.isFinite(dex?.sellImpactBps) ? dex?.sellImpactBps : null,
+        dex?.spotTwapDeviationBps ?? null,
+        dex?.liquidity.toString() ?? null,
+        Boolean(dex?.safe),
+        JSON.stringify(
+          dex?.reasons ??
+            (pinned
+              ? [`${REQUIRED_HISTORY_SECONDS}-second DEX observation unavailable`]
+              : ["No pinned direct Stock Token/USDG market"]),
+        ),
+        dex ? new Date(dex.observedAt * 1000) : null,
       ],
     );
-    const sampledAt = new Date(quote.generatedAt);
-    sampledAt.setMilliseconds(0);
-    await pool.query(
-      `INSERT INTO market_samples(
-         symbol,sampled_at,raw_mid,adjusted_mid,daily_volume,halted)
-       VALUES($1,$2,$3,$4,$5,$6)
-       ON CONFLICT(symbol,sampled_at) DO NOTHING`,
-      [
-        mapped.symbol,
-        sampledAt,
-        rawMid,
-        adjustedMid,
-        quote.dailyTradingVolume || "0",
-        quote.isTradingHalt,
-      ],
-    );
+    if (dex) {
+      const sampledAt = new Date(dex.observedAt * 1000);
+      sampledAt.setMilliseconds(0);
+      await pool.query(
+        `INSERT INTO market_samples(
+           symbol,sampled_at,raw_mid,adjusted_mid,daily_volume,halted,source,
+           twap_tick,source_block_number,source_block_hash)
+         VALUES($1,$2,$3,$3,$4,$5,'uniswap-v3-twap',$6,$7,$8)
+         ON CONFLICT(symbol,sampled_at) DO NOTHING`,
+        [
+          mapped.symbol,
+          sampledAt,
+          dex.price,
+          quote.dailyTradingVolume || "0",
+          quote.isTradingHalt,
+          dex.twapTick,
+          dex.sourceBlockNumber.toString(),
+          dex.sourceBlockHash,
+        ],
+      );
+    }
     collected += 1;
   }
   await pool.query(

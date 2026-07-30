@@ -33,13 +33,23 @@ async function loadRoster() {
     name: string;
     canonical_address: Address;
     testnet_mock_address: Address;
-    feed_id: Hex | null;
+    market_id: Hex | null;
+    pool_address: Address | null;
+    fee_tier: number | null;
+    pool_usdg_depth: string | null;
+    buy_impact_bps: string | null;
+    sell_impact_bps: string | null;
+    spot_twap_deviation_bps: string | null;
+    dex_safe: boolean;
+    dex_safety_reasons: string[];
     active: boolean;
     halted: boolean;
     daily_volume: string;
     current_multiplier: string;
   }>(
-    `SELECT symbol,name,canonical_address,testnet_mock_address,feed_id,
+    `SELECT symbol,name,canonical_address,testnet_mock_address,market_id,
+            pool_address,fee_tier,pool_usdg_depth,buy_impact_bps,
+            sell_impact_bps,spot_twap_deviation_bps,dex_safe,dex_safety_reasons,
             active,halted,daily_volume,current_multiplier
      FROM market_assets ORDER BY symbol`,
   );
@@ -50,6 +60,7 @@ async function loadRoster() {
   }>(
     `SELECT symbol,sampled_at,adjusted_mid FROM market_samples
      WHERE sampled_at >= now() - interval '30 minutes'
+       AND source='uniswap-v3-twap'
      ORDER BY symbol,sampled_at`,
   );
   const bySymbol = new Map<
@@ -70,7 +81,33 @@ async function loadRoster() {
     tokenAddress: asset.testnet_mock_address,
     canonicalAddress: asset.canonical_address,
     testnetMockAddress: asset.testnet_mock_address,
-    feedId: asset.feed_id ?? undefined,
+    marketId: asset.market_id ?? undefined,
+    dexMarket:
+      asset.market_id && asset.pool_address && asset.fee_tier
+        ? {
+            marketId: asset.market_id,
+            poolAddress: asset.pool_address,
+            stockTokenAddress: asset.canonical_address,
+            quoteTokenAddress:
+              "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+            factoryAddress:
+              "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+            feeTier: asset.fee_tier,
+            sourceChainId: 4663,
+            twap: { seconds: 600, requiredHistorySeconds: 1800 },
+            safety: {
+              eligible: asset.dex_safe,
+              usdgDepth: Number(asset.pool_usdg_depth ?? 0),
+              buyImpactBps: Number(asset.buy_impact_bps ?? 0),
+              sellImpactBps: Number(asset.sell_impact_bps ?? 0),
+              spotTwapDeviationBps: Number(
+                asset.spot_twap_deviation_bps ?? 0,
+              ),
+              sampleCount: bySymbol.get(asset.symbol)?.length ?? 0,
+              reasons: asset.dex_safety_reasons ?? [],
+            },
+          }
+        : undefined,
     active: asset.active,
     halted: asset.halted,
     canonical: Boolean(asset.canonical_address),
@@ -142,23 +179,23 @@ async function prepareIfNeeded() {
     extensionDuration: 2,
     rugDuration: 10,
     hardCapDuration: 180,
-    maxReportAge: 3,
+    maxReportAge: 15,
     marketThresholdBps: 5,
     greenMultiplierBps: 12_500,
     flatMultiplierBps: 10_000,
     redMultiplierBps: 7_500,
-    marketMode: roster.mode === "VERIFIED" ? 1 : 0,
+    marketMode: roster.mode === "DEX" ? 1 : 0,
     producerPassRequired: false,
   };
   const tickers = roster.selected.map((asset) => ({
     symbol: stringToHex(asset.ticker, { size: 32 }),
     token: asset.testnetMockAddress ?? asset.tokenAddress,
-    feedId: asset.feedId ?? zeroHash,
+    marketId: asset.marketId ?? zeroHash,
   })) as [
-    { symbol: Hex; token: Address; feedId: Hex },
-    { symbol: Hex; token: Address; feedId: Hex },
-    { symbol: Hex; token: Address; feedId: Hex },
-    { symbol: Hex; token: Address; feedId: Hex },
+    { symbol: Hex; token: Address; marketId: Hex },
+    { symbol: Hex; token: Address; marketId: Hex },
+    { symbol: Hex; token: Address; marketId: Hex },
+    { symbol: Hex; token: Address; marketId: Hex },
   ];
   await pool.query(
     `INSERT INTO keeper_jobs(chain_id,idempotency_key,job_type,payload)
@@ -238,7 +275,7 @@ async function cancelForReportOutage() {
     details: { available?: number; outageSince?: number };
   }>(
     `SELECT status,details FROM service_heartbeats
-     WHERE chain_id=$1 AND service='data-streams-adapter'`,
+     WHERE chain_id=$1 AND service='dex-market'`,
     [manifest.chainId],
   );
   const state = health.rows[0];

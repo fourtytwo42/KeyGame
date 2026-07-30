@@ -24,13 +24,18 @@ export const lastBellAbi = parseAbi([
   "function holderPrice() view returns (uint256)",
   "function holderReportAt() view returns (uint64)",
   "function holderSourceReportHash() view returns (bytes32)",
+  "function holderSourcePool() view returns (address)",
+  "function holderSourceChainId() view returns (uint256)",
+  "function holderSourceBlockNumber() view returns (uint64)",
+  "function holderSourceBlockHash() view returns (bytes32)",
   "function holderProducerPass() view returns (bool)",
   "function winningTicker() view returns (uint8)",
   "function acceptedClaims() view returns (uint256)",
-  "function tickerConfigs(uint256) view returns (bytes32 symbol,address token,bytes32 feedId)",
+  "function tickerConfigs(uint256) view returns (bytes32 symbol,address token,bytes32 marketId)",
   "function openingPrices(uint256) view returns (uint256)",
   "function lastTickerAcquisitionAt(uint256) view returns (uint64)",
   "function tickerAirtime(uint8) view returns (uint256)",
+  "function playerTickerAirtime(address,uint8) view returns (uint256)",
   "function tickerScore(uint8) view returns (uint256)",
   "function playerTickerScore(address,uint8) view returns (uint256)",
   "function paid(address) view returns (uint256)",
@@ -41,18 +46,24 @@ export const lastBellAbi = parseAbi([
   "function holderRewardClaimed(address) view returns (bool)",
   "function closingPrintRewardClaimed(address) view returns (bool)",
   "function refundClaimed(address) view returns (bool)",
-  "function claimBell(uint8 ticker,bytes signedMarketReport,uint8 passTokenIndex)",
+  "function claimBell(uint8 ticker,bytes marketProof,uint8 passTokenIndex)",
   "function finalize()",
   "function claimHolderReward()",
   "function claimClosingPrintReward()",
   "function claimCancellationRefund()",
   "function transferNextRoundSeed(address recipient)",
-  "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,bytes32 sourceReportHash,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
+  "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,bytes32 sourceReportHash,address sourcePool,uint256 sourceChainId,uint64 sourceBlockNumber,bytes32 sourceBlockHash,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
   "event ControlCredited(uint256 indexed roundId,address indexed player,uint8 indexed ticker,uint64 intervalStart,uint64 intervalEnd,uint256 duration,uint16 multiplierBps,uint256 weightedScore)",
   "event RoundSettled(uint256 indexed roundId,address indexed finalHolder,uint8 indexed winningTicker,uint256 winningTickerScore,uint256 grossPot,uint256 holderPool,uint256 closingPrintPool,uint256 nextRoundPool,uint256 protocolPool)",
   "event RoundCancelled(uint256 indexed roundId,bytes32 reason,uint256 refundablePot)",
   "event RewardClaimed(uint256 indexed roundId,address indexed player,bytes32 indexed rewardType,uint256 amount)",
   "event RefundClaimed(uint256 indexed roundId,address indexed player,uint256 amount)",
+]);
+
+// Retained for archived closing-print-v1 deployments. The DEX release appends
+// source pool/block evidence to BellClaimed, which changes the event topic.
+export const legacyClosingPrintEventAbi = parseAbi([
+  "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,bytes32 sourceReportHash,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
 ]);
 
 export const roundManagerAbi = parseAbi([
@@ -61,7 +72,7 @@ export const roundManagerAbi = parseAbi([
   "function latestRoundId() view returns (uint256)",
   "function paymentRouter() view returns (address)",
   "function keeper() view returns (address)",
-  "function prepareRound((uint256 roundId,uint256 claimPrice,uint64 startDuration,uint64 extensionDuration,uint64 rugDuration,uint64 hardCapDuration,uint64 maxReportAge,uint16 marketThresholdBps,uint16 greenMultiplierBps,uint16 flatMultiplierBps,uint16 redMultiplierBps,uint8 marketMode,bool producerPassRequired) settings,(bytes32 symbol,address token,bytes32 feedId)[4] tickers) returns (address)",
+  "function prepareRound((uint256 roundId,uint256 claimPrice,uint64 startDuration,uint64 extensionDuration,uint64 rugDuration,uint64 hardCapDuration,uint64 maxReportAge,uint16 marketThresholdBps,uint16 greenMultiplierBps,uint16 flatMultiplierBps,uint16 redMultiplierBps,uint8 marketMode,bool producerPassRequired) settings,(bytes32 symbol,address token,bytes32 marketId)[4] tickers) returns (address)",
   "function finalizeActive()",
   "function activatePrepared(bytes[4] openingReports) returns (address)",
   "function cancelActive(bytes32 reason)",

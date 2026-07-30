@@ -1,6 +1,47 @@
 export type TickerId = string;
 export type MarketBand = "RED" | "FLAT" | "GREEN";
-export type MarketMode = "VERIFIED" | "FLAT";
+export type MarketMode = "DEX" | "FLAT";
+export type PriceSourceChain = "ROBINHOOD_MAINNET" | "LOCAL_DEVNET";
+
+export interface TwapWindow {
+  seconds: 600;
+  requiredHistorySeconds: 1800;
+}
+
+export interface PoolSafety {
+  eligible: boolean;
+  usdgDepth: number;
+  buyImpactBps: number;
+  sellImpactBps: number;
+  spotTwapDeviationBps: number;
+  sampleCount: number;
+  reasons: string[];
+}
+
+export interface DexMarket {
+  marketId: `0x${string}`;
+  poolAddress: `0x${string}`;
+  stockTokenAddress: `0x${string}`;
+  quoteTokenAddress: `0x${string}`;
+  factoryAddress: `0x${string}`;
+  feeTier: number;
+  sourceChainId: number;
+  twap: TwapWindow;
+  safety: PoolSafety;
+}
+
+export interface DexObservation {
+  marketId: `0x${string}`;
+  poolAddress: `0x${string}`;
+  twapTick: number;
+  price: number;
+  sourceChainId: number;
+  sourceBlockNumber: number;
+  sourceBlockHash: `0x${string}`;
+  observedAt: number;
+  expiresAt: number;
+  sourceReportHash: `0x${string}`;
+}
 
 export type RoundPhase =
   "entry" | "live" | "rug" | "finalizing" | "settled" | "cancelled";
@@ -14,7 +55,8 @@ export interface TickerSlot {
   color: string;
   secondary: string;
   tokenAddress?: `0x${string}`;
-  feedId?: `0x${string}`;
+  marketId?: `0x${string}`;
+  dexMarket?: DexMarket;
   volatilityRank: number;
   realizedMovementBps: number;
   dailyVolume: number;
@@ -45,14 +87,19 @@ export interface RoundConfig {
 }
 
 export interface MarketReport {
-  feedId: `0x${string}`;
+  marketId: `0x${string}`;
   price: number;
   observedAt: number;
   validFrom: number;
   expiresAt: number;
   report?: `0x${string}`;
   sourceReportHash?: `0x${string}`;
-  verifierType?: "mock" | "testnet-attested" | "chainlink";
+  sourcePool?: `0x${string}`;
+  sourceChainId?: number;
+  sourceBlockNumber?: number;
+  sourceBlockHash?: `0x${string}`;
+  verifierType?: "mock" | "testnet-dex-attested" | "dex-onchain";
+  observation?: DexObservation;
 }
 
 export interface BellHolder {
@@ -65,6 +112,10 @@ export interface BellHolder {
   verifiedPrice: number;
   reportTimestamp: number;
   sourceReportHash?: `0x${string}`;
+  sourcePool?: `0x${string}`;
+  sourceChainId?: number;
+  sourceBlockNumber?: number;
+  sourceBlockHash?: `0x${string}`;
   producerPass: boolean;
 }
 
@@ -75,6 +126,7 @@ export interface TickerScore {
   lastAcquisitionAt: number;
   currentBand: MarketBand;
   multiplierBps: number;
+  payoutAirtimeSeconds?: number;
 }
 
 export interface ClaimEvent {
@@ -89,7 +141,7 @@ export interface ClaimEvent {
   transactionHash?: `0x${string}`;
   blockNumber?: number;
   logIndex?: number;
-  contractVersion?: "closing-print-v1" | "faction-v0";
+  contractVersion?: "closing-print-v2-dex" | "closing-print-v1" | "faction-v0";
   accepted: boolean;
   reason?: string;
   potAfterUsd: number;
@@ -97,6 +149,10 @@ export interface ClaimEvent {
   verifiedPrice: number;
   reportTimestamp: number;
   sourceReportHash?: `0x${string}`;
+  sourcePool?: `0x${string}`;
+  sourceChainId?: number;
+  sourceBlockNumber?: number;
+  sourceBlockHash?: `0x${string}`;
   marketBand: MarketBand;
   multiplierBps: number;
   intervalSeconds?: number;
@@ -122,7 +178,7 @@ export interface RoundState {
   settlementTx?: `0x${string}`;
   chainId?: number;
   contractAddress?: `0x${string}`;
-  contractVersion: "closing-print-v1" | "faction-v0";
+  contractVersion: "closing-print-v2-dex" | "closing-print-v1" | "faction-v0";
   blockNumber?: number;
   startedAt?: number;
   deadline?: number;
@@ -200,7 +256,8 @@ export interface ScreeningAsset {
   tokenAddress: `0x${string}`;
   canonicalAddress?: `0x${string}`;
   testnetMockAddress?: `0x${string}`;
-  feedId?: `0x${string}`;
+  marketId?: `0x${string}`;
+  dexMarket?: DexMarket;
   name?: string;
   active: boolean;
   halted: boolean;

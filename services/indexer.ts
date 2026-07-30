@@ -1,5 +1,9 @@
 import { decodeEventLog, type Address, zeroAddress } from "viem";
-import { lastBellAbi, roundManagerAbi } from "../src/lib/web3/last-bell-abi";
+import {
+  lastBellAbi,
+  legacyClosingPrintEventAbi,
+  roundManagerAbi,
+} from "../src/lib/web3/last-bell-abi";
 import { heartbeat, loadManifest, pool, publicClientFor } from "./common";
 
 const manifest = await loadManifest();
@@ -123,7 +127,11 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
       let args: unknown = null;
       try {
         const decoded = decodeEventLog({
-          abi: [...roundManagerAbi, ...lastBellAbi],
+          abi: [
+            ...roundManagerAbi,
+            ...lastBellAbi,
+            ...legacyClosingPrintEventAbi,
+          ],
           data: log.data,
           topics: log.topics,
           strict: false,

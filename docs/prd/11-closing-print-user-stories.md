@@ -1,5 +1,8 @@
 # Closing Print User Stories
 
+> `D-022` override: Use PRD 13 for DEX Onchain Momentum, pool safety, testnet
+> attestations, and raw-airtime contributor shares.
+
 Status: Current `closing-print-v1` backlog
 
 Supersedes: permanent-faction stories in PRD 08

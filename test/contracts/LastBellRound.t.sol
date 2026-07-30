@@ -40,7 +40,7 @@ contract LastBellRoundTest is TestBase {
             keccak256("TSLA/USD"),
             keccak256("SPY/USD")
         ];
-        round = _deploy(LastBellRound.MarketMode.Verified, false);
+        round = _deploy(LastBellRound.MarketMode.Dex, false);
         token.mint(address(this), SEED);
         token.approve(address(paymentRouter), SEED);
         bytes[4] memory reports;
@@ -73,7 +73,7 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_CannotClaimBeforeOperatorInitialization() public {
-        LastBellRound waiting = _deploy(LastBellRound.MarketMode.Verified, false);
+        LastBellRound waiting = _deploy(LastBellRound.MarketMode.Dex, false);
         _fund(ALICE);
         vm.expectRevert(LastBellRound.RoundNotInitialized.selector);
         vm.prank(ALICE);
@@ -111,7 +111,7 @@ contract LastBellRoundTest is TestBase {
     }
 
     function test_OneRouterApprovalWorksAcrossRounds() public {
-        LastBellRound next = _deploy(LastBellRound.MarketMode.Verified, false);
+        LastBellRound next = _deploy(LastBellRound.MarketMode.Dex, false);
         bytes[4] memory reports;
         for (uint8 index; index < 4; index++) {
             reports[index] = _report(index, opening[index], uint64(block.timestamp));
@@ -259,7 +259,7 @@ contract LastBellRoundTest is TestBase {
         vm.stopPrank();
     }
 
-    function test_SettlementPaysHolderAndWeightedClosingPrintContributors() public {
+    function test_WeightedTickerWinsButRawAirtimeDividesClosingPrint() public {
         _fund(ALICE);
         _fund(BOB);
         _fund(CAROL);
@@ -283,7 +283,10 @@ contract LastBellRoundTest is TestBase {
         uint256 before = token.balanceOf(ALICE);
         vm.prank(ALICE);
         round.claimClosingPrintReward();
-        assertTrue(token.balanceOf(ALICE) > before, "contributor paid");
+        uint256 expected = round.closingPrintPool() * round.playerTickerAirtime(
+            ALICE, 0
+        ) / round.tickerAirtime(0);
+        assertEq(token.balanceOf(ALICE) - before, expected, "raw-airtime share");
         vm.prank(BOB);
         vm.expectRevert(LastBellRound.NothingToClaim.selector);
         round.claimClosingPrintReward();

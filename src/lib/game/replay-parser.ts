@@ -19,6 +19,10 @@ type LegacyFactionClaim = {
 
 export type VersionedReplay =
   | {
+      contractVersion: "closing-print-v2-dex";
+      claims: ClaimEvent[];
+    }
+  | {
       contractVersion: "closing-print-v1";
       claims: ClaimEvent[];
     }
@@ -28,10 +32,13 @@ export type VersionedReplay =
     };
 
 export function parseVersionedReplay(input: VersionedReplay): ClaimEvent[] {
-  if (input.contractVersion === "closing-print-v1") {
+  if (
+    input.contractVersion === "closing-print-v2-dex" ||
+    input.contractVersion === "closing-print-v1"
+  ) {
     return input.claims.map((claim) => ({
       ...claim,
-      contractVersion: "closing-print-v1",
+      contractVersion: input.contractVersion,
     }));
   }
 

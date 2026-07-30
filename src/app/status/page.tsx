@@ -20,7 +20,11 @@ export default async function StatusPage() {
           block: number;
           sourceCommit: string;
           indexer: { lag: number };
-          market: { assets: number; completeStreams: number };
+          market: {
+            assets: number;
+            completeStreams: number;
+            safeDexMarkets: number;
+          };
           services: Array<{
             name: string;
             status: string;
@@ -102,9 +106,9 @@ export default async function StatusPage() {
           <p>Latest verified block: {snapshot?.blockNumber ?? "unavailable"}</p>
           <p>Deployment commit: {production?.sourceCommit ?? "unavailable"}</p>
           <p>
-            Market screen:{" "}
+            DEX market screen:{" "}
             {production
-              ? `${production.market.assets} assets · ${production.market.completeStreams} complete streams`
+              ? `${production.market.safeDexMarkets} safe pools · ${production.market.completeStreams} complete 30-minute sample sets`
               : "unavailable"}
           </p>
         </div>

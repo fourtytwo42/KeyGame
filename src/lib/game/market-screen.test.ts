@@ -14,7 +14,26 @@ const makeAsset = (
   return {
     ticker,
     tokenAddress: `0x${ticker.charCodeAt(0).toString(16).padStart(40, "0")}`,
-    feedId: `0x${ticker.charCodeAt(0).toString(16).padStart(64, "0")}`,
+    marketId: `0x${ticker.charCodeAt(0).toString(16).padStart(64, "0")}`,
+    dexMarket: {
+      marketId: `0x${ticker.charCodeAt(0).toString(16).padStart(64, "0")}`,
+      poolAddress: `0x${ticker.charCodeAt(0).toString(16).padStart(40, "0")}`,
+      stockTokenAddress: `0x${ticker.charCodeAt(0).toString(16).padStart(40, "0")}`,
+      quoteTokenAddress: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      factoryAddress: "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+      feeTier: 3000,
+      sourceChainId: 4663,
+      twap: { seconds: 600, requiredHistorySeconds: 1800 },
+      safety: {
+        eligible: true,
+        usdgDepth: 20_000,
+        buyImpactBps: 50,
+        sellImpactBps: 50,
+        spotTwapDeviationBps: 5,
+        sampleCount: MIN_COMPLETE_SAMPLES,
+        reasons: [],
+      },
+    },
     active: true,
     halted: false,
     canonical: true,
@@ -35,7 +54,7 @@ describe("Closing Print roster screening", () => {
       makeAsset("NVDA", { movement: 3 }),
       makeAsset("SPY", { movement: 2 }),
     ]);
-    expect(result.mode).toBe("VERIFIED");
+    expect(result.mode).toBe("DEX");
     expect(result.label).toBe("HEAT CHECK");
     expect(result.selected.map((asset) => asset.ticker)).toEqual([
       "TSLA",

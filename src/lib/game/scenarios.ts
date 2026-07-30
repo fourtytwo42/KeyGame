@@ -107,7 +107,7 @@ const claims: ClaimEvent[] = [
 
 const baseState: RoundState = {
   phase: "live",
-  marketMode: "VERIFIED",
+  marketMode: "DEX",
   broadcastLabel: "HEAT CHECK",
   producerPassRequired: false,
   timeLeftSeconds: 21,

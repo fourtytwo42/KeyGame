@@ -49,10 +49,12 @@ export async function GET(request: Request) {
   let roundAddress: `0x${string}` | undefined;
   let tickerIndex = -1;
   let marketMode = 1;
-  const adapterUrl = process.env.DATA_STREAMS_REPORT_ADAPTER_URL;
-  const adapterToken = process.env.DATA_STREAMS_REPORT_ADAPTER_TOKEN;
+  const adapterUrl = process.env.DEX_MARKET_ADAPTER_URL;
+  const adapterToken = process.env.DEX_MARKET_ADAPTER_TOKEN;
+  let sourceChainId = 4663;
   try {
     const manifest = await loadServerDeployment();
+    sourceChainId = manifest.chainId;
     const client = deploymentPublicClient(manifest);
     const [active, prepared] = await Promise.all([
       client.readContract({
@@ -97,14 +99,14 @@ export async function GET(request: Request) {
     });
     if (!initialized) {
       let openingReports = ["0x", "0x", "0x", "0x"];
-      if (marketMode === 1) {
+      if (marketMode === 1 && manifest.chainId !== 4663) {
         if (!adapterUrl || !adapterToken) {
           throw new Error(
-            "Signed Data Streams acquisition is not configured for activation.",
+            "DEX observation attestation is not configured for activation.",
           );
         }
         const opening = await fetch(
-          `${adapterUrl}?opening=true&round=${roundAddress}&feeds=${configs
+          `${adapterUrl}?opening=true&round=${roundAddress}&markets=${configs
             .map((config) => config[2])
             .join(",")}`,
           {
@@ -125,7 +127,7 @@ export async function GET(request: Request) {
           )
         ) {
           throw new Error(
-            payload.error || "Fresh opening reports are unavailable.",
+            payload.error || "Fresh opening DEX observations are unavailable.",
           );
         }
         openingReports = payload.reports;
@@ -172,6 +174,16 @@ export async function GET(request: Request) {
         verifierType: "none",
       });
     }
+    if (sourceChainId === 4663) {
+      return NextResponse.json({
+        ok: true,
+        ticker,
+        tickerIndex,
+        report: "0x",
+        source: "uniswap-v3-twap",
+        verifierType: "dex-onchain",
+      });
+    }
   } catch (error) {
     return NextResponse.json(
       {
@@ -188,7 +200,7 @@ export async function GET(request: Request) {
       {
         ok: false,
         error:
-          "Signed Data Streams acquisition is not configured for this deployment.",
+          "DEX observation attestation is not configured for this deployment.",
       },
       { status: 503 },
     );
@@ -226,7 +238,7 @@ export async function GET(request: Request) {
       ok: true,
       ticker,
       tickerIndex,
-      source: "chainlink-data-streams",
+      source: "uniswap-v3-twap",
       ...payload,
     });
   } catch (error) {

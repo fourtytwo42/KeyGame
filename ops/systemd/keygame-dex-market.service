@@ -1,22 +1,20 @@
 [Unit]
-Description=KeyGame Chainlink Data Streams testnet attestation adapter
+Description=KeyGame Robinhood Chain DEX market attestation adapter
 After=network-online.target postgresql.service
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=hendo420
 WorkingDirectory=/home/hendo420/projects/KeyGame
-EnvironmentFile=/etc/keygame/testnet.env
+EnvironmentFile=/home/hendo420/.config/keygame/testnet.env
 Environment=PATH=/home/hendo420/.nvm/versions/node/v24.18.0/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/hendo420/.nvm/versions/node/v24.18.0/bin/corepack pnpm service:data-streams
+ExecStart=/home/hendo420/.nvm/versions/node/v24.18.0/bin/corepack pnpm service:dex-market
 Restart=always
 RestartSec=3
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=/var/run/postgresql
+ReadWritePaths=/home/hendo420/projects/KeyGame /var/run/postgresql
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

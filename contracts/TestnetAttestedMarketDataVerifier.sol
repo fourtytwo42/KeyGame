@@ -3,14 +3,18 @@ pragma solidity ^0.8.30;
 
 import { IMarketDataVerifier } from "./interfaces/IMarketDataVerifier.sol";
 
-/// @notice Testnet-only verifier for Chainlink reports acquired offchain.
-/// @dev The attestor signs normalized report fields and the original signed
-/// Chainlink report hash. The signature is bound to this chain, verifier, and
-/// calling round. This contract must never appear in a mainnet manifest.
+/// @notice Testnet-only verifier for mainnet DEX TWAP observations.
+/// @dev The signature is bound to this chain, verifier, calling round, source
+/// chain, source pool, and source block. This contract is prohibited on mainnet.
 contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
     struct AttestedReport {
-        bytes32 feedId;
+        bytes32 marketId;
+        address pool;
+        int24 twapTick;
         uint256 price;
+        uint256 sourceChainId;
+        uint64 sourceBlockNumber;
+        bytes32 sourceBlockHash;
         uint64 validFrom;
         uint64 observedAt;
         uint64 expiresAt;
@@ -23,10 +27,10 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
         "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
     );
     bytes32 public constant REPORT_TYPEHASH = keccak256(
-        "MarketReport(bytes32 feedId,uint256 price,uint64 validFrom,uint64 observedAt,uint64 expiresAt,address round,bytes32 sourceReportHash)"
+        "DexObservation(bytes32 marketId,address pool,int24 twapTick,uint256 price,uint256 sourceChainId,uint64 sourceBlockNumber,bytes32 sourceBlockHash,uint64 validFrom,uint64 observedAt,uint64 expiresAt,address round,bytes32 sourceReportHash)"
     );
     bytes32 private constant NAME_HASH =
-        keccak256("Last Bell Testnet Market Attestation");
+        keccak256("Last Bell Testnet DEX Attestation");
     bytes32 private constant VERSION_HASH = keccak256("1");
     uint256 private constant SECP256K1_HALF_N =
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
@@ -76,16 +80,20 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
         authorizedCaller[caller] = true;
     }
 
-    function verify(bytes calldata encoded)
+    function verify(bytes32 expectedMarketId, bytes calldata encoded)
         external
         view
         returns (
-            bytes32 feedId,
+            bytes32 marketId,
             uint256 price,
             uint64 validFrom,
             uint64 observedAt,
             uint64 expiresAt,
-            bytes32 sourceReportHash
+            bytes32 sourceReportHash,
+            address sourcePool,
+            uint256 sourceChainId,
+            uint64 sourceBlockNumber,
+            bytes32 sourceBlockHash
         )
     {
         if (!authorizedCaller[msg.sender]) {
@@ -93,15 +101,23 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
         }
         AttestedReport memory report = abi.decode(encoded, (AttestedReport));
         if (
-            report.round != msg.sender || report.price == 0
+            report.round != msg.sender || report.marketId != expectedMarketId
+                || report.pool == address(0) || report.sourceChainId != 4663
+                || report.sourceBlockNumber == 0
+                || report.sourceBlockHash == bytes32(0) || report.price == 0
                 || report.sourceReportHash == bytes32(0)
         ) revert InvalidAttestation();
 
         bytes32 structHash = keccak256(
             abi.encode(
                 REPORT_TYPEHASH,
-                report.feedId,
+                report.marketId,
+                report.pool,
+                report.twapTick,
                 report.price,
+                report.sourceChainId,
+                report.sourceBlockNumber,
+                report.sourceBlockHash,
                 report.validFrom,
                 report.observedAt,
                 report.expiresAt,
@@ -115,12 +131,16 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
             revert InvalidAttestation();
         }
         return (
-            report.feedId,
+            report.marketId,
             report.price,
             report.validFrom,
             report.observedAt,
             report.expiresAt,
-            report.sourceReportHash
+            report.sourceReportHash,
+            report.pool,
+            report.sourceChainId,
+            report.sourceBlockNumber,
+            report.sourceBlockHash
         );
     }
 

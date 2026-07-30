@@ -12,7 +12,8 @@ import { TestBase } from "./TestBase.sol";
 
 contract TestnetAttestedMarketDataVerifierTest is TestBase {
     uint256 internal constant ATTESTOR_KEY = 0xA771570;
-    bytes32 internal constant FEED = keccak256("NVDA/USD");
+    bytes32 internal constant MARKET = keccak256("NVDA/USDG/V3/500/600");
+    address internal constant SOURCE_POOL = address(0xD3E);
 
     MockUSDG internal token;
     PaymentRouter internal router;
@@ -31,7 +32,7 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
             tickers[i] = LastBellRound.TickerConfig(
                 i == 0 ? bytes32("NVDA") : bytes32(uint256(i + 1)),
                 address(stock),
-                bytes32(uint256(FEED) + i)
+                bytes32(uint256(MARKET) + i)
             );
         }
         LastBellRound.RoundSettings memory settings = LastBellRound.RoundSettings({
@@ -46,7 +47,7 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
             greenMultiplierBps: 12_500,
             flatMultiplierBps: 10_000,
             redMultiplierBps: 7_500,
-            marketMode: LastBellRound.MarketMode.Verified,
+            marketMode: LastBellRound.MarketMode.Dex,
             producerPassRequired: false
         });
         round = new LastBellRound(
@@ -60,7 +61,7 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         bytes[4] memory openingReports;
         for (uint8 i; i < 4; i++) {
             openingReports[i] = _report(
-                bytes32(uint256(FEED) + i),
+                bytes32(uint256(MARKET) + i),
                 100e8 + i,
                 address(round),
                 keccak256(abi.encode("opening", i))
@@ -71,8 +72,9 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         vm.prank(address(0xA11CE));
         token.approve(address(router), type(uint256).max);
 
-        bytes32 sourceHash = keccak256("genuine-chainlink-report");
-        bytes memory claimReport = _report(FEED, 101e8, address(round), sourceHash);
+        bytes32 sourceHash = keccak256("mainnet-dex-observation");
+        bytes memory claimReport =
+            _report(MARKET, 101e18, address(round), sourceHash);
         vm.prank(address(0xA11CE));
         round.claimBell(0, claimReport, type(uint8).max);
         assertEq(round.holderSourceReportHash(), sourceHash, "source hash");
@@ -82,13 +84,13 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         bytes[4] memory openingReports;
         for (uint8 i; i < 4; i++) {
             openingReports[i] = _report(
-                bytes32(uint256(FEED) + i),
+                bytes32(uint256(MARKET) + i),
                 100e8 + i,
                 address(0xBAD),
                 keccak256(abi.encode(i))
             );
         }
-        vm.expectRevert(TestnetAttestedMarketDataVerifier.InvalidAttestation.selector);
+        vm.expectRevert(LastBellRound.InvalidMarketReport.selector);
         round.start(0, openingReports);
     }
 
@@ -109,7 +111,7 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
     }
 
     function _report(
-        bytes32 feedId,
+        bytes32 marketId,
         uint256 price,
         address reportRound,
         bytes32 sourceHash
@@ -118,8 +120,13 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         bytes32 structHash = keccak256(
             abi.encode(
                 verifier.REPORT_TYPEHASH(),
-                feedId,
+                marketId,
+                SOURCE_POOL,
+                int24(223_791),
                 price,
+                uint256(4663),
+                uint64(22_814_522),
+                keccak256("source-block"),
                 now64,
                 now64,
                 now64 + 30,
@@ -133,8 +140,13 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ATTESTOR_KEY, digest);
         return abi.encode(
             TestnetAttestedMarketDataVerifier.AttestedReport({
-                feedId: feedId,
+                marketId: marketId,
+                pool: SOURCE_POOL,
+                twapTick: 223_791,
                 price: price,
+                sourceChainId: 4663,
+                sourceBlockNumber: 22_814_522,
+                sourceBlockHash: keccak256("source-block"),
                 validFrom: now64,
                 observedAt: now64,
                 expiresAt: now64 + 30,

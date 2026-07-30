@@ -55,13 +55,14 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">04</span>
         <div>
-          <h2>The market changes the score</h2>
+          <h2>Onchain momentum changes the score</h2>
           <p>
-            We compare your stock&apos;s verified price with its price at the
-            start of the round. Up 0.05% or more earns 1.25 points per second. A
-            smaller move earns 1 point per second. Down 0.05% or more earns 0.75
-            points per second. Your rate locks when your play succeeds and stays
-            the same until someone else takes the bell.
+            We use the stock&apos;s 10-minute average price from its direct
+            Robinhood Chain DEX pool. Up 0.05% or more from the opening average
+            earns 1.25 points per second. A smaller move earns 1 point per
+            second. Down 0.05% or more earns 0.75 points per second. Your rate
+            locks when your play succeeds and stays the same until someone else
+            takes the bell.
           </p>
         </div>
       </section>
@@ -72,9 +73,10 @@ export default function RulesPage() {
           <p>
             The person holding the bell when the clock reaches zero wins 50% of
             the pot. The stock with the most market-adjusted points wins the 30%
-            Closing Print Pool. That 30% is shared among the players who earned
-            points for that stock. Another 15% starts the next round, and 5%
-            goes to the protocol.
+            Closing Print Pool. Only callers for that stock qualify, but their
+            shares are based on raw seconds holding the bell, not multiplied
+            points. Another 15% starts the next round, and 5% goes to the
+            protocol.
           </p>
         </div>
       </section>

@@ -13,7 +13,8 @@ const phaseName = (phase: number): RoundState["phase"] =>
 const bandName = (band: number) =>
   (["RED", "FLAT", "GREEN"] as const)[band] ?? "FLAT";
 const usd = (value: bigint) => Number(value) / 1e6;
-const price = (value: bigint) => Number(value) / 1e8;
+const price = (value: bigint) =>
+  Number(value) / (value > 1_000_000_000_000_000n ? 1e18 : 1e8);
 
 type EventRow = {
   transaction_hash: `0x${string}`;
@@ -249,8 +250,12 @@ export async function getLiveSnapshot(
         claimNumber: Number(args.sequence),
         band: bandName(Number(args.marketBand)),
         multiplierBps: Number(args.multiplierBps),
-        verifiedPrice: Number(args.verifiedPrice) / 1e8,
+        verifiedPrice: price(BigInt(args.verifiedPrice as string)),
         reportTimestamp: Number(args.reportTimestamp),
+        sourcePool: args.sourcePool as `0x${string}`,
+        sourceChainId: Number(args.sourceChainId),
+        sourceBlockNumber: Number(args.sourceBlockNumber),
+        sourceBlockHash: args.sourceBlockHash as `0x${string}`,
         producerPass: Boolean(args.producerPass),
       },
       previousHolder: args.previousHolder as Address,
@@ -263,13 +268,17 @@ export async function getLiveSnapshot(
       transactionHash: event.transaction_hash,
       blockNumber: Number(event.block_number),
       logIndex: event.log_index,
-      contractVersion: "closing-print-v1",
+      contractVersion: "closing-print-v2-dex",
       accepted: true,
       potAfterUsd: Number(args.pot) / 1e6,
       timeAfterSeconds: Number(args.deadline) - Number(args.acceptedAt),
-      verifiedPrice: Number(args.verifiedPrice) / 1e8,
+      verifiedPrice: price(BigInt(args.verifiedPrice as string)),
       reportTimestamp: Number(args.reportTimestamp),
       sourceReportHash: args.sourceReportHash as `0x${string}`,
+      sourcePool: args.sourcePool as `0x${string}`,
+      sourceChainId: Number(args.sourceChainId),
+      sourceBlockNumber: Number(args.sourceBlockNumber),
+      sourceBlockHash: args.sourceBlockHash as `0x${string}`,
       marketBand: bandName(Number(args.marketBand)),
       multiplierBps: Number(args.multiplierBps),
       producerPass: Boolean(args.producerPass),
@@ -302,6 +311,10 @@ export async function getLiveSnapshot(
       verifiedPrice: claim.verifiedPrice,
       reportTimestamp: claim.reportTimestamp,
       sourceReportHash: claim.sourceReportHash,
+      sourcePool: claim.sourcePool,
+      sourceChainId: claim.sourceChainId,
+      sourceBlockNumber: claim.sourceBlockNumber,
+      sourceBlockHash: claim.sourceBlockHash,
       marketBand: claim.marketBand,
       multiplierBps: claim.multiplierBps,
       intervalSeconds,
@@ -343,7 +356,7 @@ export async function getLiveSnapshot(
   return {
     roundId: roundId.toString(),
     phase: displayedPhase,
-    marketMode: Number(mode) === 1 ? "VERIFIED" : "FLAT",
+    marketMode: Number(mode) === 1 ? "DEX" : "FLAT",
     broadcastLabel: Number(mode) === 1 ? "HEAT CHECK" : "VOLUME CHECK",
     producerPassRequired: passRequired,
     timeLeftSeconds: Math.max(0, deadlineNumber - now),
@@ -364,6 +377,10 @@ export async function getLiveSnapshot(
             multiplierBps: Number(holderMultiplier),
             verifiedPrice: price(holderPrice),
             reportTimestamp: Number(holderReportAt),
+            sourcePool: latest?.sourcePool,
+            sourceChainId: latest?.sourceChainId,
+            sourceBlockNumber: latest?.sourceBlockNumber,
+            sourceBlockHash: latest?.sourceBlockHash,
             producerPass: holderPass,
           },
     tickerScores: tickers.map((ticker: TickerId, index) => ({
@@ -381,7 +398,7 @@ export async function getLiveSnapshot(
     updatedAt: new Date(now * 1000).toISOString(),
     chainId: manifest.chainId,
     contractAddress: roundAddress,
-    contractVersion: "closing-print-v1",
+    contractVersion: "closing-print-v2-dex",
     blockNumber: Number(block.number),
     startedAt: Number(startedAt),
     deadline: deadlineNumber,

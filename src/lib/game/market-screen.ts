@@ -26,7 +26,8 @@ export function screenRoster(
     .filter(
       (asset) =>
         baseEligible(asset) &&
-        Boolean(asset.feedId) &&
+        Boolean(asset.marketId) &&
+        Boolean(asset.dexMarket?.safety.eligible) &&
         asset.samples.length >= MIN_COMPLETE_SAMPLES,
     )
     .sort((left, right) => {
@@ -41,7 +42,7 @@ export function screenRoster(
 
   if (verified.length >= 4) {
     return {
-      mode: "VERIFIED",
+      mode: "DEX",
       label: "HEAT CHECK",
       selected: verified.slice(0, 4),
       delayed: false,
@@ -63,7 +64,7 @@ export function screenRoster(
       selected: fallback.slice(0, 4),
       delayed: false,
       screenedAt,
-      reason: "Fewer than four complete verified streams.",
+      reason: "Fewer than four safe, complete direct DEX markets.",
     };
   }
 

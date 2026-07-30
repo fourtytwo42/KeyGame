@@ -3,11 +3,13 @@ pragma solidity ^0.8.30;
 
 interface Vm {
     function warp(uint256 newTimestamp) external;
+    function roll(uint256 newHeight) external;
     function prank(address sender) external;
     function startPrank(address sender) external;
     function stopPrank() external;
     function expectRevert(bytes4 selector) external;
     function expectRevert(bytes calldata revertData) external;
+    function expectRevert() external;
     function sign(uint256 privateKey, bytes32 digest)
         external
         returns (uint8 v, bytes32 r, bytes32 s);

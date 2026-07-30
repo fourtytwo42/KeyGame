@@ -30,7 +30,7 @@
     "contracts:test": "forge test -vvv",
     "db:migrate": "tsx services/migrate.ts",
     "service:market": "tsx services/market-collector.ts",
-    "service:data-streams": "tsx services/data-streams-adapter.ts",
+    "service:dex-market": "tsx services/dex-market-adapter.ts",
     "service:indexer": "tsx services/indexer.ts",
     "service:keeper": "tsx services/keeper.ts",
     "release:scan": "bash scripts/scan-protected-build.sh",
@@ -39,7 +39,6 @@
     "contracts:deploy:testnet": "forge script script/DeployTestnet.s.sol:DeployTestnet --rpc-url \"$ROBINHOOD_TESTNET_RPC_URL\" --broadcast --verify"
   },
   "dependencies": {
-    "@chainlink/data-streams-sdk": "^1.2.1",
     "@tanstack/react-query": "^5.101.4",
     "ethers": "^6.17.0",
     "next": "16.2.12",

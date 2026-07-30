@@ -18,7 +18,7 @@ fi
 pnpm build
 forbidden='keygame:uat-testnet-wallet|Built-in Testnet Wallet|FUND TEST WALLET|Test ETH and mock USDG funded'
 if [[ "${NEXT_PUBLIC_GAME_MODE:-}" == "mainnet" ]]; then
-  forbidden="${forbidden}|TestnetAttestedMarketDataVerifier|testnet-attested"
+  forbidden="${forbidden}|TestnetAttestedMarketDataVerifier|testnet-dex-attested"
 fi
 if grep -R -a -n -E "$forbidden" .next/static .next/server; then
   echo "Protected bundle contains forbidden UAT/testnet-only code." >&2

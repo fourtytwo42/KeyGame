@@ -10,6 +10,14 @@ describe("versioned replay parser", () => {
     expect(parsed).toEqual([]);
   });
 
+  it("preserves DEX source evidence", () => {
+    const parsed = parseVersionedReplay({
+      contractVersion: "closing-print-v2-dex",
+      claims: [],
+    });
+    expect(parsed).toEqual([]);
+  });
+
   it("normalizes legacy faction events without treating them as verified", () => {
     const parsed = parseVersionedReplay({
       contractVersion: "faction-v0",

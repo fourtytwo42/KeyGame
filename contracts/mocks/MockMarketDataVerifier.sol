@@ -6,20 +6,29 @@ import { IMarketDataVerifier } from "../interfaces/IMarketDataVerifier.sol";
 contract MockMarketDataVerifier is IMarketDataVerifier {
     function authorizeCaller(address) external pure { }
 
-    function verify(bytes calldata report)
+    function verify(bytes32 expectedMarketId, bytes calldata report)
         external
-        pure
+        view
         returns (
-            bytes32 feedId,
+            bytes32 marketId,
             uint256 price,
             uint64 validFrom,
             uint64 observedAt,
             uint64 expiresAt,
-            bytes32 sourceReportHash
+            bytes32 sourceReportHash,
+            address sourcePool,
+            uint256 sourceChainId,
+            uint64 sourceBlockNumber,
+            bytes32 sourceBlockHash
         )
     {
-        (feedId, price, validFrom, observedAt, expiresAt) =
+        (marketId, price, validFrom, observedAt, expiresAt) =
             abi.decode(report, (bytes32, uint256, uint64, uint64, uint64));
+        require(marketId == expectedMarketId, "MARKET_ID");
         sourceReportHash = keccak256(report);
+        sourcePool = address(0);
+        sourceChainId = block.chainid;
+        sourceBlockNumber = uint64(block.number);
+        sourceBlockHash = bytes32(0);
     }
 }

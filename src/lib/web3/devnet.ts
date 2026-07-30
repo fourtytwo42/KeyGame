@@ -424,6 +424,10 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
         multiplierBps: Number(args.multiplierBps),
         verifiedPrice: reportPrice(args.verifiedPrice ?? 0n),
         reportTimestamp: Number(args.reportTimestamp),
+        sourcePool: args.sourcePool,
+        sourceChainId: Number(args.sourceChainId),
+        sourceBlockNumber: Number(args.sourceBlockNumber),
+        sourceBlockHash: args.sourceBlockHash,
         producerPass: Boolean(args.producerPass),
       },
       previousHolder: args.previousHolder as Address,
@@ -436,7 +440,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       transactionHash: log.transactionHash,
       blockNumber: Number(log.blockNumber),
       logIndex: log.logIndex,
-      contractVersion: "closing-print-v1",
+      contractVersion: "closing-print-v2-dex",
       accepted: true,
       potAfterUsd: unitsToUsd(args.pot ?? 0n),
       timeAfterSeconds: Math.max(
@@ -445,6 +449,11 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
       ),
       verifiedPrice: reportPrice(args.verifiedPrice ?? 0n),
       reportTimestamp: Number(args.reportTimestamp),
+      sourceReportHash: args.sourceReportHash,
+      sourcePool: args.sourcePool,
+      sourceChainId: Number(args.sourceChainId),
+      sourceBlockNumber: Number(args.sourceBlockNumber),
+      sourceBlockHash: args.sourceBlockHash,
       marketBand: band,
       multiplierBps: Number(args.multiplierBps),
       intervalSeconds: credit ? Number(credit.args.duration) : undefined,
@@ -469,7 +478,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
   return {
     roundId: currentRoundId.toString(),
     phase: displayedPhase,
-    marketMode: Number(mode) === 1 ? "VERIFIED" : "FLAT",
+    marketMode: Number(mode) === 1 ? "DEX" : "FLAT",
     broadcastLabel: Number(mode) === 1 ? "HEAT CHECK" : "VOLUME CHECK",
     producerPassRequired: passRequired,
     timeLeftSeconds: Math.max(0, deadlineNumber - now),
@@ -511,7 +520,7 @@ export async function getDevnetSnapshot(): Promise<RoundState> {
     settlementTx: settlement?.transactionHash,
     chainId: localDevnet.id,
     contractAddress: roundAddress,
-    contractVersion: "closing-print-v1",
+    contractVersion: "closing-print-v2-dex",
     blockNumber: Number(block.number),
     startedAt: Number(startedAt),
     deadline: deadlineNumber,
@@ -575,11 +584,11 @@ export async function getDevnetSession(
   const winnerIndex = snapshot.winningTicker
     ? tickerSlots.findIndex((ticker) => ticker.id === snapshot.winningTicker)
     : 0;
-  const [playerScore, tokenConfigs] = await Promise.all([
+  const [playerAirtime, tokenConfigs] = await Promise.all([
     devnetPublicClient.readContract({
       address: roundAddress,
       abi: lastBellAbi,
-      functionName: "playerTickerScore",
+      functionName: "playerTickerAirtime",
       args: [player, winnerIndex],
     }),
     Promise.all(
@@ -613,7 +622,7 @@ export async function getDevnetSession(
   const winningTotal =
     snapshot.tickerScores.find(
       (score) => score.ticker === snapshot.winningTicker,
-    )?.weightedScore ?? 0;
+    )?.rawSeconds ?? 0;
   return {
     session: {
       player,
@@ -644,11 +653,11 @@ export async function getDevnetSession(
           : 0,
       closingPrintUsd:
         snapshot.phase === "settled" &&
-        playerScore > 0n &&
+        playerAirtime > 0n &&
         winningTotal > 0 &&
         !printClaimed
           ? ((snapshot.pools?.closingPrintUsd || 0) *
-              (Number(playerScore) / 10_000)) /
+              Number(playerAirtime)) /
             winningTotal
           : 0,
       refundUsd:

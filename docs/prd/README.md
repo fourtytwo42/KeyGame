@@ -11,6 +11,7 @@ Current implementation documents:
 - [PRD 10: Closing Print market-reactive specification](./10-closing-print-market-reactive.md)
 - [PRD 11: Closing Print user stories](./11-closing-print-user-stories.md)
 - [PRD 12: Robinhood testnet production readiness](./12-robinhood-testnet-production-readiness.md)
+- [PRD 13: DEX-powered Onchain Momentum](./13-dex-onchain-momentum.md)
 
 Status: Product baseline approved for Stage 0 implementation and a testnet-points
 first public MVP. Value-bearing and Stock Token stages remain gated.
@@ -71,6 +72,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-015` | Use the current `GAME-CFG-*` timer and payout values as configurable simulation defaults. | `SELECTED FOR PROTOTYPE` | Prototype selection does not approve production economics. |
 | `D-016` | Keep same-faction theft, late entry, control-time precision, and faction tie-breaking configurable until simulation produces evidence. | `DECIDED` | Components consume typed configuration and cannot hard-code an unresolved outcome. |
 | `D-020` | Replace permanent factions with a ticker selected on every paid claim and market-weight the 30% Closing Print contest. | `IMPLEMENTED STAGE 1` | Use `closing-print-v1`; no separate entry transaction or Stock Token custody. |
+| `D-022` | Replace Chainlink scoring with direct ten-minute Uniswap V3 Stock Token/USDG TWAPs; weighted points pick the ticker and raw airtime divides its pool. | `IMPLEMENTING` | PRD 13 overrides conflicting price-source and contributor-share requirements. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |
