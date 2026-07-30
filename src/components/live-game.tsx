@@ -872,7 +872,19 @@ function ProjectionPanel({
   player: PlayerRoundProjection | null;
 }) {
   const projection = state.projection;
-  if (!projection) return null;
+  const projectedHolder =
+    projection?.finalHolderDisplayName ?? state.holder?.displayName;
+  const projectedHolderPool =
+    projection?.holderPoolUsd ??
+    state.pools?.holderUsd ??
+    (state.potUsd * roundConfig.payoutBps.holder) / 10_000;
+  const projectedTicker =
+    projection?.winningTicker ??
+    (state.tickerScores.length ? leadingTicker(state) : null);
+  const projectedPrintPool =
+    projection?.closingPrintPoolUsd ??
+    state.pools?.closingPrintUsd ??
+    (state.potUsd * roundConfig.payoutBps.closingPrint) / 10_000;
   return (
     <section className="railCard projectionCard">
       <span className="railLabel">IF THE BELL RANG NOW</span>
@@ -880,15 +892,15 @@ function ProjectionPanel({
         <div>
           <dt>FINAL CALLER · 50%</dt>
           <dd>
-            <span>{projection.finalHolderDisplayName ?? "NO CALLER"}</span>
-            <strong>{formatUsd(projection.holderPoolUsd)}</strong>
+            <span>{projectedHolder ?? "NO CALLER"}</span>
+            <strong>{formatUsd(projectedHolderPool)}</strong>
           </dd>
         </div>
         <div>
           <dt>CLOSING PRINT · 30%</dt>
           <dd>
-            <span>{projection.winningTicker ?? "NO PRINT"}</span>
-            <strong>{formatUsd(projection.closingPrintPoolUsd)}</strong>
+            <span>{projectedTicker ?? "NO PRINT"}</span>
+            <strong>{formatUsd(projectedPrintPool)}</strong>
           </dd>
         </div>
       </dl>
