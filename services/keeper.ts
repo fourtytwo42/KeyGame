@@ -9,6 +9,11 @@ import { screenRoster } from "../src/lib/game/market-screen";
 import type { ScreeningAsset } from "../src/lib/game/types";
 import { lastBellAbi, roundManagerAbi } from "../src/lib/web3/last-bell-abi";
 import {
+  hydrateRoundSettings,
+  persistRoundSettings,
+  type PersistedRoundSettings,
+} from "./keeper-payload";
+import {
   heartbeat,
   loadManifest,
   pool,
@@ -164,7 +169,7 @@ async function prepareIfNeeded() {
       `prepare:${settings.roundId}`,
       JSON.stringify({
         roundId: settings.roundId.toString(),
-        settings: { ...settings, roundId: settings.roundId.toString() },
+        settings: persistRoundSettings(settings),
         tickers,
         roster,
       }),
@@ -272,7 +277,7 @@ async function processJob() {
       payload: {
         openingReports?: Hex[];
         reason?: Hex;
-        settings?: Record<string, string | number | boolean>;
+        settings?: PersistedRoundSettings;
         tickers?: Array<Record<string, string>>;
         roster?: unknown;
         roundId?: string;
@@ -345,10 +350,7 @@ async function processJob() {
       hash = await sendManager(
         "prepareRound",
         [
-          {
-            ...job.payload.settings,
-            roundId: BigInt(String(job.payload.settings.roundId)),
-          },
+          hydrateRoundSettings(job.payload.settings),
           job.payload.tickers,
         ],
         rememberHash,
