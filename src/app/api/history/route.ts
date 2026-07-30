@@ -3,18 +3,23 @@ import {
   getHistoricalRunSummaries,
   recordCompletedRun,
 } from "@/lib/game/history";
+import { getIndexedHistoricalRunSummaries } from "@/lib/server/indexed-history";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    if (process.env.NEXT_PUBLIC_GAME_MODE === "devnet") {
+    const mode = process.env.NEXT_PUBLIC_GAME_MODE;
+    if (mode === "devnet") {
       await recordCompletedRun(await getDevnetSnapshot());
     }
     return NextResponse.json({
       ok: true,
-      runs: await getHistoricalRunSummaries(),
+      runs:
+        mode === "testnet" || mode === "mainnet"
+          ? await getIndexedHistoricalRunSummaries()
+          : await getHistoricalRunSummaries(),
     });
   } catch (error) {
     return NextResponse.json(

@@ -26,7 +26,9 @@ type EventRow = {
 
 type IndexedClaim = ClaimEvent & { acceptedAt: number };
 
-export async function getLiveSnapshot(): Promise<RoundState> {
+export async function getLiveSnapshot(
+  requestedRoundAddress?: Address,
+): Promise<RoundState> {
   const manifest = await loadServerDeployment();
   const client = deploymentPublicClient(manifest);
   const [active, prepared, block] = await Promise.all([
@@ -42,7 +44,9 @@ export async function getLiveSnapshot(): Promise<RoundState> {
     }),
     client.getBlock(),
   ]);
-  const roundAddress = prepared !== zeroAddress ? prepared : active;
+  const roundAddress =
+    requestedRoundAddress ??
+    (prepared !== zeroAddress ? prepared : active);
   if (roundAddress === zeroAddress) {
     throw new Error("No active or prepared broadcast is deployed.");
   }

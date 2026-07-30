@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ReplayPlayer } from "@/components/replay-player";
 import { getHistoricalRun } from "@/lib/game/history";
 import { scenarios } from "@/lib/game/scenarios";
+import { getIndexedHistoricalRun } from "@/lib/server/indexed-history";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = { title: "Replay Round 4663" };
@@ -14,7 +16,14 @@ export default async function ReplayPage({
   params: Promise<{ roundId: string }>;
 }) {
   const { roundId } = await params;
-  const archivedRun = await getHistoricalRun(roundId);
+  const mode = process.env.NEXT_PUBLIC_GAME_MODE;
+  const archivedRun =
+    mode === "testnet" || mode === "mainnet"
+      ? await getIndexedHistoricalRun(roundId)
+      : await getHistoricalRun(roundId);
+  if ((mode === "testnet" || mode === "mainnet") && !archivedRun) {
+    notFound();
+  }
   const state = archivedRun
     ? archivedRun.state
     : process.env.NEXT_PUBLIC_GAME_MODE === "devnet"

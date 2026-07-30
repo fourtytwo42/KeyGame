@@ -179,6 +179,27 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
           );
         }
       }
+      if (
+        (eventName === "RoundSettled" || eventName === "RoundCancelled") &&
+        args &&
+        typeof args === "object"
+      ) {
+        const completed = args as { roundId?: string };
+        if (completed.roundId) {
+          await connection.query(
+            `UPDATE rounds SET state=$3,
+               settled_at=(SELECT block_time FROM canonical_blocks
+                           WHERE chain_id=$1 AND number=$4)
+             WHERE chain_id=$1 AND round_id=$2`,
+            [
+              manifest.chainId,
+              completed.roundId,
+              eventName === "RoundSettled" ? "settled" : "cancelled",
+              log.blockNumber.toString(),
+            ],
+          );
+        }
+      }
     }
     const tip = blocks.at(-1);
     if (!tip?.hash) throw new Error("Batch has no canonical tip");
