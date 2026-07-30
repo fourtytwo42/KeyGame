@@ -4,18 +4,17 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: implement PRD 14 reward clarity, SIWE caller profiles,
-  community-triggered raids, deployment-aware history, and mainnet-readiness
-  evidence without changing round economics.
-- Last meaningful result: the local workspace implements round and player
-  projections, estimated DEX entry bands, an 11px interactive-copy floor, SIWE
-  sessions and profiles, public chain-derived stats, featured raid campaigns,
-  deployment-key migration/backfill, Reown mainnet guards, and economic/latency
-  evidence scripts. Local TypeScript, ESLint, 45 Vitest tests, and the
-  production build pass.
-- Next step: migrate and build both modes on the authoritative VM, restart the
-  services, run Foundry/integration/Playwright/browser UAT, and start or
-  document the remaining 24-hour testnet soak.
+- Current task: PRD 14 implementation is complete through testnet browser UAT
+  at commit `504c4e2`; do not freeze or deploy mainnet.
+- Last meaningful result: two isolated built-in wallets completed funded,
+  signed Robinhood testnet calls, reusable approvals, a cross-ticker bell
+  steal, settlement/rollover, SIWE profile creation, deployment-aware history,
+  and the deciding raid vote. The raid entered its five-minute `COUNTDOWN` at
+  `2/2 UNIQUE CALLERS`.
+- Next step: run the required 24-hour/100-round soak, obtain a real Reown
+  project ID for extension-wallet UAT, resolve the failed DEX manipulation
+  economics and measured Rug Zone automation advantage, then proceed to
+  independent audit/legal/multisig release work.
 - Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
   depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
   checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.
@@ -185,6 +184,30 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-30: Completed PRD 14 implementation and live VM acceptance at commit
+  `504c4e2`. Migration `005_retention_and_deployment_identity.sql` and the
+  deployment-history backfill reconstructed three deployments and nine
+  historical rounds. Final gates passed 47 Vitest tests, 28 Forge tests, four
+  Anvil integration tests, both VM builds, protected-bundle scanning, and 20
+  Playwright tests with two intentional cross-project skips. All five testnet
+  services were active; `/api/status` reported healthy LAN and fallback RPCs,
+  PostgreSQL, keeper, DEX adapter, collector, and deployment-aware indexer.
+- 2026-07-30: In-app browser UAT used two independently generated session-only
+  testnet wallets. It verified faucet funding, one reusable $100 approval,
+  first-$1 timer activation, a second wallet stealing the bell with AAPL,
+  weighted points versus raw payout airtime, settlement, automatic round
+  preparation, SIWE login, two public profiles, chain-derived caller history,
+  one-wallet/one-vote eligibility, and an atomic `2/2` raid countdown.
+  Browser UAT found and fixed deployment-scoped activation-job conflict keys,
+  raid interval SQL typing, zero live-pot projections, numeric ticker labels,
+  final-holder airtime reconstruction, missing legacy earning-rate fallback,
+  and compact desktop/mobile clipping.
+- 2026-07-30: Mainnet-readiness simulations remain blocking. The DEX economic
+  screen marked all five eligible pools below the required 10x manipulation
+  cost relative to a $100 maximum pot, and the 100,000-round Rug Zone latency
+  model measured an automated-wallet win rate of 90.796% versus 9.204% for the
+  modeled human wallet, a 9.865x advantage. These are evidence for economic and
+  product review, not approval to freeze.
 - 2026-07-30: Removed the Bags card diagonal corner pseudo-element after live
   browser inspection showed it crossing the upper-right momentum badge. Devnet
   and testnet production builds passed; browser verification confirmed all four
@@ -478,10 +501,17 @@ When sources conflict, use this order:
 - Complete the required 24-hour/100-round testnet soak with DEX read failures,
   stale attestations, keeper/indexer restarts, liquidity failures, and RPC
   failover. Reconcile every observation and payout from chain events.
+- Resolve the economic screen before mainnet: exclude unsafe pools or adopt an
+  independently reviewed pot/scoring design that satisfies the required 10x
+  manipulation-cost margin.
+- Obtain explicit product approval for the measured Rug Zone automation
+  advantage or revise the final-holder mechanics and repeat the latency model.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
 - Arrange independent smart-contract security and economic review.
+- Move manager admin, verifier admin, and treasury to documented 2-of-3
+  multisigs before a mainnet release candidate.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
 - Select real testnet payment token, treasury, operator, and monitoring before
   deployment. RPC-provider routing is configured and verified.
