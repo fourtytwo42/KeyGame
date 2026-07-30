@@ -2,9 +2,7 @@ import "server-only";
 import { hexToString, type Address, zeroAddress } from "viem";
 import type { ClaimEvent, RoundState, TickerId } from "@/lib/game/types";
 import { database } from "@/lib/server/db";
-import {
-  loadServerDeployment,
-} from "@/lib/server/deployment";
+import { loadServerDeployment } from "@/lib/server/deployment";
 import { deploymentPublicClient } from "@/lib/server/rpc-client";
 import { lastBellAbi, roundManagerAbi } from "./last-bell-abi";
 
@@ -45,8 +43,7 @@ export async function getLiveSnapshot(
     client.getBlock(),
   ]);
   const roundAddress =
-    requestedRoundAddress ??
-    (prepared !== zeroAddress ? prepared : active);
+    requestedRoundAddress ?? (prepared !== zeroAddress ? prepared : active);
   if (roundAddress === zeroAddress) {
     throw new Error("No active or prepared broadcast is deployed.");
   }
@@ -76,39 +73,152 @@ export async function getLiveSnapshot(
     acquired,
     pools,
   ] = await Promise.all([
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "roundId" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "currentPhase" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "marketMode" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "producerPassRequired" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "startedAt" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "deadline" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "hardEnd" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "settledAt" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "pot" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holder" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holderTicker" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holderBand" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holderMultiplierBps" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holderPrice" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holderReportAt" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "holderProducerPass" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "winningTicker" }),
-    client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "acceptedClaims" }),
-    Promise.all([0n, 1n, 2n, 3n].map((index) =>
-      client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "tickerConfigs", args: [index] }),
-    )),
-    Promise.all([0, 1, 2, 3].map((index) =>
-      client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "tickerAirtime", args: [index] }),
-    )),
-    Promise.all([0, 1, 2, 3].map((index) =>
-      client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "tickerScore", args: [index] }),
-    )),
-    Promise.all([0n, 1n, 2n, 3n].map((index) =>
-      client.readContract({ address: roundAddress, abi: lastBellAbi, functionName: "lastTickerAcquisitionAt", args: [index] }),
-    )),
-    Promise.all((["holderPool", "closingPrintPool", "nextRoundPool", "protocolPool"] as const).map((functionName) =>
-      client.readContract({ address: roundAddress, abi: lastBellAbi, functionName }),
-    )),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "roundId",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "currentPhase",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "marketMode",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "producerPassRequired",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "startedAt",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "deadline",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "hardEnd",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "settledAt",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "pot",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holder",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderTicker",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderBand",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderMultiplierBps",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderPrice",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderReportAt",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "holderProducerPass",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "winningTicker",
+    }),
+    client.readContract({
+      address: roundAddress,
+      abi: lastBellAbi,
+      functionName: "acceptedClaims",
+    }),
+    Promise.all(
+      [0n, 1n, 2n, 3n].map((index) =>
+        client.readContract({
+          address: roundAddress,
+          abi: lastBellAbi,
+          functionName: "tickerConfigs",
+          args: [index],
+        }),
+      ),
+    ),
+    Promise.all(
+      [0, 1, 2, 3].map((index) =>
+        client.readContract({
+          address: roundAddress,
+          abi: lastBellAbi,
+          functionName: "tickerAirtime",
+          args: [index],
+        }),
+      ),
+    ),
+    Promise.all(
+      [0, 1, 2, 3].map((index) =>
+        client.readContract({
+          address: roundAddress,
+          abi: lastBellAbi,
+          functionName: "tickerScore",
+          args: [index],
+        }),
+      ),
+    ),
+    Promise.all(
+      [0n, 1n, 2n, 3n].map((index) =>
+        client.readContract({
+          address: roundAddress,
+          abi: lastBellAbi,
+          functionName: "lastTickerAcquisitionAt",
+          args: [index],
+        }),
+      ),
+    ),
+    Promise.all(
+      (
+        [
+          "holderPool",
+          "closingPrintPool",
+          "nextRoundPool",
+          "protocolPool",
+        ] as const
+      ).map((functionName) =>
+        client.readContract({
+          address: roundAddress,
+          abi: lastBellAbi,
+          functionName,
+        }),
+      ),
+    ),
   ]);
 
   const tickers = configs.map((config) =>
@@ -156,8 +266,7 @@ export async function getLiveSnapshot(
       contractVersion: "closing-print-v1",
       accepted: true,
       potAfterUsd: Number(args.pot) / 1e6,
-      timeAfterSeconds:
-        Number(args.deadline) - Number(args.acceptedAt),
+      timeAfterSeconds: Number(args.deadline) - Number(args.acceptedAt),
       verifiedPrice: Number(args.verifiedPrice) / 1e8,
       reportTimestamp: Number(args.reportTimestamp),
       sourceReportHash: args.sourceReportHash as `0x${string}`,
@@ -214,8 +323,7 @@ export async function getLiveSnapshot(
     deadlineNumber > 0
   ) {
     const duration =
-      Math.min(now, deadlineNumber, hardEndNumber) -
-      latest.acceptedAt;
+      Math.min(now, deadlineNumber, hardEndNumber) - latest.acceptedAt;
     if (duration > 0) {
       rawNow[Number(holderTicker)] += duration;
       scoreNow[Number(holderTicker)] +=
@@ -230,7 +338,9 @@ export async function getLiveSnapshot(
     broadcastLabel: Number(mode) === 1 ? "HEAT CHECK" : "VOLUME CHECK",
     producerPassRequired: passRequired,
     timeLeftSeconds: Math.max(0, deadlineNumber - now),
-    elapsedSeconds: Number(startedAt) ? Math.max(0, now - Number(startedAt)) : 0,
+    elapsedSeconds: Number(startedAt)
+      ? Math.max(0, now - Number(startedAt))
+      : 0,
     hardTimeLeftSeconds: Math.max(0, hardEndNumber - now),
     potUsd: usd(pot),
     holder:
@@ -268,8 +378,7 @@ export async function getLiveSnapshot(
     deadline: deadlineNumber,
     hardEnd: hardEndNumber,
     settledAt: Number(settledAt) || undefined,
-    winningTicker:
-      Number(winner) < 4 ? tickers[Number(winner)] : undefined,
+    winningTicker: Number(winner) < 4 ? tickers[Number(winner)] : undefined,
     pools: {
       holderUsd: usd(pools[0]),
       closingPrintUsd: usd(pools[1]),
