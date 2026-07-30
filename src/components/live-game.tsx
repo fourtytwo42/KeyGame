@@ -720,19 +720,36 @@ function ClosingPrintBoard({
   );
   return (
     <section className="railCard airtimeCard">
-      <span className="railLabel">
-        {state.marketMode === "DEX"
-          ? "ONCHAIN MOMENTUM · 10M TWAP · THE CLOSING PRINT"
-          : "FLAT ROUND · 1.00× · THE CLOSING PRINT"}
+      <span className="railLabel closingPrintLabel">
+        <strong>THE CLOSING PRINT</strong>
+        <small>
+          {state.marketMode === "DEX" ? "10M MOMENTUM" : "FLAT · 1.00×"}
+        </small>
       </span>
       {state.tickerScores.map((score) => {
         const ticker = tickerById(score.ticker);
         return (
-          <div className="airtimeRow" key={score.ticker}>
-            <span>
-              <strong>{score.ticker}</strong>
-              {leader === score.ticker ? <small> LEADS</small> : null}
-            </span>
+          <div
+            className="airtimeRow"
+            data-leader={leader === score.ticker}
+            key={score.ticker}
+          >
+            <div className="airtimeRowTop">
+              <span className="airtimeTicker">
+                <strong>{score.ticker}</strong>
+                {leader === score.ticker ? <small>LEADS</small> : null}
+              </span>
+              <span className="airtimeMetrics">
+                <b>
+                  {score.weightedScore.toFixed(1)}
+                  <small>PTS</small>
+                </b>
+                <b>
+                  {score.rawSeconds}
+                  <small>SEC AIRTIME</small>
+                </b>
+              </span>
+            </div>
             <div className="airtimeTrack">
               <i
                 style={{
@@ -741,10 +758,6 @@ function ClosingPrintBoard({
                 }}
               />
             </div>
-            <b>
-              {score.weightedScore.toFixed(1)}pt · {score.rawSeconds}s payout
-              airtime
-            </b>
           </div>
         );
       })}

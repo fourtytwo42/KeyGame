@@ -878,28 +878,94 @@ main {
   background: var(--caller-lilac);
 }
 
-.airtimeRow {
-  display: grid;
-  grid-template-columns: 57px 1fr 36px;
-  gap: 7px;
+.closingPrintLabel {
+  display: flex;
   align-items: center;
-  margin: 14px 0;
-  font-family: var(--mono);
-  font-size: 0.65rem;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.airtimeRow span {
-  display: grid;
+.closingPrintLabel strong {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
-.airtimeRow small {
+.closingPrintLabel small {
+  padding: 3px 5px;
   color: var(--night-desk);
-  font-weight: 900;
+  background: var(--caller-lilac);
+  font-family: var(--mono);
   font-size: 0.48rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.airtimeRow {
+  margin: 7px 0;
+  padding: 6px;
+  background: rgb(255 255 255 / 42%);
+  border: 2px solid var(--night-desk);
+  font-family: var(--mono);
+}
+
+.airtimeRow[data-leader="true"] {
+  background: var(--tube-white);
+  box-shadow: 3px 3px 0 var(--night-desk);
+}
+
+.airtimeRowTop {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 4px;
+}
+
+.airtimeTicker {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+}
+
+.airtimeTicker strong {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  line-height: 0.9;
+}
+
+.airtimeTicker small {
+  padding: 2px 4px;
+  color: var(--tube-white);
+  background: var(--night-desk);
+  font-weight: 900;
+  font-size: 0.43rem;
+}
+
+.airtimeMetrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.airtimeMetrics b {
+  display: grid;
+  align-content: center;
+  gap: 0;
+  padding: 3px 5px;
+  background: rgb(18 18 18 / 8%);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.airtimeMetrics small {
+  font-size: 0.4rem;
+  font-weight: 900;
 }
 
 .airtimeTrack {
-  height: 13px;
+  height: 9px;
   background: var(--tube-white);
   border: 2px solid var(--night-desk);
 }

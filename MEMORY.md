@@ -182,6 +182,11 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-30: Refined the live Closing Print scoreboard in both devnet and
+  testnet. Shortened the header to `THE CLOSING PRINT` plus a compact mode tag,
+  separated weighted points from payout airtime into labeled cells, and kept
+  all four rows inside the 720px desktop studio. Lint, typecheck, 34 app tests,
+  both production builds, and live browser layout measurements passed.
 - 2026-07-30: Redesigned the Bags cards in both VM devnet and Robinhood
   testnet builds. Removed Environment, Custody, and Price Source; added team
   identity, momentum dial, point speed, 30-minute heat, roster rank, and
