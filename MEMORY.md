@@ -80,6 +80,11 @@ Durable project context lives here. Update this file whenever information should
   untracked, mode-600 environment as fallbacks. The relay switches when the
   primary is unavailable or more than five blocks behind and does not expose
   provider credentials to browser JavaScript. Last verified 2026-07-29.
+- The protected VM service environments now contain both Robinhood testnet and
+  mainnet Alchemy fallback endpoints. Live chain-ID checks passed for 46630 and
+  4663, and `/api/status` reported the LAN primary and testnet fallback at the
+  same head with 7 ms and 47 ms observed latency respectively. Credentials are
+  not stored in the repository or this memory file. Last verified 2026-07-29.
 
 ## User Preferences
 
