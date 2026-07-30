@@ -3,7 +3,7 @@ import { tickerSlots } from "@/lib/game/constants";
 import type { TickerId } from "@/lib/game/types";
 import { createMockMarketReport } from "@/lib/web3/devnet";
 import { database } from "@/lib/server/db";
-import { loadServerDeployment } from "@/lib/server/deployment";
+import { loadServerDeploymentWithKey } from "@/lib/server/deployment";
 import { deploymentPublicClient } from "@/lib/server/rpc-client";
 import { lastBellAbi, roundManagerAbi } from "@/lib/web3/last-bell-abi";
 import { hexToString, zeroAddress } from "viem";
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
   const adapterToken = process.env.DEX_MARKET_ADAPTER_TOKEN;
   let sourceChainId = 4663;
   try {
-    const manifest = await loadServerDeployment();
+    const { manifest, deploymentKey } = await loadServerDeploymentWithKey();
     sourceChainId = manifest.chainId;
     const client = deploymentPublicClient(manifest);
     const [active, prepared] = await Promise.all([
@@ -122,9 +122,7 @@ export async function GET(request: Request) {
         if (
           !opening.ok ||
           payload.reports?.length !== 4 ||
-          payload.reports.some(
-            (report) => !/^0x[0-9a-fA-F]+$/.test(report),
-          )
+          payload.reports.some((report) => !/^0x[0-9a-fA-F]+$/.test(report))
         ) {
           throw new Error(
             payload.error || "Fresh opening DEX observations are unavailable.",
@@ -134,10 +132,12 @@ export async function GET(request: Request) {
       }
       const idempotencyKey = `activate:${roundAddress.toLowerCase()}`;
       await database.query(
-        `INSERT INTO keeper_jobs(chain_id,idempotency_key,job_type,payload)
-         VALUES($1,$2,'activate',$3)
-         ON CONFLICT(chain_id,idempotency_key) DO NOTHING`,
+        `INSERT INTO keeper_jobs(
+           deployment_key,chain_id,idempotency_key,job_type,payload)
+         VALUES($1,$2,$3,'activate',$4)
+         ON CONFLICT(deployment_key,idempotency_key) DO NOTHING`,
         [
+          deploymentKey,
           manifest.chainId,
           idempotencyKey,
           JSON.stringify({ openingReports }),
@@ -151,7 +151,8 @@ export async function GET(request: Request) {
             abi: lastBellAbi,
             functionName: "initialized",
           })
-        ) break;
+        )
+          break;
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
       if (
