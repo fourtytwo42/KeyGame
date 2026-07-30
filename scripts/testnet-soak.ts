@@ -296,6 +296,22 @@ async function createRun() {
   if (targetHours < 24 || targetRounds < 100) {
     throw new Error("Audit soak requires at least 24 hours and 100 rounds.");
   }
+  const tokenPath = process.env.SOAK_CONTROL_TOKEN_FILE;
+  if (!tokenPath) throw new Error("SOAK_CONTROL_TOKEN_FILE is required.");
+  const authDigest = createHash("sha256")
+    .update((await readFile(tokenPath, "utf8")).trim())
+    .digest("hex");
+  await Promise.all([soakAccount("A"), soakAccount("B")]);
+  const existingRun = await pool.query(
+    `SELECT id FROM soak_runs WHERE deployment_key=$1
+       AND state IN ('scheduled','running','monitoring') LIMIT 1`,
+    [deploymentKey],
+  );
+  if (existingRun.rowCount) {
+    throw new Error(
+      `Active soak run already exists: ${existingRun.rows[0].id}`,
+    );
+  }
   const runId = `soak-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   const intervalMs = (targetHours * 60 * 60 * 1_000) / targetRounds;
   await pool.query(
@@ -325,11 +341,6 @@ async function createRun() {
       ],
     );
   }
-  const tokenPath = process.env.SOAK_CONTROL_TOKEN_FILE;
-  if (!tokenPath) throw new Error("SOAK_CONTROL_TOKEN_FILE is required.");
-  const authDigest = createHash("sha256")
-    .update((await readFile(tokenPath, "utf8")).trim())
-    .digest("hex");
   const faults = [
     ["rpc-primary-failure", 0.08, 90],
     ["dex-stale", 0.16, 25],

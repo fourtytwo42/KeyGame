@@ -21,10 +21,10 @@ if [[ ! "$fault_id" =~ ^[0-9]+$ ]]; then
   echo "Fault id must be numeric." >&2
   exit 1
 fi
-row="$(psql "$DATABASE_URL" -Atc \
+row="$(psql "$DATABASE_URL" -v run_id="$SOAK_RUN_ID" -Atc \
   "SELECT fault_type || '|' || auth_digest || '|' || coalesce((parameters->>'durationSeconds'),'0')
      FROM soak_faults
-    WHERE id=$fault_id AND run_id=${SOAK_RUN_ID@Q} AND state='scheduled'
+    WHERE id=$fault_id AND run_id=:'run_id' AND state='scheduled'
       AND scheduled_at <= now()")"
 IFS='|' read -r fault_type expected_digest duration_seconds <<<"$row"
 if [[ -z "${fault_type:-}" || "$digest" != "$expected_digest" ]]; then
@@ -54,16 +54,19 @@ case "$fault_type" in
     sleep "$duration_seconds"
     ;;
   keeper-restart)
-    sudo systemctl restart keygame-keeper.service
+    systemctl --user restart keygame-keeper.service
     ;;
   indexer-restart)
-    sudo systemctl restart keygame-indexer.service
+    systemctl --user restart keygame-indexer.service
     ;;
   web-restart)
-    sudo systemctl restart keygame-uat-web.service
+    systemctl --user restart keygame-uat-web.service
     ;;
-  stale-attestation|replayed-attestation|isolated-reorg-fixture|duplicate-round-fixture)
-    echo "$fault_type is executed by the isolated integration fixture runner."
+  stale-attestation|replayed-attestation)
+    forge test --match-test test_InvalidStaleMismatchedAndReplayedReportsNeverCharge
+    ;;
+  isolated-reorg-fixture|duplicate-round-fixture)
+    corepack pnpm exec tsx scripts/soak-isolated-fixtures.ts "$fault_type"
     ;;
   *)
     echo "Unsupported fault type: $fault_type" >&2
