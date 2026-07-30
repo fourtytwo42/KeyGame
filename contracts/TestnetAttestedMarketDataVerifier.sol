@@ -39,9 +39,7 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
 
     error InvalidAttestation();
 
-    event AdminTransferred(
-        address indexed previousAdmin, address indexed nextAdmin
-    );
+    event AdminTransferred(address indexed previousAdmin, address indexed nextAdmin);
 
     constructor(address attestor_, address admin_) {
         if (attestor_ == address(0) || admin_ == address(0)) {

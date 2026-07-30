@@ -100,9 +100,7 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         freshVerifier.transferAdmin(nextAdmin);
         assertEq(freshVerifier.admin(), nextAdmin, "admin");
 
-        vm.expectRevert(
-            TestnetAttestedMarketDataVerifier.InvalidAttestation.selector
-        );
+        vm.expectRevert(TestnetAttestedMarketDataVerifier.InvalidAttestation.selector);
         freshVerifier.setAuthorizer(address(this));
 
         vm.prank(nextAdmin);
