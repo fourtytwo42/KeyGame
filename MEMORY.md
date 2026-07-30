@@ -20,8 +20,10 @@ Durable project context lives here. Update this file whenever information should
   `v4-devnet-2026-07-30T21-33-20-690Z` to complete, then reconcile and package
   its evidence. The active target is 24 naturally timed rounds with all six
   faults at 15-minute intervals. Source commit `b303635` passed the
-  accelerated gate; controller recovery commit `5fc0410` resumes interrupted
-  rounds from persisted calls. Robinhood testnet remains separately authorized.
+  accelerated gate. Endurance hardening commits through `176be3b` resume
+  interrupted rounds from persisted calls, safely retry reverted transactions,
+  use wall-clock-safe quote deadlines, and record fault restoration correctly.
+  Robinhood testnet remains separately authorized.
 
 ## Current State
 
@@ -52,9 +54,14 @@ Durable project context lives here. Update this file whenever information should
   discrepancies, and exact indexer reconstruction of 111 rounds. The active
   clean-deployment endurance run is
   `v4-devnet-2026-07-30T21-33-20-690Z`; its first naturally timed round settled
-  and rolled successfully. The run was shortened in place to 24 rounds; two
-  rounds are confirmed with zero failed actions after restart recovery. Last
-  verified 2026-07-30.
+  and rolled successfully. The run was shortened in place to 24 rounds; five
+  rounds are confirmed with zero failed actions after recovery. A round-five
+  quote expired because Anvil advanced wall time while idle; transaction
+  `0xefeba21a6e533ee01775fcd77f8318cf0db6485d74356a1f3576fa129f0a6134`
+  reverted without charging and remains recorded as evidence. The controller
+  now safely retries reverted expected-success actions with fresh deadlines.
+  A keeper restart fault completed and restored; the remaining compressed
+  schedule continues at 15-minute intervals. Last verified 2026-07-30.
 - V4 application snapshots resolve `RoundManagerV4.activeRound()` and are
   read-only. `services/v4-devnet-keeper.ts` owns local lifecycle transitions;
   `scripts/v4-devnet-soak.ts` owns deterministic qualification scenarios.
