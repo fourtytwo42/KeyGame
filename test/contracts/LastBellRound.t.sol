@@ -413,9 +413,21 @@ contract LastBellRoundTest is TestBase {
             comparison.totalControlTime(),
             "control-time invariant"
         );
-        assertEq(round.controlTime(ALICE), comparison.controlTime(ALICE));
-        assertEq(round.controlTime(BOB), comparison.controlTime(BOB));
-        assertEq(round.controlTime(CAROL), comparison.controlTime(CAROL));
+        assertEq(
+            round.controlTime(ALICE),
+            comparison.controlTime(ALICE),
+            "alice control invariant"
+        );
+        assertEq(
+            round.controlTime(BOB),
+            comparison.controlTime(BOB),
+            "bob control invariant"
+        );
+        assertEq(
+            round.controlTime(CAROL),
+            comparison.controlTime(CAROL),
+            "carol control invariant"
+        );
     }
 
     function _bandPrice(uint8 ticker, uint8 seed)
