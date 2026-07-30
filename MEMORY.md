@@ -311,7 +311,9 @@ When sources conflict, use this order:
   keeper `0x9f4efb42F7d8a0E392F5030965718473E0C4F963`, attestor
   `0x449C36a9692Be235f1594658e5fB7eF429664BbD`, faucet
   `0xa8FAdDE77519C427684e82634Daf1869Cbf31455`. All balances were zero when
-  checked.
+  checked. Keystores use lowercase Web3 `crypto` metadata and were verified
+  readable by both the TypeScript service wallet loader and Foundry `cast`.
+  The deployment preflight reaches and stops at the zero-balance guard.
 
 - 2026-07-12: Reset stale project-specific memory while retaining the durable memory-management logic.
 - 2026-07-28: Created `docs/fomo3d-game-logic-research.md` with contract mapping, exact price curves, all payout tables, timer and round state machines, Long/Soon differences, ICO behavior, vault/mask accounting, edge cases, historical attacks, implementation pseudocode, and a fidelity test checklist.

@@ -24,7 +24,15 @@ for (const role of roles) {
   const password = randomBytes(32).toString("base64url");
   const wallet = Wallet.createRandom();
   try {
-    await reservation.writeFile(await wallet.encrypt(password));
+    const encrypted = JSON.parse(await wallet.encrypt(password)) as Record<
+      string,
+      unknown
+    >;
+    if (encrypted.Crypto && !encrypted.crypto) {
+      encrypted.crypto = encrypted.Crypto;
+      delete encrypted.Crypto;
+    }
+    await reservation.writeFile(JSON.stringify(encrypted));
     await reservation.close();
     await writeFile(passwordPath, `${password}\n`, {
       encoding: "utf8",
