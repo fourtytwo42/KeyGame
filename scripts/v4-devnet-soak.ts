@@ -55,6 +55,7 @@ const rpc = deployment.rpc.primary;
 const client = createPublicClient({
   chain: localDevnet,
   cacheTime: 0,
+  pollingInterval: 50,
   transport: http(rpc),
 });
 const testClient = createTestClient({
@@ -99,6 +100,7 @@ function wallet(account: Address) {
   return createWalletClient({
     account,
     chain: localDevnet,
+    pollingInterval: 50,
     transport: http(rpc),
   });
 }

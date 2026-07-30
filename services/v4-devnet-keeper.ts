@@ -36,6 +36,7 @@ const client = publicClientFor(manifest);
 const wallet = createWalletClient({
   account: operator,
   chain: client.chain,
+  pollingInterval: 100,
   transport: http(manifest.rpc.primary),
 });
 const manager = manifest.contracts.manager;
