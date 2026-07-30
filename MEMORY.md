@@ -5,13 +5,13 @@ Durable project context lives here. Update this file whenever information should
 ## Active Handoff
 
 - Current task: Robinhood testnet production-readiness sprint.
-- Last meaningful result: The production-shaped core contracts are deployed and
-  explorer-verified on Robinhood testnet from commit `20cc38d`. The manager is
-  seeded with 50 mock USDG, user administration and treasury ownership are set,
-  and keeper/UAT faucet gas reserves are funded.
-- Next step: Install/configure PostgreSQL and systemd services against
-  `deployments/46630.json`, validate the user's faucet Stock Token contracts,
-  then configure genuine Chainlink Data Streams credentials and feed IDs.
+- Last meaningful result: The corrected production-shaped core contracts are
+  deployed and explorer-verified on Robinhood testnet from commit `f793296`.
+  The manager holds exactly 50.000000 mock USDG, user administration and
+  treasury ownership are set, and keeper/UAT faucet gas reserves are funded.
+- Next step: Reset superseded chain-46630 derived index state, restart the
+  PostgreSQL-backed services against the corrected manifest, and complete
+  isolated two-wallet browser UAT.
 - Blockers: Chainlink credentials and the final symbol/feed map are absent.
   Genuine-report UAT and the 24-hour/100-round soak cannot begin until they are
   configured.
@@ -56,6 +56,12 @@ Durable project context lives here. Update this file whenever information should
   independent systemd service templates: market collector, Data Streams
   adapter, indexer, and keeper. The chain-46630 core deployment is recorded in
   `deployments/46630.json`.
+- The active chain-46630 deployment at block `95079292` uses manager
+  `0xfe0504A9eBd6f9A4FF03b1778Fd7435c536fBa0b`, router
+  `0x4141D7CD735b2Fe20F9ea1E47fd139A3E23Ba10f`, mock USDG
+  `0x78931e3c4729Dd0a4D3ff83D4B47558997A16721`, and verifier
+  `0x03a380b412EbD6DD319A506fA725aD0C3E10C0E3`. The earlier deployment is
+  superseded and archived under `deployments/archive/`.
 - Separate encrypted deployer, keeper, attestor, and faucet keystores exist
   outside the repository under the VM user's private configuration. Public
   addresses are recorded in the 2026-07-29 production-readiness entry below;
@@ -323,8 +329,9 @@ When sources conflict, use this order:
   6,490,861 gas, approximately 0.00006491 ETH at that gas price before
   network-specific overhead. Fund the deployer first and redistribute small
   keeper/UAT balances after deployment rather than funding every role directly.
-- 2026-07-29: Deployed the production-shaped core contracts to Robinhood
-  testnet from commit `20cc38d4bc97dc8180aca66ff50c6bee7911f855`.
+- 2026-07-29: The first production-shaped core deployment from commit
+  `20cc38d4bc97dc8180aca66ff50c6bee7911f855` was superseded after browser UAT
+  exposed an 18-decimal seed input against the 6-decimal mock USDG.
   Addresses: manager `0x14301Aeb6845bEA2aedF43F9cD286F307EEBada7`,
   router `0xa9837E03eBAD581B5EB84F6C590C05C48df5112b`, mock USDG
   `0x17f39DAE52C1238FB50513A652cA67FF44b71F4a`, and verifier
@@ -332,7 +339,20 @@ When sources conflict, use this order:
   all four contracts. The user wallet
   `0x9099d24d55c105818b4e9ee117d87bc11063cf10` is manager/verifier
   admin and treasury; the manager holds the 50 mock-USDG seed; the faucet owns
-  mock-USDG minting; and the verifier authorizer is the manager.
+  mock-USDG minting; and the verifier authorizer is the manager. Its manifest
+  is retained only as an explicit superseded audit record.
+- 2026-07-29: Added a seed-denomination safety guard and redeployed the
+  corrected chain-46630 package from commit
+  `f79329695ca5dffa5368dd9933e43ad2b3269543` at block `95079292`.
+  Explorer-verified addresses: manager
+  `0xfe0504A9eBd6f9A4FF03b1778Fd7435c536fBa0b`, router
+  `0x4141D7CD735b2Fe20F9ea1E47fd139A3E23Ba10f`, mock USDG
+  `0x78931e3c4729Dd0a4D3ff83D4B47558997A16721`, and verifier
+  `0x03a380b412EbD6DD319A506fA725aD0C3E10C0E3`. Live reads verified the
+  manager holds exactly 50,000,000 raw units (50.000000 USDG), the faucet owns
+  mock USDG, the user wallet is manager admin/treasury and verifier admin, the
+  manager is verifier authorizer and router operator, and the router references
+  the corrected token.
 - 2026-07-29: The initial deployment simulation found that immutable verifier
   administration prevented deployer configuration followed by user ownership.
   Added verifier admin transfer support and a regression test; 26 VM Foundry
@@ -384,8 +404,9 @@ When sources conflict, use this order:
 - Configure private Chainlink Data Streams credentials plus a verified
   symbol/feed map; then run genuine testnet report and official mainnet-fork
   verification gates.
-- Install/enable PostgreSQL and systemd units, prepare the first round, perform
-  two-context browser UAT, and complete the 24-hour/100-round interruption soak.
+- Complete two-context browser UAT against the corrected deployment, enable
+  user-service persistence with `sudo loginctl enable-linger hendo420`, and
+  complete the 24-hour/100-round interruption soak.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
