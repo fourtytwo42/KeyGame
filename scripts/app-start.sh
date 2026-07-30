@@ -18,6 +18,11 @@ export KEYGAME_CHAIN_ID=31337
 export KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/31337.json"
 pnpm db:migrate >/dev/null
 
+# NEXT_PUBLIC values are compiled into the browser bundle. Release scans build
+# protected/testnet variants into the same .next directory, so always rebuild
+# from the active devnet manifest before starting the local application.
+pnpm build >/dev/null
+
 if [[ -f "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
   echo "Last Bell is already running with PID $(cat "$pid_file")."
 else

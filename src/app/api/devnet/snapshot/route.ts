@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordCompletedRun } from "@/lib/game/history";
+import { isV4DevnetRuntime } from "@/lib/server/runtime-deployment";
 import {
   ensureDevnetRoundProgression,
   getDevnetSession,
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    if (process.env.NEXT_PUBLIC_CONTRACT_VERSION === "last-bell-v4-stock-pot") {
+    if (isV4DevnetRuntime()) {
       let state = await getV4DevnetSnapshot();
       await recordCompletedRun(state);
       state = await ensureV4DevnetRoundProgression(state);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isV4DevnetRuntime } from "@/lib/server/runtime-deployment";
 import { quoteV4Devnet } from "@/lib/web3/v4-devnet";
 import type { TickerId } from "@/lib/game/types";
 
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
       amountUsd?: number;
       slippageBps?: number;
     };
-    if (process.env.NEXT_PUBLIC_CONTRACT_VERSION !== "last-bell-v4-stock-pot") {
+    if (!isV4DevnetRuntime()) {
       return NextResponse.json(
         { ok: false, error: "Stock-pot quotes are not enabled." },
         { status: 409 },
