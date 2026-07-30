@@ -9,9 +9,9 @@ Durable project context lives here. Update this file whenever information should
   deployed and explorer-verified on Robinhood testnet from commit `f793296`.
   The manager holds exactly 50.000000 mock USDG, user administration and
   treasury ownership are set, and keeper/UAT faucet gas reserves are funded.
-- Next step: Reset superseded chain-46630 derived index state, restart the
-  PostgreSQL-backed services against the corrected manifest, and complete
-  isolated two-wallet browser UAT.
+- Next step: Configure genuine Chainlink credentials/feed IDs, validate the
+  user's faucet Stock Token provenance, enable service persistence, and begin
+  the controlled 24-hour/100-round interruption soak.
 - Blockers: Chainlink credentials and the final symbol/feed map are absent.
   Genuine-report UAT and the 24-hour/100-round soak cannot begin until they are
   configured.
@@ -62,6 +62,10 @@ Durable project context lives here. Update this file whenever information should
   `0x78931e3c4729Dd0a4D3ff83D4B47558997A16721`, and verifier
   `0x03a380b412EbD6DD319A506fA725aD0C3E10C0E3`. The earlier deployment is
   superseded and archived under `deployments/archive/`.
+- Native PostgreSQL plus collector, attestation adapter, indexer, keeper, and
+  UAT web services are running against the corrected deployment. Round rollover
+  is continuous, but every prepared round remains at `startedAt == 0` until its
+  first accepted $1 claim.
 - Separate encrypted deployer, keeper, attestor, and faucet keystores exist
   outside the repository under the VM user's private configuration. Public
   addresses are recorded in the 2026-07-29 production-readiness entry below;
@@ -353,6 +357,20 @@ When sources conflict, use this order:
   mock USDG, the user wallet is manager admin/treasury and verifier admin, the
   manager is verifier authorizer and router operator, and the router references
   the corrected token.
+- 2026-07-29: Corrected-deployment browser UAT completed through round 3 with
+  two independent session wallets. Wallet A started the timer with NVDA,
+  wallet B stole the bell with SPY, and wallet A reused its original allowance
+  to steal it back with QQQ. The round settled at $4.2975 with QQQ winning,
+  exact pools of $2.14875/$1.28925/$0.644625/$0.214875, and three indexed
+  claims. The keeper prepared round 4 with no holder, no timer, and no pot.
+  Browser UAT exposed and fixed a live-spectator bug that incorrectly showed
+  the entry desk to a connected wallet with no prior claims. Replay projection
+  was also extended with locked interval seconds, weighted points, ticker
+  switch, market proof, transaction, and block details. Testnet receipts now
+  use the indexed settled round instead of simulator data, and replay/receipt
+  pages expose wallet-bound pull-payment withdrawal controls for final-holder
+  and Closing Print rewards. VM application gates passed 34 tests, ESLint,
+  TypeScript, and the isolated production build.
 - 2026-07-29: The initial deployment simulation found that immutable verifier
   administration prevented deployer configuration followed by user ownership.
   Added verifier admin transfer support and a regression test; 26 VM Foundry

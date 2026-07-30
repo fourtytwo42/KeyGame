@@ -2138,6 +2138,52 @@ main {
   font-size: 2.5rem;
 }
 
+.replayProof {
+  width: min(100%, 620px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0 0 18px;
+  color: var(--night-desk);
+  background: var(--tube-white);
+  border: 2px solid var(--night-desk);
+  text-align: left;
+}
+
+.replayProof div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-right: 2px solid var(--night-desk);
+  border-bottom: 2px solid var(--night-desk);
+}
+
+.replayProof div:nth-child(even) {
+  border-right: 0;
+}
+
+.replayProof div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.replayProof dt {
+  font-family: var(--mono);
+  font-size: 0.54rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.replayProof dd {
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.replayProof code {
+  font-size: 0.6rem;
+}
+
 .replayControls {
   grid-column: 1;
   display: grid;
@@ -2214,6 +2260,37 @@ main {
   display: flex;
   gap: 12px;
   justify-content: center;
+}
+
+.roundRewardPanel {
+  width: min(100%, 680px);
+  margin: 26px auto 0;
+  padding: 18px;
+  background: var(--green-room);
+  border: var(--outline);
+  box-shadow: 5px 5px 0 var(--night-desk);
+  text-align: center;
+}
+
+.roundRewardPanel h2 {
+  margin: 5px 0;
+  font-family: var(--display);
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+
+.roundRewardPanel p {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.roundRewardPanel > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 12px;
 }
 
 .receiptPage {

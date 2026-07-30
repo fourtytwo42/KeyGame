@@ -37,6 +37,38 @@ export function ReplayPlayer({ state }: { state: RoundState }) {
           PUTS IT ON AIR · {event.marketBand} ·{" "}
           {(event.multiplierBps / 10_000).toFixed(2)}×
         </p>
+        <dl className="replayProof">
+          <div>
+            <dt>Locked interval</dt>
+            <dd>
+              {event.intervalSeconds ?? 0}s ·{" "}
+              {(event.weightedPoints ?? 0).toFixed(2)} PT
+            </dd>
+          </div>
+          <div>
+            <dt>Ticker switch</dt>
+            <dd>
+              {event.previousTicker ?? "OPEN"} → {event.claimant.ticker}
+            </dd>
+          </div>
+          <div>
+            <dt>Market proof</dt>
+            <dd>
+              {state.marketMode === "FLAT"
+                ? "FLAT ROUND · NO REPORT REQUIRED"
+                : `${event.verifiedPrice.toFixed(4)} · ${new Date(
+                    event.reportTimestamp * 1000,
+                  ).toLocaleString()}`}
+            </dd>
+          </div>
+          <div>
+            <dt>Chain proof</dt>
+            <dd>
+              BLOCK {event.blockNumber ?? "—"} · TX{" "}
+              <code>{event.transactionHash ?? "—"}</code>
+            </dd>
+          </div>
+        </dl>
         <strong>{formatUsd(event.potAfterUsd)} POT</strong>
       </div>
       <div className="replayControls">
@@ -74,7 +106,7 @@ export function ReplayPlayer({ state }: { state: RoundState }) {
               <span>#{claim.sequence}</span>
               <strong>{claim.claimant.displayName}</strong>
               <small>
-                {claim.claimant.ticker} · {claim.timeAfterSeconds}s ·{" "}
+                {claim.claimant.ticker} · {claim.intervalSeconds ?? 0}s ·{" "}
                 {claim.weightedPoints?.toFixed(2) ?? "—"} PT
               </small>
             </button>

@@ -276,31 +276,40 @@ export async function getLiveSnapshot(
       acceptedAt: Number(args.acceptedAt),
     };
   });
-  const claims: ClaimEvent[] = indexedClaims.map((claim) => ({
-    id: claim.id,
-    sequence: claim.sequence,
-    atSeconds: claim.atSeconds,
-    claimant: claim.claimant,
-    previousHolder: claim.previousHolder,
-    previousTicker: claim.previousTicker,
-    feeUsd: claim.feeUsd,
-    phase: claim.phase,
-    transactionHash: claim.transactionHash,
-    blockNumber: claim.blockNumber,
-    logIndex: claim.logIndex,
-    contractVersion: claim.contractVersion,
-    accepted: claim.accepted,
-    potAfterUsd: claim.potAfterUsd,
-    timeAfterSeconds: claim.timeAfterSeconds,
-    verifiedPrice: claim.verifiedPrice,
-    reportTimestamp: claim.reportTimestamp,
-    sourceReportHash: claim.sourceReportHash,
-    marketBand: claim.marketBand,
-    multiplierBps: claim.multiplierBps,
-    producerPass: claim.producerPass,
-  }));
-
   const now = Number(block.timestamp);
+  const scoringEnd = Math.min(Number(deadline), Number(hardEnd));
+  const claims: ClaimEvent[] = indexedClaims.map((claim, index) => {
+    const intervalEnd =
+      indexedClaims[index + 1]?.acceptedAt ??
+      (Number(phase) >= 4 ? scoringEnd : Math.min(now, scoringEnd));
+    const intervalSeconds = Math.max(0, intervalEnd - claim.acceptedAt);
+    return {
+      id: claim.id,
+      sequence: claim.sequence,
+      atSeconds: claim.atSeconds,
+      claimant: claim.claimant,
+      previousHolder: claim.previousHolder,
+      previousTicker: claim.previousTicker,
+      feeUsd: claim.feeUsd,
+      phase: claim.phase,
+      transactionHash: claim.transactionHash,
+      blockNumber: claim.blockNumber,
+      logIndex: claim.logIndex,
+      contractVersion: claim.contractVersion,
+      accepted: claim.accepted,
+      potAfterUsd: claim.potAfterUsd,
+      timeAfterSeconds: claim.timeAfterSeconds,
+      verifiedPrice: claim.verifiedPrice,
+      reportTimestamp: claim.reportTimestamp,
+      sourceReportHash: claim.sourceReportHash,
+      marketBand: claim.marketBand,
+      multiplierBps: claim.multiplierBps,
+      intervalSeconds,
+      weightedPoints: (intervalSeconds * claim.multiplierBps) / 10_000,
+      producerPass: claim.producerPass,
+    };
+  });
+
   const deadlineNumber = Number(deadline);
   const hardEndNumber = Number(hardEnd);
   const chainPhase = phaseName(Number(phase));

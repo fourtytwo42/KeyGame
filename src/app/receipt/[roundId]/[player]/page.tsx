@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { RoundRewardPanel } from "@/components/round-reward-panel";
 import { ShareReceipt } from "@/components/share-receipt";
 import { formatUsd, shortAddress } from "@/lib/game/constants";
 import { scenarios } from "@/lib/game/scenarios";
+import { getIndexedHistoricalRunByRoundId } from "@/lib/server/indexed-history";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = {
@@ -18,8 +21,15 @@ export default async function ReceiptPage({
   params: Promise<{ roundId: string; player: string }>;
 }) {
   const { roundId, player } = await params;
-  const state =
-    process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
+  const mode = process.env.NEXT_PUBLIC_GAME_MODE;
+  const indexed =
+    mode === "testnet" || mode === "mainnet"
+      ? await getIndexedHistoricalRunByRoundId(roundId)
+      : undefined;
+  if ((mode === "testnet" || mode === "mainnet") && !indexed) notFound();
+  const state = indexed
+    ? indexed.state
+    : mode === "devnet"
       ? await getDevnetSnapshot()
       : scenarios.settled.state;
   const isWinner =
@@ -110,6 +120,9 @@ export default async function ReceiptPage({
           WATCH THE TAPE
         </Link>
       </div>
+      {mode === "testnet" || mode === "mainnet" ? (
+        <RoundRewardPanel state={state} />
+      ) : null}
       <p className="receiptDisclaimer">
         Devnet receipt. No real asset, payout, or brokerage position exists.
       </p>

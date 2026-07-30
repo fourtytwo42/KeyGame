@@ -85,3 +85,14 @@ export async function getIndexedHistoricalRun(
     state: await getLiveSnapshot(row.contract_address),
   };
 }
+
+export async function getIndexedHistoricalRunByRoundId(
+  roundId: string,
+): Promise<HistoricalRun | undefined> {
+  const row = (await settledRows(roundId)).rows[0];
+  if (!row) return undefined;
+  return {
+    ...summary(row),
+    state: await getLiveSnapshot(row.contract_address),
+  };
+}

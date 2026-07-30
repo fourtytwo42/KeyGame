@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReplayPlayer } from "@/components/replay-player";
+import { RoundRewardPanel } from "@/components/round-reward-panel";
 import { getHistoricalRun } from "@/lib/game/history";
 import { scenarios } from "@/lib/game/scenarios";
 import { getIndexedHistoricalRun } from "@/lib/server/indexed-history";
@@ -53,6 +54,9 @@ export default async function ReplayPage({
         {state.contractAddress ?? "LOCAL FIXTURE"} · BLOCK{" "}
         {state.blockNumber ?? "SIM"}
       </p>
+      {mode === "testnet" || mode === "mainnet" ? (
+        <RoundRewardPanel state={state} />
+      ) : null}
       <div className="pageEndActions">
         <Link className="primaryAction linkAction" href="/?scenario=entry">
           RUN IT BACK
