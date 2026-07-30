@@ -506,7 +506,7 @@ async function reconcileRound(
   });
   let failures = 0;
   for (let ticker = 0; ticker < 4; ticker += 1) {
-    const [config, accounted, holder, winning, lifetime, seed, protocol] =
+    const [config, accounted, holder, winning, lifetime, protocol] =
       await Promise.all([
         client.readContract({
           address: round,
@@ -547,20 +547,16 @@ async function reconcileRound(
         cancelled
           ? Promise.resolve(0n)
           : client.readContract({
-              address: manager,
-              abi: roundManagerV4Abi,
-              functionName: "seedAmounts",
-              args: [BigInt(ticker)],
-            }),
-        cancelled
-          ? Promise.resolve(0n)
-          : client.readContract({
               address: round,
               abi: lastBellV4Abi,
               functionName: "protocolPool",
               args: [BigInt(ticker)],
             }),
       ]);
+    // The keeper transfers and clears nextRoundPool before activating the next
+    // entry-state round. Reconstruct the immutable 5% allocation from the
+    // accounted token balance so reconciliation remains valid after rollover.
+    const seed = cancelled ? 0n : (accounted * 500n) / 10_000n;
     const allocated = holder + winning + lifetime + seed + protocol;
     const discrepancy = cancelled ? 0n : accounted - allocated;
     if (discrepancy !== 0n) failures += 1;
