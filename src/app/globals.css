@@ -2962,6 +2962,11 @@ main {
     gap: 10px;
   }
 
+  .rightRail {
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .railCard {
     padding: 12px;
   }
@@ -2969,6 +2974,49 @@ main {
   .railLabel {
     margin: -12px -12px 12px;
     padding: 6px 9px;
+  }
+
+  .projectionCard {
+    padding-bottom: 8px;
+  }
+
+  .projectionCard dl {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .projectionCard dl > div {
+    min-width: 0;
+    padding-bottom: 3px;
+  }
+
+  .projectionCard p {
+    margin: 5px 0 2px;
+  }
+
+  .raidCard progress {
+    margin-block: 4px 2px;
+  }
+
+  .raidCard .textButton {
+    margin-top: 2px;
+  }
+
+  .trenchesCard {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .trenchesList {
+    gap: 6px;
+  }
+
+  .trenchEvent {
+    padding-bottom: 5px;
+  }
+
+  .trenchEvent:nth-child(n + 4) {
+    display: none;
   }
 
   .ruleCard li {
