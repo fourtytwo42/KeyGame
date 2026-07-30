@@ -165,8 +165,10 @@ async function advanceCampaign(
            state='COUNTDOWN',threshold=$2,eligible_voters=$3,
            countdown_starts_at=now(),
            live_starts_at=now()+($4::text || ' minutes')::interval,
-           live_ends_at=now()+(($4+$5)::text || ' minutes')::interval,
-           cooldown_ends_at=now()+(($4+$5+$6)::text || ' minutes')::interval,
+           live_ends_at=now()+
+             ((($4::int)+($5::int))::text || ' minutes')::interval,
+           cooldown_ends_at=now()+
+             ((($4::int)+($5::int)+($6::int))::text || ' minutes')::interval,
            updated_at=now()
          WHERE id=$1`,
         [
