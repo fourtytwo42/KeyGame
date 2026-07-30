@@ -3024,14 +3024,26 @@ main {
   }
 
   .factionChoice {
-    min-height: 82px;
+    min-height: 68px;
     gap: 2px;
-    padding: 8px;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 7px;
+    padding: 6px 8px;
     border-width: 3px;
   }
 
+  .factionChoice .tickerBadge {
+    grid-row: 1 / 4;
+  }
+
   .factionChoice strong {
-    font-size: 1.35rem;
+    font-size: 1.2rem;
+  }
+
+  .factionChoice small {
+    grid-column: 2;
+    line-height: 1.05;
   }
 
   .entryTerms {
@@ -3039,7 +3051,7 @@ main {
   }
 
   .entryDesk > .primaryAction {
-    min-height: 46px;
+    min-height: 42px;
     padding-block: 8px;
   }
 
@@ -3317,12 +3329,17 @@ main {
   }
 
   .factionChoice {
-    min-height: 108px;
-    padding: 10px;
+    min-height: 84px;
+    gap: 2px;
+    padding: 7px;
   }
 
   .factionChoice strong {
-    font-size: 1.35rem;
+    font-size: 1.2rem;
+  }
+
+  .factionChoice small {
+    line-height: 1.05;
   }
 
   .stateInterstitial,

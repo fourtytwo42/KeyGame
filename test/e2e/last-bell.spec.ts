@@ -181,4 +181,28 @@ test("desktop studio fits entirely inside the viewport", async ({
   expect(dimensions.arenaBottom ?? Infinity).toBeLessThanOrEqual(
     dimensions.viewport,
   );
+
+  const entryAction = page.getByRole("button", {
+    name: /ENTER WITH .+ · \$1/i,
+  });
+  await expect(entryAction).toBeVisible();
+  const actionBounds = await entryAction.boundingBox();
+  expect(
+    actionBounds ? actionBounds.y + actionBounds.height : Infinity,
+  ).toBeLessThanOrEqual(dimensions.viewport);
+});
+
+test("mobile entry action fits the paid-flow viewport", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium");
+  await page.goto("/?scenario=entry");
+  const entryAction = page.getByRole("button", {
+    name: /ENTER WITH .+ · \$1/i,
+  });
+  await expect(entryAction).toBeVisible();
+  const actionBounds = await entryAction.boundingBox();
+  expect(
+    actionBounds ? actionBounds.y + actionBounds.height : Infinity,
+  ).toBeLessThanOrEqual(844);
 });

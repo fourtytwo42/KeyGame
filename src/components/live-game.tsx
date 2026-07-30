@@ -599,10 +599,8 @@ function EntryDesk({
               <small>
                 {score.currentPrice
                   ? `10M TWAP ${formatUsd(score.currentPrice)}`
-                  : "10M TWAP WARMING UP"}
-              </small>
-              <small>
-                HEAT #{score.volatilityRank || index + 1} · 30M MOVE{" "}
+                  : "10M TWAP WARMING UP"}{" "}
+                · HEAT #{score.volatilityRank || index + 1} · 30M{" "}
                 {(score.realizedMovementBps ?? 0).toFixed(1)} BPS
               </small>
               <small>
