@@ -36,18 +36,20 @@ fi
 auth_digest="$(tr -d '\r\n' <"$SOAK_CONTROL_TOKEN_FILE" | sha256sum | awk '{print $1}')"
 fault_id="$(
   psql "$DATABASE_URL" -v run_id="$run_id" -v fault="$fault_type" \
-    -v digest="$auth_digest" -v duration="$duration_seconds" -Atc \
-    "INSERT INTO soak_faults(
-       run_id,fault_type,auth_digest,state,scheduled_at,activated_at,parameters)
-     VALUES(:'run_id',:'fault',:'digest','active',now(),now(),
-       jsonb_build_object('durationSeconds',:'duration'::integer))
-     RETURNING id"
+    -v digest="$auth_digest" -v duration="$duration_seconds" -At <<'SQL'
+INSERT INTO soak_faults(
+  run_id,fault_type,auth_digest,state,scheduled_at,activated_at,parameters)
+VALUES(:'run_id',:'fault',:'digest','active',now(),now(),
+  jsonb_build_object('durationSeconds',:'duration'::integer))
+RETURNING id;
+SQL
 )"
 
 restore() {
-  psql "$DATABASE_URL" -v id="$fault_id" -c \
-    "UPDATE soak_faults SET state='restored',restored_at=now()
-     WHERE id=:'id'" >/dev/null || true
+  psql "$DATABASE_URL" -v id="$fault_id" <<'SQL' >/dev/null || true
+UPDATE soak_faults SET state='restored',restored_at=now()
+WHERE id=:'id';
+SQL
 }
 trap restore EXIT
 
