@@ -461,7 +461,7 @@ export async function quoteV4Devnet(
         }),
       ),
     ),
-    client.getBlock(),
+    client.getBlock({ blockTag: "pending" }),
   ]);
   const projected = (amount * BigInt(multiplier)) / 10_000n;
   const resulting = standings.map((value, item) =>
