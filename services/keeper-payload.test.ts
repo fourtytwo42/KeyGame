@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  hydrateRoundSettings,
-  persistRoundSettings,
-} from "./keeper-payload";
+import { hydrateRoundSettings, persistRoundSettings } from "./keeper-payload";
 
 describe("keeper round settings persistence", () => {
   it("serializes and restores every uint256 field without precision loss", () => {

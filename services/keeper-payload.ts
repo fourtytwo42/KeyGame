@@ -1,7 +1,4 @@
-export type PersistedRoundSettings = Record<
-  string,
-  string | number | boolean
->;
+export type PersistedRoundSettings = Record<string, string | number | boolean>;
 
 export function persistRoundSettings<
   T extends {

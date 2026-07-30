@@ -349,10 +349,7 @@ async function processJob() {
       }
       hash = await sendManager(
         "prepareRound",
-        [
-          hydrateRoundSettings(job.payload.settings),
-          job.payload.tickers,
-        ],
+        [hydrateRoundSettings(job.payload.settings), job.payload.tickers],
         rememberHash,
       );
     } else {
