@@ -2,14 +2,15 @@
   "schemaVersion": 2,
   "environment": "robinhood-testnet",
   "chainId": 46630,
-  "deploymentBlock": 95124915,
-  "sourceCommit": "213ff49ddb40aa0094630362162a497c52b38cad",
+  "deploymentBlock": 95286752,
+  "sourceCommit": "6b0b8479bbbabc75b34bafbfcd6d6f538602914e",
   "mockOnly": true,
+  "contractVersion": "closing-print-v3-airtime",
   "contracts": {
-    "manager": "0x73efd21ee56bafce2f286511a66702e74c7133fe",
-    "paymentRouter": "0xc9A28Fb0Cac73F07038078e25645cd7E8B9A9baB",
-    "paymentToken": "0x0bbe0774147a2530b7328f09979b51804bc0b844",
-    "marketVerifier": "0x6083abe0b26e3ac1409eab2ccb4aeb908febb894"
+    "manager": "0x3c8e37ac53c9fcd869339313799cec1a3ecc71b5",
+    "paymentRouter": "0x2840675D424943867c7b5E122972c328BFA2A88f",
+    "paymentToken": "0x360908e1a7a95b26ec4b098762b61d080d7c9aba",
+    "marketVerifier": "0x8a6fb950579cdf1990260e489b057d1f229a3ee0"
   },
   "rpc": {
     "primary": "http://192.168.50.117:8547"
