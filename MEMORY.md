@@ -12,9 +12,10 @@ Durable project context lives here. Update this file whenever information should
 - Next step: Configure genuine Chainlink credentials/feed IDs, validate the
   user's faucet Stock Token provenance, enable service persistence, and begin
   the controlled 24-hour/100-round interruption soak.
-- Blockers: Chainlink credentials and the final symbol/feed map are absent.
-  Genuine-report UAT and the 24-hour/100-round soak cannot begin until they are
-  configured.
+- Market-price direction under evaluation: prefer manipulation-resistant
+  Robinhood Chain DEX TWAPs for canonical Stock Token/USDG pools instead of
+  requiring Chainlink credentials. Confirm live pool addresses, observation
+  support, and minimum liquidity before replacing the existing verifier.
 
 ## Current State
 
@@ -431,9 +432,10 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Configure private Chainlink Data Streams credentials plus a verified
-  symbol/feed map; then run genuine testnet report and official mainnet-fork
-  verification gates.
+- Discover and verify canonical Robinhood Chain DEX pools for the supported
+  Stock Tokens, measure usable USDG liquidity and TWAP observation history, and
+  specify manipulation/deviation guards. If coverage is insufficient, retain
+  Chainlink Data Streams as a fallback rather than trusting instantaneous spot.
 - Complete two-context browser UAT against the corrected deployment, enable
   user-service persistence with `sudo loginctl enable-linger hendo420`, and
   complete the 24-hour/100-round interruption soak.
