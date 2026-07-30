@@ -243,19 +243,25 @@ async function tickerSymbols(round: Address) {
 async function executeRoundAction(
   runId: string,
   action: { id: string; idempotency_key: string },
+  runGasReserveWei: bigint,
 ) {
   const [a, b] = await Promise.all([soakAccount("A"), soakAccount("B")]);
   const balances = await Promise.all([
     client.getBalance({ address: a.account.address }),
     client.getBalance({ address: b.account.address }),
   ]);
-  if (balances.some((balance) => balance < gasReserveWei)) {
+  if (balances.some((balance) => balance < runGasReserveWei)) {
     await pool.query(
       "UPDATE soak_runs SET state='monitoring',spend_stopped_at=now(),updated_at=now() WHERE id=$1",
       [runId],
     );
     throw new Error("Gas reserve reached; new spend stopped.");
   }
+  await pool.query(
+    `UPDATE soak_runs SET state='running',spend_stopped_at=null,updated_at=now()
+     WHERE id=$1 AND state='monitoring'`,
+    [runId],
+  );
   const round = getAddress(await activeRound());
   if (round === zeroAddress) throw new Error("No prepared or active round.");
   const symbols = await tickerSymbols(round);
@@ -376,8 +382,8 @@ async function createRun() {
 }
 
 async function runDueActions() {
-  const run = await pool.query<{ id: string }>(
-    `SELECT id FROM soak_runs WHERE deployment_key=$1
+  const run = await pool.query<{ id: string; gas_reserve_wei: string }>(
+    `SELECT id,gas_reserve_wei::text FROM soak_runs WHERE deployment_key=$1
        AND state IN ('running','monitoring') ORDER BY created_at DESC LIMIT 1`,
     [deploymentKey],
   );
@@ -397,7 +403,11 @@ async function runDueActions() {
     );
     if (!due.rowCount) break;
     try {
-      await executeRoundAction(runId, due.rows[0]);
+      await executeRoundAction(
+        runId,
+        due.rows[0],
+        BigInt(run.rows[0].gas_reserve_wei),
+      );
       await pool.query(
         "UPDATE soak_actions SET state='confirmed',completed_at=now() WHERE id=$1",
         [due.rows[0].id],
