@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { getAddress, isAddress } from "viem";
+import { tickerSlots } from "@/lib/game/constants";
 import type { PlayerProfile } from "@/lib/game/types";
 import { validateProfile } from "@/lib/game/profile-validation";
 import { database } from "./db";
@@ -50,18 +51,31 @@ async function statsFor(address: string) {
         total_seconds: string;
         top_ticker: string | null;
       }>(
-        `WITH ordered AS (
-           SELECT contract_address,args,
+        `WITH settlements AS (
+           SELECT e.contract_address,
+             extract(epoch FROM b.block_time)::bigint AS settled_at
+           FROM chain_events e
+           JOIN canonical_blocks b
+             ON b.chain_id=e.chain_id AND b.number=e.block_number
+           WHERE e.deployment_key=$1 AND e.event_name='RoundSettled'
+         ), ordered AS (
+           SELECT claim.contract_address,claim.args,
              (args->>'ticker') AS ticker,
              (args->>'acceptedAt')::bigint AS accepted_at,
              lead((args->>'acceptedAt')::bigint) OVER (
-               PARTITION BY contract_address ORDER BY block_number,log_index
-             ) AS next_at
-           FROM chain_events
-           WHERE deployment_key=$1 AND event_name='BellClaimed'
+               PARTITION BY claim.contract_address
+               ORDER BY claim.block_number,claim.log_index
+             ) AS next_at,
+             settlements.settled_at
+           FROM chain_events claim
+           LEFT JOIN settlements
+             ON lower(settlements.contract_address)=lower(claim.contract_address)
+           WHERE claim.deployment_key=$1 AND claim.event_name='BellClaimed'
          ), owned AS (
            SELECT ticker,
-             greatest(0,coalesce(next_at,accepted_at)-accepted_at) AS seconds
+             greatest(
+               0,coalesce(next_at,settled_at,accepted_at)-accepted_at
+             ) AS seconds
            FROM ordered
            WHERE lower(args->>'player')=lower($2)
          ), totals AS (
@@ -73,6 +87,8 @@ async function statsFor(address: string) {
         [deploymentKey, address],
       ),
     ]);
+  const topTicker = airtime.rows[0]?.top_ticker;
+  const topTickerIndex = topTicker === null ? Number.NaN : Number(topTicker);
   return {
     calls: Number(basics.rows[0]?.calls ?? 0),
     roundsPlayed: Number(basics.rows[0]?.rounds ?? 0),
@@ -81,7 +97,10 @@ async function statsFor(address: string) {
       winningContributions.rows[0]?.count ?? 0,
     ),
     totalRawAirtimeSeconds: Number(airtime.rows[0]?.total_seconds ?? 0),
-    topTicker: airtime.rows[0]?.top_ticker ?? undefined,
+    topTicker:
+      Number.isInteger(topTickerIndex) && tickerSlots[topTickerIndex]
+        ? tickerSlots[topTickerIndex].id
+        : (topTicker ?? undefined),
     claimedRewardsUsd: Number(rewards.rows[0]?.amount ?? 0) / 1e6,
   };
 }
