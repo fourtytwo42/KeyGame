@@ -87,7 +87,19 @@ test("projected rewards and earning units are immediately understandable", async
   await expect(page.getByText("IF THE BELL RANG NOW")).toBeAttached();
   await expect(page.getByText(/FINAL CALLER · 50%/)).toBeAttached();
   await expect(page.getByText(/CLOSING PRINT · 30%/)).toBeAttached();
-  await expect(page.getByText(/PTS\/SEC/)).toBeAttached();
+  if (
+    await page
+      .locator(".clockAssembly")
+      .isVisible()
+      .catch(() => false)
+  ) {
+    await expect(page.getByText(/PTS\/SEC/)).toBeAttached();
+  } else {
+    await expect(
+      page.getByText(/EST\. (GREEN|FLAT|RED) · \d\.\d{2}×/).first(),
+    ).toBeAttached();
+    await expect(page.getByText(/FIRST \$1 STARTS IT/)).toBeAttached();
+  }
   await expect(page.getByText(/FINAL AMOUNTS SETTLE ONCHAIN/)).toBeAttached();
 });
 

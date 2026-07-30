@@ -3299,7 +3299,7 @@ main {
 
   .entryDesk {
     min-height: calc(100vh - 159px);
-    padding: 28px 14px 55px;
+    padding: 18px 14px 44px;
   }
 
   .segmentTitle h1 {
