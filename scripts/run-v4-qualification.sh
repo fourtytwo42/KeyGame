@@ -23,6 +23,9 @@ DELETE FROM chain_events WHERE chain_id=31337;
 DELETE FROM canonical_blocks WHERE chain_id=31337;
 DELETE FROM indexer_checkpoints WHERE chain_id=31337;
 DELETE FROM service_heartbeats WHERE chain_id=31337;
+UPDATE soak_runs
+SET state='failed',completed_at=now(),updated_at=now()
+WHERE chain_id=31337 AND state IN ('scheduled','running','monitoring');
 SQL
 
 bash scripts/devnet-start.sh
