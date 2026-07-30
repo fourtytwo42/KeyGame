@@ -22,11 +22,7 @@ contract DeployTestnet is ScriptBase {
     uint256 internal constant PAYMENT_TOKEN_SCALE = 1e6;
     uint256 internal constant MAX_INITIAL_SEED_USD = 1_000_000;
 
-    function initialSeedRaw(uint256 initialSeedUsd)
-        public
-        pure
-        returns (uint256)
-    {
+    function initialSeedRaw(uint256 initialSeedUsd) public pure returns (uint256) {
         if (initialSeedUsd > MAX_INITIAL_SEED_USD) revert InvalidSeed();
         return initialSeedUsd * PAYMENT_TOKEN_SCALE;
     }
