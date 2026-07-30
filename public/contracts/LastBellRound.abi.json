@@ -566,6 +566,19 @@
   },
   {
     "type": "function",
+    "name": "holderSourceReportHash",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "holderTicker",
     "inputs": [],
     "outputs": [
@@ -1236,6 +1249,12 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      },
+      {
+        "name": "sourceReportHash",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
       },
       {
         "name": "marketBand",
