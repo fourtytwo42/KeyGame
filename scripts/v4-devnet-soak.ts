@@ -151,8 +151,17 @@ async function transaction(
     const receipt = await client.getTransactionReceipt({
       hash: existing.rows[0].transaction_hash,
     });
-    if (receipt.status !== "success") throw new Error(`${key} reverted`);
-    return existing.rows[0].transaction_hash;
+    if (receipt.status === "success") {
+      return existing.rows[0].transaction_hash;
+    }
+    await pool.query(
+      `UPDATE soak_transactions
+       SET idempotency_key=idempotency_key || ':reverted:' || id::text,
+           updated_at=now()
+       WHERE run_id=$1 AND idempotency_key=$2
+         AND transaction_hash=$3`,
+      [runId, key, existing.rows[0].transaction_hash],
+    );
   }
   const nonce = await client.getTransactionCount({
     address: signer,
@@ -247,12 +256,15 @@ async function contribute(
     args: [token, amount],
   });
   const block = await client.getBlock();
+  const wallClock = BigInt(Math.floor(Date.now() / 1_000));
+  const quoteDeadline =
+    (block.timestamp > wallClock ? block.timestamp : wallClock) + 120n;
   return transaction(runId, actionId, key, player, () =>
     wallet(player).writeContract({
       address: round,
       abi: lastBellV4Abi,
       functionName: "claimBell",
-      args: [ticker, amount, output, block.timestamp + 60n, 255],
+      args: [ticker, amount, output, quoteDeadline, 255],
       gas: 1_000_000n,
     }),
   );

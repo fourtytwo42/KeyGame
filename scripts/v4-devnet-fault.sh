@@ -8,6 +8,10 @@ duration_seconds="${2:-5}"
 : "${DATABASE_URL:=postgresql:///keygame?host=/var/run/postgresql}"
 : "${SOAK_CONTROL_TOKEN_FILE:?SOAK_CONTROL_TOKEN_FILE is required}"
 
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
+export PATH="$HOME/.foundry/bin:$PATH"
+
 if [[ ! -r "$SOAK_CONTROL_TOKEN_FILE" ]]; then
   echo "The devnet fault-control token is unavailable." >&2
   exit 1
@@ -47,8 +51,6 @@ restore() {
 }
 trap restore EXIT
 
-export NVM_DIR="$HOME/.nvm"
-source "$NVM_DIR/nvm.sh"
 cd "$project_root"
 
 stop_managed_process() {
