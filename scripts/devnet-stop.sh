@@ -15,4 +15,14 @@ if kill -0 "$pid" 2>/dev/null; then
   wait "$pid" 2>/dev/null || true
 fi
 rm -f "$pid_file"
-echo "Anvil stopped."
+
+for _ in {1..50}; do
+  if ! cast chain-id --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; then
+    echo "Anvil stopped."
+    exit 0
+  fi
+  sleep 0.1
+done
+
+echo "Anvil did not release port 8545 after shutdown." >&2
+exit 1
