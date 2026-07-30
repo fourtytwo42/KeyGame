@@ -484,11 +484,7 @@ async function run() {
             `UPDATE indexer_checkpoints
              SET block_number=$2,block_hash=$3,updated_at=now()
              WHERE deployment_key=$1 AND service='chain-indexer'`,
-            [
-              deploymentKey,
-              rewindNumber.toString(),
-              rewind.hash,
-            ],
+            [deploymentKey, rewindNumber.toString(), rewind.hash],
           );
           reconciledRoundCount = knownRoundCount;
           continue;
