@@ -55,7 +55,7 @@ export function LiveGame({
     "Live broadcast synchronized.",
   );
   const activeRoundIdentity = useRef(
-    `${state.contractAddress.toLowerCase()}:${state.roundId}`,
+    `${state.contractAddress?.toLowerCase() ?? "none"}:${state.roundId}`,
   );
   const walletGame = useWalletGame(state.contractAddress);
   const activeSession = walletGame.isConnected
@@ -92,7 +92,7 @@ export function LiveGame({
     if (!response.ok || !payload.state) {
       throw new Error(payload.error || "Chain snapshot failed");
     }
-    const nextRoundIdentity = `${payload.state.contractAddress.toLowerCase()}:${payload.state.roundId}`;
+    const nextRoundIdentity = `${payload.state.contractAddress?.toLowerCase() ?? "none"}:${payload.state.roundId}`;
     if (nextRoundIdentity !== activeRoundIdentity.current) {
       activeRoundIdentity.current = nextRoundIdentity;
       setActionStatus("idle");
