@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { Pool, type PoolClient } from "pg";
@@ -71,7 +72,14 @@ export function chainFor(chainId: number): Chain {
 }
 
 export function publicClientFor(manifest: DeploymentManifest) {
-  const transports = [http(manifest.rpc.primary, { timeout: 3_000 })];
+  const forcedFailureMarker =
+    process.env.SOAK_RPC_FAILURE_MARKER ??
+    path.join(process.cwd(), ".soak", "rpc-primary-failure");
+  const primary =
+    manifest.chainId === 46630 && existsSync(forcedFailureMarker)
+      ? "http://127.0.0.1:1"
+      : manifest.rpc.primary;
+  const transports = [http(primary, { timeout: 3_000 })];
   if (manifest.rpc.fallback) {
     transports.push(http(manifest.rpc.fallback, { timeout: 4_000 }));
   }

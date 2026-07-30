@@ -24,6 +24,7 @@ test-results/
 broadcast/
 cache/
 .devnet/
+.soak/
 
 # TypeScript
 *.tsbuildinfo

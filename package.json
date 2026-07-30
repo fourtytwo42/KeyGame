@@ -37,6 +37,8 @@
     "soak:status": "tsx scripts/testnet-soak.ts status",
     "soak:reconcile": "tsx scripts/testnet-soak.ts reconcile",
     "soak:fixtures": "tsx scripts/soak-isolated-fixtures.ts",
+    "soak:wallets": "tsx scripts/generate-soak-keystores.ts",
+    "soak:fund": "tsx scripts/fund-soak-wallets.ts",
     "service:market": "tsx services/market-collector.ts",
     "service:dex-market": "tsx services/dex-market-adapter.ts",
     "service:indexer": "tsx services/indexer.ts",

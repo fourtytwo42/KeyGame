@@ -5,6 +5,7 @@ set -euo pipefail
 : "${SOAK_RUN_ID:?SOAK_RUN_ID is required}"
 : "${SOAK_CONTROL_TOKEN_FILE:?SOAK_CONTROL_TOKEN_FILE is required}"
 : "${DATABASE_URL:=postgresql:///keygame?host=/var/run/postgresql}"
+: "${SOAK_RPC_FAILURE_MARKER:=$PWD/.soak/rpc-primary-failure}"
 
 if [[ "$KEYGAME_CHAIN_ID" != "46630" ]]; then
   echo "Fault injection is testnet-only." >&2
@@ -37,7 +38,9 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
 
 restore() {
   if [[ "$fault_type" == "rpc-primary-failure" ]]; then
-    sudo ip route del prohibit 192.168.50.117/32 2>/dev/null || true
+    rm -f "$SOAK_RPC_FAILURE_MARKER"
+    systemctl --user restart keygame-market-collector.service \
+      keygame-indexer.service keygame-keeper.service
   fi
   psql "$DATABASE_URL" -c \
     "UPDATE soak_faults SET state='restored',restored_at=now() WHERE id=$fault_id" \
@@ -47,7 +50,10 @@ trap restore EXIT
 
 case "$fault_type" in
   rpc-primary-failure)
-    sudo ip route add prohibit 192.168.50.117/32
+    mkdir -p "$(dirname "$SOAK_RPC_FAILURE_MARKER")"
+    touch "$SOAK_RPC_FAILURE_MARKER"
+    systemctl --user restart keygame-market-collector.service \
+      keygame-indexer.service keygame-keeper.service
     sleep "$duration_seconds"
     ;;
   dex-stale|unsafe-market)

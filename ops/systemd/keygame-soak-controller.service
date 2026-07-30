@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/home/hendo420/projects/KeyGame
 EnvironmentFile=/home/hendo420/.config/keygame/testnet.env
+EnvironmentFile=/home/hendo420/.config/keygame/soak/soak.env
 Environment=PATH=/home/hendo420/.nvm/versions/node/v24.18.0/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=/home/hendo420/.nvm/versions/node/v24.18.0/bin/corepack pnpm service:soak
 Restart=always
@@ -15,7 +16,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ReadOnlyPaths=/home/hendo420/.config/keygame
-ReadWritePaths=/home/hendo420/projects/KeyGame /var/run/postgresql
+ReadWritePaths=/home/hendo420/projects/KeyGame/.soak /var/run/postgresql
 
 [Install]
 WantedBy=default.target
