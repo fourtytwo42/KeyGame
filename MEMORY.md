@@ -9,7 +9,8 @@ Durable project context lives here. Update this file whenever information should
 - Last meaningful result: the DEX contracts and services are deployed and
   explorer-verified on Robinhood testnet. Browser UAT completed FLAT rollover,
   automatic DEX roster preparation, reusable allowance, and a real
-  mainnet-observation/testnet-attestation claim in round 4.
+  mainnet-observation/testnet-attestation claim in round 4. The Bags page now
+  uses team-style stock cards focused on point speed, heat, and game impact.
 - Next step: run the required 24-hour/100-round failure-injection soak, finish
   audit/economic/legal gates, and conduct later manual extension-wallet UAT.
 - Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
@@ -55,6 +56,10 @@ Durable project context lives here. Update this file whenever information should
 - `docs/prd/README.md` indexes the implementation-facing PRD suite and is the requirements entrypoint.
 - `docs/prd/11-closing-print-user-stories.md` is the current implementation backlog; `docs/prd/08-user-stories.md` is the superseded faction-era backlog.
 - `/` is the one-game entrypoint and opens directly into the active studio. Legacy `/play/{roundId}` routes redirect to `/`.
+- `/supported-assets` presents each roster stock as a team card with ticker,
+  nickname, momentum state, point speed, 30-minute heat, and a plain-language
+  payout explanation. Environment, custody, and price-source fields are
+  intentionally omitted as redundant infrastructure detail.
 - Completed devnet runs are stored as event-derived snapshots in `.devnet/round-history.json`, survive Anvil resets, and appear beneath the main studio with peak pot, final caller, Closing Print ticker, call count, and a full replay link. No fake history is seeded.
 - GitHub Actions is disabled for this repository and no workflow is committed. All compilation and testing must run locally on the project VM. Last verified 2026-07-29.
 - Production-shaped testnet infrastructure uses native PostgreSQL and four
@@ -177,6 +182,12 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-30: Redesigned the Bags cards in both VM devnet and Robinhood
+  testnet builds. Removed Environment, Custody, and Price Source; added team
+  identity, momentum dial, point speed, 30-minute heat, roster rank, and
+  per-stock game explanation. Lint, typecheck, 34 app tests, and both
+  production builds passed. Browser checks confirmed four cards, no removed
+  labels, and no desktop horizontal overflow.
 - 2026-07-30: Deployed and explorer-verified the DEX-attested package on
   Robinhood testnet at block `95124915`. Browser UAT proved round 2 settlement,
   round 3 FLAT fallback and rollover, round 4 automatic DEX preparation, one

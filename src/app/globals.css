@@ -1897,7 +1897,7 @@ main {
   padding-top: 30px;
 }
 
-.infoBody > section:not(.disclosureBlock) {
+.infoBody > section:not(.disclosureBlock):not(.bagRoster) {
   display: grid;
   grid-template-columns: 90px 1fr;
   gap: 24px;
@@ -1948,6 +1948,38 @@ main {
   font-size: 0.66rem;
 }
 
+.bagRoster {
+  display: block;
+}
+
+.bagRosterHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+  gap: 28px;
+  align-items: end;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 4px solid var(--night-desk);
+}
+
+.bagRosterHeader h2 {
+  margin: 5px 0 0;
+  font-size: clamp(2.6rem, 6vw, 5.2rem);
+  line-height: 0.82;
+}
+
+.bagRosterHeader p {
+  margin: 0;
+  padding: 12px;
+  color: var(--tube-white);
+  background: var(--night-desk);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
 .assetGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1955,42 +1987,180 @@ main {
 }
 
 .assetCard {
-  padding: 24px;
-  background: var(--tube-white);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgb(18 18 18 / 6%) 50%,
+      transparent 50.5%
+    ),
+    var(--tube-white);
   border: var(--outline);
-  box-shadow: 6px 6px 0 var(--faction);
+  box-shadow: 7px 7px 0 var(--faction);
 }
 
-.assetCard h2 {
-  margin-top: 16px;
+.assetCard::after {
+  position: absolute;
+  top: 42px;
+  right: -30px;
+  width: 100px;
+  height: 18px;
+  content: "";
+  background: var(--faction);
+  border-block: 2px solid var(--night-desk);
+  transform: rotate(45deg);
 }
 
-.assetCard dl {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 18px 0 0;
-  border: 2px solid var(--night-desk);
-}
-
-.assetCard dl div {
-  padding: 9px;
-  border-right: 2px solid var(--night-desk);
-}
-
-.assetCard dl div:last-child {
-  border: 0;
-}
-
-.assetCard dt {
+.assetCardTopline {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  color: var(--tube-white);
+  background: var(--faction-dark);
+  border-bottom: 3px solid var(--night-desk);
   font-family: var(--mono);
-  font-size: 0.52rem;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.assetCard dd {
-  margin: 3px 0 0;
-  font-size: 0.79rem;
+.assetCardTopline strong {
+  padding-inline: 7px;
+  color: var(--night-desk);
+  background: var(--faction);
+}
+
+.assetIdentity {
+  display: grid;
+  grid-template-columns: 122px 1fr;
+  gap: 16px;
+  align-items: center;
+  min-height: 130px;
+  padding: 18px;
+}
+
+.assetTicker {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  color: var(--night-desk);
+  background: var(--faction);
+  border: 3px solid var(--night-desk);
+  box-shadow: 4px 4px 0 var(--faction-dark);
+  font-family: var(--display);
+  font-size: clamp(2.25rem, 5vw, 3.8rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 0.8;
+}
+
+.assetIdentity h3 {
+  margin: 0 28px 6px 0;
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+
+.assetIdentity p {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.63rem;
   font-weight: 800;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.momentumDial {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-inline: 18px;
+  border: 2px solid var(--night-desk);
+}
+
+.momentumDial span {
+  padding: 6px 4px;
+  color: rgb(18 18 18 / 48%);
+  border-right: 2px solid var(--night-desk);
+  font-family: var(--mono);
+  font-size: 0.54rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.momentumDial span:last-child {
+  border-right: 0;
+}
+
+.assetCard[data-band="RED"] .momentumDial span:first-child,
+.assetCard[data-band="FLAT"] .momentumDial span:nth-child(2),
+.assetCard[data-band="GREEN"] .momentumDial span:last-child {
+  color: var(--night-desk);
+  background: var(--faction);
+}
+
+.assetStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 14px 18px 0;
+  border-block: 2px solid var(--night-desk);
+}
+
+.assetStats div {
+  padding: 10px 12px;
+  border-right: 2px solid var(--night-desk);
+}
+
+.assetStats div:last-child {
+  border: 0;
+}
+
+.assetStats dt {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.assetStats dd {
+  margin: 3px 0 1px;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.assetStats small {
+  font-family: var(--mono);
+  font-size: 0.53rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.assetCallout {
+  margin-top: 14px;
+  padding: 14px 18px 17px;
+  color: var(--tube-white);
+  background: var(--night-desk);
+}
+
+.assetCallout strong {
+  color: var(--faction);
+  font-family: var(--display);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.assetCallout p {
+  margin: 5px 0 0;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  line-height: 1.45;
+  text-transform: uppercase;
 }
 
 .disclosureBlock {
@@ -2877,7 +3047,7 @@ main {
     padding: 50px 20px 75px;
   }
 
-  .infoBody > section:not(.disclosureBlock),
+  .infoBody > section:not(.disclosureBlock):not(.bagRoster),
   .disclosureBlock {
     grid-template-columns: 65px 1fr;
     gap: 15px;
@@ -2893,13 +3063,25 @@ main {
     grid-template-columns: 1fr;
   }
 
-  .assetCard dl {
+  .bagRosterHeader {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
-  .assetCard dl div {
-    border-right: 0;
-    border-bottom: 2px solid var(--night-desk);
+  .assetIdentity {
+    grid-template-columns: 92px 1fr;
+    min-height: 110px;
+    padding: 14px;
+  }
+
+  .assetTicker {
+    min-height: 76px;
+    font-size: 2rem;
+  }
+
+  .momentumDial,
+  .assetStats {
+    margin-inline: 14px;
   }
 
   .pageTitleBar {
@@ -2987,7 +3169,7 @@ main {
     grid-column: 2;
   }
 
-  .infoBody > section:not(.disclosureBlock),
+  .infoBody > section:not(.disclosureBlock):not(.bagRoster),
   .disclosureBlock {
     grid-template-columns: 1fr;
   }
