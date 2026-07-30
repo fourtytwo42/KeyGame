@@ -182,6 +182,10 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-30: Removed the Bags card diagonal corner pseudo-element after live
+  browser inspection showed it crossing the upper-right momentum badge. Devnet
+  and testnet production builds passed; browser verification confirmed all four
+  status badges are unobstructed and the page has no horizontal overflow.
 - 2026-07-30: Refined the live Closing Print scoreboard in both devnet and
   testnet. Shortened the header to `THE CLOSING PRINT` plus a compact mode tag,
   separated weighted points from payout airtime into labeled cells, and kept

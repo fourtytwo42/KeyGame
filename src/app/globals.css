@@ -2068,18 +2068,6 @@ main {
   box-shadow: 7px 7px 0 var(--faction);
 }
 
-.assetCard::after {
-  position: absolute;
-  top: 42px;
-  right: -30px;
-  width: 100px;
-  height: 18px;
-  content: "";
-  background: var(--faction);
-  border-block: 2px solid var(--night-desk);
-  transform: rotate(45deg);
-}
-
 .assetCardTopline {
   display: flex;
   justify-content: space-between;
