@@ -32,12 +32,16 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
 
     address public immutable attestor;
-    address public immutable admin;
+    address public admin;
     address public authorizer;
     mapping(address => bool) public authorizedCaller;
     bytes32 public immutable domainSeparator;
 
     error InvalidAttestation();
+
+    event AdminTransferred(
+        address indexed previousAdmin, address indexed nextAdmin
+    );
 
     constructor(address attestor_, address admin_) {
         if (attestor_ == address(0) || admin_ == address(0)) {
@@ -57,6 +61,14 @@ contract TestnetAttestedMarketDataVerifier is IMarketDataVerifier {
             msg.sender != admin || authorizer != address(0) || authorizer_ == address(0)
         ) revert InvalidAttestation();
         authorizer = authorizer_;
+    }
+
+    function transferAdmin(address nextAdmin) external {
+        if (msg.sender != admin || nextAdmin == address(0)) {
+            revert InvalidAttestation();
+        }
+        emit AdminTransferred(admin, nextAdmin);
+        admin = nextAdmin;
     }
 
     function authorizeCaller(address caller) external {

@@ -9,11 +9,13 @@ Durable project context lives here. Update this file whenever information should
   dynamic roster, genuine-report attestation adapter, durable keeper/indexer,
   isolated UAT wallet build, deployment guards, and status APIs pass local VM
   contract/app gates.
-- Next step: Fund the new chain-46630 role wallets, provide Chainlink Data
-  Streams credentials and feed IDs, deploy from a clean pushed commit, then run
+- Next step: Fund only the chain-46630 deployer with the user's next available
+  0.01 test ETH, then deploy and redistribute small balances to the keeper and
+  UAT faucet. Provide Chainlink Data Streams credentials and feed IDs, then run
   two-wallet browser UAT and the 24-hour/100-round soak.
-- Blockers: All four new role wallets have zero test ETH. Chainlink credentials
-  and the final symbol/feed map are absent.
+- Blockers: Testnet ETH is scarce and the user can obtain only 0.01 per day.
+  All four role wallets remain unfunded. Chainlink credentials and the final
+  symbol/feed map are absent.
 
 ## Current State
 
@@ -314,6 +316,12 @@ When sources conflict, use this order:
   checked. Keystores use lowercase Web3 `crypto` metadata and were verified
   readable by both the TypeScript service wallet loader and Foundry `cast`.
   The deployment preflight reaches and stops at the zero-balance guard.
+- 2026-07-29: Revised the testnet funding plan after learning the faucet limit
+  is 0.01 test ETH per day. Live chain-46630 gas price was 10,000,000 wei
+  (0.01 gwei), and the comparable 11-transaction local deployment consumed
+  6,490,861 gas, approximately 0.00006491 ETH at that gas price before
+  network-specific overhead. Fund the deployer first and redistribute small
+  keeper/UAT balances after deployment rather than funding every role directly.
 
 - 2026-07-12: Reset stale project-specific memory while retaining the durable memory-management logic.
 - 2026-07-28: Created `docs/fomo3d-game-logic-research.md` with contract mapping, exact price curves, all payout tables, timer and round state machines, Long/Soon differences, ICO behavior, vault/mask accounting, edge cases, historical attacks, implementation pseudocode, and a fidelity test checklist.
@@ -354,8 +362,9 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Fund the four recorded chain-46630 role addresses with enough test ETH for
-  deployment, keeper operation, report attestation operations, and UAT faucet.
+- Fund the deployer with the next available 0.01 chain-46630 test ETH. After
+  deployment, redistribute only measured minimum balances to the keeper and UAT
+  faucet; the offchain attestor does not need gas.
 - Configure private Chainlink Data Streams credentials plus a verified
   symbol/feed map; then run genuine testnet report and official mainnet-fork
   verification gates.

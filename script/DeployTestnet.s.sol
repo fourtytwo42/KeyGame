@@ -39,9 +39,10 @@ contract DeployTestnet is ScriptBase {
 
         vm.startBroadcast();
         token = new TestnetMockUSDG(deployer);
-        verifier = new TestnetAttestedMarketDataVerifier(attestor, admin);
+        verifier = new TestnetAttestedMarketDataVerifier(attestor, deployer);
         manager = new RoundManager(token, verifier, admin, keeper, treasury);
         verifier.setAuthorizer(address(manager));
+        verifier.transferAdmin(admin);
         if (initialSeed != 0) token.mint(address(manager), initialSeed);
         token.transferOwnership(faucet);
         vm.stopBroadcast();

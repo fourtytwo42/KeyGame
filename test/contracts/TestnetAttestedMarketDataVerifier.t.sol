@@ -92,6 +92,24 @@ contract TestnetAttestedMarketDataVerifierTest is TestBase {
         round.start(0, openingReports);
     }
 
+    function test_TransfersAdminBeforeAuthorizerConfiguration() public {
+        TestnetAttestedMarketDataVerifier freshVerifier =
+            new TestnetAttestedMarketDataVerifier(vm.addr(ATTESTOR_KEY), address(this));
+        address nextAdmin = address(0xA11CE);
+
+        freshVerifier.transferAdmin(nextAdmin);
+        assertEq(freshVerifier.admin(), nextAdmin, "admin");
+
+        vm.expectRevert(
+            TestnetAttestedMarketDataVerifier.InvalidAttestation.selector
+        );
+        freshVerifier.setAuthorizer(address(this));
+
+        vm.prank(nextAdmin);
+        freshVerifier.setAuthorizer(address(this));
+        assertEq(freshVerifier.authorizer(), address(this), "authorizer");
+    }
+
     function _report(
         bytes32 feedId,
         uint256 price,
