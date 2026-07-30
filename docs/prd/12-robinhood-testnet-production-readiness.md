@@ -1,10 +1,10 @@
 # PRD 12: Robinhood Testnet Production Readiness
 
-> `D-022` override: Chainlink credentials, feeds, and the Data Streams adapter
-> are removed. Testnet signs genuine mainnet Uniswap V3 TWAP observations as
-> specified in PRD 13.
+> `D-026` v4 override: PRD 16 replaces market-report scoring with variable
+> USDG contributions, Stock Token pot baskets, volume heat, and persistent
+> lifetime points. Testnet uses deterministic mock swaps.
 
-Status: implementation complete; live acceptance gates blocked where noted.
+Status: v4 package prepared; broadcast requires separate authorization.
 
 This is the handoff for the production-shaped chain 46630 sprint. It does not
 authorize mainnet deployment or real funds.
@@ -23,28 +23,17 @@ authorize mainnet deployment or real funds.
 - Native PostgreSQL stores canonical blocks, raw logs, checkpoints, rounds,
   market assets and samples, acquired reports, keeper jobs, UAT funding, and
   service heartbeats.
-- Independent systemd services collect Robinhood market data, acquire Data
-  Streams, index three-confirmation history, and execute serialized round
-  transitions.
+- Independent services index canonical history and execute serialized round
+  transitions. Devnet uses the same durable v4 lifecycle boundary.
 - The indexer retains block hashes and rolls back chain-derived data across
   reorganizations. The keeper uses advisory locks, idempotency keys,
   pre-broadcast simulation, immediate transaction-hash persistence, and
   restart receipt reconciliation.
-- Dynamic selection requires 100 of 120 samples over 30 minutes, ranks total
-  absolute basis-point movement, breaks ties by volume and symbol, falls back
-  to an explicit FLAT volume roster, and delays if four eligible assets do not
-  remain.
-- A prepared round has no timer or opening price. The first entry requests
-  fresh opening reports, activates the round, and its accepted $1 claim starts
-  the 45-second clock.
-- Chainlink V8 equity and V10 tokenized-equity reports normalize to eight price
-  decimals. V10 uses `tokenizedPrice`, which includes the corporate-action
-  multiplier.
-- Testnet attestations bind the genuine source-report hash to chain, verifier,
-  round, feed, price, and timestamps with EIP-712. Only manager-authorized
-  rounds can consume them. Invalid or replayed reports revert before payment.
-- A verified active round is cancelled after all four roster streams remain
-  unavailable for 15 seconds.
+- A prepared v4 round has no timer. Its first accepted contribution starts the
+  45-second clock.
+- Testnet v4 uses mock Stock Tokens and deterministic swaps marked
+  `TESTNET MOCK · NO VALUE`. DEX price momentum and Chainlink reports do not
+  score v4.
 - `/api/game/snapshot` combines live contract reads with confirmed indexed
   history. Simulator data cannot silently replace testnet or mainnet state.
 - `/api/status` reports deployment provenance, RPC, database and indexer
@@ -60,25 +49,23 @@ The release candidate must pass formatting, ESLint, TypeScript, Vitest,
 Foundry and fuzz tests, migrations, protected-bundle scanning, both UAT and
 protected builds, integration tests, and desktop/mobile browser UAT.
 
-The following evidence must exist on Robinhood testnet before audit freeze:
+The economic and accounting evidence is produced on devnet. Robinhood testnet
+is reserved for the network behavior Anvil cannot prove:
 
 1. A funded deployment from a clean pushed commit with explorer verification.
-2. Genuine report acquisition using private Chainlink credentials and pinned
-   equity feed IDs.
-3. Two isolated browser sessions completing approval, ticker thefts, locked
-   scoring, settlement, withdrawals, cancellation refund, history, and replay.
-4. Wrong-chain, low-gas, stale-report, service restart, and RPC-failover tests.
-5. A 24-hour soak with at least 100 rounds and exact payout, seed, and indexed
-   log conservation.
-6. A fresh mainnet-fork report accepted by Robinhood's official verifier proxy
-   without broadcasting.
+2. Two isolated wallets completing two rounds, including reusable approval,
+   contribution, rollover, following-round lifetime eligibility, and basket
+   withdrawal.
+3. Wrong-chain, rejection, confirmation, indexing, and RPC-failover checks.
+
+The 100-round, cancellation, fault, and endurance gates run on Anvil without
+consuming testnet ETH.
 
 ## Current external blockers
 
-- The encrypted chain-46630 role wallets require test ETH.
-- Chainlink Data Streams credentials and the final symbol/feed map are absent.
-  The implementation refuses to fabricate verified-mode evidence.
+- The encrypted chain-46630 roles require enough test ETH for one deployment
+  and a two-round smoke test.
 
-Mainnet remains blocked on independent audit, current legal review, production
-Chainlink access, canonical asset/feed revalidation, and explicit release
-authorization.
+Mainnet remains blocked on the production canonical Stock Token swap adapter,
+independent audit, current legal review, canonical asset and pool
+revalidation, multisigs, and explicit release authorization.

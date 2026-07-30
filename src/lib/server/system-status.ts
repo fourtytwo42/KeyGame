@@ -34,6 +34,85 @@ async function probe(url: string) {
 
 export async function getSystemStatus() {
   const mode = process.env.NEXT_PUBLIC_GAME_MODE || "simulator";
+  if (mode === "devnet") {
+    const [db, run, services] = await Promise.all([
+      databaseHealth(),
+      database
+        .query<{
+          id: string;
+          state: string;
+          run_profile: string;
+          started_at: Date;
+          completed_at: Date | null;
+          confirmed: string;
+          failed: string;
+          settled: string;
+          cancelled: string;
+          discrepancies: string;
+        }>(
+          `SELECT r.id,r.state,r.run_profile,r.started_at,r.completed_at,
+             count(DISTINCT a.id) FILTER (
+               WHERE a.state='confirmed'
+             )::text AS confirmed,
+             count(DISTINCT a.id) FILTER (
+               WHERE a.state='failed'
+             )::text AS failed,
+             count(DISTINCT a.id) FILTER (
+               WHERE a.state='confirmed'
+                 AND a.action_type='v4-settled-round'
+             )::text AS settled,
+             count(DISTINCT a.id) FILTER (
+               WHERE a.state='confirmed'
+                 AND a.action_type='v4-cancelled-round'
+             )::text AS cancelled,
+             count(DISTINCT ar.round_contract) FILTER (
+               WHERE ar.discrepancy_raw<>0
+             )::text AS discrepancies
+           FROM soak_runs r
+           LEFT JOIN soak_actions a ON a.run_id=r.id
+           LEFT JOIN soak_asset_reconciliations ar ON ar.run_id=r.id
+           WHERE r.chain_id=31337
+           GROUP BY r.id ORDER BY r.created_at DESC LIMIT 1`,
+        )
+        .catch(() => ({ rows: [], rowCount: 0 })),
+      database
+        .query<{
+          service: string;
+          status: string;
+          observed_at: Date;
+        }>(
+          `SELECT service,status,observed_at FROM service_heartbeats
+           WHERE chain_id=31337 ORDER BY service`,
+        )
+        .catch(() => ({ rows: [], rowCount: 0 })),
+    ]);
+    const latest = run.rows[0];
+    return {
+      ok: true,
+      mode,
+      database: db,
+      qualification: latest
+        ? {
+            runId: latest.id,
+            profile: latest.run_profile,
+            state: latest.state,
+            settledRounds: Number(latest.settled),
+            cancelledRounds: Number(latest.cancelled),
+            confirmedActions: Number(latest.confirmed),
+            failedActions: Number(latest.failed),
+            discrepancies: Number(latest.discrepancies),
+            startedAt: latest.started_at.toISOString(),
+            completedAt: latest.completed_at?.toISOString(),
+          }
+        : null,
+      services: services.rows.map((service) => ({
+        name: service.service,
+        status: service.status,
+        observedAt: service.observed_at.toISOString(),
+      })),
+      checkedAt: new Date().toISOString(),
+    };
+  }
   if (mode !== "testnet" && mode !== "mainnet") {
     return { ok: true, mode, checkedAt: new Date().toISOString() };
   }

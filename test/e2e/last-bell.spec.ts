@@ -1,5 +1,29 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type APIRequestContext } from "@playwright/test";
+
+let cleanDevnetSnapshot: string;
+
+async function rpc(
+  request: APIRequestContext,
+  method: string,
+  params: unknown[] = [],
+) {
+  const response = await request.post("http://127.0.0.1:8545", {
+    data: { jsonrpc: "2.0", id: 1, method, params },
+  });
+  const payload = (await response.json()) as { result: string | boolean };
+  return payload.result;
+}
+
+test.beforeEach(async ({ request }) => {
+  cleanDevnetSnapshot = (await rpc(request, "evm_snapshot")) as string;
+});
+
+test.afterEach(async ({ request }) => {
+  if (cleanDevnetSnapshot) {
+    expect(await rpc(request, "evm_revert", [cleanDevnetSnapshot])).toBe(true);
+  }
+});
 
 test("the main page opens directly into the game and archive", async ({
   page,
@@ -11,11 +35,17 @@ test("the main page opens directly into the game and archive", async ({
   ).toBeAttached();
 });
 
-test("real devnet starter ticker is the first paid claim", async ({ page }) => {
+test("real devnet starter ticker is the first paid contribution", async ({
+  page,
+}) => {
   await page.goto("/");
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
+  await page
+    .locator(".amountPresets button")
+    .filter({ hasText: /^\$1$/ })
+    .click();
   const entryAction = page.getByRole("button", {
-    name: /ENTER WITH .* · \$1/i,
+    name: /APE \$1 ON .*/i,
   });
   if (await entryAction.isVisible().catch(() => false)) {
     await expect(page.getByText("TIMER WAITS FOR YOU")).toBeVisible();
@@ -24,37 +54,45 @@ test("real devnet starter ticker is the first paid claim", async ({ page }) => {
       "WAITING · FIRST $1 STARTS IT",
     );
     await expect(page.locator(".clockAssembly")).not.toBeVisible();
-    await page.getByRole("button", { name: /AAPL.*FLAT/i }).click();
-    await page.getByRole("button", { name: /ENTER WITH AAPL · \$1/i }).click();
+    await page.getByRole("button", { name: /AAPL/i }).first().click();
+    await page.getByRole("button", { name: /APE \$1 ON AAPL/i }).click();
     await expect(page.locator(".clockAssembly")).toBeVisible();
-    await expect(page.locator(".clockAssembly strong")).toContainText("00:4");
+    await expect(page.locator(".clockAssembly strong")).not.toContainText(
+      "00:00",
+    );
     await expect(page.getByText(/PRODUCER PASS/i).first()).toBeVisible();
-    await expect(page.getByText("$99").first()).toBeVisible();
+    await expect(page.locator(".sessionPanel")).toContainText("SPENT");
+    await expect(page.locator(".sessionPanel")).toContainText("$1");
+    await expect(page.locator(".sessionPanel")).toContainText("MAX");
   }
 });
 
-test("live studio exposes four market-labeled one-tap claims", async ({
+test("live studio exposes four Stock Pot contribution controls", async ({
   page,
 }) => {
   await page.goto("/");
+  await page
+    .locator(".amountPresets button")
+    .filter({ hasText: /^\$1$/ })
+    .click();
   const entryAction = page.getByRole("button", {
-    name: /ENTER WITH NVDA · \$1/i,
+    name: /APE \$1 ON NVDA/i,
   });
   if (await entryAction.isVisible().catch(() => false)) {
     await entryAction.click({ force: true });
   }
   await expect(
-    page.locator(".railLabel:visible").filter({ hasText: "THE CLOSING PRINT" }),
+    page.locator(".railLabel:visible").filter({ hasText: "WINNING STOCK" }),
   ).toBeVisible();
   for (const ticker of ["NVDA", "TSLA", "AAPL", "SPY"]) {
     await expect(
       page.getByRole("button", {
-        name: new RegExp(`PUT ${ticker} ON AIR · \\$1`, "i"),
+        name: new RegExp(`APE \\$1 ON ${ticker}`, "i"),
       }),
     ).toBeVisible();
   }
-  await expect(page.getByText(/GREEN · 1.25×/).first()).toBeVisible();
-  await expect(page.getByText(/RED · 0.75×/).first()).toBeVisible();
+  await expect(page.getByText(/30S HEAT/).first()).toBeAttached();
+  await expect(page.getByText(/PTS/).first()).toBeAttached();
 });
 
 test("wallet panel exposes major connector paths and config state", async ({
@@ -77,8 +115,12 @@ test("projected rewards and earning units are immediately understandable", async
   page,
 }) => {
   await page.goto("/?scenario=live");
+  await page
+    .locator(".amountPresets button")
+    .filter({ hasText: /^\$1$/ })
+    .click();
   const entryAction = page.getByRole("button", {
-    name: /ENTER WITH .* · \$1/i,
+    name: /APE \$1 ON .*/i,
   });
   if (await entryAction.isVisible().catch(() => false)) {
     await entryAction.click();
@@ -86,18 +128,17 @@ test("projected rewards and earning units are immediately understandable", async
   }
   await expect(page.getByText("IF THE BELL RANG NOW")).toBeAttached();
   await expect(page.getByText(/FINAL CALLER · 50%/)).toBeAttached();
-  await expect(page.getByText(/CLOSING PRINT · 30%/)).toBeAttached();
+  await expect(page.getByText(/WINNING STOCK · 30%/).first()).toBeAttached();
+  await expect(page.getByText(/LIFETIME POINTS · 10%/).first()).toBeAttached();
   if (
     await page
       .locator(".clockAssembly")
       .isVisible()
       .catch(() => false)
   ) {
-    await expect(page.getByText(/PTS\/SEC/)).toBeAttached();
+    await expect(page.getByText(/PTS WON/)).toBeAttached();
   } else {
-    await expect(
-      page.getByText(/EST\. (GREEN|FLAT|RED) · \d\.\d{2}×/).first(),
-    ).toBeAttached();
+    await expect(page.getByText(/30S HEAT/).first()).toBeAttached();
     await expect(page.getByText(/FIRST \$1 STARTS IT/)).toBeAttached();
   }
   await expect(page.getByText(/FINAL AMOUNTS SETTLE ONCHAIN/)).toBeAttached();
@@ -194,9 +235,7 @@ test("desktop studio fits entirely inside the viewport", async ({
     dimensions.viewport,
   );
 
-  const entryAction = page.getByRole("button", {
-    name: /ENTER WITH .+ · \$1/i,
-  });
+  const entryAction = page.locator(".entryDesk > .primaryAction");
   await expect(entryAction).toBeVisible();
   const actionBounds = await entryAction.boundingBox();
   expect(
@@ -209,9 +248,7 @@ test("mobile entry action fits the paid-flow viewport", async ({
 }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile-chromium");
   await page.goto("/?scenario=entry");
-  const entryAction = page.getByRole("button", {
-    name: /ENTER WITH .+ · \$1/i,
-  });
+  const entryAction = page.locator(".entryDesk > .primaryAction");
   await expect(entryAction).toBeVisible();
   const actionBounds = await entryAction.boundingBox();
   expect(

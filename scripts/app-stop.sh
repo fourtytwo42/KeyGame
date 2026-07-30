@@ -4,6 +4,16 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 pid_file="$project_root/.devnet/app.pid"
 keeper_pid_file="$project_root/.devnet/round-keeper.pid"
+indexer_pid_file="$project_root/.devnet/indexer.pid"
+
+if [[ -f "$indexer_pid_file" ]]; then
+  indexer_pid="$(cat "$indexer_pid_file")"
+  if kill -0 "$indexer_pid" 2>/dev/null; then
+    kill "$indexer_pid"
+    wait "$indexer_pid" 2>/dev/null || true
+  fi
+  rm -f "$indexer_pid_file"
+fi
 
 if [[ -f "$keeper_pid_file" ]]; then
   keeper_pid="$(cat "$keeper_pid_file")"

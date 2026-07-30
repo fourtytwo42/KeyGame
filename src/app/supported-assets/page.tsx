@@ -5,105 +5,77 @@ import { tickerSlots } from "@/lib/game/constants";
 
 export const metadata: Metadata = { title: "Tonight's Stock Tokens" };
 
-const bandCopy = {
-  GREEN: {
-    label: "Cooking",
-    detail: "Momentum boost",
-  },
-  FLAT: {
-    label: "Holding",
-    detail: "Standard pace",
-  },
-  RED: {
-    label: "Cooling",
-    detail: "Momentum drag",
-  },
-} as const;
-
 export default function SupportedAssetsPage() {
   return (
     <InfoPage
-      eyebrow="TEAM SELECT / TONIGHT'S LINEUP"
+      eyebrow="STOCK POT / TONIGHT'S LINEUP"
       title="Pick your bag"
-      intro="Every $1 call puts one stock on air. Hold the bell to build points for that stock. You can switch stocks the next time you call."
+      intro="Choose an amount and a stock. Your USDG buys that Stock Token for the round pot, awards points, and takes the bell."
     >
       <section className="bagRoster" aria-labelledby="bag-roster-title">
         <div className="bagRosterHeader">
           <div>
             <span className="eyebrow">FOUR STOCKS · ONE BELL</span>
-            <h2 id="bag-roster-title">Tonight&apos;s teams</h2>
+            <h2 id="bag-roster-title">Tonight&apos;s stocks</h2>
           </div>
           <p>
-            The multiplier changes point speed. It never changes the $1 call
-            price or the final-caller prize.
+            Recent buys heat a stock for followers. The 30-second multiplier
+            changes points, never the final-caller prize.
           </p>
         </div>
 
         <div className="assetGrid">
-          {tickerSlots.map((ticker) => {
-            const band = bandCopy[ticker.currentBand];
-            const multiplier = ticker.multiplierBps / 10_000;
-
-            return (
-              <article
-                className="assetCard"
-                data-band={ticker.currentBand}
-                key={ticker.id}
-                style={
-                  {
-                    "--faction": ticker.color,
-                    "--faction-dark": ticker.secondary,
-                  } as CSSProperties
-                }
-              >
-                <div className="assetCardTopline">
-                  <span>
-                    TEAM {String(ticker.volatilityRank).padStart(2, "0")}
-                  </span>
-                  <strong>{band.label}</strong>
+          {tickerSlots.map((ticker) => (
+            <article
+              className="assetCard"
+              data-band="FLAT"
+              key={ticker.id}
+              style={
+                {
+                  "--faction": ticker.color,
+                  "--faction-dark": ticker.secondary,
+                } as CSSProperties
+              }
+            >
+              <div className="assetCardTopline">
+                <span>
+                  ROSTER {String(ticker.volatilityRank).padStart(2, "0")}
+                </span>
+                <strong>STOCK POT</strong>
+              </div>
+              <div className="assetIdentity">
+                <span className="assetTicker">{ticker.id}</span>
+                <div>
+                  <h3>{ticker.name}</h3>
+                  <p>{ticker.assetName}</p>
                 </div>
-
-                <div className="assetIdentity">
-                  <span className="assetTicker">{ticker.id}</span>
-                  <div>
-                    <h3>{ticker.name}</h3>
-                    <p>{ticker.assetName}</p>
-                  </div>
+              </div>
+              <div className="momentumDial" aria-label="Volume heat scale">
+                <span>1.00×</span>
+                <span>FOLLOWERS HEAT UP</span>
+                <span>2.00× CAP</span>
+              </div>
+              <dl className="assetStats">
+                <div>
+                  <dt>Points</dt>
+                  <dd>USDG × HEAT</dd>
+                  <small>Multiplier locks before your buy</small>
                 </div>
-
-                <div
-                  className="momentumDial"
-                  aria-label={`${ticker.currentBand} momentum`}
-                >
-                  <span>COOLING</span>
-                  <span>HOLDING</span>
-                  <span>COOKING</span>
+                <div>
+                  <dt>Heat window</dt>
+                  <dd>30 SECONDS</dd>
+                  <small>$4,000 reaches 2.00×</small>
                 </div>
-
-                <dl className="assetStats">
-                  <div>
-                    <dt>Point speed</dt>
-                    <dd>{multiplier.toFixed(2)}x</dd>
-                    <small>{band.detail}</small>
-                  </div>
-                  <div>
-                    <dt>30-minute heat</dt>
-                    <dd>{(ticker.realizedMovementBps / 100).toFixed(2)}%</dd>
-                    <small>Roster rank #{ticker.volatilityRank}</small>
-                  </div>
-                </dl>
-
-                <div className="assetCallout">
-                  <strong>PUT {ticker.id} ON AIR · $1</strong>
-                  <p>
-                    Each second on the bell earns {multiplier.toFixed(2)}{" "}
-                    points. If {ticker.id} wins, your real airtime sets your
-                    share.
-                  </p>
-                </div>
-              </article>
-            );
-          })}
+              </dl>
+              <div className="assetCallout">
+                <strong>APE ON {ticker.id} · $1 MIN · NO MAX</strong>
+                <p>
+                  Your call buys {ticker.id} for the basket. If it finishes with
+                  the most points, its backers split 30% by their points.
+                </p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -112,10 +84,10 @@ export default function SupportedAssetsPage() {
         <div>
           <h2>Know what you are picking</h2>
           <p>
-            These teams represent Stock Tokens in the game. Test versions have
-            no value. Before a real-money launch, every supported token will
-            include its issuer, eligibility, redemption, transfer, and
-            market-hours details.
+            Devnet and testnet Stock Tokens have no value. The game contract
+            accounts only for tokens returned by its approved mock swap adapter.
+            A real-money launch still requires verified canonical assets,
+            security review, eligibility design, and current legal approval.
           </p>
         </div>
       </section>

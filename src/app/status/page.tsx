@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
+import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
 import { getSystemStatus } from "@/lib/server/system-status";
 
 export const metadata: Metadata = { title: "Signal Status" };
@@ -10,7 +11,11 @@ export const dynamic = "force-dynamic";
 export default async function StatusPage() {
   const snapshot =
     process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
-      ? await getDevnetSnapshot().catch(() => null)
+      ? await (
+          process.env.NEXT_PUBLIC_CONTRACT_VERSION === "last-bell-v4-stock-pot"
+            ? getV4DevnetSnapshot()
+            : getDevnetSnapshot()
+        ).catch(() => null)
       : null;
   const system = await getSystemStatus().catch(() => null);
   const production =
@@ -32,6 +37,21 @@ export default async function StatusPage() {
           }>;
         })
       : null;
+  const qualification =
+    system && "qualification" in system
+      ? (system.qualification as {
+          runId: string;
+          profile: string;
+          state: string;
+          settledRounds: number;
+          cancelledRounds: number;
+          confirmedActions: number;
+          failedActions: number;
+          discrepancies: number;
+          startedAt: string;
+          completedAt?: string;
+        } | null)
+      : null;
   return (
     <InfoPage
       eyebrow="ENGINEERING / TRANSMITTER ROOM"
@@ -46,6 +66,28 @@ export default async function StatusPage() {
             <p>Next.js application serving current Channel 4663 assets.</p>
           </div>
           <strong>ONLINE</strong>
+        </article>
+        <article>
+          <span
+            className={`statusLamp ${
+              qualification &&
+              qualification.failedActions === 0 &&
+              qualification.discrepancies === 0
+                ? "good"
+                : "standby"
+            }`}
+          />
+          <div>
+            <h2>v4 devnet qualification</h2>
+            <p>
+              {qualification
+                ? `${qualification.settledRounds} settled · ${qualification.cancelledRounds} cancelled · ${qualification.discrepancies} discrepancies.`
+                : "No v4 qualification run has been recorded yet."}
+            </p>
+          </div>
+          <strong>
+            {qualification ? qualification.state.toUpperCase() : "STANDBY"}
+          </strong>
         </article>
         <article>
           <span className={`statusLamp ${snapshot ? "good" : "standby"}`} />

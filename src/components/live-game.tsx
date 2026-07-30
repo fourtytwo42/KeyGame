@@ -42,6 +42,7 @@ export function LiveGame({
     cloneState(scenarios[initialScenario].state),
   );
   const [selectedTicker, setSelectedTicker] = useState<TickerId>("NVDA");
+  const [amountUsd, setAmountUsd] = useState(10);
   const [guestSession, setGuestSession] = useState<SessionBudget | null>(null);
   const [guestClaimable, setGuestClaimable] = useState<ClaimableBalances>({
     holderUsd: 0,
@@ -57,7 +58,11 @@ export function LiveGame({
   const activeRoundIdentity = useRef(
     `${state.contractAddress?.toLowerCase() ?? "none"}:${state.roundId}`,
   );
-  const walletGame = useWalletGame(state.contractAddress);
+  const walletGame = useWalletGame(
+    state.contractAddress,
+    state.contractVersion,
+  );
+  const v4Economy = state.contractVersion === "last-bell-v4-stock-pot";
   const activeSession = walletGame.isConnected
     ? walletGame.session
     : guestSession;
@@ -219,12 +224,13 @@ export function LiveGame({
       | "claim-print"
       | "claim-refund",
     ticker = effectiveTicker,
+    amount = amountUsd,
   ) => {
     try {
       const response = await fetch("/api/devnet/action", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action, ticker }),
+        body: JSON.stringify({ action, ticker, amountUsd: amount }),
       });
       const payload = (await response.json()) as {
         ok: boolean;
@@ -273,7 +279,7 @@ export function LiveGame({
     if (chainMode) {
       if (walletGame.isConnected) {
         void walletGame
-          .claim(ticker)
+          .claim(ticker, amountUsd)
           .then(() => refreshChain())
           .then(() => {
             setActionStatus("accepted");
@@ -288,7 +294,7 @@ export function LiveGame({
             );
           });
       } else if (devnetMode) {
-        void requestDevnetAction("claim", ticker);
+        void requestDevnetAction("claim", ticker, amountUsd);
       } else {
         setActionStatus("rejected");
         setAnnouncement("Connect the testnet wallet before taking the bell.");
@@ -327,7 +333,7 @@ export function LiveGame({
     if (chainMode) {
       if (walletGame.isConnected) {
         try {
-          await walletGame.enter(effectiveTicker);
+          await walletGame.enter(effectiveTicker, amountUsd);
           await refreshChain();
           setActionStatus("accepted");
           setAnnouncement(
@@ -340,7 +346,7 @@ export function LiveGame({
           );
         }
       } else if (devnetMode) {
-        await requestDevnetAction("enter", effectiveTicker);
+        await requestDevnetAction("enter", effectiveTicker, amountUsd);
       } else {
         setActionStatus("rejected");
         setAnnouncement("Connect the testnet wallet before entering.");
@@ -386,7 +392,9 @@ export function LiveGame({
   const entryRequired = state.phase === "entry";
   const hasChainClaimPath = walletGame.isConnected
     ? walletGame.ready
-    : devnetMode && joined && (activeSession?.availableActions ?? 0) > 0;
+    : devnetMode &&
+      joined &&
+      (v4Economy || (activeSession?.availableActions ?? 0) > 0);
   const canAct =
     state.freshness === "live" &&
     (state.phase === "live" || state.phase === "rug") &&
@@ -431,11 +439,19 @@ export function LiveGame({
             <ol>
               <li>
                 <strong>Pick a stock.</strong>
-                <span>Choose what goes on air now.</span>
+                <span>
+                  {v4Economy
+                    ? "Choose what the pot buys."
+                    : "Choose what goes on air now."}
+                </span>
               </li>
               <li>
-                <strong>Pay $1.</strong>
-                <span>Start the clock or take the bell.</span>
+                <strong>{v4Economy ? "Choose an amount." : "Pay $1."}</strong>
+                <span>
+                  {v4Economy
+                    ? "$1 minimum. No maximum."
+                    : "Start the clock or take the bell."}
+                </span>
               </li>
               <li>
                 <strong>Hold at zero.</strong>
@@ -465,6 +481,9 @@ export function LiveGame({
               onEnter={enterRound}
               status={actionStatus}
               walletConnected={walletGame.isConnected}
+              amountUsd={amountUsd}
+              onAmountChange={setAmountUsd}
+              v4Economy={v4Economy}
             />
           ) : state.phase === "cancelled" ? (
             <CancelledRound
@@ -501,6 +520,9 @@ export function LiveGame({
               canAct={canAct}
               takeBell={takeBell}
               session={activeSession}
+              amountUsd={amountUsd}
+              onAmountChange={setAmountUsd}
+              v4Economy={v4Economy}
             />
           )}
 
@@ -542,6 +564,44 @@ export function LiveGame({
   );
 }
 
+function AmountComposer({
+  amountUsd,
+  onChange,
+}: {
+  amountUsd: number;
+  onChange: (amount: number) => void;
+}) {
+  return (
+    <div className="amountComposer" aria-label="Contribution amount">
+      <div className="amountPresets">
+        {[1, 10, 100, 1_000].map((amount) => (
+          <button
+            type="button"
+            key={amount}
+            data-selected={amountUsd === amount}
+            onClick={() => onChange(amount)}
+          >
+            {formatUsd(amount)}
+          </button>
+        ))}
+      </div>
+      <label>
+        <span>USDG INPUT · $1 MINIMUM · NO MAXIMUM</span>
+        <input
+          type="number"
+          min="1"
+          step="1"
+          value={amountUsd}
+          onChange={(event) =>
+            onChange(Math.max(1, Number(event.target.value) || 1))
+          }
+          inputMode="decimal"
+        />
+      </label>
+    </div>
+  );
+}
+
 function EntryDesk({
   state,
   selected,
@@ -549,6 +609,9 @@ function EntryDesk({
   onEnter,
   status,
   walletConnected,
+  amountUsd,
+  onAmountChange,
+  v4Economy,
 }: {
   state: RoundState;
   selected: TickerId;
@@ -556,17 +619,28 @@ function EntryDesk({
   onEnter: () => void;
   status: ActionStatus;
   walletConnected: boolean;
+  amountUsd: number;
+  onAmountChange: (amount: number) => void;
+  v4Economy: boolean;
 }) {
   return (
     <div className="entryDesk">
       <div className="segmentTitle">
         <span>
-          {state.marketMode === "DEX"
-            ? "ONCHAIN MOMENTUM"
-            : "FLAT ROUND · DEX HISTORY WARMING UP"}
+          {v4Economy
+            ? "STOCK POT"
+            : state.marketMode === "DEX"
+              ? "ONCHAIN MOMENTUM"
+              : "FLAT ROUND · DEX HISTORY WARMING UP"}
         </span>
-        <h1>Pick the first print</h1>
-        <p>Your first $1 call starts the 45-second broadcast clock.</p>
+        <h1>
+          {v4Economy ? "Pick a stock. Take the bell." : "Pick the first print"}
+        </h1>
+        <p>
+          {v4Economy
+            ? "Your buy starts the 45-second clock. The Stock Tokens go into this round's pot."
+            : "Your first $1 call starts the 45-second broadcast clock."}
+        </p>
         {state.marketExplanation ? <p>{state.marketExplanation}</p> : null}
       </div>
       <div
@@ -604,15 +678,14 @@ function EntryDesk({
             >
               <span className="tickerBadge">{score.ticker}</span>
               <strong>
-                {state.marketMode === "DEX" ? "EST. " : ""}
-                {band} · {(multiplier / 10_000).toFixed(2)}×
+                {v4Economy
+                  ? `${(score.multiplierBps / 10_000).toFixed(2)}× · ${(score.recentVolumeUsd ?? 0).toLocaleString()} 30S HEAT`
+                  : `${state.marketMode === "DEX" ? "EST. " : ""}${band} · ${(multiplier / 10_000).toFixed(2)}×`}
               </strong>
               <small>
-                {score.currentPrice
-                  ? `10M TWAP ${formatUsd(score.currentPrice)}`
-                  : "10M TWAP WARMING UP"}{" "}
-                · HEAT #{score.volatilityRank || index + 1} · 30M{" "}
-                {(score.realizedMovementBps ?? 0).toFixed(1)} BPS
+                {v4Economy
+                  ? `${score.weightedScore.toLocaleString()} POINTS · ${(score.potTokenQuantity ?? 0).toLocaleString()} ${score.ticker} IN POT`
+                  : `${score.currentPrice ? `10M TWAP ${formatUsd(score.currentPrice)}` : "10M TWAP WARMING UP"} · HEAT #${score.volatilityRank || index + 1} · 30M ${(score.realizedMovementBps ?? 0).toFixed(1)} BPS`}
               </small>
               <small>
                 {gameMode === "testnet"
@@ -627,9 +700,12 @@ function EntryDesk({
           );
         })}
       </div>
+      {v4Economy ? (
+        <AmountComposer amountUsd={amountUsd} onChange={onAmountChange} />
+      ) : null}
       <div className="entryTerms">
         <span>TIMER WAITS FOR YOU</span>
-        <span>$1 PER CALL</span>
+        <span>{v4Economy ? "$1 MIN · NO MAX" : "$1 PER CALL"}</span>
         <span>ONE APPROVAL</span>
         <span>REVOKE ANY TIME</span>
       </div>
@@ -643,12 +719,16 @@ function EntryDesk({
           ? "WAITING FOR FRESH DEX DATA"
           : status === "submitted"
             ? "TUNING THE LINE…"
-            : `ENTER WITH ${selected} · $1`}
+            : v4Economy
+              ? `APE ${formatUsd(amountUsd)} ON ${selected}`
+              : `ENTER WITH ${selected} · $1`}
       </button>
       <p className="actionFinePrint">
-        {walletConnected
-          ? `Approves ${formatUsd(sessionApproval.amountUsd)} play USDG only when allowance is below ${formatUsd(sessionApproval.refreshBelowUsd)}. You can change or revoke it in your wallet.`
-          : `${gameMode === "testnet" ? "The built-in testnet wallet" : "Devnet guest mode"} uses the same ${formatUsd(sessionApproval.amountUsd)} reusable play-USDG approval. No real value is used.`}
+        {v4Economy
+          ? "One reusable approval. Your wallet can edit or revoke it. Quote protection reverts the whole call if the swap moves beyond your minimum."
+          : walletConnected
+            ? `Approves ${formatUsd(sessionApproval.amountUsd)} play USDG only when allowance is below ${formatUsd(sessionApproval.refreshBelowUsd)}. You can change or revoke it in your wallet.`
+            : `${gameMode === "testnet" ? "The built-in testnet wallet" : "Devnet guest mode"} uses the same ${formatUsd(sessionApproval.amountUsd)} reusable play-USDG approval. No real value is used.`}
       </p>
     </div>
   );
@@ -660,14 +740,28 @@ function LiveArena({
   canAct,
   takeBell,
   session,
+  amountUsd,
+  onAmountChange,
+  v4Economy,
 }: {
   state: RoundState;
   actionStatus: ActionStatus;
   canAct: boolean;
   takeBell: (ticker: TickerId) => void;
   session: SessionBudget | null;
+  amountUsd: number;
+  onAmountChange: (amount: number) => void;
+  v4Economy: boolean;
 }) {
   const ticker = state.holder ? tickerById(state.holder.ticker) : null;
+  const currentCall = [...state.claims]
+    .reverse()
+    .find(
+      (claim) =>
+        claim.accepted &&
+        claim.claimant.address.toLowerCase() ===
+          state.holder?.address.toLowerCase(),
+    );
   const clockLabel = state.phase === "rug" ? "RUG ZONE" : "BROADCAST CLOCK";
   return (
     <div className="liveStage">
@@ -717,11 +811,17 @@ function LiveArena({
               )}
             </strong>
             <small>
-              CLAIM #{state.holder?.claimNumber ?? 0} ·{" "}
-              {state.holder?.band ?? "FLAT"} ·{" "}
-              {((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×
+              {v4Economy
+                ? `CALL #${state.holder?.claimNumber ?? 0} · ${formatUsd(currentCall?.usdgAmount ?? 0)} · ${(currentCall?.pointsAwarded ?? 0).toLocaleString()} PTS`
+                : `CLAIM #${state.holder?.claimNumber ?? 0} · ${state.holder?.band ?? "FLAT"} · ${((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×`}
             </small>
-            {state.projection?.currentEarning || state.holder ? (
+            {v4Economy && currentCall ? (
+              <span className="earningRate">
+                {currentCall.claimant.ticker} ·{" "}
+                {(currentCall.multiplierBps / 10_000).toFixed(2)}× LOCKED ·{" "}
+                {(currentCall.pointsAwarded ?? 0).toLocaleString()} PTS WON
+              </span>
+            ) : state.projection?.currentEarning || state.holder ? (
               <span className="earningRate">
                 {state.projection?.currentEarning?.ticker ??
                   state.holder?.ticker}{" "}
@@ -742,11 +842,15 @@ function LiveArena({
           {session?.producerPass ? "ACTUALLY HOLDS THE BAG" : "OPEN CALLER"}
         </strong>
         <small>
-          {formatUsd(session?.remainingUsd ?? 0)} APPROVED ·{" "}
-          {session?.availableActions ?? 0} CALLS
+          {v4Economy
+            ? "REUSABLE APPROVAL · CUSTOM AMOUNTS"
+            : `${formatUsd(session?.remainingUsd ?? 0)} APPROVED · ${session?.availableActions ?? 0} CALLS`}
         </small>
       </div>
       <div className="claimTickerGrid" aria-label="Put a stock on air">
+        {v4Economy ? (
+          <AmountComposer amountUsd={amountUsd} onChange={onAmountChange} />
+        ) : null}
         {state.tickerScores.map((score) => {
           const slot = tickerById(score.ticker);
           return (
@@ -760,11 +864,13 @@ function LiveArena({
             >
               {actionStatus === "submitted"
                 ? "CALLING…"
-                : `PUT ${score.ticker} ON AIR · $1`}
+                : v4Economy
+                  ? `APE ${formatUsd(amountUsd)} ON ${score.ticker}`
+                  : `PUT ${score.ticker} ON AIR · $1`}
               <small>
-                {score.currentBand} ·{" "}
-                {(score.multiplierBps / 10_000).toFixed(2)}× ·{" "}
-                {score.weightedScore.toFixed(1)} POINTS
+                {v4Economy
+                  ? `${(score.multiplierBps / 10_000).toFixed(2)}× · ${(score.recentVolumeUsd ?? 0).toLocaleString()} HEAT · ${score.weightedScore.toLocaleString()} PTS`
+                  : `${score.currentBand} · ${(score.multiplierBps / 10_000).toFixed(2)}× · ${score.weightedScore.toFixed(1)} POINTS`}
               </small>
             </button>
           );
@@ -786,6 +892,7 @@ function ClosingPrintBoard({
   state: RoundState;
   leader: TickerId;
 }) {
+  const v4Economy = state.contractVersion === "last-bell-v4-stock-pot";
   const max = Math.max(
     ...state.tickerScores.map((score) => score.weightedScore),
     1,
@@ -793,9 +900,15 @@ function ClosingPrintBoard({
   return (
     <section className="railCard airtimeCard">
       <span className="railLabel closingPrintLabel">
-        <strong>CLOSING PRINT CROWN</strong>
+        <strong>
+          {v4Economy ? "WINNING STOCK · 30%" : "CLOSING PRINT CROWN"}
+        </strong>
         <small>
-          {state.marketMode === "DEX" ? "10M MOMENTUM" : "FLAT · 1.00×"}
+          {v4Economy
+            ? "POINTS PICK THE STOCK"
+            : state.marketMode === "DEX"
+              ? "10M MOMENTUM"
+              : "FLAT · 1.00×"}
         </small>
       </span>
       {state.tickerScores.map((score) => {
@@ -817,8 +930,10 @@ function ClosingPrintBoard({
                   <small>PTS</small>
                 </b>
                 <b>
-                  {score.rawSeconds}
-                  <small>SEC AIRTIME</small>
+                  {v4Economy
+                    ? (score.recentVolumeUsd ?? 0).toLocaleString()
+                    : score.rawSeconds}
+                  <small>{v4Economy ? "30S HEAT" : "SEC AIRTIME"}</small>
                 </b>
               </span>
             </div>
@@ -867,7 +982,9 @@ function Trenches({ state }: { state: RoundState }) {
                 </strong>
                 <span>
                   {claim.accepted
-                    ? ` PUT ${claim.claimant.ticker} ON AIR · ${claim.marketBand} ${(claim.multiplierBps / 10_000).toFixed(2)}×`
+                    ? state.contractVersion === "last-bell-v4-stock-pot"
+                      ? ` APED ${formatUsd(claim.usdgAmount ?? 0)} ON ${claim.claimant.ticker} · ${(claim.multiplierBps / 10_000).toFixed(2)}× · ${(claim.pointsAwarded ?? 0).toLocaleString()} PTS`
+                      : ` PUT ${claim.claimant.ticker} ON AIR · ${claim.marketBand} ${(claim.multiplierBps / 10_000).toFixed(2)}×`
                     : ` got bounced: ${claim.reason}`}
                 </span>
               </p>
@@ -889,6 +1006,7 @@ function ProjectionPanel({
   state: RoundState;
   player: PlayerRoundProjection | null;
 }) {
+  const v4Economy = state.contractVersion === "last-bell-v4-stock-pot";
   const projection = state.projection;
   const projectedHolder =
     projection?.finalHolderDisplayName ?? state.holder?.displayName;
@@ -900,6 +1018,11 @@ function ProjectionPanel({
   const projectedTicker =
     projection?.closingPrintCrown.ticker ??
     (state.tickerScores.length ? leadingTicker(state) : null);
+  const projectedTickerScore =
+    projection?.closingPrintCrown.weightedPoints ??
+    state.tickerScores.find((score) => score.ticker === projectedTicker)
+      ?.weightedScore ??
+    0;
   const projectedAirtimePool =
     projection?.airtimePoolUsd ??
     (state.phase === "settled" && state.pools
@@ -917,22 +1040,27 @@ function ProjectionPanel({
           </dd>
         </div>
         <div>
-          <dt>CLOSING PRINT CROWN · PRESTIGE</dt>
+          <dt>
+            {v4Economy
+              ? "WINNING STOCK · 30%"
+              : "CLOSING PRINT CROWN · PRESTIGE"}
+          </dt>
           <dd>
             <span>{projectedTicker ?? "NO PRINT"}</span>
-            <strong>
-              {projection?.closingPrintCrown.weightedPoints.toFixed(1) ?? "0.0"}{" "}
-              PTS
-            </strong>
+            <strong>{projectedTickerScore.toFixed(1)} PTS</strong>
           </dd>
         </div>
         <div>
-          <dt>AIRTIME POOL · 30%</dt>
+          <dt>{v4Economy ? "LIFETIME POINTS · 10%" : "AIRTIME POOL · 30%"}</dt>
           <dd>
             <span>
-              {projection?.totalRawAirtimeSeconds.toFixed(0) ?? "0"} TOTAL SEC
+              {v4Economy
+                ? "PERSISTENT · NEVER BURN"
+                : `${projection?.totalRawAirtimeSeconds.toFixed(0) ?? "0"} TOTAL SEC`}
             </span>
-            <strong>{formatUsd(projectedAirtimePool)}</strong>
+            <strong>
+              {formatUsd(v4Economy ? state.potUsd * 0.1 : projectedAirtimePool)}
+            </strong>
           </dd>
         </div>
       </dl>
@@ -942,7 +1070,13 @@ function ProjectionPanel({
           <strong>{formatUsd(player.projectedTotalRewardUsd)}</strong>
         </p>
       ) : (
-        <p>CONNECT TO SEE YOUR EST. CLAIM</p>
+        <p>
+          {v4Economy ? (
+            <Link href="/earnings">OPEN YOUR EARNINGS</Link>
+          ) : (
+            "CONNECT TO SEE YOUR EST. CLAIM"
+          )}
+        </p>
       )}
       <small>ESTIMATE · FINAL AMOUNTS SETTLE ONCHAIN</small>
     </section>
@@ -1063,6 +1197,7 @@ function FinalTransmission({
   claimable: ClaimableBalances;
   onClaim: (kind: "holder" | "airtime") => void;
 }) {
+  const v4Economy = state.contractVersion === "last-bell-v4-stock-pot";
   const holderPayout = state.pools?.holderUsd ?? state.potUsd * 0.5;
   const airtimePayout = state.pools?.airtimeUsd ?? state.potUsd * 0.3;
   const nextRound = state.pools?.nextRoundUsd ?? state.potUsd * 0.15;
@@ -1085,7 +1220,11 @@ function FinalTransmission({
           <strong>{formatUsd(holderPayout)}</strong>
         </div>
         <div className="payoutTape">
-          <span>CLOSING PRINT CROWN · PRESTIGE</span>
+          <span>
+            {v4Economy
+              ? "WINNING STOCK · 30%"
+              : "CLOSING PRINT CROWN · PRESTIGE"}
+          </span>
           <strong>
             {state.winningTicker ?? "—"} ·{" "}
             {state.tickerScores
@@ -1095,12 +1234,20 @@ function FinalTransmission({
           </strong>
         </div>
         <div className="payoutTape">
-          <span>AIRTIME POOL · 30% · ALL CALLERS</span>
-          <strong>{formatUsd(airtimePayout)}</strong>
+          <span>
+            {v4Economy
+              ? "LIFETIME POINTS · 10% · FUTURE EARNINGS"
+              : "AIRTIME POOL · 30% · ALL CALLERS"}
+          </span>
+          <strong>
+            {formatUsd(v4Economy ? state.potUsd * 0.1 : airtimePayout)}
+          </strong>
         </div>
       </div>
       <div className="poolBreakdown">
-        <span>NEXT ROUND · {formatUsd(nextRound)}</span>
+        <span>
+          NEXT ROUND · {formatUsd(v4Economy ? state.potUsd * 0.05 : nextRound)}
+        </span>
         <span>PROTOCOL · {formatUsd(protocol)}</span>
       </div>
       {typeof state.nextRoundStartsInSeconds === "number" ? (
@@ -1186,6 +1333,7 @@ function SessionPanel({
   connected: boolean;
   onRevoke: () => void;
 }) {
+  const maxApproval = (session?.allowanceUsd ?? 0) > 1_000_000_000;
   return (
     <section className="railCard sessionPanel">
       <span className="railLabel">ROUND SESSION</span>
@@ -1200,7 +1348,7 @@ function SessionPanel({
           <dl>
             <div>
               <dt>APPROVED</dt>
-              <dd>{formatUsd(session.maximumUsd)}</dd>
+              <dd>{maxApproval ? "MAX" : formatUsd(session.maximumUsd)}</dd>
             </div>
             <div>
               <dt>SPENT</dt>
@@ -1208,11 +1356,13 @@ function SessionPanel({
             </div>
             <div>
               <dt>ALLOWANCE</dt>
-              <dd>{formatUsd(session.remainingUsd)}</dd>
+              <dd>
+                {maxApproval ? "REUSABLE" : formatUsd(session.remainingUsd)}
+              </dd>
             </div>
             <div>
               <dt>CALLS</dt>
-              <dd>{session.availableActions}</dd>
+              <dd>{maxApproval ? "NO CAP" : session.availableActions}</dd>
             </div>
           </dl>
           {session.status === "active" ? (

@@ -1,9 +1,8 @@
 # Last Bell Implementation Gap Audit
 
-> `D-024` update: PRD 15 is authoritative. The v3 model removes DEX influence
-> from every financial allocation. Remaining release gates are the v3 testnet
-> redeployment, complete wallet evidence, 24-hour/100-round soak, verified Safe
-> roles, audit, legal review, and explicit mainnet authorization.
+> `D-026` update: PRD 16 is authoritative. V4 uses uncapped Stock Token pot
+> contributions and persistent lifetime points. The 100-round economic gate is
+> devnet-first; testnet is a separately authorized two-round smoke test.
 
 > Updated 2026-07-30. PRD 13 is the current DEX game specification. PRD 14 is
 > the current product-retention and mainnet-readiness specification. Faction
@@ -13,10 +12,10 @@
 
 | Capability | Status | Evidence |
 |---|---|---|
-| Ticker-per-claim DEX round | Implemented | `LastBellRound.claimBell(uint8,bytes,uint8)` |
-| 10-minute Uniswap V3 momentum | Implemented | DEX verifier, collector, testnet attestation adapter |
-| Weighted ticker result / raw-airtime contributor payout | Implemented | Contract, snapshot, replay, and Foundry coverage |
-| First $1 starts the timer | Implemented | Prepared rounds wait with `startedAt == 0` |
+| Variable Stock Pot contribution | Implemented | `LastBellRoundV4.claimBell(uint8,uint256,uint256,uint64,uint8)` |
+| Rolling-volume heat and ticker points | Implemented | Contract, snapshot, and Foundry coverage |
+| 50/30/10/5/5 Stock Token basket | Implemented | Round, lifetime vault, reward router, and indexer |
+| First contribution starts the timer | Implemented | Prepared rounds wait with `startedAt == 0` |
 | Continuous settlement and rollover | Implemented | Durable manager and keeper |
 | Reward projection and live earning rate | Implemented | `RoundProjection`, player projection API, live studio |
 | Truthful DEX/FLAT entry state | Implemented | Estimated bands, stale-data pause, FLAT-only 1.00x |
@@ -30,8 +29,8 @@
 
 - A real Reown project ID and allowlisted production origins.
 - Manual extension-wallet and WalletConnect UAT.
-- 24-hour/100-round failure-injection soak.
-- Per-pool manipulation-cost evidence and Rug Zone automation analysis.
+- 100-round accelerated devnet qualification plus eight-hour stability pass.
+- Production swap-adapter audit and Rug Zone automation disclosure.
 - Independent security and economic review.
 - Legal and jurisdiction approval.
 - Separate documented 2-of-3 manager, verifier, and treasury multisigs.
@@ -40,7 +39,7 @@
 
 ## Acceptance boundary
 
-The repository is a production-shaped Robinhood testnet application. Testnet
-assets are labeled as mocks with no value. No mainnet deployment, contract
-freeze, external audit approval, legal approval, or completed 24-hour soak is
-claimed by this audit.
+The repository is a production-shaped v4 devnet application with a guarded
+testnet package. Testnet assets are labeled as mocks with no value. No testnet
+or mainnet deployment, contract freeze, external audit approval, or legal
+approval is claimed by this audit.

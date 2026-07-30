@@ -12,7 +12,7 @@ export default function RulesPage() {
     <InfoPage
       eyebrow="HOW TO PLAY / ROUND 4663"
       title="The rules, in plain English"
-      intro="Pick a stock, pay $1 to take the bell, and still hold it when the clock reaches zero."
+      intro="Pick a stock, choose how much to put in, and take the bell. The final caller wins half of every Stock Token in the pot."
     >
       <section>
         <span className="chapterNumber">01</span>
@@ -29,12 +29,12 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">02</span>
         <div>
-          <h2>Pay $1 to take the bell</h2>
+          <h2>Choose an amount and take the bell</h2>
           <p>
-            A successful play costs {roundConfig.claimPriceUsd} play USD, puts
-            your stock on air, and makes you the new bell holder. The $1 goes
-            into the prize pot. You cannot play again while you already hold the
-            bell.
+            The minimum is {roundConfig.claimPriceUsd} USDG and there is no
+            maximum. Your USDG buys the Stock Token you picked. Those tokens go
+            into this round&apos;s pot, and you become the new bell holder. You
+            cannot call again while you already hold the bell.
           </p>
         </div>
       </section>
@@ -55,29 +55,25 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">04</span>
         <div>
-          <h2>Onchain momentum changes the score</h2>
+          <h2>Recent buys heat up a stock</h2>
           <p>
-            We use the stock&apos;s 10-minute average price from its direct
-            Robinhood Chain DEX pool. Up 0.05% or more from the opening average
-            earns 1.25 points per second. A smaller move earns 1 point per
-            second. Down 0.05% or more earns 0.75 points per second. Your rate
-            locks when your play succeeds and stays the same until someone else
-            takes the bell.
+            Your points start with the USDG amount you put in. Buys from the
+            last 30 seconds raise that stock&apos;s multiplier for the next
+            caller, up to 2×. Your own buy heats the stock for followers; it
+            does not boost itself. DEX price movement does not affect points.
           </p>
         </div>
       </section>
       <section>
         <span className="chapterNumber">05</span>
         <div>
-          <h2>The Crown is for bragging rights. Airtime pays.</h2>
+          <h2>There are three ways to earn</h2>
           <p>
-            The person holding the bell when the clock reaches zero wins 50% of
-            the pot. The stock with the most market-adjusted points gets the
-            Closing Print Crown. The Crown is a title, not a cash prize. Every
-            caller shares the 30% Airtime Pool based only on how many raw
-            seconds they held the bell across all stocks. Multipliers never
-            change anyone&apos;s payout. Another 15% starts the next round, and
-            5% goes to the protocol.
+            The final caller gets 50% of every token in the pot. The stock with
+            the most points wins; its backers split 30% based on their points in
+            that stock. Settled points also become lifetime points, which share
+            10% of future pots without being spent. Another 5% seeds the next
+            round and 5% goes to the protocol.
           </p>
         </div>
       </section>
@@ -95,13 +91,12 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">07</span>
         <div>
-          <h2>Your wallet gives one approval</h2>
+          <h2>Your wallet gives one reusable approval</h2>
           <p>
-            Before your first play, your wallet may ask for permission to spend
-            up to $100 of play USDG. This is a spending limit, not a $100
-            charge. Each successful play still costs only $1. We ask again when
-            less than $10 remains. You can lower or cancel the permission in
-            your wallet at any time.
+            Before your first play, your wallet asks for reusable USDG
+            permission. It is not a charge. The game asks again only when the
+            allowance is below your chosen amount. You can edit or revoke the
+            permission in your wallet at any time.
           </p>
         </div>
       </section>
@@ -110,7 +105,7 @@ export default function RulesPage() {
         <span>ADD 2s</span>
         <span>RUG ZONE 10s</span>
         <span>HARD STOP 180s</span>
-        <span>PLAY $1</span>
+        <span>$1 MIN · NO MAX</span>
       </div>
       <div className="disclosureBlock">
         <span className="chapterNumber">ID</span>
@@ -119,8 +114,9 @@ export default function RulesPage() {
           <p>Round contract: {roundAddress}</p>
           <p>Play USDG: {devDollarAddress}</p>
           <p>
-            This test version uses fake Stock Tokens for the Producer Pass. The
-            game never takes, locks, trades, or awards those tokens.
+            Devnet and testnet use mock Stock Tokens with no value. A successful
+            call swaps mock USDG into the selected mock stock and holds it in
+            the round contract for basket settlement.
           </p>
         </div>
       </div>

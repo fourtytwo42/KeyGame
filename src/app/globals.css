@@ -328,6 +328,132 @@ main {
   font-size: 0.68rem;
 }
 
+.amountComposer {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: rgb(11 15 24 / 88%);
+}
+
+.amountPresets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.amountPresets button {
+  min-height: 34px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: #171d29;
+  color: #f3e7cb;
+  font:
+    800 12px/1 var(--font-mono),
+    monospace;
+  cursor: pointer;
+}
+
+.amountPresets button[data-selected="true"] {
+  border-color: #ff6b35;
+  background: #ff6b35;
+  color: #111;
+}
+
+.amountComposer label {
+  display: grid;
+  gap: 5px;
+  color: #aeb6c6;
+  font:
+    700 11px/1.2 var(--font-mono),
+    monospace;
+  letter-spacing: 0.04em;
+}
+
+.amountComposer input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #ff6b35;
+  background: #090c12;
+  color: #fff;
+  padding: 8px 10px;
+  font:
+    900 22px/1 var(--font-mono),
+    monospace;
+}
+
+.earningsCenter {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.earningsTotals,
+.rewardTokenGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.earningsTotals article,
+.rewardTokenGrid article,
+.pointsMath,
+.leaderboardTable article {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  background: #10151f;
+}
+
+.stationFooter a {
+  font-size: max(11px, 0.67rem);
+}
+
+.earningsTotals span,
+.rewardTokenGrid span,
+.leaderboardTable span {
+  color: #aeb6c6;
+  font:
+    700 11px/1.25 var(--font-mono),
+    monospace;
+}
+
+.earningsTotals strong {
+  color: #ffd166;
+  font-size: clamp(22px, 4vw, 38px);
+}
+
+.rewardTokenGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.leaderboardTable {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.leaderboardTable article {
+  grid-template-columns: 52px minmax(140px, 1fr) repeat(3, minmax(100px, auto));
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .earningsTotals,
+  .rewardTokenGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .leaderboardTable article {
+    grid-template-columns: 40px 1fr;
+  }
+
+  .leaderboardTable article span:nth-of-type(n + 2) {
+    grid-column: 2;
+  }
+}
+
 .homePage {
   overflow: hidden;
 }
@@ -3065,17 +3191,21 @@ main {
   }
 
   .entryDesk {
-    padding: 12px 24px 40px;
+    padding: 8px 20px 12px;
   }
 
   .segmentTitle h1 {
     margin-top: 6px;
-    font-size: clamp(3.25rem, 8vh, 4.8rem);
+    font-size: clamp(2.9rem, 7vh, 4.2rem);
   }
 
   .segmentTitle p {
     margin: 4px 0 7px;
     font-size: 0.85rem;
+  }
+
+  .segmentTitle p + p {
+    display: none;
   }
 
   .entryClock {
@@ -3084,7 +3214,7 @@ main {
   }
 
   .entryClock strong {
-    font-size: clamp(3.7rem, 9vh, 5rem);
+    font-size: clamp(3.2rem, 8vh, 4.5rem);
   }
 
   .factionGrid {
@@ -3093,7 +3223,7 @@ main {
   }
 
   .factionChoice {
-    min-height: 68px;
+    min-height: 61px;
     gap: 2px;
     grid-template-columns: auto 1fr;
     align-items: center;
@@ -3117,6 +3247,20 @@ main {
 
   .entryTerms {
     margin-bottom: 8px;
+  }
+
+  .entryDesk > .amountComposer {
+    width: min(100%, 650px);
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    gap: 8px;
+    padding: 7px;
+  }
+
+  .entryDesk > .amountComposer input {
+    min-height: 34px;
+    padding-block: 5px;
+    font-size: 1rem;
   }
 
   .entryDesk > .primaryAction {
@@ -3368,21 +3512,34 @@ main {
 
   .entryDesk {
     min-height: calc(100vh - 159px);
-    padding: 18px 14px 44px;
+    justify-content: flex-start;
+    padding: 10px 12px 14px;
   }
 
   .segmentTitle h1 {
-    font-size: clamp(4.4rem, 21vw, 7rem);
+    margin-top: 6px;
+    font-size: clamp(2.5rem, 11vw, 4rem);
+    line-height: 0.9;
+  }
+
+  .segmentTitle p {
+    margin: 7px 0 9px;
+    font-size: 0.84rem;
+    line-height: 1.25;
+  }
+
+  .segmentTitle p + p {
+    display: none;
   }
 
   .entryClock {
     column-gap: 10px;
-    margin-bottom: 12px;
-    padding: 9px 11px;
+    margin-bottom: 7px;
+    padding: 5px 8px;
   }
 
   .entryClock strong {
-    font-size: clamp(3.7rem, 18vw, 5.2rem);
+    font-size: clamp(2.7rem, 13vw, 4rem);
   }
 
   .entryClock span {
@@ -3394,21 +3551,52 @@ main {
   }
 
   .factionGrid {
-    gap: 8px;
+    gap: 5px;
+    margin-bottom: 7px;
   }
 
   .factionChoice {
-    min-height: 84px;
+    min-height: 58px;
     gap: 2px;
-    padding: 7px;
+    padding: 5px;
   }
 
   .factionChoice strong {
-    font-size: 1.2rem;
+    font-size: 0.82rem;
   }
 
   .factionChoice small {
     line-height: 1.05;
+  }
+
+  .amountComposer {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .amountPresets button {
+    min-height: 31px;
+    padding: 4px;
+  }
+
+  .amountComposer input {
+    min-height: 36px;
+    padding: 5px 8px;
+    font-size: 1.15rem;
+  }
+
+  .entryTerms {
+    margin-bottom: 6px;
+  }
+
+  .entryDesk > .primaryAction {
+    min-height: 44px;
+    padding-block: 7px;
+  }
+
+  .entryDesk > .actionFinePrint {
+    display: none;
   }
 
   .stateInterstitial,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { TickerId } from "@/lib/game/types";
 import { tickerSlots } from "@/lib/game/constants";
 import { sendDevnetAction, type DevnetAction } from "@/lib/web3/devnet";
+import { sendV4DevnetAction, type V4DevnetAction } from "@/lib/web3/v4-devnet";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       action?: string;
       ticker?: string;
+      amountUsd?: number;
     };
-    const supported: DevnetAction[] = [
+    const supported: string[] = [
       "enter",
       "claim",
       "demo-claim",
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
       "revoke",
       "claim-holder",
       "claim-print",
+      "claim-lifetime",
       "claim-refund",
     ];
     if (!supported.includes(body.action as DevnetAction)) {
@@ -45,10 +48,17 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const result = await sendDevnetAction(
-      body.action as DevnetAction,
-      body.ticker as TickerId | undefined,
-    );
+    const result =
+      process.env.NEXT_PUBLIC_CONTRACT_VERSION === "last-bell-v4-stock-pot"
+        ? await sendV4DevnetAction(
+            body.action as V4DevnetAction,
+            body.ticker as TickerId | undefined,
+            body.amountUsd,
+          )
+        : await sendDevnetAction(
+            body.action as DevnetAction,
+            body.ticker as TickerId | undefined,
+          );
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return NextResponse.json(

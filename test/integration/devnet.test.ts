@@ -1,137 +1,150 @@
 import {
+  createPublicClient,
   createTestClient,
   createWalletClient,
   http,
+  maxUint256,
   publicActions,
+  type Address,
 } from "viem";
 import { beforeAll, describe, expect, it } from "vitest";
-import { tickerSlots } from "@/lib/game/constants";
 import deployment from "../../deployments/31337.json";
-import { devDollarAbi, lastBellAbi } from "@/lib/web3/last-bell-abi";
-import {
-  devDollarAddress,
-  devnetPublicClient,
-  devnetSessionPlayer,
-  getDevnetSnapshot,
-  getDevnetSession,
-  paymentRouterAddress,
-  sendDevnetAction,
-} from "@/lib/web3/devnet";
 import { localDevnet } from "@/lib/web3/chains";
+import { devDollarAbi, lastBellV4Abi } from "@/lib/web3/last-bell-abi";
+import {
+  ensureV4DevnetRoundProgression,
+  getV4DevnetSession,
+  getV4DevnetSnapshot,
+  quoteV4Devnet,
+  sendV4DevnetAction,
+} from "@/lib/web3/v4-devnet";
 
+const rpc = process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545";
+const d = deployment as {
+  lastBellRound: Address;
+  devDollar: Address;
+  paymentRouter: Address;
+  sessionPlayer: Address;
+};
+const publicClient = createPublicClient({
+  chain: localDevnet,
+  cacheTime: 0,
+  transport: http(rpc),
+});
 const testClient = createTestClient({
   chain: localDevnet,
   mode: "anvil",
-  transport: http(process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545"),
+  transport: http(rpc),
 }).extend(publicActions);
 
-describe("deployed local devnet", () => {
+describe("deployed v4 local devnet", () => {
   beforeAll(async () => {
-    expect(await devnetPublicClient.getChainId()).toBe(31337);
+    expect(await publicClient.getChainId()).toBe(31337);
+    expect((await getV4DevnetSnapshot()).contractVersion).toBe(
+      "last-bell-v4-stock-pot",
+    );
   });
 
-  it("reads the deployed round and accepts a real contract claim", async () => {
-    const beforeEntry = await getDevnetSnapshot();
-    expect(beforeEntry.phase).toBe("entry");
-    expect(beforeEntry.timeLeftSeconds).toBe(0);
-    const startedBefore = await devnetPublicClient.readContract({
-      address: deployment.lastBellRound as `0x${string}`,
-      abi: lastBellAbi,
+  it("quotes and accepts an uncapped custom Stock Token contribution", async () => {
+    const before = await getV4DevnetSnapshot();
+    expect(before.phase).toBe("entry");
+    const quote = await quoteV4Devnet("AAPL", 5_000);
+    expect(quote.usdgAmount).toBe(5_000);
+    expect(quote.projectedPoints).toBe(5_000);
+
+    const result = await sendV4DevnetAction("enter", "AAPL", 5_000);
+    expect(result.state.phase).toBe("live");
+    expect(result.state.holder?.ticker).toBe("AAPL");
+    expect(result.state.potUsd).toBeCloseTo(before.potUsd + 5_000, 6);
+    expect(result.state.tickerScores[1].weightedScore).toBe(5_000);
+    expect(result.state.tickerScores[1].potTokenQuantity).toBeGreaterThan(0);
+    const startedAt = await publicClient.readContract({
+      address: d.lastBellRound,
+      abi: lastBellV4Abi,
       functionName: "startedAt",
     });
-    expect(startedBefore).toBe(0n);
-
-    const entered = await sendDevnetAction("enter", "AAPL");
-    expect(entered.session?.starterTicker).toBe("AAPL");
-    expect(entered.session?.allowanceUsd).toBe(99);
-    expect(entered.state.phase).toBe("live");
-    expect(entered.state.timeLeftSeconds).toBeGreaterThanOrEqual(44);
-    expect(entered.state.timeLeftSeconds).toBeLessThanOrEqual(45);
-    const startedAfter = await devnetPublicClient.readContract({
-      address: deployment.lastBellRound as `0x${string}`,
-      abi: lastBellAbi,
-      functionName: "startedAt",
-    });
-    expect(startedAfter).toBeGreaterThan(0n);
-    await sendDevnetAction("demo-claim", "NVDA");
-    const before = await getDevnetSnapshot();
-    const deadlineBefore = await devnetPublicClient.readContract({
-      address: deployment.lastBellRound as `0x${string}`,
-      abi: lastBellAbi,
-      functionName: "deadline",
-    });
-    const target = tickerSlots.find(
-      (ticker) => ticker.id !== before.holder?.ticker && ticker.id !== "AAPL",
-    )!;
-    const result = await sendDevnetAction("claim", target.id);
-    const deadlineAfter = await devnetPublicClient.readContract({
-      address: deployment.lastBellRound as `0x${string}`,
-      abi: lastBellAbi,
-      functionName: "deadline",
-    });
-
-    expect(result.state.holder?.ticker).toBe(target.id);
-    expect(result.state.potUsd).toBe(before.potUsd + 1);
-    expect(result.state.claims.length).toBe(before.claims.length + 1);
-    expect(deadlineAfter).toBe(deadlineBefore + 2n);
-    const { session } = await getDevnetSession();
-    expect(session.spentUsd).toBe(2);
-    expect(session.remainingUsd).toBe(98);
-    expect(session.availableActions).toBe(98);
+    expect(startedAt).toBeGreaterThan(0n);
   });
 
-  it("refreshes a low allowance before the next claim", async () => {
+  it("refreshes any insufficient allowance to one reusable max approval", async () => {
     const wallet = createWalletClient({
-      account: devnetSessionPlayer,
+      account: d.sessionPlayer,
       chain: localDevnet,
-      transport: http(process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545"),
+      transport: http(rpc),
     });
     await wallet.writeContract({
-      address: devDollarAddress,
+      account: d.sessionPlayer,
+      address: d.devDollar,
       abi: devDollarAbi,
       functionName: "approve",
-      args: [paymentRouterAddress, 5_000_000n],
+      args: [d.paymentRouter, 5_000_000n],
     });
-    await sendDevnetAction("demo-claim", "TSLA");
-    await sendDevnetAction("claim", "AAPL");
-
-    const allowance = await devnetPublicClient.readContract({
-      address: devDollarAddress,
+    await sendV4DevnetAction("demo-claim", "TSLA", 10);
+    await sendV4DevnetAction("claim", "NVDA", 100);
+    const allowance = await publicClient.readContract({
+      address: d.devDollar,
       abi: devDollarAbi,
       functionName: "allowance",
-      args: [devnetSessionPlayer, paymentRouterAddress],
+      args: [d.sessionPlayer, d.paymentRouter],
     });
-    expect(allowance).toBe(99_000_000n);
+    expect(allowance).toBe(maxUint256);
   });
 
-  it("keeps the deadline fixed for a real Rug Zone claim", async () => {
-    const beforeWarp = await getDevnetSnapshot();
+  it("locks the follower multiplier before the incoming call and keeps Rug Zone FCFS", async () => {
+    await sendV4DevnetAction("demo-claim", "SPY", 1_000);
+    const heated = await quoteV4Devnet("SPY", 250);
+    expect(heated.multiplierBps).toBe(15_000);
+    const beforeWarp = await getV4DevnetSnapshot();
     await testClient.increaseTime({
       seconds: Math.max(1, beforeWarp.timeLeftSeconds - 8),
     });
     await testClient.mine({ blocks: 1 });
-    const inRug = await getDevnetSnapshot();
+    const inRug = await getV4DevnetSnapshot();
     expect(inRug.phase).toBe("rug");
-
-    const target = tickerSlots.find(
-      (ticker) => ticker.id !== inRug.holder?.ticker,
-    )!;
-    const result = await sendDevnetAction("demo-claim", target.id);
-    expect(result.state.timeLeftSeconds).toBeLessThanOrEqual(
-      inRug.timeLeftSeconds,
-    );
+    const deadline = inRug.deadline;
+    const result = await sendV4DevnetAction("demo-claim", "NVDA", 250);
+    expect(result.state.deadline).toBe(deadline);
   });
 
-  it("finalizes onchain after zero without declaring early", async () => {
-    const beforeWarp = await getDevnetSnapshot();
+  it("settles the basket and promotes points for the following round", async () => {
+    const beforeWarp = await getV4DevnetSnapshot();
     await testClient.increaseTime({
       seconds: beforeWarp.timeLeftSeconds + 1,
     });
     await testClient.mine({ blocks: 1 });
-    expect((await getDevnetSnapshot()).phase).toBe("finalizing");
-
-    const result = await sendDevnetAction("finalize");
+    expect((await getV4DevnetSnapshot()).phase).toBe("finalizing");
+    const result = await sendV4DevnetAction("finalize");
     expect(result.state.phase).toBe("settled");
     expect(result.state.holder).not.toBeNull();
+    const activeBefore = await publicClient.readContract({
+      address: deployment.roundManager as Address,
+      abi: [
+        {
+          type: "function",
+          name: "activeRound",
+          stateMutability: "view",
+          inputs: [],
+          outputs: [{ type: "address" }],
+        },
+      ],
+      functionName: "activeRound",
+    });
+    await ensureV4DevnetRoundProgression(result.state);
+    const activeAfter = await publicClient.readContract({
+      address: deployment.roundManager as Address,
+      abi: [
+        {
+          type: "function",
+          name: "activeRound",
+          stateMutability: "view",
+          inputs: [],
+          outputs: [{ type: "address" }],
+        },
+      ],
+      functionName: "activeRound",
+    });
+    expect(activeAfter).toBe(activeBefore);
+    const { session } = await getV4DevnetSession();
+    expect(session.spentUsd).toBeGreaterThan(0);
   });
 });

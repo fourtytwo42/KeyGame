@@ -26,12 +26,19 @@ export type DeploymentManifest = {
   deploymentBlock: number;
   sourceCommit: string;
   mockOnly: boolean;
-  contractVersion?: "closing-print-v3-airtime" | "closing-print-v2-dex";
+  contractVersion?:
+    | "last-bell-v4-stock-pot"
+    | "closing-print-v3-airtime"
+    | "closing-print-v2-dex";
   contracts: {
     manager: Address;
     paymentRouter: Address;
     paymentToken: Address;
     marketVerifier: Address;
+    lifetimePointsVault?: Address;
+    rewardRouter?: Address;
+    swapAdapter?: Address;
+    activeRound?: Address;
   };
   rpc: { primary: string; fallback?: string };
   verifier: {

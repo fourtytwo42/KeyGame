@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { maxUint256 } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import deploymentJson from "../../../deployments/31337.json";
-import { sessionApproval } from "@/lib/game/constants";
+import { sessionApproval, tickerSlots } from "@/lib/game/constants";
 import type {
   ClaimableBalances,
   SessionBudget,
@@ -15,12 +16,14 @@ import {
   robinhoodChainMainnet,
   robinhoodChainTestnet,
 } from "./chains";
-import { devDollarAbi, lastBellAbi } from "./last-bell-abi";
+import { devDollarAbi, lastBellAbi, lastBellV4Abi } from "./last-bell-abi";
 
 const deployment = deploymentJson as unknown as {
   lastBellRound: `0x${string}`;
   devDollar: `0x${string}`;
   paymentRouter: `0x${string}`;
+  swapAdapter?: `0x${string}`;
+  stockTokens?: `0x${string}`[];
 };
 
 export const configuredRoundAddress =
@@ -55,10 +58,13 @@ type ReportResponse = {
 export function useWalletGame(
   activeRoundAddress: `0x${string}` = configuredRoundAddress,
   contractVersion:
+    | "last-bell-v4-stock-pot"
     | "closing-print-v3-airtime"
     | "closing-print-v2-dex"
-    | "closing-print-v1" = "closing-print-v3-airtime",
+    | "closing-print-v1"
+    | "faction-v0" = "closing-print-v3-airtime",
 ) {
+  const v4Economy = contractVersion === "last-bell-v4-stock-pot";
   const legacyPayout = contractVersion !== "closing-print-v3-airtime";
   const { address, chainId, isConnected } = useAccount();
   const publicClient = usePublicClient({ chainId: configuredGameChain.id });
@@ -82,6 +88,51 @@ export function useWalletGame(
   const refresh = useCallback(async () => {
     if (!address || !publicClient) {
       setSession(null);
+      return;
+    }
+    if (v4Economy) {
+      const [phase, spent, allowance, deadline] = await Promise.all([
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "currentPhase",
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "paid",
+          args: [address],
+        }),
+        publicClient.readContract({
+          address: configuredPaymentToken,
+          abi: devDollarAbi,
+          functionName: "allowance",
+          args: [address, configuredPaymentRouter],
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "deadline",
+        }),
+      ]);
+      setSession({
+        player: address,
+        starterTicker: null,
+        maximumUsd: 0,
+        spentUsd: Number(spent) / 1e6,
+        remainingUsd: 0,
+        availableActions: 0,
+        allowanceUsd:
+          allowance === maxUint256
+            ? Number.MAX_SAFE_INTEGER
+            : Number(allowance) / 1e6,
+        expiresAt: Number(deadline) || null,
+        status:
+          Number(phase) >= 4 ? "expired" : spent === 0n ? "new" : "active",
+        mode: "wallet",
+        producerPass: false,
+      });
+      setClaimable({ holderUsd: 0, airtimeUsd: 0, refundUsd: 0 });
       return;
     }
     const [
@@ -249,7 +300,7 @@ export function useWalletGame(
           : 0,
       refundUsd: Number(phase) === 5 && !refundClaimed ? spentUsd : 0,
     });
-  }, [activeRoundAddress, address, legacyPayout, publicClient]);
+  }, [activeRoundAddress, address, legacyPayout, publicClient, v4Economy]);
 
   useEffect(() => {
     const initial = window.setTimeout(
@@ -265,34 +316,45 @@ export function useWalletGame(
     };
   }, [address, refresh]);
 
-  const ensureAllowance = useCallback(async () => {
-    if (!address || !publicClient || !walletClient.data) {
-      throw new Error("Connect the wallet on the game network first.");
-    }
-    const allowance = await publicClient.readContract({
-      address: configuredPaymentToken,
-      abi: devDollarAbi,
-      functionName: "allowance",
-      args: [address, configuredPaymentRouter],
-    });
-    if (allowance >= BigInt(sessionApproval.refreshBelowUsd * 1e6)) return;
-    setAction("approving");
-    const hash = await walletClient.data.writeContract({
-      account: address,
-      chain: configuredGameChain,
-      address: configuredPaymentToken,
-      abi: devDollarAbi,
-      functionName: "approve",
-      args: [configuredPaymentRouter, BigInt(sessionApproval.amountUsd * 1e6)],
-    });
-    const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    if (receipt.status !== "success") {
-      throw new Error("USDG approval was rejected.");
-    }
-  }, [address, publicClient, walletClient.data]);
+  const ensureAllowance = useCallback(
+    async (requiredAmount = 1n) => {
+      if (!address || !publicClient || !walletClient.data) {
+        throw new Error("Connect the wallet on the game network first.");
+      }
+      const allowance = await publicClient.readContract({
+        address: configuredPaymentToken,
+        abi: devDollarAbi,
+        functionName: "allowance",
+        args: [address, configuredPaymentRouter],
+      });
+      if (
+        v4Economy
+          ? allowance >= requiredAmount
+          : allowance >= BigInt(sessionApproval.refreshBelowUsd * 1e6)
+      )
+        return;
+      setAction("approving");
+      const hash = await walletClient.data.writeContract({
+        account: address,
+        chain: configuredGameChain,
+        address: configuredPaymentToken,
+        abi: devDollarAbi,
+        functionName: "approve",
+        args: [
+          configuredPaymentRouter,
+          v4Economy ? maxUint256 : BigInt(sessionApproval.amountUsd * 1e6),
+        ],
+      });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== "success") {
+        throw new Error("USDG approval was rejected.");
+      }
+    },
+    [address, publicClient, v4Economy, walletClient.data],
+  );
 
   const claim = useCallback(
-    async (ticker: TickerId) => {
+    async (ticker: TickerId, amountUsd = 1) => {
       if (!address || !publicClient || !walletClient.data || !ready) {
         throw new Error(
           `Connect and switch to ${configuredGameChain.name} before playing.`,
@@ -300,8 +362,51 @@ export function useWalletGame(
       }
       setError(null);
       try {
-        await ensureAllowance();
+        const amount = BigInt(Math.floor(amountUsd * 1e6));
+        await ensureAllowance(amount);
         setAction("claiming");
+        if (v4Economy) {
+          const response = await fetch("/api/game/quote", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ticker, amountUsd, slippageBps: 100 }),
+          });
+          const payload = (await response.json()) as {
+            ok: boolean;
+            quote?: {
+              minimumStockOut: string;
+              expiresAt: number;
+            };
+            error?: string;
+          };
+          if (!response.ok || !payload.quote) {
+            throw new Error(payload.error || "Stock quote unavailable.");
+          }
+          const tickerIndex = tickerSlots.findIndex(
+            (slot) => slot.id === ticker,
+          );
+          const hash = await walletClient.data.writeContract({
+            account: address,
+            chain: configuredGameChain,
+            address: activeRoundAddress,
+            abi: lastBellV4Abi,
+            functionName: "claimBell",
+            args: [
+              tickerIndex,
+              amount,
+              BigInt(payload.quote.minimumStockOut),
+              BigInt(payload.quote.expiresAt),
+              255,
+            ],
+          });
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash,
+          });
+          if (receipt.status !== "success")
+            throw new Error("Contribution reverted.");
+          await refresh();
+          return hash;
+        }
         const response = await fetch(
           `/api/market/report?ticker=${encodeURIComponent(ticker)}`,
           { cache: "no-store" },
@@ -339,11 +444,12 @@ export function useWalletGame(
       ready,
       refresh,
       walletClient.data,
+      v4Economy,
     ],
   );
 
   const enter = useCallback(
-    async (ticker: TickerId) => {
+    async (ticker: TickerId, amountUsd = 1) => {
       if (publicEnvironment.mode === "devnet" && address) {
         setAction("funding");
         const response = await fetch("/api/devnet/faucet", {
@@ -353,7 +459,7 @@ export function useWalletGame(
         });
         if (!response.ok) throw new Error("The local faucet failed.");
       }
-      return claim(ticker);
+      return claim(ticker, amountUsd);
     },
     [address, claim],
   );
@@ -384,6 +490,25 @@ export function useWalletGame(
       }
       setAction(kind === "refund" ? "claiming-refund" : "claiming-reward");
       try {
+        if (v4Economy) {
+          const functionName =
+            kind === "holder"
+              ? "claimHolderRewardFor"
+              : kind === "airtime"
+                ? "claimWinningStockRewardFor"
+                : "claimCancellationRefundFor";
+          const hash = await walletClient.data.writeContract({
+            account: address,
+            chain: configuredGameChain,
+            address: activeRoundAddress,
+            abi: lastBellV4Abi,
+            functionName,
+            args: [address],
+          });
+          await publicClient.waitForTransactionReceipt({ hash });
+          await refresh();
+          return hash;
+        }
         const functionName =
           kind === "holder"
             ? "claimHolderReward"
@@ -413,6 +538,7 @@ export function useWalletGame(
       publicClient,
       refresh,
       walletClient.data,
+      v4Economy,
     ],
   );
 

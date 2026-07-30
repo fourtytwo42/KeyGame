@@ -3,6 +3,7 @@ import { screenRoster } from "@/lib/game/market-screen";
 import { buildRoundProjection } from "@/lib/game/projections";
 import { loadScreeningAssets } from "@/lib/server/market-store";
 import { getDevnetSession, getDevnetSnapshot } from "@/lib/web3/devnet";
+import { getV4DevnetSession, getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
 
 export const dynamic = "force-dynamic";
@@ -11,13 +12,20 @@ export async function GET() {
   const mode = process.env.NEXT_PUBLIC_GAME_MODE || "simulator";
   try {
     if (mode === "devnet") {
-      const state = await getDevnetSnapshot();
-      state.projection = buildRoundProjection(state);
+      const state =
+        process.env.NEXT_PUBLIC_CONTRACT_VERSION === "last-bell-v4-stock-pot"
+          ? await getV4DevnetSnapshot()
+          : await getDevnetSnapshot();
+      if (state.contractVersion !== "last-bell-v4-stock-pot") {
+        state.projection = buildRoundProjection(state);
+      }
       return NextResponse.json({
         ok: true,
         chainId: 31337,
         state,
-        ...(await getDevnetSession()),
+        ...(state.contractVersion === "last-bell-v4-stock-pot"
+          ? await getV4DevnetSession()
+          : await getDevnetSession()),
       });
     }
     if (mode !== "testnet" && mode !== "mainnet") {

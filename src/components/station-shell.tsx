@@ -31,6 +31,8 @@ export function StationShell({ children }: { children: ReactNode }) {
         <nav className="desktopNav" aria-label="Primary">
           <Link href="/rules">Rules</Link>
           <Link href="/supported-assets">Bags</Link>
+          <Link href="/earnings">Earnings</Link>
+          <Link href="/leaderboards">Whales</Link>
         </nav>
         <WalletPanel />
       </header>
@@ -45,6 +47,7 @@ export function StationShell({ children }: { children: ReactNode }) {
         <nav aria-label="Footer">
           <Link href="/rules">Rules</Link>
           <Link href="/supported-assets">Supported assets</Link>
+          <Link href="/earnings">Earnings</Link>
         </nav>
       </footer>
     </div>

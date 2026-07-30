@@ -3,6 +3,8 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 rpc_url="${LOCAL_RPC_URL:-http://127.0.0.1:8545}"
+deployment_block="$(( $(cast block-number --rpc-url "$rpc_url") + 1 ))"
+source_commit="$(git rev-parse HEAD)"
 deployer="0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 accounts=(
   "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
@@ -30,53 +32,41 @@ send_checked() {
   fi
 }
 
-forge script script/DeployLocal.s.sol:DeployLocal \
+forge script script/DeployLocalV4.s.sol:DeployLocalV4 \
   --rpc-url "$rpc_url" \
   --broadcast \
   --slow \
   --unlocked \
   --sender "$deployer"
 
-broadcast_file="$project_root/broadcast/DeployLocal.s.sol/31337/run-latest.json"
+broadcast_file="$project_root/broadcast/DeployLocalV4.s.sol/31337/run-latest.json"
 token_address="$(jq -r '.transactions[] | select(.contractName == "MockUSDG") | .contractAddress' "$broadcast_file" | head -n1)"
-payment_router_address="$(jq -r '.transactions[] | select(.contractName == "PaymentRouter") | .contractAddress' "$broadcast_file" | head -n1)"
-verifier_address="$(jq -r '.transactions[] | select(.contractName == "MockMarketDataVerifier") | .contractAddress' "$broadcast_file" | head -n1)"
+swap_adapter_address="$(jq -r '.transactions[] | select(.contractName == "MockStockSwapAdapter") | .contractAddress' "$broadcast_file" | head -n1)"
+manager_address="$(jq -r '.transactions[] | select(.contractName == "RoundManagerV4") | .contractAddress' "$broadcast_file" | head -n1)"
+reward_router_address="$(jq -r '.transactions[] | select(.contractName == "RewardRouterV4") | .contractAddress' "$broadcast_file" | head -n1)"
 mapfile -t stock_addresses < <(jq -r '.transactions[] | select(.contractName == "MockStockToken") | .contractAddress' "$broadcast_file")
-round_address="$(jq -r '.transactions[] | select(.contractName == "LastBellRound") | .contractAddress' "$broadcast_file" | head -n1)"
+payment_router_address="$(cast call "$manager_address" 'paymentRouter()(address)' --rpc-url "$rpc_url")"
+lifetime_vault_address="$(cast call "$manager_address" 'lifetimeVault()(address)' --rpc-url "$rpc_url")"
+round_address="$(cast call "$manager_address" 'activeRound()(address)' --rpc-url "$rpc_url")"
 
-if [[ -z "$token_address" || -z "$payment_router_address" || -z "$verifier_address" || ${#stock_addresses[@]} -ne 4 || -z "$round_address" || "$token_address" == "null" || "$payment_router_address" == "null" || "$round_address" == "null" ]]; then
+if [[ -z "$token_address" || -z "$payment_router_address" || -z "$swap_adapter_address" || -z "$manager_address" || -z "$lifetime_vault_address" || -z "$reward_router_address" || ${#stock_addresses[@]} -ne 4 || -z "$round_address" || "$token_address" == "null" || "$payment_router_address" == "null" || "$round_address" == "null" ]]; then
   echo "Could not recover deployed addresses from $broadcast_file." >&2
   exit 1
 fi
 
-observed_hex="$(cast block latest --rpc-url "$rpc_url" --json | jq -r '.timestamp')"
-observed_at="$(cast to-dec "$observed_hex")"
 symbols=("NVDA" "AAPL" "TSLA" "SPY")
-opening_prices=(10000000000 20000000000 25000000000 50000000000)
-opening_reports=()
-for index in "${!symbols[@]}"; do
-  feed_id="$(cast keccak "${symbols[$index]}/USD")"
-  opening_reports+=(
-    "$(cast abi-encode 'f(bytes32,uint256,uint64,uint64,uint64)' \
-      "$feed_id" "${opening_prices[$index]}" "$observed_at" "$observed_at" "$((observed_at + 30))")"
-  )
-done
-opening_report_array="[$(IFS=,; echo "${opening_reports[*]}")]"
-send_checked "$round_address" "start(uint256,bytes[4])" 50000000 "$opening_report_array" \
-  --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 1000000
-
 for index in "${!accounts[@]}"; do
   account="${accounts[$index]}"
   ticker="$((index % 4))"
-  send_checked "$token_address" "mint(address,uint256)" "$account" 100000000 \
+  send_checked "$token_address" "mint(address,uint256)" "$account" 1000000000000 \
     --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
-  send_checked "$token_address" "approve(address,uint256)" "$payment_router_address" 100000000 \
+  send_checked "$token_address" "approve(address,uint256)" "$payment_router_address" 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff \
     --rpc-url "$rpc_url" --unlocked --from "$account" --gas-limit 150000
   send_checked "${stock_addresses[$ticker]}" "mint(address,uint256)" "$account" 1 \
     --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
 done
 
-send_checked "$token_address" "mint(address,uint256)" "$session_player" 100000000 \
+send_checked "$token_address" "mint(address,uint256)" "$session_player" 1000000000000 \
   --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
 send_checked "${stock_addresses[0]}" "mint(address,uint256)" "$session_player" 1 \
   --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
@@ -84,29 +74,55 @@ send_checked "${stock_addresses[0]}" "mint(address,uint256)" "$session_player" 1
 mkdir -p "$project_root/deployments" "$project_root/public/contracts"
 jq -n \
   --argjson chainId 31337 \
+  --argjson deploymentBlock "$deployment_block" \
   --arg rpcUrl "$rpc_url" \
+  --arg sourceCommit "$source_commit" \
   --arg deployer "$deployer" \
   --arg token "$token_address" \
   --arg paymentRouter "$payment_router_address" \
-  --arg verifier "$verifier_address" \
+  --arg swapAdapter "$swap_adapter_address" \
+  --arg manager "$manager_address" \
+  --arg lifetimeVault "$lifetime_vault_address" \
+  --arg rewardRouter "$reward_router_address" \
   --arg round "$round_address" \
   --arg sessionPlayer "$session_player" \
   --argjson stockTokens "$(printf '%s\n' "${stock_addresses[@]}" | jq -R . | jq -s .)" \
   --argjson players "$(printf '%s\n' "${accounts[@]}" | jq -R . | jq -s .)" \
   '{
+    schemaVersion: 4,
+    environment: "anvil",
     chainId: $chainId,
+    deploymentBlock: $deploymentBlock,
+    sourceCommit: $sourceCommit,
+    mockOnly: true,
     rpcUrl: $rpcUrl,
+    rpc: {primary: $rpcUrl},
     deployer: $deployer,
     devDollar: $token,
     paymentRouter: $paymentRouter,
-    marketVerifier: $verifier,
+    swapAdapter: $swapAdapter,
+    roundManager: $manager,
+    lifetimePointsVault: $lifetimeVault,
+    rewardRouter: $rewardRouter,
     stockTokens: $stockTokens,
     lastBellRound: $round,
+    contractVersion: "last-bell-v4-stock-pot",
+    contracts: {
+      manager: $manager,
+      paymentRouter: $paymentRouter,
+      paymentToken: $token,
+      marketVerifier: $swapAdapter,
+      lifetimePointsVault: $lifetimeVault,
+      rewardRouter: $rewardRouter,
+      swapAdapter: $swapAdapter,
+      activeRound: $round
+    },
+    verifier: {type: "mock"},
     sessionPlayer: $sessionPlayer,
     players: $players
   }' >"$project_root/deployments/31337.json"
 
-forge inspect contracts/LastBellRound.sol:LastBellRound abi --json \
+forge inspect contracts/LastBellRoundV4.sol:LastBellRoundV4 abi --json \
   >"$project_root/public/contracts/LastBellRound.abi.json"
 forge inspect contracts/mocks/MockUSDG.sol:MockUSDG abi --json \
   >"$project_root/public/contracts/MockUSDG.abi.json"
@@ -115,13 +131,18 @@ printf '%s\n' \
   "NEXT_PUBLIC_APP_URL=http://192.168.50.138:3000" \
   "NEXT_PUBLIC_LOCAL_RPC_URL=http://192.168.50.138:8545" \
   "NEXT_PUBLIC_GAME_MODE=devnet" \
+  "NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot" \
   "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS=$round_address" \
   "NEXT_PUBLIC_DEV_DOLLAR_ADDRESS=$token_address" \
+  "NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS=$payment_router_address" \
   "NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL=https://rpc.testnet.chain.robinhood.com" \
   >"$project_root/.env.local"
 
 echo "LastBellRound: $round_address"
 echo "MockUSDG:      $token_address"
 echo "PaymentRouter: $payment_router_address"
-echo "MockVerifier:  $verifier_address"
+echo "SwapAdapter:   $swap_adapter_address"
+echo "RoundManager:  $manager_address"
+echo "LifetimeVault: $lifetime_vault_address"
+echo "RewardRouter:  $reward_router_address"
 echo "Deployment:    $project_root/deployments/31337.json"

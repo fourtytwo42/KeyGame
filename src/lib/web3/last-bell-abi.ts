@@ -69,6 +69,93 @@ export const lastBellAbi = parseAbi([
   "event RefundClaimed(uint256 indexed roundId,address indexed player,uint256 amount)",
 ]);
 
+export const lastBellV4Abi = parseAbi([
+  "function CONTRACT_VERSION() view returns (bytes32)",
+  "function roundId() view returns (uint256)",
+  "function currentPhase() view returns (uint8)",
+  "function producerPassRequired() view returns (bool)",
+  "function startedAt() view returns (uint64)",
+  "function deadline() view returns (uint64)",
+  "function hardEnd() view returns (uint64)",
+  "function settledAt() view returns (uint64)",
+  "function holder() view returns (address)",
+  "function holderTicker() view returns (uint8)",
+  "function winningTicker() view returns (uint8)",
+  "function acceptedClaims() view returns (uint256)",
+  "function totalContributed() view returns (uint256)",
+  "function largestCall() view returns (uint256)",
+  "function heatTarget() view returns (uint256)",
+  "function tickerConfigs(uint256) view returns (bytes32 symbol,bytes32 assetId,address token)",
+  "function recentVolume(uint8) view returns (uint256)",
+  "function currentMultiplierBps(uint8) view returns (uint16)",
+  "function tickerPoints(uint256) view returns (uint256)",
+  "function lastTickerContributionAt(uint256) view returns (uint64)",
+  "function accountedStock(uint256) view returns (uint256)",
+  "function paid(address) view returns (uint256)",
+  "function playerTickerPoints(address,uint8) view returns (uint256)",
+  "function playerPurchasedStock(address,uint8) view returns (uint256)",
+  "function holderPool(uint256) view returns (uint256)",
+  "function winningStockPool(uint256) view returns (uint256)",
+  "function lifetimePool(uint256) view returns (uint256)",
+  "function nextRoundPool(uint256) view returns (uint256)",
+  "function protocolPool(uint256) view returns (uint256)",
+  "function totalWinningPointsClaimed() view returns (uint256)",
+  "function winningPoolPaid(uint256) view returns (uint256)",
+  "function holderRewardClaimed(address) view returns (bool)",
+  "function winningRewardClaimed(address) view returns (bool)",
+  "function refundClaimed(address) view returns (bool)",
+  "function claimBell(uint8 tickerIndex,uint256 usdgAmount,uint256 minimumStockOut,uint64 quoteDeadline,uint8 passTokenIndex)",
+  "function claimHolderRewardFor(address player)",
+  "function claimWinningStockRewardFor(address player)",
+  "function claimCancellationRefundFor(address player)",
+  "function claimProtocolBasket(address recipient)",
+  "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint256 usdgAmount,uint256 stockReceived,uint16 multiplierBps,uint256 points,uint256 recentVolume,uint64 acceptedAt,uint64 deadline,bool rugZone)",
+  "event RoundStarted(uint256 indexed roundId,uint64 startedAt,uint64 deadline,uint64 hardEnd)",
+  "event RoundSettled(uint256 indexed roundId,address indexed finalHolder,uint8 indexed winningTicker,uint256 winningTickerPoints,uint256 totalContributed,uint256[4] accountedStock,bytes32 contractVersion)",
+  "event BasketRewardClaimed(uint256 indexed roundId,address indexed player,bytes32 indexed rewardType,uint256[4] amounts)",
+  "event RoundCancelled(uint256 indexed roundId,bytes32 reason)",
+]);
+
+export const stockSwapAdapterAbi = parseAbi([
+  "function quoteUsdgForStock(address stock,uint256 amountIn) view returns (uint256)",
+]);
+
+export const lifetimePointsVaultAbi = parseAbi([
+  "function totalActivePoints() view returns (uint256)",
+  "function totalPendingPoints() view returns (uint256)",
+  "function activePoints(address) view returns (uint256)",
+  "function pendingPoints(address) view returns (uint256)",
+  "function activeTickerPoints(address,bytes32) view returns (uint256)",
+  "function tickerPointsOf(address,bytes32) view returns (uint256)",
+  "function claimable(address,address) view returns (uint256)",
+  "function totalClaimed(address,address) view returns (uint256)",
+  "function claimFor(address,address[])",
+  "event RoundOpened(uint256 indexed roundId,address indexed round)",
+  "event PendingPointsRecorded(uint256 indexed roundId,address indexed player,bytes32 indexed assetId,uint256 points)",
+  "event RoundPointsSettled(uint256 indexed roundId,uint256 activatedPoints)",
+  "event RoundPointsCancelled(uint256 indexed roundId,uint256 discardedPoints)",
+  "event LifetimeRewardAdded(uint256 indexed roundId,address indexed token,uint256 amount,uint256 eligiblePoints,uint256 carriedAmount)",
+  "event LifetimeRewardClaimed(address indexed player,address indexed token,uint256 amount)",
+]);
+
+export const roundManagerV4Abi = parseAbi([
+  "function activeRound() view returns (address)",
+  "function preparedRound() view returns (address)",
+  "function latestRoundId() view returns (uint256)",
+  "function paymentRouter() view returns (address)",
+  "function lifetimeVault() view returns (address)",
+  "function swapAdapter() view returns (address)",
+  "function seedAmounts(uint256) view returns (uint256)",
+  "function prepareRound((uint256 roundId,uint64 startDuration,uint64 extensionDuration,uint64 rugDuration,uint64 hardCapDuration,uint256 heatTarget,bool producerPassRequired) settings,(bytes32 symbol,bytes32 assetId,address token)[4] tickers) returns (address)",
+  "function activatePrepared(uint256[4] sellMinimums,uint256[4] buyMinimums,uint64 quoteDeadline) returns (address)",
+  "function finalizeActive()",
+  "function cancelActive(bytes32 reason)",
+  "event RoundPrepared(uint256 indexed roundId,address indexed round)",
+  "event RoundActivated(uint256 indexed roundId,address indexed round,uint256[4] seed)",
+  "event ActiveRoundFinalized(uint256 indexed roundId,address indexed round)",
+  "event ActiveRoundCancelled(uint256 indexed roundId,address indexed round,bytes32 reason)",
+]);
+
 // Retained for archived closing-print-v1 deployments. The DEX release appends
 // source pool/block evidence to BellClaimed, which changes the event topic.
 export const legacyClosingPrintEventAbi = parseAbi([

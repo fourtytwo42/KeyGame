@@ -1,5 +1,10 @@
 # Last Bell PRD Suite
 
+> `D-025` (2026-07-30): PRD 16 is the authoritative v4 economy.
+> [16-stock-pot-lifetime-points.md](./16-stock-pot-lifetime-points.md)
+> supersedes v3 Airtime payouts and all fixed-$1 or DEX-momentum scoring
+> requirements. Older versions remain replay history.
+
 > `D-020` (2026-07-29): Closing Print is the implemented product.
 > [10-closing-print-market-reactive.md](./10-closing-print-market-reactive.md)
 > supersedes every permanent-faction, asset-lock, separate-entry, and
@@ -14,6 +19,7 @@ Current implementation documents:
 - [PRD 13: DEX-powered Onchain Momentum](./13-dex-onchain-momentum.md)
 - [PRD 14: Product, retention, and mainnet readiness](./14-product-retention-mainnet-readiness.md)
 - [PRD 15: Audit candidate, Airtime Pool, and mainnet readiness](./15-audit-candidate-airtime-pool.md)
+- [PRD 16: Stock Pot and Lifetime Points](./16-stock-pot-lifetime-points.md)
 
 Status: Product baseline approved for Stage 0 implementation and a testnet-points
 first public MVP. Value-bearing and Stock Token stages remain gated.
@@ -43,6 +49,7 @@ The complete mobile and desktop concept set is embedded in
 | [12 Robinhood Testnet Production Readiness](12-robinhood-testnet-production-readiness.md) | Production-shaped testnet architecture, evidence, external blockers, and freeze gates | `TESTNET` |
 | [14 Product, Retention, and Mainnet Readiness](14-product-retention-mainnet-readiness.md) | Reward projections, SIWE profiles, featured raids, deployment-safe history, and audit-candidate gates | `RET`, `IDENT` |
 | [15 Audit Candidate and Airtime Pool](15-audit-candidate-airtime-pool.md) | Nonfinancial Crown, all-caller raw-time Airtime Pool, FCFS disclosure, Safes, soak, and freeze gates | `AUDIT`, `AIRTIME` |
+| [16 Stock Pot and Lifetime Points](16-stock-pot-lifetime-points.md) | Uncapped variable contributions, Stock Token basket custody, follower heat, winning-stock payouts, and recurring lifetime rewards | `V4`, `STOCKPOT`, `LIFETIME` |
 
 ## Status vocabulary
 
@@ -79,6 +86,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-022` | Replace Chainlink scoring with direct ten-minute Uniswap V3 Stock Token/USDG TWAPs; weighted points pick the ticker and raw airtime divides its pool. | `IMPLEMENTED / ECONOMIC REVIEW GATED` | PRD 13 overrides conflicting price-source and contributor-share requirements. |
 | `D-023` | Add estimated reward clarity, opt-in SIWE caller profiles, and community-triggered featured raids without changing contract economics. | `IMPLEMENTED / MAINNET GATED` | PRD 14 defines deployment-aware history and the remaining audit-candidate gates. |
 | `D-024` | Make DEX momentum nonfinancial and award the 30% Airtime Pool to all callers by total raw control time. | `IMPLEMENTED CANDIDATE / SOAK OPEN` | PRD 15 supersedes all current-version payout language in PRDs 01-14. |
+| `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTING / DEVNET ACCEPTANCE` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |

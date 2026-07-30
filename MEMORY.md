@@ -4,27 +4,54 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: monitor and complete the active `closing-print-v3-airtime`
-  24-hour/100-round Robinhood testnet soak. Do not freeze or deploy mainnet.
-- Last meaningful result: v3 is explorer-verified on Robinhood testnet, all six
-  production-shaped services are active, full two-wallet browser UAT passed,
-  and soak run `soak-2026-07-30T14-58-01-684Z` is running with one confirmed
-  action, zero failed actions, and 99 scheduled actions. Four completed v3
-  rounds reconciled with zero discrepancy. Last verified 2026-07-30.
-- Next step: let the soak run for at least 24 hours and 100 completed rounds,
-  verify every scheduled fault and exact final reconciliation, then package
-  the evidence. Audit freeze, Safe configuration, Reown production setup,
-  extension-wallet UAT, legal approval, and mainnet authorization remain
-  separate gates.
-- Five pinned direct USDG pools (AAPL, TSLA, AMZN, SPY, NVDA) passed the live
-  depth, two-sided impact, liquidity, observation-history, and spot/TWAP safety
-  checks on 2026-07-29. PLTR remains excluded for insufficient liquidity.
+- Current task: `last-bell-v4-stock-pot` is implemented and accepted on Anvil.
+  Do not broadcast v4 to Robinhood testnet or mainnet without a separate user
+  authorization.
+- Last meaningful result: v4 contract, application, API, devnet rollover,
+  lifetime rewards, changed-roster seed rebalance, browser UAT, protected build,
+  and testnet package gates passed on the project VM. The clean live devnet is
+  round 4663 in entry state with the automatic keeper running. Last verified
+  2026-07-30.
+- Testnet-ready archive:
+  `artifacts/last-bell-v4-testnet-ready.tgz`; its adjacent `.sha256` file is the
+  package checksum. It is explicitly marked not broadcast and records both the
+  baseline commit and working-tree diff hash.
+- Next step: complete the devnet-first v4 qualification. The reviewed source
+  now includes a v4 devnet keeper, read-only snapshots, per-asset/point soak
+  evidence, and accelerated/endurance controllers. Robinhood testnet is
+  reserved for a separately authorized two-round smoke test.
 
 ## Current State
 
+- `docs/prd/16-stock-pot-lifetime-points.md` is authoritative. V4 replaces the
+  fixed fee and Airtime economy with uncapped variable USDG contributions that
+  atomically buy the selected mock Stock Token for the round basket.
+- V4 payout is 50% final holder, 30% winning-stock contributors by multiplied
+  points in that stock, 10% persistent lifetime-point holders, 5% next seed,
+  and 5% protocol. Points are USDG input times a pre-call rolling-volume
+  multiplier; DEX price movement no longer scores the game.
+- `LifetimePointsVault` promotes settled points for the following round,
+  discards cancelled points, never burns points on claim, and accrues a bounded
+  multi-token reward catalog. `RewardRouterV4` batches round and lifetime
+  claims.
+- The v4 UI has an uncapped amount composer, $1/$10/$100/$1,000 presets,
+  winning-stock heat and points, earnings center, and round/season/lifetime
+  leaderboards. Desktop 1280x720 and mobile 390x844 keep the paid action visible.
+- The v4 indexer decodes manager, round, and lifetime-vault events and
+  materializes Stock Pot contributions and pending/settled/cancelled point
+  epochs. Migration `db/007_stock_pot_lifetime_points.sql` adds the v4 derived
+  tables.
+- V4 qualification is devnet-first. The acceptance gate is 100 accelerated
+  settled rounds, ten cancellation rounds, exact basket/point reconciliation,
+  and an eight-hour unattended run. Testnet no longer carries a 100-round soak
+  requirement.
+- V4 application snapshots resolve `RoundManagerV4.activeRound()` and are
+  read-only. `services/v4-devnet-keeper.ts` owns local lifecycle transitions;
+  `scripts/v4-devnet-soak.ts` owns deterministic qualification scenarios.
 - The repository now contains a pnpm Next.js 16.2.12 application with React 19, Wagmi 3, Viem, React Query, Vitest, Playwright, and axe tooling.
 - The complete responsive application, Foundry contracts, deterministic Anvil controller, local VM verification, and testnet deployment workflow are implemented.
-- Permanent factions are removed. Every accepted $1 claim selects one of four configured ticker slots; the current holder cannot claim again.
+- Permanent factions are removed. Every accepted contribution selects one of
+  four configured ticker slots; the current holder cannot call again.
 - DEX rounds lock GREEN/FLAT/RED scoring at 1.25x/1.0x/0.75x from a
   10-minute Uniswap V3 TWAP for each holder interval. FLAT rounds require no
   report and score every interval at 1.0x.
@@ -33,10 +60,11 @@ Durable project context lives here. Update this file whenever information should
   tickers. DEX price, band, and multiplier cannot change any financial
   allocation. The 50% final-holder payout, 15% next-round seed, and 5% protocol
   allocation remain unchanged.
-- `docs/prd/15-audit-candidate-airtime-pool.md` is authoritative for current
-  payout, FCFS disclosure, Safe, wallet, soak, and audit-freeze requirements.
+- `docs/prd/15-audit-candidate-airtime-pool.md` is archived v3 context.
 - `docs/prd/10-closing-print-market-reactive.md` and `docs/prd/11-closing-print-user-stories.md` are the canonical current requirements. PRDs 01-09 remain historical/superseded context where marked.
-- The canonical entry authorization is a reusable $100 play-USDG allowance. Each accepted bell claim transfers exactly $1, the client requests a new $100 approval only below $10, and users can edit, reject, or revoke the ERC-20 allowance in their wallet.
+- V4 requests a reusable maximum USDG allowance only when the current allowance
+  is below the chosen contribution. The contract enforces a $1 minimum and no
+  maximum; users can edit, reject, or revoke approval in their wallet.
 - The reusable USDG allowance targets the permanent `PaymentRouter`, not an
   individual round. Operator-authorized round contracts can pull only their
   accepted claim fee, so a wallet does not approve again on rollover.
@@ -194,6 +222,28 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-30: Implemented `last-bell-v4-stock-pot`. Final local gates passed:
+  48 Vitest tests, 4 clean-chain integration tests, 37 Foundry tests including
+  512-run v4 fuzzing, 20 Playwright desktop/mobile checks with two intentional
+  project-specific skips, axe serious/critical checks, formatting, ESLint,
+  TypeScript, production build, and protected-bundle scan. Browser UAT confirmed
+  the paid action at 1280x720 and 390x844. The VM required Playwright Linux
+  browser dependencies, which are now installed.
+- 2026-07-30: Exercised at least three sequential devnet rounds with $1, $10,
+  $250, $1,000, $5,000, and custom contributions; verified heat, decay, cap,
+  ticker flips, first-call start, Rug Zone, settlement, exact cancellation
+  Stock Token refunds, lifetime reward claims with unchanged points, seed
+  carry, and automatic rollover. Added a Foundry changed-roster test proving
+  old seed liquidation and equal-USDG rebuy across four replacement stocks.
+- 2026-07-30: Generated the non-broadcast testnet package at
+  `artifacts/last-bell-v4-testnet-ready.tgz`. The guarded chain-46630 deployment
+  script fails closed on missing authorization, wrong chain, dirty/unpushed
+  source, exposed RPC accounts, insufficient deployer gas, and failed local
+  build/tests.
+- 2026-07-30: Replayed a fresh v4 Anvil deployment through PostgreSQL with zero
+  confirmations. The indexer decoded manager, round, and lifetime events,
+  materialized four accepted contributions totaling 1,360 USDG and 1,360
+  points, and promoted the four matching player point epochs at settlement.
 - 2026-07-30: Completed PRD 14 implementation and live VM acceptance at commit
   `504c4e2`. Migration `005_retention_and_deployment_identity.sql` and the
   deployment-history backfill reconstructed three deployments and nine
@@ -550,14 +600,19 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Complete active soak run `soak-2026-07-30T14-58-01-684Z` after at least 24
-  hours and 100 completed rounds. Verify every fault restoration, zero duplicate
-  broadcasts, and exact canonical event reconciliation before packaging
-  evidence.
-- Retain DEX safety screening for Closing Print Crown integrity. DEX momentum
-  is nonfinancial in v3, and Foundry fuzzing proves arbitrary price bands and
-  multipliers cannot change financial allocations for the same control-time
-  sequence.
+- Commit the reviewed v4 qualification baseline, then run the clean-chain
+  accelerated and endurance gates.
+- Broadcast v4 to Robinhood testnet only after explicit user authorization.
+  Testnet uses mock Stock Tokens and deterministic mock swaps labeled
+  `TESTNET MOCK · NO VALUE`.
+- Run 100 accelerated settled rounds, ten cancellation rounds, and an
+  eight-hour devnet stability pass with exact event-derived basket/point
+  reconciliation. The archived v3 soak remains infrastructure evidence only.
+- Limit Robinhood testnet to a separately authorized two-round compatibility
+  smoke test after estimating gas and preserving an operating reserve.
+- Implement and audit the production canonical Stock Token swap adapter and
+  its 10-minute-TWAP/1% execution-deviation enforcement before mainnet. V4
+  testnet intentionally packages only the deterministic mock adapter.
 - Keep Rug Zone latency evidence current and disclose FCFS automation advantage.
   Automation advantage is an accepted product property, not a freeze failure.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
@@ -584,3 +639,9 @@ When sources conflict, use this order:
 ## Archive
 
 - No archived entries yet.
+- 2026-07-30: Implemented the devnet-first v4 qualification boundary. Added
+  migration `008_v4_devnet_qualification.sql`, v4 soak commands, a durable
+  devnet keeper, authenticated devnet fault scripts, Status progress, and
+  read-only snapshot behavior. VM formatting, ESLint, TypeScript, 48 Vitest
+  tests, and 37 Foundry tests including 512-run fuzzing passed before the
+  accelerated qualification run.

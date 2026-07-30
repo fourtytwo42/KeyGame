@@ -1,9 +1,12 @@
 import { decodeEventLog, type Address, zeroAddress } from "viem";
 import {
   lastBellAbi,
+  lastBellV4Abi,
+  lifetimePointsVaultAbi,
   legacyClosingPrintEventAbi,
   legacyDexPayoutEventAbi,
   roundManagerAbi,
+  roundManagerV4Abi,
 } from "../src/lib/web3/last-bell-abi";
 import {
   deploymentKeyFor,
@@ -18,6 +21,26 @@ const deploymentKey = deploymentKeyFor(manifest);
 const client = publicClientFor(manifest);
 const confirmations = BigInt(process.env.INDEXER_CONFIRMATIONS || 3);
 const batchSize = BigInt(process.env.INDEXER_BATCH_SIZE || 100);
+
+async function registerDeployment() {
+  await pool.query(
+    `INSERT INTO deployments(
+       deployment_key,chain_id,environment,deployment_block,source_commit,manifest)
+     VALUES($1,$2,$3,$4,$5,$6)
+     ON CONFLICT(deployment_key) DO UPDATE SET
+       source_commit=excluded.source_commit,
+       manifest=excluded.manifest,
+       updated_at=now()`,
+    [
+      deploymentKey,
+      manifest.chainId,
+      manifest.environment,
+      manifest.deploymentBlock,
+      manifest.sourceCommit,
+      JSON.stringify(manifest),
+    ],
+  );
+}
 
 function jsonSafe(value: unknown): unknown {
   if (typeof value === "bigint") return value.toString();
@@ -97,8 +120,13 @@ async function indexedAddresses() {
   );
   return [
     manifest.contracts.manager,
+    manifest.contracts.lifetimePointsVault,
+    manifest.contracts.rewardRouter,
     ...rounds.rows.map((row) => row.contract_address),
-  ].filter((address) => address !== zeroAddress);
+  ].filter(
+    (address): address is Address =>
+      Boolean(address) && address !== zeroAddress,
+  );
 }
 
 async function indexBatch(fromBlock: bigint, toBlock: bigint) {
@@ -137,7 +165,10 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
         const decoded = decodeEventLog({
           abi: [
             ...roundManagerAbi,
+            ...roundManagerV4Abi,
             ...lastBellAbi,
+            ...lastBellV4Abi,
+            ...lifetimePointsVaultAbi,
             ...legacyClosingPrintEventAbi,
             ...legacyDexPayoutEventAbi,
           ],
@@ -185,6 +216,117 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
               prepared.round,
               log.blockNumber.toString(),
             ],
+          );
+        }
+      }
+      if (
+        eventName === "BellClaimed" &&
+        manifest.contractVersion === "last-bell-v4-stock-pot" &&
+        args &&
+        typeof args === "object"
+      ) {
+        const claim = args as {
+          roundId?: string;
+          player?: Address;
+          ticker?: string;
+          usdgAmount?: string;
+          stockReceived?: string;
+          multiplierBps?: string;
+          points?: string;
+          recentVolume?: string;
+        };
+        if (
+          claim.roundId &&
+          claim.player &&
+          claim.ticker !== undefined &&
+          claim.usdgAmount &&
+          claim.stockReceived &&
+          claim.multiplierBps !== undefined &&
+          claim.points &&
+          claim.recentVolume
+        ) {
+          const ticker = await client.readContract({
+            address: log.address,
+            abi: lastBellV4Abi,
+            functionName: "tickerConfigs",
+            args: [BigInt(claim.ticker)],
+            blockNumber: log.blockNumber,
+          });
+          await connection.query(
+            `INSERT INTO stock_pot_contributions(
+               deployment_key,round_id,transaction_hash,log_index,player_address,
+               ticker_index,stock_token,usdg_amount,stock_received,multiplier_bps,
+               points,recent_volume)
+             VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+             ON CONFLICT(deployment_key,transaction_hash,log_index) DO NOTHING`,
+            [
+              deploymentKey,
+              claim.roundId,
+              log.transactionHash,
+              log.logIndex,
+              claim.player,
+              Number(claim.ticker),
+              ticker[2],
+              claim.usdgAmount,
+              claim.stockReceived,
+              Number(claim.multiplierBps),
+              claim.points,
+              claim.recentVolume,
+            ],
+          );
+        }
+      }
+      if (
+        eventName === "PendingPointsRecorded" &&
+        args &&
+        typeof args === "object"
+      ) {
+        const points = args as {
+          roundId?: string;
+          player?: Address;
+          assetId?: string;
+          points?: string;
+        };
+        if (
+          points.roundId &&
+          points.player &&
+          points.assetId &&
+          points.points
+        ) {
+          await connection.query(
+            `INSERT INTO lifetime_point_epochs(
+               deployment_key,round_id,player_address,ticker_asset_id,pending_points)
+             VALUES($1,$2,$3,$4,$5)
+             ON CONFLICT(deployment_key,round_id,player_address,ticker_asset_id)
+             DO UPDATE SET pending_points=
+               lifetime_point_epochs.pending_points + excluded.pending_points`,
+            [
+              deploymentKey,
+              points.roundId,
+              points.player,
+              points.assetId,
+              points.points,
+            ],
+          );
+        }
+      }
+      if (
+        (eventName === "RoundPointsSettled" ||
+          eventName === "RoundPointsCancelled") &&
+        args &&
+        typeof args === "object"
+      ) {
+        const epoch = args as { roundId?: string };
+        if (epoch.roundId) {
+          await connection.query(
+            eventName === "RoundPointsSettled"
+              ? `UPDATE lifetime_point_epochs
+                 SET activated_points=pending_points,pending_points=0
+                 WHERE deployment_key=$1 AND round_id=$2`
+              : `UPDATE lifetime_point_epochs
+                 SET pending_points=0,cancelled=true
+                 WHERE deployment_key=$1 AND round_id=$2`,
+            [deploymentKey, epoch.roundId],
           );
         }
       }
@@ -241,6 +383,7 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
 }
 
 async function run() {
+  await registerDeployment();
   await rollbackIfReorged();
   for (;;) {
     try {

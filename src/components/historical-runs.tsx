@@ -43,7 +43,7 @@ export function HistoricalRuns() {
         <h2 id="historical-runs-title">Historical runs</h2>
         <p>
           See how large each pot became, who held the final bell, and which
-          stock won the Closing Print.
+          stock won the point race.
         </p>
       </header>
       {runs.length ? (
@@ -68,7 +68,7 @@ export function HistoricalRuns() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Closing Print Crown</dt>
+                  <dt>Winning stock</dt>
                   <dd>{run.winningTicker ?? "NO WINNER"}</dd>
                 </div>
                 <div>
