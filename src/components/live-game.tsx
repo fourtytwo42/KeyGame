@@ -703,10 +703,15 @@ function LiveArena({
               {state.holder?.band ?? "FLAT"} ·{" "}
               {((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×
             </small>
-            {state.projection?.currentEarning ? (
+            {state.projection?.currentEarning || state.holder ? (
               <span className="earningRate">
-                {state.projection.currentEarning.ticker} ·{" "}
-                {state.projection.currentEarning.pointsPerSecond.toFixed(2)}{" "}
+                {state.projection?.currentEarning?.ticker ??
+                  state.holder?.ticker}{" "}
+                ·{" "}
+                {(
+                  state.projection?.currentEarning?.pointsPerSecond ??
+                  (state.holder?.multiplierBps ?? 10_000) / 10_000
+                ).toFixed(2)}{" "}
                 PTS/SEC
               </span>
             ) : null}
