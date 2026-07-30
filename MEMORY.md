@@ -369,8 +369,11 @@ When sources conflict, use this order:
   switch, market proof, transaction, and block details. Testnet receipts now
   use the indexed settled round instead of simulator data, and replay/receipt
   pages expose wallet-bound pull-payment withdrawal controls for final-holder
-  and Closing Print rewards. VM application gates passed 34 tests, ESLint,
-  TypeScript, and the isolated production build.
+  and Closing Print rewards. Browser UAT withdrew both round-3 rewards from the
+  winning wallet; live reads verified both claimed flags, a 999.438000 wallet
+  balance, and exactly 0.859500 remaining in the round (0.644625 waiting to
+  seed round 4 on first entry plus 0.214875 protocol pool). VM application
+  gates passed 34 tests, ESLint, TypeScript, and the isolated production build.
 - 2026-07-29: The initial deployment simulation found that immutable verifier
   administration prevented deployer configuration followed by user ownership.
   Added verifier admin transfer support and a regression test; 26 VM Foundry
