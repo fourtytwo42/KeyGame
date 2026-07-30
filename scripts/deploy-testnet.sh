@@ -65,6 +65,7 @@ forge script script/DeployTestnet.s.sol:DeployTestnet \
   --verify \
   --verifier blockscout \
   --verifier-url https://explorer.testnet.chain.robinhood.com/api/ \
+  --gas-estimate-multiplier 200 \
   --slow
 
 pnpm exec tsx scripts/write-testnet-manifest.ts
