@@ -8,6 +8,22 @@ import type {
 
 const EPSILON = 1e-9;
 
+function projectedPools(state: RoundState) {
+  if (state.phase === "cancelled") {
+    return { holderUsd: 0, closingPrintUsd: 0 };
+  }
+  if (state.phase === "settled") {
+    return {
+      holderUsd: state.pools?.holderUsd ?? state.potUsd * 0.5,
+      closingPrintUsd: state.pools?.closingPrintUsd ?? state.potUsd * 0.3,
+    };
+  }
+  return {
+    holderUsd: state.potUsd * 0.5,
+    closingPrintUsd: state.potUsd * 0.3,
+  };
+}
+
 export function projectedWinningTicker(scores: TickerScore[]) {
   if (!scores.length) return null;
   return scores.reduce((leader, candidate, candidateIndex) => {
@@ -48,14 +64,15 @@ export function buildRoundProjection(state: RoundState): RoundProjection {
       freshness: state.freshness,
     }),
   );
+  const pools = projectedPools(state);
   return {
     snapshotBlock: state.blockNumber,
     snapshotTime,
     finalHolder: state.holder?.address ?? null,
     finalHolderDisplayName: state.holder?.displayName ?? null,
-    holderPoolUsd: state.pools?.holderUsd ?? state.potUsd * 0.5,
+    holderPoolUsd: pools.holderUsd,
     winningTicker: winner,
-    closingPrintPoolUsd: state.pools?.closingPrintUsd ?? state.potUsd * 0.3,
+    closingPrintPoolUsd: pools.closingPrintUsd,
     currentEarning:
       state.holder &&
       currentScore &&
@@ -113,8 +130,9 @@ export function buildPlayerRoundProjection(input: {
   const winningRaw = state.tickerScores[winnerIndex]?.rawSeconds ?? 0;
   const playerWinningRaw =
     winnerIndex >= 0 ? perTicker[winnerIndex].rawAirtimeSeconds : 0;
-  const holderPool = state.pools?.holderUsd ?? state.potUsd * 0.5;
-  const printPool = state.pools?.closingPrintUsd ?? state.potUsd * 0.3;
+  const pools = projectedPools(state);
+  const holderPool = pools.holderUsd;
+  const printPool = pools.closingPrintUsd;
   const projectedHolderRewardUsd = isCurrentHolder ? holderPool : 0;
   const projectedClosingPrintRewardUsd =
     winningRaw > 0 ? (printPool * playerWinningRaw) / winningRaw : 0;

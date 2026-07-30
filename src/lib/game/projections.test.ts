@@ -64,6 +64,20 @@ describe("round projections", () => {
     ).toBe(true);
   });
 
+  it("projects a live pot even when pre-settlement pool fields are zero", () => {
+    const state = structuredClone(scenarios.live.state);
+    state.potUsd = 1.21;
+    state.pools = {
+      holderUsd: 0,
+      closingPrintUsd: 0,
+      nextRoundUsd: 0,
+      protocolUsd: 0,
+    };
+    const projection = buildRoundProjection(state);
+    expect(projection.holderPoolUsd).toBeCloseTo(0.605);
+    expect(projection.closingPrintPoolUsd).toBeCloseTo(0.363);
+  });
+
   it("stops showing a live earning rate after settlement", () => {
     expect(
       buildRoundProjection(scenarios.settled.state).currentEarning,

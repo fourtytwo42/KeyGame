@@ -876,15 +876,17 @@ function ProjectionPanel({
     projection?.finalHolderDisplayName ?? state.holder?.displayName;
   const projectedHolderPool =
     projection?.holderPoolUsd ??
-    state.pools?.holderUsd ??
-    (state.potUsd * roundConfig.payoutBps.holder) / 10_000;
+    (state.phase === "settled" && state.pools
+      ? state.pools.holderUsd
+      : (state.potUsd * roundConfig.payoutBps.holder) / 10_000);
   const projectedTicker =
     projection?.winningTicker ??
     (state.tickerScores.length ? leadingTicker(state) : null);
   const projectedPrintPool =
     projection?.closingPrintPoolUsd ??
-    state.pools?.closingPrintUsd ??
-    (state.potUsd * roundConfig.payoutBps.closingPrint) / 10_000;
+    (state.phase === "settled" && state.pools
+      ? state.pools.closingPrintUsd
+      : (state.potUsd * roundConfig.payoutBps.closingPrint) / 10_000);
   return (
     <section className="railCard projectionCard">
       <span className="railLabel">IF THE BELL RANG NOW</span>
