@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   demoAddresses,
   formatUsd,
@@ -54,6 +54,9 @@ export function LiveGame({
   const [announcement, setAnnouncement] = useState(
     "Live broadcast synchronized.",
   );
+  const activeRoundIdentity = useRef(
+    `${state.contractAddress.toLowerCase()}:${state.roundId}`,
+  );
   const walletGame = useWalletGame(state.contractAddress);
   const activeSession = walletGame.isConnected
     ? walletGame.session
@@ -66,11 +69,6 @@ export function LiveGame({
       ?.ticker ??
     state.tickerScores[0]?.ticker ??
     selectedTicker;
-
-  useEffect(() => {
-    setActionStatus("idle");
-    setAnnouncement("Live broadcast synchronized.");
-  }, [state.contractAddress, state.roundId]);
 
   const loadScenario = (nextScenario: SimulationScenarioId) => {
     setScenario(nextScenario);
@@ -93,6 +91,12 @@ export function LiveGame({
     };
     if (!response.ok || !payload.state) {
       throw new Error(payload.error || "Chain snapshot failed");
+    }
+    const nextRoundIdentity = `${payload.state.contractAddress.toLowerCase()}:${payload.state.roundId}`;
+    if (nextRoundIdentity !== activeRoundIdentity.current) {
+      activeRoundIdentity.current = nextRoundIdentity;
+      setActionStatus("idle");
+      setAnnouncement("Live broadcast synchronized.");
     }
     setState(payload.state);
     if (payload.session) {
