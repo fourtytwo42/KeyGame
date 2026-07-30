@@ -63,4 +63,10 @@ describe("round projections", () => {
       projection.estimatedBands.every((band) => band.multiplierBps === 10_000),
     ).toBe(true);
   });
+
+  it("stops showing a live earning rate after settlement", () => {
+    expect(
+      buildRoundProjection(scenarios.settled.state).currentEarning,
+    ).toBeNull();
+  });
 });

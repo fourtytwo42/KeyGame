@@ -57,7 +57,9 @@ export function buildRoundProjection(state: RoundState): RoundProjection {
     winningTicker: winner,
     closingPrintPoolUsd: state.pools?.closingPrintUsd ?? state.potUsd * 0.3,
     currentEarning:
-      state.holder && currentScore
+      state.holder &&
+      currentScore &&
+      (state.phase === "live" || state.phase === "rug")
         ? {
             ticker: state.holder.ticker,
             band: state.holder.band,

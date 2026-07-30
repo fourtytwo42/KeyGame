@@ -14,12 +14,10 @@ test("the main page opens directly into the game and archive", async ({
 test("real devnet starter ticker is the first paid claim", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
-  if (
-    await page
-      .getByRole("button", { name: /ENTER WITH AAPL · \$1/i })
-      .isVisible()
-      .catch(() => false)
-  ) {
+  const entryAction = page.getByRole("button", {
+    name: /ENTER WITH .* · \$1/i,
+  });
+  if (await entryAction.isVisible().catch(() => false)) {
     await expect(page.getByText("TIMER WAITS FOR YOU")).toBeVisible();
     await expect(page.locator(".entryClock")).toContainText("00:45");
     await expect(page.locator(".entryClock")).toContainText(
@@ -79,6 +77,13 @@ test("projected rewards and earning units are immediately understandable", async
   page,
 }) => {
   await page.goto("/?scenario=live");
+  const entryAction = page.getByRole("button", {
+    name: /ENTER WITH .* · \$1/i,
+  });
+  if (await entryAction.isVisible().catch(() => false)) {
+    await entryAction.click();
+    await expect(page.locator(".clockAssembly")).toBeVisible();
+  }
   await expect(page.getByText("IF THE BELL RANG NOW")).toBeAttached();
   await expect(page.getByText(/FINAL CALLER · 50%/)).toBeAttached();
   await expect(page.getByText(/CLOSING PRINT · 30%/)).toBeAttached();
