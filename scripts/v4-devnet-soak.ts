@@ -757,13 +757,34 @@ async function claimSettledRewards(
   }
 }
 
+async function roundForSettledAction(
+  runId: string,
+  ordinal: number,
+): Promise<Address> {
+  const existing = await pool.query<{ transaction_hash: Hex }>(
+    `SELECT transaction_hash
+     FROM soak_transactions
+     WHERE run_id=$1 AND idempotency_key=$2
+       AND transaction_hash IS NOT NULL
+     LIMIT 1`,
+    [runId, `round:${ordinal}:call:0`],
+  );
+  const hash = existing.rows[0]?.transaction_hash;
+  if (!hash) return activeRound();
+  const persisted = await client.getTransaction({ hash });
+  if (!persisted.to) {
+    throw new Error(`Persisted round ${ordinal} call has no contract target.`);
+  }
+  return persisted.to;
+}
+
 async function runSettledRound(
   runId: string,
   ordinal: number,
   actionId: string,
   natural = false,
 ) {
-  const round = await activeRound();
+  const round = await roundForSettledAction(runId, ordinal);
   const phase = Number(
     await client.readContract({
       address: round,
@@ -771,8 +792,16 @@ async function runSettledRound(
       functionName: "currentPhase",
     }),
   );
-  if (phase !== 0) throw new Error(`Round ${round} is not in entry state.`);
-  await exerciseAtomicFailures(round, ordinal);
+  if (phase === 4) {
+    const discrepancies = await reconcileRound(runId, round, false);
+    if (discrepancies) throw new Error(`Round ${ordinal} did not conserve.`);
+    await claimSettledRewards(runId, actionId, round, ordinal);
+    return;
+  }
+  if (phase !== 0 && phase !== 1 && phase !== 2) {
+    throw new Error(`Round ${round} cannot resume from phase ${phase}.`);
+  }
+  if (phase === 0) await exerciseAtomicFailures(round, ordinal);
   const amounts = [
     1_000_000n,
     10_000_000n,
