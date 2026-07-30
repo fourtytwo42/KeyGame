@@ -14,6 +14,7 @@ const uatFundingModule =
     : "./src/lib/server/uat-funding.disabled.ts";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   turbopack: {
     resolveAlias: {

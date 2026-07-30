@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAddress, isAddress, parseEther } from "viem";
+import { getAddress, isAddress } from "viem";
 import { database } from "@/lib/server/db";
 import { loadServerDeployment } from "@/lib/server/deployment";
 import { deploymentPublicClient } from "@/lib/server/rpc-client";
 import { loadRoleWallet } from "@/lib/server/role-wallet";
+import { readUatNativeGrant } from "@/lib/server/uat-grant";
 import { devDollarAbi } from "@/lib/web3/last-bell-abi";
 
 export async function fundUatWallet(request: Request) {
@@ -55,11 +56,14 @@ export async function fundUatWallet(request: Request) {
     const publicClient = deploymentPublicClient(manifest);
     const wallet = await loadRoleWallet("faucet", manifest);
     if (!wallet.account) throw new Error("Faucet account unavailable.");
+    const nativeGrant = readUatNativeGrant(
+      process.env.KEYGAME_UAT_NATIVE_GRANT_ETH,
+    );
     const nativeHash = await wallet.sendTransaction({
       account: wallet.account,
       chain: wallet.chain,
       to: address,
-      value: parseEther("0.01"),
+      value: nativeGrant,
     });
     const nativeReceipt = await publicClient.waitForTransactionReceipt({
       hash: nativeHash,
