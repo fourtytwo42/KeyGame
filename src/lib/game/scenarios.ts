@@ -128,7 +128,25 @@ const stateFor = (
 ): RoundState => ({ ...baseState, phase, ...overrides });
 
 export function tickerById(id: string) {
-  return tickerSlots.find((ticker) => ticker.id === id) ?? tickerSlots[0];
+  const configured = tickerSlots.find((ticker) => ticker.id === id);
+  if (configured) return configured;
+  const palette = [
+    ["#ff5f5f", "#551f34"],
+    ["#70d6ff", "#173e56"],
+    ["#ffd166", "#5b4313"],
+    ["#b8f2a1", "#244a26"],
+  ] as const;
+  const slot =
+    [...id].reduce((total, character) => total + character.charCodeAt(0), 0) %
+    palette.length;
+  return {
+    ...tickerSlots[slot],
+    id,
+    name: id,
+    assetName: `${id} Stock Token`,
+    color: palette[slot][0],
+    secondary: palette[slot][1],
+  };
 }
 
 const bandState = (band: MarketBand, ticker: TickerId): RoundState => {

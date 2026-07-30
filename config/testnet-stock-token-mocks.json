@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "sourceProject": "Robyn",
+  "sourceGitCommit": "8fc564f7a676697d6f165f8ce7cc0dfd3fd76ed8",
+  "sourceDeploymentBlock": 92820861,
+  "sourceManifestSha256": "c67a5e7a061bfbaf3232627d263e0d903ca8e787c1b9a3c07c6ed5e644abee04",
+  "verifiedChainId": 46630,
+  "disclosure": "These are project-owned Robinhood testnet mocks. They are not official Robinhood Stock Tokens and have no real-world value or redemption rights.",
+  "assets": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple",
+      "mainnetAddress": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+      "testnetMockAddress": "0xa4C65774e3b5006dDd70E9b1F2309E8066b0d24C"
+    },
+    {
+      "symbol": "AMD",
+      "name": "AMD",
+      "mainnetAddress": "0x86923f96303D656E4aa86D9d42D1e57ad2023fdC",
+      "testnetMockAddress": "0x03392c5434A198927BBFD6258fE906b108681026"
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon",
+      "mainnetAddress": "0x12f190a9F9d7D37a250758b26824B97CE941bF54",
+      "testnetMockAddress": "0x86fD7f47263B76804573Eff87B340fA63C14FF89"
+    },
+    {
+      "symbol": "COIN",
+      "name": "Coinbase",
+      "mainnetAddress": "0x6330D8C3178a418788dF01a47479c0ce7CCF450b",
+      "testnetMockAddress": "0xe963759DecDa94E97D13B86A76474c30A4cdA663"
+    },
+    {
+      "symbol": "COST",
+      "name": "Costco",
+      "mainnetAddress": "0x4EA005168D7F09a7A0Ba9D1DEf21a479950E44C2",
+      "testnetMockAddress": "0x5d20641ec585D716E468387be2E8553e3b751Dd9"
+    },
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet Class A",
+      "mainnetAddress": "0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3",
+      "testnetMockAddress": "0x58aF703fe2DCDCEfCc8eBFD0D61Ff12D0B45F4be"
+    },
+    {
+      "symbol": "META",
+      "name": "Meta Platforms",
+      "mainnetAddress": "0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35",
+      "testnetMockAddress": "0x72F50c647D3B2099eCea8BdcF9A8B10fEc061C0A"
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft",
+      "mainnetAddress": "0xe93237C50D904957Cf27E7B1133b510C669c2e74",
+      "testnetMockAddress": "0xFD38DCc7529350bdB26491107FE1Aa0421a488Cc"
+    },
+    {
+      "symbol": "MSTR",
+      "name": "Strategy",
+      "mainnetAddress": "0xec262a75e413fAfD0dF80480274532C79D42da09",
+      "testnetMockAddress": "0x8895A170799F1Ee0076ccA73a832e6efe53faa17"
+    },
+    {
+      "symbol": "NFLX",
+      "name": "Netflix",
+      "mainnetAddress": "0xE0444EF8BF4eD74f74FD73686e2ddF4C1c5591E8",
+      "testnetMockAddress": "0x35C342D0DCB296Ca8Fcdf66EbF87a27B05E66BE0"
+    },
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA",
+      "mainnetAddress": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+      "testnetMockAddress": "0x8549353256aFCe7DbB9d895eD6b035D5FAD012D4"
+    },
+    {
+      "symbol": "PLTR",
+      "name": "Palantir",
+      "mainnetAddress": "0x894E1EC2D74FFE5AEF8Dc8A9e84686acCB964F2A",
+      "testnetMockAddress": "0x30516309382e24db38B89aD74e1139A1Eeaf45f9"
+    },
+    {
+      "symbol": "RDDT",
+      "name": "Reddit",
+      "mainnetAddress": "0x05b37Fb53A299a1b874A619e1c4C404D52C36F4C",
+      "testnetMockAddress": "0x39f9aa3055690637043203c355790E735b3C22D1"
+    },
+    {
+      "symbol": "RIVN",
+      "name": "Rivian",
+      "mainnetAddress": "0xB1BF26c1D20ff267A4f93550d1E0d06ac40a114B",
+      "testnetMockAddress": "0x46578e0371e22C4561C6FD7F56811C3D09Bb2c04"
+    },
+    {
+      "symbol": "SOFI",
+      "name": "SoFi",
+      "mainnetAddress": "0x98E75885157C80992A8D41b696D8c9C6Fb30A926",
+      "testnetMockAddress": "0x53ceFbbC884Da4745835B9209B74f0eb6B3DAA01"
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla",
+      "mainnetAddress": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d",
+      "testnetMockAddress": "0x9FcD640bE732e991c5fee03D0c1698cEe90DB78F"
+    },
+    {
+      "symbol": "QQQ",
+      "name": "Invesco QQQ",
+      "mainnetAddress": "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68",
+      "testnetMockAddress": "0x4D69991Cb26D81a123EE7C7D0f4F9174Ded9Cb88"
+    },
+    {
+      "symbol": "SGOV",
+      "name": "iShares 0-3 Month Treasury Bond",
+      "mainnetAddress": "0x92FD66527192E3e61d4DDd13322Aa222DE86F9B5",
+      "testnetMockAddress": "0xBec636391146e1fD72598e4c86Aa728BB6F87239"
+    },
+    {
+      "symbol": "SLV",
+      "name": "iShares Silver Trust",
+      "mainnetAddress": "0x411eFb0E7f985935DAec3D4C3ebaEa0d0AD7D89f",
+      "testnetMockAddress": "0x9c84d627F33a0333398F67655697380296e4464F"
+    },
+    {
+      "symbol": "SOXX",
+      "name": "iShares Semiconductor ETF",
+      "mainnetAddress": "0x75742c18BC1f1C5c5f448f4C9D9C6F66dafAAa38",
+      "testnetMockAddress": "0x17b2D3Dbc9Ca05A9564119A669Ef4a1038FA5061"
+    },
+    {
+      "symbol": "SPY",
+      "name": "SPDR S&P 500 ETF Trust",
+      "mainnetAddress": "0x117cc2133c37B721F49dE2A7a74833232B3B4C0C",
+      "testnetMockAddress": "0x2689ba5183232d6846e5ab0e8EC332832d4e9AA7"
+    },
+    {
+      "symbol": "USO",
+      "name": "United States Oil Fund",
+      "mainnetAddress": "0xa30FA36Db767ad9eD3f7a60fC79526fB4d56D344",
+      "testnetMockAddress": "0x749fa2Fdd10386D03a0926c531c790e85a11e1C3"
+    },
+    {
+      "symbol": "XLK",
+      "name": "Technology Select Sector SPDR ETF",
+      "mainnetAddress": "0x15Cd20759CE7F3285c29A319dE2D1A2e098c6f43",
+      "testnetMockAddress": "0x49837123a8ec9ac34410afe5E4B8F3fFCE88f5D1"
+    }
+  ]
+}

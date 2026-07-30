@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { tickerSlots } from "@/lib/game/constants";
 import { screenRoster } from "@/lib/game/market-screen";
 import type { ScreeningAsset } from "@/lib/game/types";
+import { loadScreeningAssets } from "@/lib/server/market-store";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,19 @@ const devnetAssets = (): ScreeningAsset[] =>
 export async function GET() {
   if (process.env.NEXT_PUBLIC_GAME_MODE === "devnet") {
     return NextResponse.json({ ok: true, ...screenRoster(devnetAssets()) });
+  }
+
+  if (process.env.DATABASE_URL) {
+    try {
+      const roster = screenRoster(await loadScreeningAssets());
+      return NextResponse.json(
+        { ok: !roster.delayed, ...roster },
+        { status: roster.delayed ? 503 : 200 },
+      );
+    } catch {
+      // The explicit adapter below remains a controlled fallback while the
+      // local database is recovering.
+    }
   }
 
   const adapterUrl = process.env.ROBINHOOD_MARKET_SCREEN_ADAPTER_URL;

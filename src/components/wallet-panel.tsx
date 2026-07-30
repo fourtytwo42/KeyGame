@@ -10,6 +10,7 @@ import {
   useSwitchChain,
 } from "wagmi";
 import { shortAddress } from "@/lib/game/constants";
+import { UatControls } from "@/components/uat-controls-runtime";
 import { walletConnectConfigured } from "@/lib/web3/config";
 import {
   configuredGameChain,
@@ -44,7 +45,7 @@ export function WalletPanel() {
 
   useEffect(() => {
     if (!open) return;
-    void fetch("/api/devnet/snapshot", { cache: "no-store" })
+    void fetch("/api/game/snapshot", { cache: "no-store" })
       .then((response) => response.json())
       .then((payload: { state?: { contractAddress?: `0x${string}` } }) => {
         if (payload.state?.contractAddress) {
@@ -153,6 +154,7 @@ export function WalletPanel() {
                   <span>APPROVAL ROUTER</span>
                   <code>{configuredPaymentRouter}</code>
                 </div>
+                <UatControls address={address} />
                 {chain?.id !== configuredGameChain.id ? (
                   <button
                     className="secondaryAction fullWidth"

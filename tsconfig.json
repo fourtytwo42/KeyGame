@@ -19,7 +19,16 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/lib/web3/uat-connector-runtime": [
+        "./src/lib/web3/uat-connector.disabled.ts"
+      ],
+      "@/components/uat-controls-runtime": [
+        "./src/components/uat-controls.disabled.tsx"
+      ],
+      "@/lib/server/uat-funding-runtime": [
+        "./src/lib/server/uat-funding.disabled.ts"
+      ]
     }
   },
   "include": [

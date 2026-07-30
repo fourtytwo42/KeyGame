@@ -1,6 +1,7 @@
 {
   "name": "last-bell",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "packageManager": "pnpm@11.17.0",
   "engines": {
@@ -27,12 +28,22 @@
     "chain": "anvil --chain-id 31337 --block-time 1",
     "contracts:build": "forge build",
     "contracts:test": "forge test -vvv",
+    "db:migrate": "tsx services/migrate.ts",
+    "service:market": "tsx services/market-collector.ts",
+    "service:data-streams": "tsx services/data-streams-adapter.ts",
+    "service:indexer": "tsx services/indexer.ts",
+    "service:keeper": "tsx services/keeper.ts",
+    "release:scan": "bash scripts/scan-protected-build.sh",
+    "roles:generate": "tsx scripts/generate-role-keystores.ts",
     "contracts:deploy:local": "forge script script/DeployLocal.s.sol:DeployLocal --rpc-url http://127.0.0.1:8545 --broadcast",
     "contracts:deploy:testnet": "forge script script/DeployTestnet.s.sol:DeployTestnet --rpc-url \"$ROBINHOOD_TESTNET_RPC_URL\" --broadcast --verify"
   },
   "dependencies": {
+    "@chainlink/data-streams-sdk": "^1.2.1",
     "@tanstack/react-query": "^5.101.4",
+    "ethers": "^6.17.0",
     "next": "16.2.12",
+    "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "viem": "^2.55.10",
@@ -45,6 +56,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.4",
@@ -53,6 +65,7 @@
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^30.0.0",
     "prettier": "^3.9.6",
+    "tsx": "^4.23.1",
     "typescript": "^5",
     "vitest": "^4.1.10",
     "wait-on": "^9.1.0"

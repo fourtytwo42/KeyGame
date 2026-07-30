@@ -49,12 +49,16 @@ export function readPublicEnvironment(
     "NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS",
     source.NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS,
   );
+  const roundManagerAddress = optionalAddress(
+    "NEXT_PUBLIC_ROUND_MANAGER_ADDRESS",
+    source.NEXT_PUBLIC_ROUND_MANAGER_ADDRESS,
+  );
 
   if (mode === "testnet" || mode === "mainnet") {
-    if (!roundAddress) {
+    if (!roundAddress && !roundManagerAddress) {
       literalError(
-        "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS",
-        `is required in ${mode} mode.`,
+        "NEXT_PUBLIC_ROUND_MANAGER_ADDRESS",
+        `or NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS is required in ${mode} mode.`,
       );
     }
     if (!devDollarAddress) {
@@ -92,6 +96,7 @@ export function readPublicEnvironment(
     roundAddress,
     devDollarAddress,
     paymentRouterAddress,
+    roundManagerAddress,
     walletConnectProjectId:
       source.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() || undefined,
   };

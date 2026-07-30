@@ -1,4 +1,4 @@
-export type TickerId = "NVDA" | "AAPL" | "TSLA" | "SPY";
+export type TickerId = string;
 export type MarketBand = "RED" | "FLAT" | "GREEN";
 export type MarketMode = "VERIFIED" | "FLAT";
 
@@ -51,6 +51,8 @@ export interface MarketReport {
   validFrom: number;
   expiresAt: number;
   report?: `0x${string}`;
+  sourceReportHash?: `0x${string}`;
+  verifierType?: "mock" | "testnet-attested" | "chainlink";
 }
 
 export interface BellHolder {
@@ -62,6 +64,7 @@ export interface BellHolder {
   multiplierBps: number;
   verifiedPrice: number;
   reportTimestamp: number;
+  sourceReportHash?: `0x${string}`;
   producerPass: boolean;
 }
 
@@ -93,6 +96,7 @@ export interface ClaimEvent {
   timeAfterSeconds: number;
   verifiedPrice: number;
   reportTimestamp: number;
+  sourceReportHash?: `0x${string}`;
   marketBand: MarketBand;
   multiplierBps: number;
   intervalSeconds?: number;
@@ -194,11 +198,17 @@ export interface MarketSample {
 export interface ScreeningAsset {
   ticker: string;
   tokenAddress: `0x${string}`;
+  canonicalAddress?: `0x${string}`;
+  testnetMockAddress?: `0x${string}`;
   feedId?: `0x${string}`;
+  name?: string;
   active: boolean;
   halted: boolean;
   canonical: boolean;
   dailyVolume: number;
+  currentMultiplier?: number;
+  quoteGeneratedAt?: number;
+  mockOnly?: boolean;
   samples: MarketSample[];
 }
 

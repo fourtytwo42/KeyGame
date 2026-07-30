@@ -4,6 +4,8 @@ pragma solidity ^0.8.30;
 import { IMarketDataVerifier } from "../interfaces/IMarketDataVerifier.sol";
 
 contract MockMarketDataVerifier is IMarketDataVerifier {
+    function authorizeCaller(address) external pure { }
+
     function verify(bytes calldata report)
         external
         pure
@@ -12,9 +14,12 @@ contract MockMarketDataVerifier is IMarketDataVerifier {
             uint256 price,
             uint64 validFrom,
             uint64 observedAt,
-            uint64 expiresAt
+            uint64 expiresAt,
+            bytes32 sourceReportHash
         )
     {
-        return abi.decode(report, (bytes32, uint256, uint64, uint64, uint64));
+        (feedId, price, validFrom, observedAt, expiresAt) =
+            abi.decode(report, (bytes32, uint256, uint64, uint64, uint64));
+        sourceReportHash = keccak256(report);
     }
 }

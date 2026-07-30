@@ -12,7 +12,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "services/**/*.test.ts"],
     coverage: {
       reporter: ["text", "html"],
       include: ["src/lib/game/**/*.ts", "src/components/**/*.tsx"],

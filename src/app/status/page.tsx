@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
+import { getSystemStatus } from "@/lib/server/system-status";
 
 export const metadata: Metadata = { title: "Signal Status" };
 
@@ -10,6 +11,22 @@ export default async function StatusPage() {
   const snapshot =
     process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
       ? await getDevnetSnapshot().catch(() => null)
+      : null;
+  const system = await getSystemStatus().catch(() => null);
+  const production =
+    system && "chainId" in system
+      ? (system as Awaited<ReturnType<typeof getSystemStatus>> & {
+          chainId: number;
+          block: number;
+          sourceCommit: string;
+          indexer: { lag: number };
+          market: { assets: number; completeStreams: number };
+          services: Array<{
+            name: string;
+            status: string;
+            observedAt: string;
+          }>;
+        })
       : null;
   return (
     <InfoPage
@@ -39,13 +56,34 @@ export default async function StatusPage() {
           <strong>{snapshot ? "ONLINE" : "OFFLINE"}</strong>
         </article>
         <article>
-          <span className="statusLamp standby" />
+          <span className={`statusLamp ${production ? "good" : "standby"}`} />
           <div>
             <h2>Robinhood testnet</h2>
-            <p>Chain 46630 configured. Deployment requires a funded key.</p>
+            <p>
+              {production
+                ? `Chain ${production.chainId} · block ${production.block} · indexer lag ${production.indexer.lag}.`
+                : "Chain 46630 configured. Deployment requires a funded key."}
+            </p>
           </div>
-          <strong>STANDBY</strong>
+          <strong>{production ? "ONLINE" : "STANDBY"}</strong>
         </article>
+        {production?.services.map((service) => (
+          <article key={service.name}>
+            <span
+              className={`statusLamp ${
+                service.status === "ok" ? "good" : "standby"
+              }`}
+            />
+            <div>
+              <h2>{service.name}</h2>
+              <p>
+                Last heartbeat{" "}
+                {new Date(service.observedAt).toLocaleString("en-US")}.
+              </p>
+            </div>
+            <strong>{service.status.toUpperCase()}</strong>
+          </article>
+        ))}
         <article>
           <span className="statusLamp standby" />
           <div>
@@ -62,6 +100,13 @@ export default async function StatusPage() {
           <p>Application version: 0.1.0</p>
           <p>Round contract: {snapshot?.contractAddress ?? "unavailable"}</p>
           <p>Latest verified block: {snapshot?.blockNumber ?? "unavailable"}</p>
+          <p>Deployment commit: {production?.sourceCommit ?? "unavailable"}</p>
+          <p>
+            Market screen:{" "}
+            {production
+              ? `${production.market.assets} assets · ${production.market.completeStreams} complete streams`
+              : "unavailable"}
+          </p>
         </div>
       </section>
       <section className="disclosureBlock">

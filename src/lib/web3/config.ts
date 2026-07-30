@@ -12,6 +12,7 @@ import {
   robinhoodChainMainnet,
   robinhoodChainTestnet,
 } from "./chains";
+import { uatConnector } from "@/lib/web3/uat-connector-runtime";
 
 const walletConnectProjectId = publicEnvironment.walletConnectProjectId;
 
@@ -21,6 +22,8 @@ const connectors = [
   coinbaseWallet({ appName: "Last Bell" }),
   safe(),
 ];
+
+if (uatConnector) connectors.unshift(uatConnector);
 
 if (walletConnectProjectId) {
   connectors.push(

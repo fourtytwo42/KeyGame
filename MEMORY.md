@@ -4,14 +4,16 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: Closing Print is implemented with continuous automatic round
-  configuration and first-claim timer starts.
-- Last meaningful result: Rollover now opens a funded Entry Desk with no
-  deadline or automatic caller. The first valid $1 claim starts the exact
-  45-second clock and passed contract, integration, Playwright, and in-app
-  browser acceptance.
-- Next step: Configure production Robinhood Stock Token addresses, Chainlink Data Streams credentials/verifier, Reown WalletConnect project, funded deployment roles, and perform the Robinhood Chain testnet deployment when the user authorizes it.
-- Blockers: None documented.
+- Current task: Robinhood testnet production-readiness sprint.
+- Last meaningful result: Production-shaped contracts, PostgreSQL services,
+  dynamic roster, genuine-report attestation adapter, durable keeper/indexer,
+  isolated UAT wallet build, deployment guards, and status APIs pass local VM
+  contract/app gates.
+- Next step: Fund the new chain-46630 role wallets, provide Chainlink Data
+  Streams credentials and feed IDs, deploy from a clean pushed commit, then run
+  two-wallet browser UAT and the 24-hour/100-round soak.
+- Blockers: All four new role wallets have zero test ETH. Chainlink credentials
+  and the final symbol/feed map are absent.
 
 ## Current State
 
@@ -49,6 +51,13 @@ Durable project context lives here. Update this file whenever information should
 - `/` is the one-game entrypoint and opens directly into the active studio. Legacy `/play/{roundId}` routes redirect to `/`.
 - Completed devnet runs are stored as event-derived snapshots in `.devnet/round-history.json`, survive Anvil resets, and appear beneath the main studio with peak pot, final caller, Closing Print ticker, call count, and a full replay link. No fake history is seeded.
 - GitHub Actions is disabled for this repository and no workflow is committed. All compilation and testing must run locally on the project VM. Last verified 2026-07-29.
+- Production-shaped testnet infrastructure now uses native PostgreSQL and four
+  independent systemd service templates: market collector, Data Streams
+  adapter, indexer, and keeper. The chain-46630 deployment has not broadcast.
+- Separate encrypted deployer, keeper, attestor, and faucet keystores exist
+  outside the repository under the VM user's private configuration. Public
+  addresses are recorded in the 2026-07-29 production-readiness entry below;
+  passwords and private keys are not stored here.
 - `docs/design/screens/README.md` is the visual handoff for all twelve planned app screens; `screen-contact-sheet.png` is the at-a-glance review artifact and `prompt-set.md` records the ImageGen direction.
 - `docs/design/screens/desktop-live-on-air.png` is the desktop layout reference: a narrow center arena, rules and airtime on the left rail, and Trenches plus session controls on the right rail.
 - Robinhood Chain is the intended deployment target. Closing Print is the approved prototype architecture; production deployment remains gated.
@@ -268,7 +277,13 @@ When sources conflict, use this order:
 
 - Real Stock Token custody, player-funded prizes, account abstraction/gas sponsorship, and production compliance remain intentional PRD gates, not missing Stage 1 implementation.
 - Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
-- Robinhood Chain testnet deployment is ready but was not performed; it requires funded signer configuration, real token/treasury addresses, and explicit launch authorization.
+- Robinhood Chain testnet deployment is implemented but not broadcast; it uses
+  KeyGame mock USDG and pinned mock Stock Tokens and requires funded role
+  signers plus a configured treasury/admin.
+- The production-shaped testnet deployer, keeper, attestor, and faucet wallets
+  are currently unfunded. Chainlink Data Streams credentials/feed IDs are also
+  missing, so genuine-report UAT, the mainnet-fork evidence run, and the
+  24-hour soak cannot yet pass.
 - GitHub Actions is intentionally disabled. Do not add or enable hosted workflows without explicit new user authorization.
 - The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
 - Contracts have extensive local tests but no independent security audit.
@@ -278,6 +293,25 @@ When sources conflict, use this order:
 - First-come/first-served sequencing reduces gas-price queue jumping but does not eliminate latency advantages, Sybil activity, sequencer censorship risk, or automated play.
 
 ## Completed Work
+
+- 2026-07-29: Implemented the Robinhood testnet production-readiness
+  architecture: versioned manifests, RoundManager, testnet attested verifier,
+  Chainlink V8/V10 equity decoder, PostgreSQL migrations, official Robinhood
+  market collector, reorg-aware indexer, durable serialized keeper, Data
+  Streams adapter, dynamic snapshots/status, isolated browser UAT wallet and
+  faucet, systemd units, protected-bundle scanning, and fail-closed deployment.
+  VM verification passed 25 Foundry tests, 31 Vitest tests, four live-Anvil
+  integration tests, and 14 applicable desktop/mobile Playwright checks with
+  two intentional skips. ESLint, TypeScript, migrations, production build,
+  protected scan, UAT build, and in-app browser review also passed. All 23
+  pinned Robyn `tm*` mock Stock Tokens passed live chain-46630 bytecode and
+  ERC-20 compatibility checks.
+- 2026-07-29: Generated separate encrypted VM-only role keystores with mode 600.
+  Public addresses: deployer `0xECd74AC28a1C606415f2fC11522368e6089596Ec`,
+  keeper `0x9f4efb42F7d8a0E392F5030965718473E0C4F963`, attestor
+  `0x449C36a9692Be235f1594658e5fB7eF429664BbD`, faucet
+  `0xa8FAdDE77519C427684e82634Daf1869Cbf31455`. All balances were zero when
+  checked.
 
 - 2026-07-12: Reset stale project-specific memory while retaining the durable memory-management logic.
 - 2026-07-28: Created `docs/fomo3d-game-logic-research.md` with contract mapping, exact price curves, all payout tables, timer and round state machines, Long/Soon differences, ICO behavior, vault/mask accounting, edge cases, historical attacks, implementation pseudocode, and a fidelity test checklist.
@@ -318,6 +352,13 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
+- Fund the four recorded chain-46630 role addresses with enough test ETH for
+  deployment, keeper operation, report attestation operations, and UAT faucet.
+- Configure private Chainlink Data Streams credentials plus a verified
+  symbol/feed map; then run genuine testnet report and official mainnet-fork
+  verification gates.
+- Deploy from a clean pushed commit, install/enable systemd units, perform
+  two-context browser UAT, and complete the 24-hour/100-round interruption soak.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
 - Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.

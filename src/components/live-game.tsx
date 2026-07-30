@@ -21,7 +21,10 @@ import type {
 import { useWalletGame } from "@/lib/web3/use-wallet-game";
 
 type ActionStatus = "idle" | "submitted" | "accepted" | "rejected";
-const devnetMode = process.env.NEXT_PUBLIC_GAME_MODE === "devnet";
+const gameMode = process.env.NEXT_PUBLIC_GAME_MODE || "simulator";
+const devnetMode = gameMode === "devnet";
+const chainMode =
+  gameMode === "devnet" || gameMode === "testnet" || gameMode === "mainnet";
 
 function cloneState(state: RoundState): RoundState {
   return structuredClone(state);
@@ -55,6 +58,11 @@ export function LiveGame({
   const activeClaimable = walletGame.isConnected
     ? walletGame.claimable
     : guestClaimable;
+  const effectiveTicker =
+    state.tickerScores.find((score) => score.ticker === selectedTicker)
+      ?.ticker ??
+    state.tickerScores[0]?.ticker ??
+    selectedTicker;
 
   const loadScenario = (nextScenario: SimulationScenarioId) => {
     setScenario(nextScenario);
@@ -63,8 +71,8 @@ export function LiveGame({
     setAnnouncement(`${scenarios[nextScenario].label} loaded.`);
   };
 
-  const refreshDevnet = async (signal?: AbortSignal) => {
-    const response = await fetch("/api/devnet/snapshot", {
+  const refreshChain = async (signal?: AbortSignal) => {
+    const response = await fetch("/api/game/snapshot", {
       cache: "no-store",
       signal,
     });
@@ -76,7 +84,7 @@ export function LiveGame({
       error?: string;
     };
     if (!response.ok || !payload.state) {
-      throw new Error(payload.error || "Local chain snapshot failed");
+      throw new Error(payload.error || "Chain snapshot failed");
     }
     setState(payload.state);
     if (payload.session) {
@@ -89,11 +97,11 @@ export function LiveGame({
   };
 
   useEffect(() => {
-    if (!devnetMode) return;
+    if (!chainMode) return;
     const controller = new AbortController();
     const synchronize = async () => {
       try {
-        await refreshDevnet(controller.signal);
+        await refreshChain(controller.signal);
       } catch (error) {
         if (controller.signal.aborted) return;
         setState((current) => ({ ...current, freshness: "offline" }));
@@ -111,7 +119,7 @@ export function LiveGame({
   }, []);
 
   useEffect(() => {
-    if (devnetMode || (state.phase !== "live" && state.phase !== "rug")) return;
+    if (chainMode || (state.phase !== "live" && state.phase !== "rug")) return;
     const timer = window.setInterval(() => {
       setState((current) => {
         const next = tick(current);
@@ -150,9 +158,11 @@ export function LiveGame({
               error instanceof Error ? error.message : "Settlement failed.",
             );
           });
-      } else {
+      } else if (!chainMode) {
         setState((current) => settle(current));
         setAnnouncement("Settlement confirmed. The final holder wins.");
+      } else {
+        setAnnouncement("The keeper is confirming the final tape.");
       }
     }, 1600);
     return () => window.clearTimeout(timer);
@@ -167,7 +177,7 @@ export function LiveGame({
       | "claim-holder"
       | "claim-print"
       | "claim-refund",
-    ticker = selectedTicker,
+    ticker = effectiveTicker,
   ) => {
     try {
       const response = await fetch("/api/devnet/action", {
@@ -215,15 +225,15 @@ export function LiveGame({
     if (actionStatus === "submitted") return;
     setActionStatus("submitted");
     setAnnouncement(
-      devnetMode
-        ? "Claim submitted to local chain 31337."
+      chainMode
+        ? "Claim submitted to the active chain."
         : "Claim submitted. Waiting for the local tape.",
     );
-    if (devnetMode) {
+    if (chainMode) {
       if (walletGame.isConnected) {
         void walletGame
           .claim(ticker)
-          .then(() => refreshDevnet())
+          .then(() => refreshChain())
           .then(() => {
             setActionStatus("accepted");
             setAnnouncement("Claim accepted from your connected wallet.");
@@ -236,8 +246,11 @@ export function LiveGame({
               } The $1 game fee was not charged; network gas may have been spent.`,
             );
           });
-      } else {
+      } else if (devnetMode) {
         void requestDevnetAction("claim", ticker);
+      } else {
+        setActionStatus("rejected");
+        setAnnouncement("Connect the testnet wallet before taking the bell.");
       }
       return;
     }
@@ -268,16 +281,16 @@ export function LiveGame({
   const enterRound = async () => {
     setActionStatus("submitted");
     setAnnouncement(
-      `Putting ${selectedTicker} on air with a reusable USDG approval.`,
+      `Putting ${effectiveTicker} on air with a reusable USDG approval.`,
     );
-    if (devnetMode) {
+    if (chainMode) {
       if (walletGame.isConnected) {
         try {
-          await walletGame.enter(selectedTicker);
-          await refreshDevnet();
+          await walletGame.enter(effectiveTicker);
+          await refreshChain();
           setActionStatus("accepted");
           setAnnouncement(
-            `${selectedTicker} is on air from your connected wallet.`,
+            `${effectiveTicker} is on air from your connected wallet.`,
           );
         } catch (error) {
           setActionStatus("rejected");
@@ -285,8 +298,11 @@ export function LiveGame({
             error instanceof Error ? error.message : "Entry rejected.",
           );
         }
+      } else if (devnetMode) {
+        await requestDevnetAction("enter", effectiveTicker);
       } else {
-        await requestDevnetAction("enter", selectedTicker);
+        setActionStatus("rejected");
+        setAnnouncement("Connect the testnet wallet before entering.");
       }
       return;
     }
@@ -295,17 +311,17 @@ export function LiveGame({
         claimBell(current, {
           address: demoAddresses.player,
           displayName: "you.local",
-          ticker: selectedTicker,
-          band: tickerById(selectedTicker).currentBand,
-          multiplierBps: tickerById(selectedTicker).multiplierBps,
-          verifiedPrice: tickerById(selectedTicker).currentPrice,
+          ticker: effectiveTicker,
+          band: tickerById(effectiveTicker).currentBand,
+          multiplierBps: tickerById(effectiveTicker).multiplierBps,
+          verifiedPrice: tickerById(effectiveTicker).currentPrice,
           reportTimestamp: Math.floor(Date.now() / 1000),
           producerPass: true,
         }).state,
     );
     setGuestSession({
       player: demoAddresses.player,
-      starterTicker: selectedTicker,
+      starterTicker: effectiveTicker,
       maximumUsd: sessionApproval.amountUsd,
       spentUsd: 1,
       remainingUsd: sessionApproval.amountUsd - 1,
@@ -317,35 +333,41 @@ export function LiveGame({
       producerPass: true,
     });
     setActionStatus("accepted");
-    setAnnouncement(`${selectedTicker} is on air. Bell stolen for $1.`);
+    setAnnouncement(`${effectiveTicker} is on air. Bell stolen for $1.`);
   };
 
   const tickerLeader = leadingTicker(state);
   const joined = activeSession?.status === "active";
   const isCurrentHolder =
     (
-      activeSession?.player ?? (!devnetMode ? demoAddresses.player : undefined)
+      activeSession?.player ?? (!chainMode ? demoAddresses.player : undefined)
     )?.toLowerCase() === state.holder?.address.toLowerCase();
   const entryRequired =
     state.freshness === "live" &&
     (state.phase === "entry" ||
-      (devnetMode &&
+      (chainMode &&
         (state.phase === "live" || state.phase === "rug") &&
         (!activeSession || activeSession.status === "new")));
   const canAct =
     state.freshness === "live" &&
     (state.phase === "live" || state.phase === "rug") &&
-    Boolean(devnetMode ? joined : true) &&
+    Boolean(chainMode ? joined : true) &&
     !isCurrentHolder &&
-    Boolean(devnetMode ? (activeSession?.availableActions ?? 0) > 0 : true);
+    Boolean(chainMode ? (activeSession?.availableActions ?? 0) > 0 : true);
 
   return (
     <>
       <div className="scenarioBar" aria-label="Local development source">
-        {devnetMode ? (
+        {chainMode ? (
           <>
             <span>LIVE SOURCE:</span>
-            <strong>ANVIL · CHAIN 31337 · AUTOMINE</strong>
+            <strong>
+              {devnetMode
+                ? "ANVIL · CHAIN 31337 · AUTOMINE"
+                : gameMode === "testnet"
+                  ? "ROBINHOOD TESTNET · CHAIN 46630 · TEST TOKENS"
+                  : "ROBINHOOD CHAIN · CHAIN 4663"}
+            </strong>
           </>
         ) : (
           <>
@@ -399,7 +421,8 @@ export function LiveGame({
             <DeadAir />
           ) : entryRequired ? (
             <EntryDesk
-              selected={selectedTicker}
+              state={state}
+              selected={effectiveTicker}
               onSelect={setSelectedTicker}
               onEnter={enterRound}
               status={actionStatus}
@@ -486,12 +509,14 @@ export function LiveGame({
 }
 
 function EntryDesk({
+  state,
   selected,
   onSelect,
   onEnter,
   status,
   walletConnected,
 }: {
+  state: RoundState;
   selected: TickerId;
   onSelect: (id: TickerId) => void;
   onEnter: () => void;
@@ -514,36 +539,40 @@ function EntryDesk({
         <small>WAITING · FIRST $1 STARTS IT</small>
       </div>
       <div className="factionGrid">
-        {roundConfig.tickers.map((ticker) => (
-          <button
-            type="button"
-            className="factionChoice"
-            data-selected={selected === ticker.id}
-            style={
-              {
-                "--faction": ticker.color,
-                "--faction-dark": ticker.secondary,
-              } as React.CSSProperties
-            }
-            key={ticker.id}
-            onClick={() => onSelect(ticker.id)}
-          >
-            <span className="tickerBadge">{ticker.id}</span>
-            <strong>
-              {ticker.currentBand} ·{" "}
-              {(ticker.multiplierBps / 10_000).toFixed(2)}×
-            </strong>
-            <small>
-              #{ticker.volatilityRank} HEAT ·{" "}
-              {(
-                ((ticker.currentPrice - ticker.openingPrice) /
-                  ticker.openingPrice) *
-                100
-              ).toFixed(2)}
-              % · PRODUCER PASS
-            </small>
-          </button>
-        ))}
+        {state.tickerScores.map((score, index) => {
+          const ticker = tickerById(score.ticker);
+          return (
+            <button
+              type="button"
+              className="factionChoice"
+              data-selected={selected === score.ticker}
+              style={
+                {
+                  "--faction": ticker.color,
+                  "--faction-dark": ticker.secondary,
+                } as React.CSSProperties
+              }
+              key={score.ticker}
+              onClick={() => onSelect(score.ticker)}
+            >
+              <span className="tickerBadge">{score.ticker}</span>
+              <strong>
+                {score.currentBand} ·{" "}
+                {(score.multiplierBps / 10_000).toFixed(2)}×
+              </strong>
+              <small>
+                #{index + 1} ROSTER ·{" "}
+                {gameMode === "testnet"
+                  ? "TESTNET MOCK · NO VALUE"
+                  : gameMode === "devnet"
+                    ? "DEVNET MOCK · NO VALUE"
+                    : gameMode === "mainnet"
+                      ? "CANONICAL STOCK TOKEN"
+                      : "SIMULATION · NO VALUE"}
+              </small>
+            </button>
+          );
+        })}
       </div>
       <div className="entryTerms">
         <span>TIMER WAITS FOR YOU</span>
@@ -636,23 +665,27 @@ function LiveArena({
         </small>
       </div>
       <div className="claimTickerGrid" aria-label="Put a stock on air">
-        {roundConfig.tickers.map((slot) => (
-          <button
-            className="primaryAction apeButton"
-            type="button"
-            key={slot.id}
-            disabled={!canAct || actionStatus === "submitted"}
-            onClick={() => takeBell(slot.id)}
-            style={{ "--faction": slot.color } as React.CSSProperties}
-          >
-            {actionStatus === "submitted"
-              ? "CALLING…"
-              : `PUT ${slot.id} ON AIR · $1`}
-            <small>
-              {slot.currentBand} · {(slot.multiplierBps / 10_000).toFixed(2)}×
-            </small>
-          </button>
-        ))}
+        {state.tickerScores.map((score) => {
+          const slot = tickerById(score.ticker);
+          return (
+            <button
+              className="primaryAction apeButton"
+              type="button"
+              key={score.ticker}
+              disabled={!canAct || actionStatus === "submitted"}
+              onClick={() => takeBell(score.ticker)}
+              style={{ "--faction": slot.color } as React.CSSProperties}
+            >
+              {actionStatus === "submitted"
+                ? "CALLING…"
+                : `PUT ${score.ticker} ON AIR · $1`}
+              <small>
+                {score.currentBand} ·{" "}
+                {(score.multiplierBps / 10_000).toFixed(2)}×
+              </small>
+            </button>
+          );
+        })}
       </div>
       <p className="actionFinePrint">
         {state.phase === "rug"

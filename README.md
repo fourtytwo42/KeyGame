@@ -1,7 +1,7 @@
 # Last Bell
 
 Last Bell is a short, mobile-first onchain game for Robinhood Chain. Players
-pick a wrapped stock on every call, pay $1 to put it on air and take the bell,
+pick a Stock Token ticker on every call, pay $1 to put it on air and take the bell,
 and try to hold it when the countdown reaches zero.
 
 > Pick a stock. Pay $1 to put it on air and steal the bell. Market momentum
@@ -28,6 +28,9 @@ script, product requirements, research, and automated test suites.
 - Injected/EIP-6963, MetaMask, Coinbase Wallet, Safe, and WalletConnect
   connectors
 - Robinhood Chain testnet configuration and Foundry deployment workflow
+- PostgreSQL market collection, reorg-aware indexing, durable keeping, and a
+  Chainlink Data Streams attestation adapter
+- A build-isolated browser UAT wallet and faucet for mock-only chain 46630
 - Unit, component, contract, integration, accessibility, desktop, and mobile
   browser tests
 
@@ -97,28 +100,46 @@ server-side.
 
 ## Robinhood Chain testnet
 
-Testnet uses chain ID `46630`. Configure the environment without committing a
-signing key:
+Testnet uses chain ID `46630`, the LAN RPC first, a server-only provider
+fallback, encrypted role keystores outside the repository, KeyGame mock USDG,
+and the pinned `tm*` Stock Token mock catalog. Configure an owner-only server
+environment:
 
 ```bash
-export ROBINHOOD_TESTNET_RPC_URL=https://rpc.testnet.chain.robinhood.com
+export ROBINHOOD_TESTNET_RPC_URL=http://192.168.50.117:8547
 export DEPLOYER_ADDRESS=0x...
+export ADMIN_ADDRESS=0x...
+export KEEPER_ADDRESS=0x...
+export ATTESTOR_ADDRESS=0x...
+export FAUCET_ADDRESS=0x...
 export TREASURY_ADDRESS=0x...
-export PAYMENT_TOKEN_ADDRESS=0x...
-export PAYMENT_ROUTER_ADDRESS=0x...
-export ROUND_ID=4663
+export KEYGAME_DEPLOYER_KEYSTORE=/secure/path/deployer.json
+export KEYGAME_DEPLOYER_PASSWORD_FILE=/secure/path/deployer.password
+export ALLOW_TESTNET_BROADCAST=YES_I_AM_DEPLOYING_TEST_TOKENS
 ```
 
-Deploy through a configured Foundry signer or hardware wallet:
+The deployment command fails closed on a dirty or unpushed commit, wrong or
+unsynchronized chain, RPC with unlocked accounts, unfunded deployer,
+incompatible mock assets, local test failure, or missing confirmation:
 
 ```bash
-pnpm contracts:deploy:testnet
+bash scripts/deploy-testnet.sh
 ```
 
-After deployment, place the contract and payment-token addresses in the public
-application environment, build the app, and verify the deployment on the
-Robinhood Chain explorer. A production RPC provider is recommended because the
-public endpoint is rate-limited.
+It writes `deployments/46630.json`, records mock runtime bytecode hashes, and
+submits source metadata to the testnet explorer. Apply PostgreSQL migrations
+with `pnpm db:migrate`, then install the independent service templates from
+`ops/systemd/`.
+
+Verified rounds require private Chainlink credentials and a complete feed map.
+The app never substitutes fabricated signed-report evidence. Browser UAT uses
+the session-only generated wallet only when both UAT build flags are enabled.
+Run `pnpm release:scan` for protected builds to prove UAT connector, key, and
+faucet implementations are absent.
+
+The mainnet deployment script is deliberately locked. The gated
+`RobinhoodMainnetFork.t.sol` test verifies a fresh report through Robinhood's
+official verifier without broadcasting.
 
 ### Production RPC routing
 

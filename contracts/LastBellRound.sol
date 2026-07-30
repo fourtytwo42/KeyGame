@@ -99,6 +99,7 @@ contract LastBellRound {
     uint16 public holderMultiplierBps;
     uint256 public holderPrice;
     uint64 public holderReportAt;
+    bytes32 public holderSourceReportHash;
     bool public holderProducerPass;
     uint256 public acceptedClaims;
     uint256 public pot;
@@ -156,6 +157,7 @@ contract LastBellRound {
         bool rugZone,
         uint256 verifiedPrice,
         uint64 reportTimestamp,
+        bytes32 sourceReportHash,
         MarketBand marketBand,
         uint16 multiplierBps,
         bool producerPass
@@ -327,7 +329,7 @@ contract LastBellRound {
 
         if (marketMode == MarketMode.Verified) {
             for (uint8 index; index < 4; index++) {
-                (uint256 price, uint64 observedAt) =
+                (uint256 price, uint64 observedAt,) =
                     _verifyReport(index, openingReports[index]);
                 openingPrices[index] = price;
                 lastReportAt[index] = observedAt;
@@ -362,6 +364,7 @@ contract LastBellRound {
         (
             uint256 verifiedPrice,
             uint64 reportTimestamp,
+            bytes32 sourceReportHash,
             MarketBand band,
             uint16 multiplier
         ) = _marketState(ticker, marketReport);
@@ -386,6 +389,7 @@ contract LastBellRound {
         holderMultiplierBps = multiplier;
         holderPrice = verifiedPrice;
         holderReportAt = reportTimestamp;
+        holderSourceReportHash = sourceReportHash;
         holderProducerPass = hasPass;
         lastClaimAt = uint64(block.timestamp);
         lastTickerAcquisitionAt[ticker] = uint64(block.timestamp);
@@ -412,6 +416,7 @@ contract LastBellRound {
             beforeClaim == Phase.Rug,
             verifiedPrice,
             reportTimestamp,
+            sourceReportHash,
             band,
             multiplier,
             hasPass
@@ -520,32 +525,47 @@ contract LastBellRound {
         returns (
             uint256 price,
             uint64 reportTimestamp,
+            bytes32 sourceReportHash,
             MarketBand band,
             uint16 multiplier
         )
     {
         if (marketMode == MarketMode.Flat) {
             if (report.length != 0) revert InvalidMarketReport();
-            return (0, 0, MarketBand.Flat, flatMultiplierBps);
+            return (0, 0, bytes32(0), MarketBand.Flat, flatMultiplierBps);
         }
 
-        (price, reportTimestamp) = _verifyReport(ticker, report);
+        (price, reportTimestamp, sourceReportHash) = _verifyReport(ticker, report);
         uint256 referencePrice = openingPrices[ticker];
         uint256 scaled = price * BPS;
         uint256 greenBoundary = referencePrice * (BPS + marketThresholdBps);
         uint256 redBoundary = referencePrice * (BPS - marketThresholdBps);
         if (scaled >= greenBoundary) {
-            return (price, reportTimestamp, MarketBand.Green, greenMultiplierBps);
+            return (
+                price,
+                reportTimestamp,
+                sourceReportHash,
+                MarketBand.Green,
+                greenMultiplierBps
+            );
         }
         if (scaled <= redBoundary) {
-            return (price, reportTimestamp, MarketBand.Red, redMultiplierBps);
+            return (
+                price,
+                reportTimestamp,
+                sourceReportHash,
+                MarketBand.Red,
+                redMultiplierBps
+            );
         }
-        return (price, reportTimestamp, MarketBand.Flat, flatMultiplierBps);
+        return (
+            price, reportTimestamp, sourceReportHash, MarketBand.Flat, flatMultiplierBps
+        );
     }
 
     function _verifyReport(uint8 ticker, bytes calldata report)
         internal
-        returns (uint256 price, uint64 observedAt)
+        returns (uint256 price, uint64 observedAt, bytes32 sourceReportHash)
     {
         if (report.length == 0) revert InvalidMarketReport();
         bytes32 reportHash = keccak256(report);
@@ -555,7 +575,8 @@ contract LastBellRound {
             uint256 verifiedPrice,
             uint64 validFrom,
             uint64 reportObservedAt,
-            uint64 expiresAt
+            uint64 expiresAt,
+            bytes32 verifiedSourceHash
         ) = marketVerifier.verify(report);
         if (
             feedId != tickerConfigs[ticker].feedId || verifiedPrice == 0
@@ -568,7 +589,7 @@ contract LastBellRound {
         ) revert StaleMarketReport();
         usedReport[reportHash] = true;
         lastReportAt[ticker] = reportObservedAt;
-        return (verifiedPrice, reportObservedAt);
+        return (verifiedPrice, reportObservedAt, verifiedSourceHash);
     }
 
     function _hasProducerPass(address player, uint8 passTokenIndex)

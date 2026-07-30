@@ -10,6 +10,7 @@ Current implementation documents:
 
 - [PRD 10: Closing Print market-reactive specification](./10-closing-print-market-reactive.md)
 - [PRD 11: Closing Print user stories](./11-closing-print-user-stories.md)
+- [PRD 12: Robinhood testnet production readiness](./12-robinhood-testnet-production-readiness.md)
 
 Status: Product baseline approved for Stage 0 implementation and a testnet-points
 first public MVP. Value-bearing and Stock Token stages remain gated.
@@ -36,6 +37,7 @@ The complete mobile and desktop concept set is embedded in
 | [07 Delivery Plan](07-delivery-plan.md) | Milestones, dependencies, ownership, decision gates, prioritized backlog, and definitions of done | `DEL` |
 | [08 Comprehensive User Stories](08-user-stories.md) | Traceable stories and acceptance criteria for spectators, players, operators, support, auditors, accessibility, compliance, and product learning | `US` |
 | [09 Implementation Gap Audit](09-implementation-gap-audit.md) | Reconciliation of requirements against the working application, deliberate gates, and external prerequisites | `AUDIT` |
+| [12 Robinhood Testnet Production Readiness](12-robinhood-testnet-production-readiness.md) | Production-shaped testnet architecture, evidence, external blockers, and freeze gates | `TESTNET` |
 
 ## Status vocabulary
 

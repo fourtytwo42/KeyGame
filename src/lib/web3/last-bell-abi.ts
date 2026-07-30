@@ -23,6 +23,7 @@ export const lastBellAbi = parseAbi([
   "function holderMultiplierBps() view returns (uint16)",
   "function holderPrice() view returns (uint256)",
   "function holderReportAt() view returns (uint64)",
+  "function holderSourceReportHash() view returns (bytes32)",
   "function holderProducerPass() view returns (bool)",
   "function winningTicker() view returns (uint8)",
   "function acceptedClaims() view returns (uint256)",
@@ -46,12 +47,28 @@ export const lastBellAbi = parseAbi([
   "function claimClosingPrintReward()",
   "function claimCancellationRefund()",
   "function transferNextRoundSeed(address recipient)",
-  "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
+  "event BellClaimed(uint256 indexed roundId,uint256 indexed sequence,address indexed player,uint8 ticker,address previousHolder,uint8 previousTicker,uint256 fee,uint64 acceptedAt,uint64 deadline,uint256 pot,bool rugZone,uint256 verifiedPrice,uint64 reportTimestamp,bytes32 sourceReportHash,uint8 marketBand,uint16 multiplierBps,bool producerPass)",
   "event ControlCredited(uint256 indexed roundId,address indexed player,uint8 indexed ticker,uint64 intervalStart,uint64 intervalEnd,uint256 duration,uint16 multiplierBps,uint256 weightedScore)",
   "event RoundSettled(uint256 indexed roundId,address indexed finalHolder,uint8 indexed winningTicker,uint256 winningTickerScore,uint256 grossPot,uint256 holderPool,uint256 closingPrintPool,uint256 nextRoundPool,uint256 protocolPool)",
   "event RoundCancelled(uint256 indexed roundId,bytes32 reason,uint256 refundablePot)",
   "event RewardClaimed(uint256 indexed roundId,address indexed player,bytes32 indexed rewardType,uint256 amount)",
   "event RefundClaimed(uint256 indexed roundId,address indexed player,uint256 amount)",
+]);
+
+export const roundManagerAbi = parseAbi([
+  "function activeRound() view returns (address)",
+  "function preparedRound() view returns (address)",
+  "function latestRoundId() view returns (uint256)",
+  "function paymentRouter() view returns (address)",
+  "function keeper() view returns (address)",
+  "function prepareRound((uint256 roundId,uint256 claimPrice,uint64 startDuration,uint64 extensionDuration,uint64 rugDuration,uint64 hardCapDuration,uint64 maxReportAge,uint16 marketThresholdBps,uint16 greenMultiplierBps,uint16 flatMultiplierBps,uint16 redMultiplierBps,uint8 marketMode,bool producerPassRequired) settings,(bytes32 symbol,address token,bytes32 feedId)[4] tickers) returns (address)",
+  "function finalizeActive()",
+  "function activatePrepared(bytes[4] openingReports) returns (address)",
+  "function cancelActive(bytes32 reason)",
+  "event RoundPrepared(uint256 indexed roundId,address indexed round)",
+  "event RoundActivated(uint256 indexed roundId,address indexed round,uint256 seed)",
+  "event ActiveRoundFinalized(uint256 indexed roundId,address indexed round)",
+  "event ActiveRoundCancelled(uint256 indexed roundId,address indexed round,bytes32 reason)",
 ]);
 
 export const devDollarAbi = parseAbi([

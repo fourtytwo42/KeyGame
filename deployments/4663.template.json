@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "environment": "robinhood-mainnet",
+  "chainId": 4663,
+  "deploymentBlock": 0,
+  "sourceCommit": "REQUIRED_AFTER_AUDIT",
+  "mockOnly": false,
+  "broadcastLocked": true,
+  "contracts": {
+    "manager": "0x0000000000000000000000000000000000000000",
+    "paymentRouter": "0x0000000000000000000000000000000000000000",
+    "paymentToken": "0x0000000000000000000000000000000000000000",
+    "marketVerifier": "0x0000000000000000000000000000000000000000"
+  },
+  "rpc": {
+    "primary": "http://192.168.50.173:8547",
+    "fallback": "SERVER_ONLY_REQUIRED"
+  },
+  "verifier": {
+    "type": "chainlink",
+    "proxy": "0xcE73c8ad08CBDEaCa6078BF0627C8fe0a9a536E7"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "environment": "robinhood-testnet",
+  "chainId": 46630,
+  "deploymentBlock": 0,
+  "sourceCommit": "REQUIRED",
+  "mockOnly": true,
+  "contracts": {
+    "manager": "0x0000000000000000000000000000000000000000",
+    "paymentRouter": "0x0000000000000000000000000000000000000000",
+    "paymentToken": "0x0000000000000000000000000000000000000000",
+    "marketVerifier": "0x0000000000000000000000000000000000000000"
+  },
+  "rpc": {
+    "primary": "http://192.168.50.117:8547",
+    "fallback": "SERVER_ONLY_REQUIRED"
+  },
+  "verifier": {
+    "type": "testnet-attested"
+  },
+  "assetCatalog": "config/testnet-stock-token-mocks.json"
+}
