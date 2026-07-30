@@ -1,0 +1,143 @@
+{
+  "chainId": 46630,
+  "verified": [
+    {
+      "symbol": "AAPL",
+      "address": "0xa4C65774e3b5006dDd70E9b1F2309E8066b0d24C",
+      "contractSymbol": "tmAAPL",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "AMD",
+      "address": "0x03392c5434A198927BBFD6258fE906b108681026",
+      "contractSymbol": "tmAMD",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "AMZN",
+      "address": "0x86fD7f47263B76804573Eff87B340fA63C14FF89",
+      "contractSymbol": "tmAMZN",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "COIN",
+      "address": "0xe963759DecDa94E97D13B86A76474c30A4cdA663",
+      "contractSymbol": "tmCOIN",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "COST",
+      "address": "0x5d20641ec585D716E468387be2E8553e3b751Dd9",
+      "contractSymbol": "tmCOST",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "GOOGL",
+      "address": "0x58aF703fe2DCDCEfCc8eBFD0D61Ff12D0B45F4be",
+      "contractSymbol": "tmGOOGL",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "META",
+      "address": "0x72F50c647D3B2099eCea8BdcF9A8B10fEc061C0A",
+      "contractSymbol": "tmMETA",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "MSFT",
+      "address": "0xFD38DCc7529350bdB26491107FE1Aa0421a488Cc",
+      "contractSymbol": "tmMSFT",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "MSTR",
+      "address": "0x8895A170799F1Ee0076ccA73a832e6efe53faa17",
+      "contractSymbol": "tmMSTR",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "NFLX",
+      "address": "0x35C342D0DCB296Ca8Fcdf66EbF87a27B05E66BE0",
+      "contractSymbol": "tmNFLX",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "NVDA",
+      "address": "0x8549353256aFCe7DbB9d895eD6b035D5FAD012D4",
+      "contractSymbol": "tmNVDA",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "PLTR",
+      "address": "0x30516309382e24db38B89aD74e1139A1Eeaf45f9",
+      "contractSymbol": "tmPLTR",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "RDDT",
+      "address": "0x39f9aa3055690637043203c355790E735b3C22D1",
+      "contractSymbol": "tmRDDT",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "RIVN",
+      "address": "0x46578e0371e22C4561C6FD7F56811C3D09Bb2c04",
+      "contractSymbol": "tmRIVN",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "SOFI",
+      "address": "0x53ceFbbC884Da4745835B9209B74f0eb6B3DAA01",
+      "contractSymbol": "tmSOFI",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "TSLA",
+      "address": "0x9FcD640bE732e991c5fee03D0c1698cEe90DB78F",
+      "contractSymbol": "tmTSLA",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "QQQ",
+      "address": "0x4D69991Cb26D81a123EE7C7D0f4F9174Ded9Cb88",
+      "contractSymbol": "tmQQQ",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "SGOV",
+      "address": "0xBec636391146e1fD72598e4c86Aa728BB6F87239",
+      "contractSymbol": "tmSGOV",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "SLV",
+      "address": "0x9c84d627F33a0333398F67655697380296e4464F",
+      "contractSymbol": "tmSLV",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "SOXX",
+      "address": "0x17b2D3Dbc9Ca05A9564119A669Ef4a1038FA5061",
+      "contractSymbol": "tmSOXX",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "SPY",
+      "address": "0x2689ba5183232d6846e5ab0e8EC332832d4e9AA7",
+      "contractSymbol": "tmSPY",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "USO",
+      "address": "0x749fa2Fdd10386D03a0926c531c790e85a11e1C3",
+      "contractSymbol": "tmUSO",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    },
+    {
+      "symbol": "XLK",
+      "address": "0x49837123a8ec9ac34410afe5E4B8F3fFCE88f5D1",
+      "contractSymbol": "tmXLK",
+      "runtimeCodeHash": "0x089dfc6a6233e70e6f768ab740c0262eb543a7cbc8bc6d7f60f1011a1126be67"
+    }
+  ]
+}

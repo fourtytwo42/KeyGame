@@ -5,17 +5,16 @@ Durable project context lives here. Update this file whenever information should
 ## Active Handoff
 
 - Current task: Robinhood testnet production-readiness sprint.
-- Last meaningful result: Production-shaped contracts, PostgreSQL services,
-  dynamic roster, genuine-report attestation adapter, durable keeper/indexer,
-  isolated UAT wallet build, deployment guards, and status APIs pass local VM
-  contract/app gates.
-- Next step: Fund only the chain-46630 deployer with the user's next available
-  0.01 test ETH, then deploy and redistribute small balances to the keeper and
-  UAT faucet. Provide Chainlink Data Streams credentials and feed IDs, then run
-  two-wallet browser UAT and the 24-hour/100-round soak.
-- Blockers: Testnet ETH is scarce and the user can obtain only 0.01 per day.
-  All four role wallets remain unfunded. Chainlink credentials and the final
-  symbol/feed map are absent.
+- Last meaningful result: The production-shaped core contracts are deployed and
+  explorer-verified on Robinhood testnet from commit `20cc38d`. The manager is
+  seeded with 50 mock USDG, user administration and treasury ownership are set,
+  and keeper/UAT faucet gas reserves are funded.
+- Next step: Install/configure PostgreSQL and systemd services against
+  `deployments/46630.json`, validate the user's faucet Stock Token contracts,
+  then configure genuine Chainlink Data Streams credentials and feed IDs.
+- Blockers: Chainlink credentials and the final symbol/feed map are absent.
+  Genuine-report UAT and the 24-hour/100-round soak cannot begin until they are
+  configured.
 
 ## Current State
 
@@ -55,7 +54,8 @@ Durable project context lives here. Update this file whenever information should
 - GitHub Actions is disabled for this repository and no workflow is committed. All compilation and testing must run locally on the project VM. Last verified 2026-07-29.
 - Production-shaped testnet infrastructure now uses native PostgreSQL and four
   independent systemd service templates: market collector, Data Streams
-  adapter, indexer, and keeper. The chain-46630 deployment has not broadcast.
+  adapter, indexer, and keeper. The chain-46630 core deployment is recorded in
+  `deployments/46630.json`.
 - Separate encrypted deployer, keeper, attestor, and faucet keystores exist
   outside the repository under the VM user's private configuration. Public
   addresses are recorded in the 2026-07-29 production-readiness entry below;
@@ -279,13 +279,14 @@ When sources conflict, use this order:
 
 - Real Stock Token custody, player-funded prizes, account abstraction/gas sponsorship, and production compliance remain intentional PRD gates, not missing Stage 1 implementation.
 - Wallet connectors are implemented but intentionally not extension-tested in this devnet-only goal. WalletConnect requires a real Reown project ID and origin allowlist.
-- Robinhood Chain testnet deployment is implemented but not broadcast; it uses
-  KeyGame mock USDG and pinned mock Stock Tokens and requires funded role
-  signers plus a configured treasury/admin.
-- The production-shaped testnet deployer, keeper, attestor, and faucet wallets
-  are currently unfunded. Chainlink Data Streams credentials/feed IDs are also
-  missing, so genuine-report UAT, the mainnet-fork evidence run, and the
-  24-hour soak cannot yet pass.
+- Robinhood Chain testnet core contracts are live and use KeyGame mock USDG plus
+  a testnet-attested verifier. No round has been prepared or activated yet.
+- Chainlink Data Streams credentials/feed IDs are missing, so genuine-report
+  UAT and the 24-hour soak cannot yet pass.
+- The user's funding wallet received 5 each of TSLA, AMZN, PLTR, NFLX, and AMD
+  from testnet token contracts that differ from the pinned Robyn mock catalog.
+  Their provenance and compatibility must be verified before replacing or
+  extending the pinned mappings.
 - GitHub Actions is intentionally disabled. Do not add or enable hosted workflows without explicit new user authorization.
 - The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
 - Contracts have extensive local tests but no independent security audit.
@@ -322,6 +323,24 @@ When sources conflict, use this order:
   6,490,861 gas, approximately 0.00006491 ETH at that gas price before
   network-specific overhead. Fund the deployer first and redistribute small
   keeper/UAT balances after deployment rather than funding every role directly.
+- 2026-07-29: Deployed the production-shaped core contracts to Robinhood
+  testnet from commit `20cc38d4bc97dc8180aca66ff50c6bee7911f855`.
+  Addresses: manager `0x14301Aeb6845bEA2aedF43F9cD286F307EEBada7`,
+  router `0xa9837E03eBAD581B5EB84F6C590C05C48df5112b`, mock USDG
+  `0x17f39DAE52C1238FB50513A652cA67FF44b71F4a`, and verifier
+  `0x168c3045D845C328258A507e6936f8F9022437e6`. Blockscout verified
+  all four contracts. The user wallet
+  `0x9099d24d55c105818b4e9ee117d87bc11063cf10` is manager/verifier
+  admin and treasury; the manager holds the 50 mock-USDG seed; the faucet owns
+  mock-USDG minting; and the verifier authorizer is the manager.
+- 2026-07-29: The initial deployment simulation found that immutable verifier
+  administration prevented deployer configuration followed by user ownership.
+  Added verifier admin transfer support and a regression test; 26 VM Foundry
+  tests passed. The first broadcast then deployed the contracts but an
+  underestimated `transferAdmin` gas limit failed after consuming its nonce.
+  Recovered idempotently with explicit gas margins and verified final state.
+  Testnet gas reserves after allocation: deployer about 0.0098714 ETH, keeper
+  0.006 ETH, faucet 0.004 ETH; attestor remains offchain and needs no gas.
 
 - 2026-07-12: Reset stale project-specific memory while retaining the durable memory-management logic.
 - 2026-07-28: Created `docs/fomo3d-game-logic-research.md` with contract mapping, exact price curves, all payout tables, timer and round state machines, Long/Soon differences, ICO behavior, vault/mask accounting, edge cases, historical attacks, implementation pseudocode, and a fidelity test checklist.
@@ -362,14 +381,13 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Fund the deployer with the next available 0.01 chain-46630 test ETH. After
-  deployment, redistribute only measured minimum balances to the keeper and UAT
-  faucet; the offchain attestor does not need gas.
 - Configure private Chainlink Data Streams credentials plus a verified
   symbol/feed map; then run genuine testnet report and official mainnet-fork
   verification gates.
-- Deploy from a clean pushed commit, install/enable systemd units, perform
+- Install/enable PostgreSQL and systemd units, prepare the first round, perform
   two-context browser UAT, and complete the 24-hour/100-round interruption soak.
+- Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
+  PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
 - Arrange independent smart-contract security and economic review.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
