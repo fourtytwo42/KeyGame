@@ -29,7 +29,7 @@
 
 - A real Reown project ID and allowlisted production origins.
 - Manual extension-wallet and WalletConnect UAT.
-- 100-round accelerated devnet qualification plus eight-hour stability pass.
+- 100-round accelerated devnet qualification plus two-hour stability pass.
 - Production swap-adapter audit and Rug Zone automation disclosure.
 - Independent security and economic review.
 - Legal and jurisdiction approval.

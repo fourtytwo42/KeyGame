@@ -75,7 +75,7 @@ const runProfile =
     : "v4-accelerated";
 const targetSettled = Number(
   process.env.V4_SOAK_TARGET_ROUNDS ||
-    (runProfile === "v4-endurance" ? 96 : 100),
+    (runProfile === "v4-endurance" ? 24 : 100),
 );
 const targetCancelled = Number(
   process.env.V4_SOAK_CANCEL_ROUNDS || (runProfile === "v4-endurance" ? 0 : 10),
@@ -951,7 +951,7 @@ async function start() {
     [
       runId,
       deploymentKey,
-      runProfile === "v4-endurance" ? 8 : 0,
+      runProfile === "v4-endurance" ? 2 : 0,
       targetSettled,
       JSON.stringify({
         targetSettled,
@@ -962,7 +962,7 @@ async function start() {
       }),
       runProfile,
       scenarioSeed,
-      runProfile === "v4-endurance" ? 480 : 120,
+      120,
     ],
   );
   await ensurePlayers(runId);

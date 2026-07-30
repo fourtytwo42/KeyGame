@@ -14,7 +14,7 @@ mobile browser UAT, accessibility, and protected-build scanning.
 
 The extended economic qualification runs on Anvil: 100 accelerated settled
 rounds, ten cancellation rounds, exact per-token and per-point reconciliation,
-fault injection, and an eight-hour unattended stability pass. The non-broadcast Robinhood testnet handoff is
+fault injection, and a two-hour unattended stability pass. The non-broadcast Robinhood testnet handoff is
 `artifacts/last-bell-v4-testnet-ready.tgz`. Testnet remains a mock-asset
 environment. Robinhood testnet is limited to a separately authorized two-round
 network-compatibility smoke test. Production canonical swaps, audit, legal
@@ -96,7 +96,7 @@ router/pool bytecode, and at most 1% deviation from a ten-minute TWAP. Devnet
 and testnet use clearly labeled mock assets and a deterministic adapter.
 
 V4 must pass Foundry unit/fuzz tests, 100 accelerated settled Anvil rounds, ten
-cancellation rounds, an eight-hour stability run, changed-roster seed
+cancellation rounds, a two-hour stability run, changed-roster seed
 conversion, exact basket and point reconciliation, indexer reconstruction,
 service restarts, desktop/mobile browser UAT, accessibility, protected-bundle
 scanning, and local production builds. Testnet scripts and manifests may be

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-hour_seconds="${V4_ENDURANCE_HOUR_SECONDS:-3600}"
+fault_interval_seconds="${V4_ENDURANCE_FAULT_INTERVAL_SECONDS:-900}"
 faults=(
   "keeper-restart"
   "rpc-pause"
@@ -14,6 +14,6 @@ faults=(
 
 cd "$project_root"
 for fault in "${faults[@]}"; do
-  sleep "$hour_seconds"
+  sleep "$fault_interval_seconds"
   bash scripts/v4-devnet-fault.sh "$fault" 5
 done

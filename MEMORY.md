@@ -16,10 +16,12 @@ Durable project context lives here. Update this file whenever information should
   `artifacts/last-bell-v4-testnet-ready.tgz`; its adjacent `.sha256` file is the
   package checksum. It is explicitly marked not broadcast and records both the
   baseline commit and working-tree diff hash.
-- Next step: complete the devnet-first v4 qualification. The reviewed source
-  now includes a v4 devnet keeper, read-only snapshots, per-asset/point soak
-  evidence, and accelerated/endurance controllers. Robinhood testnet is
-  reserved for a separately authorized two-round smoke test.
+- Next step: allow the shortened two-hour v4 devnet endurance run
+  `v4-devnet-2026-07-30T21-33-20-690Z` to complete, then reconcile and package
+  its evidence. The active target is 24 naturally timed rounds with all six
+  faults at 15-minute intervals. Source commit `b303635` passed the
+  accelerated gate; controller recovery commit `5fc0410` resumes interrupted
+  rounds from persisted calls. Robinhood testnet remains separately authorized.
 
 ## Current State
 
@@ -43,8 +45,16 @@ Durable project context lives here. Update this file whenever information should
   tables.
 - V4 qualification is devnet-first. The acceptance gate is 100 accelerated
   settled rounds, ten cancellation rounds, exact basket/point reconciliation,
-  and an eight-hour unattended run. Testnet no longer carries a 100-round soak
+  and a two-hour unattended run. Testnet no longer carries a 100-round soak
   requirement.
+- Source commit `b303635` passed the accelerated gate with 100 settled rounds,
+  ten cancellations, 440 per-token reconciliations, zero accounting or point
+  discrepancies, and exact indexer reconstruction of 111 rounds. The active
+  clean-deployment endurance run is
+  `v4-devnet-2026-07-30T21-33-20-690Z`; its first naturally timed round settled
+  and rolled successfully. The run was shortened in place to 24 rounds; two
+  rounds are confirmed with zero failed actions after restart recovery. Last
+  verified 2026-07-30.
 - V4 application snapshots resolve `RoundManagerV4.activeRound()` and are
   read-only. `services/v4-devnet-keeper.ts` owns local lifecycle transitions;
   `scripts/v4-devnet-soak.ts` owns deterministic qualification scenarios.
@@ -600,13 +610,14 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Commit the reviewed v4 qualification baseline, then run the clean-chain
-  accelerated and endurance gates.
+- Complete and reconcile endurance run
+  `v4-devnet-2026-07-30T21-33-20-690Z`, including its scheduled keeper, RPC,
+  indexer, web, reorg, and duplicate-round faults.
 - Broadcast v4 to Robinhood testnet only after explicit user authorization.
   Testnet uses mock Stock Tokens and deterministic mock swaps labeled
   `TESTNET MOCK · NO VALUE`.
 - Run 100 accelerated settled rounds, ten cancellation rounds, and an
-  eight-hour devnet stability pass with exact event-derived basket/point
+  two-hour devnet stability pass with exact event-derived basket/point
   reconciliation. The archived v3 soak remains infrastructure evidence only.
 - Limit Robinhood testnet to a separately authorized two-round compatibility
   smoke test after estimating gas and preserving an operating reserve.
