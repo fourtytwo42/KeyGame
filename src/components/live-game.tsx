@@ -67,6 +67,11 @@ export function LiveGame({
     state.tickerScores[0]?.ticker ??
     selectedTicker;
 
+  useEffect(() => {
+    setActionStatus("idle");
+    setAnnouncement("Live broadcast synchronized.");
+  }, [state.contractAddress, state.roundId]);
+
   const loadScenario = (nextScenario: SimulationScenarioId) => {
     setScenario(nextScenario);
     setState(cloneState(scenarios[nextScenario].state));

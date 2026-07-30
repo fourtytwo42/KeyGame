@@ -136,15 +136,18 @@ export function ProfileControls({
             <strong>{profile.displayName}</strong>
             <Link href={`/profile/${profile.handle}`}>@{profile.handle} →</Link>
           </span>
-          {authenticated ? (
-            <button
-              type="button"
-              className="textButton"
-              onClick={() => setEditing(true)}
-            >
-              EDIT
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="textButton"
+            disabled={busy}
+            onClick={() => (authenticated ? setEditing(true) : void signIn())}
+          >
+            {authenticated
+              ? "EDIT"
+              : busy
+                ? "CHECKING SIGNATUREâ€¦"
+                : "SIGN IN"}
+          </button>
         </div>
       ) : authenticated && editing ? (
         <div className="profileForm">

@@ -735,7 +735,7 @@ main {
 
 .historicalRunCard dt {
   font-family: var(--mono);
-  font-size: 0.57rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
 }
 
@@ -766,7 +766,7 @@ main {
   background: var(--late-feed);
   border-bottom: 3px solid var(--night-desk);
   font-family: var(--mono);
-  font-size: 0.61rem;
+  font-size: 0.6875rem;
   white-space: nowrap;
 }
 
