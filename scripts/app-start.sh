@@ -26,7 +26,7 @@ pnpm build >/dev/null
 if [[ -f "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
   echo "Last Bell is already running with PID $(cat "$pid_file")."
 else
-  nohup node node_modules/next/dist/bin/next start --hostname 0.0.0.0 \
+  nohup setsid node node_modules/next/dist/bin/next start --hostname 0.0.0.0 \
     >"$log_file" 2>&1 &
   echo "$!" >"$pid_file"
 fi
@@ -34,13 +34,13 @@ fi
 if pnpm exec wait-on --timeout 30000 http://127.0.0.1:3000/api/status; then
   if [[ ! -f "$keeper_pid_file" ]] \
     || ! kill -0 "$(cat "$keeper_pid_file")" 2>/dev/null; then
-    nohup pnpm service:v4-devnet-keeper \
+    nohup setsid pnpm service:v4-devnet-keeper \
       >"$keeper_log_file" 2>&1 &
     echo "$!" >"$keeper_pid_file"
   fi
   if [[ ! -f "$indexer_pid_file" ]] \
     || ! kill -0 "$(cat "$indexer_pid_file")" 2>/dev/null; then
-    INDEXER_CONFIRMATIONS=0 nohup pnpm service:indexer \
+    INDEXER_CONFIRMATIONS=0 nohup setsid pnpm service:indexer \
       >"$indexer_log_file" 2>&1 &
     echo "$!" >"$indexer_pid_file"
   fi

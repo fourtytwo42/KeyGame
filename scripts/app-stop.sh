@@ -6,30 +6,27 @@ pid_file="$project_root/.devnet/app.pid"
 keeper_pid_file="$project_root/.devnet/round-keeper.pid"
 indexer_pid_file="$project_root/.devnet/indexer.pid"
 
-if [[ -f "$indexer_pid_file" ]]; then
-  indexer_pid="$(cat "$indexer_pid_file")"
-  if kill -0 "$indexer_pid" 2>/dev/null; then
-    kill "$indexer_pid"
-    wait "$indexer_pid" 2>/dev/null || true
+stop_managed_process() {
+  local pid_file="$1"
+  if [[ ! -f "$pid_file" ]]; then
+    return
   fi
-  rm -f "$indexer_pid_file"
-fi
-
-if [[ -f "$keeper_pid_file" ]]; then
-  keeper_pid="$(cat "$keeper_pid_file")"
-  if kill -0 "$keeper_pid" 2>/dev/null; then
-    kill "$keeper_pid"
-    wait "$keeper_pid" 2>/dev/null || true
-  fi
-  rm -f "$keeper_pid_file"
-fi
-
-if [[ -f "$pid_file" ]]; then
+  local pid
   pid="$(cat "$pid_file")"
   if kill -0 "$pid" 2>/dev/null; then
-    kill "$pid"
+    local session_id
+    session_id="$(ps -o sid= -p "$pid" | tr -d ' ')"
+    if [[ "$session_id" == "$pid" ]]; then
+      kill -- "-$pid"
+    else
+      kill "$pid"
+    fi
     wait "$pid" 2>/dev/null || true
   fi
   rm -f "$pid_file"
-fi
+}
+
+stop_managed_process "$indexer_pid_file"
+stop_managed_process "$keeper_pid_file"
+stop_managed_process "$pid_file"
 echo "Last Bell stopped."

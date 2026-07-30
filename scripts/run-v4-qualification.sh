@@ -8,12 +8,51 @@ source "$NVM_DIR/nvm.sh"
 export PATH="$HOME/.foundry/bin:$PATH"
 cd "$project_root"
 
-if [[ -f .devnet/indexer.pid ]] \
-  && kill -0 "$(cat .devnet/indexer.pid)" 2>/dev/null; then
-  kill "$(cat .devnet/indexer.pid)"
-fi
-rm -f .devnet/indexer.pid
+stop_indexer() {
+  if [[ ! -f .devnet/indexer.pid ]]; then
+    return
+  fi
+  local pid
+  pid="$(cat .devnet/indexer.pid)"
+  if kill -0 "$pid" 2>/dev/null; then
+    local session_id
+    session_id="$(ps -o sid= -p "$pid" | tr -d ' ')"
+    if [[ "$session_id" == "$pid" ]]; then
+      kill -- "-$pid"
+    else
+      kill "$pid"
+    fi
+    wait "$pid" 2>/dev/null || true
+  fi
+  rm -f .devnet/indexer.pid
+}
+
+start_indexer() {
+  KEYGAME_CHAIN_ID=31337 INDEXER_CONFIRMATIONS=0 \
+    nohup setsid pnpm service:indexer >.devnet/indexer.log 2>&1 &
+  echo "$!" >.devnet/indexer.pid
+}
+
+stop_indexer
 bash scripts/app-stop.sh || true
+
+# Older wrappers could exit while leaving their devnet-only keeper child
+# detached. A clean qualification must have exactly one lifecycle owner.
+mapfile -t stale_keeper_pids < <(
+  pgrep -f '[s]ervices/v4-devnet-keeper.ts' || true
+)
+for stale_pid in "${stale_keeper_pids[@]}"; do
+  kill "$stale_pid" 2>/dev/null || true
+done
+
+mapfile -t stale_indexer_pids < <(pgrep -f '[s]ervices/indexer.ts' || true)
+for stale_pid in "${stale_indexer_pids[@]}"; do
+  if tr '\0' '\n' <"/proc/$stale_pid/environ" 2>/dev/null \
+    | grep -qx 'KEYGAME_CHAIN_ID=31337'; then
+    kill "$stale_pid" 2>/dev/null || true
+  fi
+done
+
 bash scripts/devnet-stop.sh || true
 
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
@@ -31,19 +70,14 @@ SQL
 bash scripts/devnet-start.sh
 bash scripts/devnet-deploy.sh
 pnpm db:migrate
-KEYGAME_CHAIN_ID=31337 INDEXER_CONFIRMATIONS=0 \
-  nohup pnpm service:indexer >.devnet/indexer.log 2>&1 &
-echo "$!" >.devnet/indexer.pid
+start_indexer
 
 pnpm v4-soak:start
 pnpm v4-soak:run
 pnpm v4-soak:status
 pnpm v4-soak:reconcile
 pnpm v4-soak:report
-kill "$(cat .devnet/indexer.pid)"
-wait "$(cat .devnet/indexer.pid)" 2>/dev/null || true
-KEYGAME_CHAIN_ID=31337 INDEXER_CONFIRMATIONS=0 \
-  nohup pnpm service:indexer >.devnet/indexer.log 2>&1 &
-echo "$!" >.devnet/indexer.pid
+stop_indexer
+start_indexer
 sleep 15
 pnpm exec tsx scripts/check-v4-indexer.ts
