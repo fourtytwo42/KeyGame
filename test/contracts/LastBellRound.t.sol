@@ -386,10 +386,12 @@ contract LastBellRoundTest is TestBase {
 
         vm.warp(startAt + firstDuration + secondDuration);
         uint64 carolAt = startAt + firstDuration + secondDuration;
+        uint8 firstCarolBand = uint8(uint256(firstBandSeed) + 1);
+        uint8 secondCarolBand = uint8(uint256(secondBandSeed) + 1);
         bytes memory firstCarolReport =
-            _report(2, _bandPrice(2, firstBandSeed + 1), carolAt);
+            _report(2, _bandPrice(2, firstCarolBand), carolAt);
         bytes memory secondCarolReport =
-            _report(2, _bandPrice(2, secondBandSeed + 1), carolAt);
+            _report(2, _bandPrice(2, secondCarolBand), carolAt);
         vm.prank(CAROL);
         round.claimBell(2, firstCarolReport, 4);
         vm.prank(CAROL);
