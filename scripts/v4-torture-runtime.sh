@@ -80,6 +80,8 @@ start_runtime() {
     --port 9545 \
     --chain-id 31337 \
     --auto-impersonate \
+    --prune-history 50 \
+    --transaction-block-keeper 25000 \
     >"$runtime_dir/anvil.log" 2>&1 &
   echo "$!" >"$runtime_dir/anvil.pid"
   wait_rpc

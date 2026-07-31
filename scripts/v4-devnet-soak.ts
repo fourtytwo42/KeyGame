@@ -202,7 +202,10 @@ async function transaction(
        updated_at=now() WHERE run_id=$1 AND idempotency_key=$2`,
     [runId, key, hash],
   );
-  const receipt = await client.waitForTransactionReceipt({ hash });
+  const receipt = await client.waitForTransactionReceipt({
+    hash,
+    timeout: 300_000,
+  });
   await pool.query(
     `UPDATE soak_transactions SET state=$3,receipt=$4,updated_at=now()
      WHERE run_id=$1 AND idempotency_key=$2`,
