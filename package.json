@@ -63,6 +63,8 @@
     "service:v4-devnet-keeper": "tsx services/v4-devnet-keeper.ts",
     "service:v4-keeper": "tsx services/v4-keeper.ts",
     "release:scan": "bash scripts/scan-protected-build.sh",
+    "release:scan:mainnet": "bash scripts/scan-mainnet-protected-build.sh",
+    "release:prepare:testnet:v4": "bash scripts/prepare-testnet-v4-worktree.sh",
     "release:preflight:mainnet": "tsx scripts/preflight-mainnet-v4.ts",
     "release:preflight:testnet:v4": "bash scripts/preflight-testnet-v4.sh",
     "release:reconcile:testnet:v4": "tsx scripts/reconcile-testnet-v4-smoke.ts",

@@ -40,6 +40,12 @@ Durable project context lives here. Update this file whenever information should
   `storageLayout` output before collecting storage layouts. This prevents clean
   VM packaging from failing after the ordinary build/test steps replace those
   artifacts. Last verified 2026-07-31.
+- The v4 testnet release path uses a clean detached worktree at the exact
+  pushed commit. Preflight derives and matches the encrypted deployer keystore,
+  pins the Foundry sender, records conservative gas evidence, and remains
+  simulation-only. Authorization is scoped to chain 46630, one deployment,
+  and exactly two settled rounds; the v4 keeper stops lifecycle preparation
+  after round two. Last verified 2026-07-31.
 - Do not broadcast to Robinhood testnet or mainnet.
 - Next step is independent audit/legal/Safe work. The two-round Robinhood
   testnet smoke and later external-wallet UAT remain separate gates.

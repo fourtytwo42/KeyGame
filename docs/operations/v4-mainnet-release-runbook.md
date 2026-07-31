@@ -17,20 +17,44 @@ Status: fail-closed. This runbook does not authorize a broadcast.
 This step requires a new, explicit user authorization. It uses mock assets and
 must display `TESTNET MOCK · NO VALUE`.
 
-1. Create an authorization file outside the repository with the exact pushed
-   `sourceCommit` and `twoRoundSmokeAuthorized=true`.
-2. Run `pnpm release:preflight:testnet:v4`. This simulates deployment without
-   broadcasting and checks the configured gas reserve.
-3. Only after reviewing the estimate, run
+1. Run `pnpm release:prepare:testnet:v4` from the authoritative VM repository.
+   Perform every remaining release command inside the clean detached worktree
+   it prints. Set `KEYGAME_RELEASE_UPSTREAM` to the pushed release branch.
+2. Configure the encrypted deployer keystore and password-file paths outside
+   the repository. Preflight derives the address and requires it to equal
+   `DEPLOYER_ADDRESS`; neither secret is copied into evidence or logs.
+3. Run `pnpm release:preflight:testnet:v4`. This simulates deployment from the
+   exact deployer sender without broadcasting. It records deployer, keeper,
+   and faucet balances plus the higher of RPC and simulated gas prices, a
+   10-million-gas smoke budget, 20% margin, and a 0.001 ETH reserve. The
+   2026-07-31 reference requirement is 0.001720306900015344 ETH and must be
+   recalculated immediately before authorization.
+4. Create an authorization file outside the repository with exactly:
+
+   ```text
+   sourceCommit=<full pushed commit>
+   twoRoundSmokeAuthorized=true
+   chainId=46630
+   maxDeployments=1
+   maxSettledRounds=2
+   ```
+
+5. Only after reviewing the estimate, run
    `TESTNET_RELEASE_AUTHORIZATION_FILE=... pnpm contracts:deploy:testnet:v4`.
-4. Use two built-in session wallets. Complete exactly two representative
+6. Start `service:v4-keeper` with
+   `KEYGAME_TESTNET_SMOKE_INITIAL_ROUND_ID` set to the deployed first round and
+   `KEYGAME_TESTNET_SMOKE_MAX_SETTLED_ROUNDS=2`. The keeper finalizes round two
+   and refuses to prepare round three.
+7. Use two built-in session wallets. Complete exactly two representative
    rounds, including allowance reuse, rollover, and round-one lifetime-point
    eligibility in round two.
-5. Withdraw Last Bell, Winning Stock, Lifetime, and batch rewards. Restart the
+8. Withdraw Last Bell, Winning Stock, Lifetime, and batch rewards. Restart the
    keeper once after transaction-hash persistence and confirm recovery.
-6. Run `pnpm release:reconcile:testnet:v4`. Archive its report, deployment
+9. Run `pnpm release:reconcile:testnet:v4`. It must see exactly two database
+   rounds, both settled, two distinct contributing wallets in each, and no
+   cancellations. Archive its report, deployment
    manifest, transaction hashes, API snapshots, and explorer links.
-7. Stop. Do not turn this into a soak or continue spending testnet gas.
+10. Stop. Do not turn this into a soak or continue spending testnet gas.
 
 ## 3. Audit, legal, and role setup
 

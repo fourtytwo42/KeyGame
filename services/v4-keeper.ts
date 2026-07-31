@@ -10,6 +10,7 @@ import {
 } from "viem";
 import { screenStockPotRoster } from "../src/lib/game/market-screen";
 import type { ScreeningAsset } from "../src/lib/game/types";
+import { smokeRoundLimitReached } from "../src/lib/release/testnet-v4";
 import {
   lastBellV4Abi,
   roundManagerV4Abi,
@@ -47,6 +48,22 @@ if (!operator) throw new Error("Keeper account unavailable.");
 const manager = manifest.contracts.manager;
 const adapter = manifest.contracts.swapAdapter;
 const pollMs = Number(process.env.V4_KEEPER_POLL_MS || 1_000);
+const smokeInitialRoundId =
+  manifest.chainId === 46630
+    ? BigInt(process.env.KEYGAME_TESTNET_SMOKE_INITIAL_ROUND_ID || "0")
+    : undefined;
+const smokeMaxSettledRounds =
+  manifest.chainId === 46630
+    ? Number(process.env.KEYGAME_TESTNET_SMOKE_MAX_SETTLED_ROUNDS || "0")
+    : undefined;
+if (
+  manifest.chainId === 46630 &&
+  (smokeInitialRoundId === 0n || smokeMaxSettledRounds !== 2)
+) {
+  throw new Error(
+    "Testnet v4 keeper requires an initial round and an exact two-round smoke limit.",
+  );
+}
 const manifestHash = createHash("sha256")
   .update(JSON.stringify(manifest))
   .digest("hex");
@@ -302,6 +319,18 @@ async function scheduleLifecycle() {
     return;
   }
   if (phase !== 4 && phase !== 5) return;
+  if (
+    smokeInitialRoundId !== undefined &&
+    smokeMaxSettledRounds !== undefined &&
+    smokeRoundLimitReached(latest, smokeInitialRoundId, smokeMaxSettledRounds)
+  ) {
+    await heartbeat("v4-keeper", manifest.chainId, "smoke-complete", {
+      deploymentKey,
+      latestRoundId: latest.toString(),
+      maxSettledRounds: smokeMaxSettledRounds,
+    });
+    return;
+  }
   const roster = await loadRoster();
   if (roster.delayed || roster.selected.length !== 4) {
     await heartbeat("v4-keeper", manifest.chainId, "waiting-for-safe-roster", {

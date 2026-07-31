@@ -11,8 +11,8 @@ is authorized or claimed.
 | Direct production adapter | Implemented | `RobinhoodStockSwapAdapter.sol` |
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
-| Full release regression | Passed locally | 54 Foundry tests, 57 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
-| Two-round Robinhood testnet smoke | Blocked | Separate written user authorization |
+| Full release regression | Passed locally | 54 Foundry tests, 64 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
+| Two-round Robinhood testnet smoke | Prepared, not authorized | Sender and keystore guards, conservative gas evidence, exact authorization scope, and two-round keeper ceiling are implemented; broadcast still needs separate written user authorization |
 | Independent audit | Blocked | External auditor and frozen candidate required |
 | Legal/eligibility matrix | Blocked | Counsel approval required |
 | Three 2-of-3 Safes | Blocked | Three owners and verified Safe deployments required |
@@ -26,7 +26,13 @@ is authorized or claimed.
   shell wrapper. An environment variable alone cannot remove the compile-time
   lock.
 - Testnet deployment requires an authorization file outside the repository,
-  matching the exact pushed commit, plus an explicit two-round-smoke grant.
+  matching the exact pushed commit, chain 46630, one deployment, and exactly
+  two settled rounds. The v4 keeper finalizes round two and refuses to prepare
+  another round.
+- Testnet release commands run from a clean detached worktree. Preflight
+  derives the encrypted deployer-keystore address, pins the simulation and
+  broadcast sender, and budgets with the higher of the RPC and Foundry gas
+  prices plus 20% margin and a 0.001 ETH reserve.
 - Mainnet preflight verifies chain synchronization, canonical contracts, direct
   pools, bytecode, token decimals, safety observations, and at least four safe
   catalog markets.

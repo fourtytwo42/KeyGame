@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { assertSmokeReconciliationScope } from "../src/lib/release/testnet-v4";
 import {
   deploymentKeyFor,
   loadManifest,
@@ -33,28 +34,26 @@ const rounds = await pool.query<{
   [deploymentKey],
 );
 const settled = rounds.rows.filter((round) => round.state === "settled");
-if (
-  settled.length !== 2 ||
-  rounds.rows.some((round) => round.state === "cancelled")
-) {
-  throw new Error(
-    `Expected exactly two settled rounds and no cancellations; found ${JSON.stringify(rounds.rows)}.`,
-  );
-}
+assertSmokeReconciliationScope({
+  totalRounds: rounds.rows.length,
+  settledRounds: settled.length,
+  cancelledRounds: rounds.rows.filter((round) => round.state === "cancelled")
+    .length,
+});
 
 const roundIds = settled.map((round) => round.round_id);
 const [contributions, allocations, claims, epochs, failures, events] =
   await Promise.all([
     pool.query<{
-      count: string;
+      round_id: string;
+      calls: string;
       players: string;
-      rounds: string;
     }>(
-      `SELECT count(*)::text,
-              count(DISTINCT lower(player_address))::text AS players,
-              count(DISTINCT round_id)::text AS rounds
+      `SELECT round_id::text,count(*)::text AS calls,
+              count(DISTINCT lower(player_address))::text AS players
        FROM stock_pot_contributions
-       WHERE deployment_key=$1 AND round_id=ANY($2::numeric[]) AND canonical`,
+       WHERE deployment_key=$1 AND round_id=ANY($2::numeric[]) AND canonical
+       GROUP BY round_id ORDER BY round_id`,
       [deploymentKey, roundIds],
     ),
     pool.query<{
@@ -106,13 +105,13 @@ const [contributions, allocations, claims, epochs, failures, events] =
     ),
   ]);
 
-if (Number(contributions.rows[0]?.players ?? 0) < 2) {
+if (
+  contributions.rows.length !== 2 ||
+  contributions.rows.some((round) => Number(round.players) < 2)
+) {
   throw new Error(
-    "Smoke evidence requires at least two distinct contributing wallets.",
+    "Each smoke round requires two distinct contributing wallets.",
   );
-}
-if (Number(contributions.rows[0]?.rounds ?? 0) !== 2) {
-  throw new Error("Both smoke rounds must contain accepted contributions.");
 }
 if (allocations.rows.length !== 8) {
   throw new Error(
@@ -158,6 +157,7 @@ const report = {
   checkedAt: new Date().toISOString(),
   deploymentKey,
   sourceCommit: manifest.sourceCommit,
+  authorizationScope: { maxDeployments: 1, maxSettledRounds: 2 },
   manifestHash: createHash("sha256")
     .update(JSON.stringify(manifest))
     .digest("hex"),

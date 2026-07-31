@@ -2,15 +2,29 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-output_dir="$project_root/artifacts/testnet-v4"
 cd "$project_root"
+commit="$(git rev-parse HEAD)"
+short="${commit:0:12}"
+upstream="${KEYGAME_RELEASE_UPSTREAM:-origin/codex/v4-mainnet-readiness}"
+artifact_root="${KEYGAME_RELEASE_ARTIFACT_DIR:-/home/hendo420/releases/packages/$short}"
+output_dir="$artifact_root/testnet-v4"
+archive="$artifact_root/last-bell-v4-testnet-ready-$short.tgz"
+
+[[ -z "$(git status --porcelain)" ]] || {
+  echo "Testnet package requires a clean release worktree." >&2
+  exit 1
+}
+[[ "$(git rev-parse "$upstream")" == "$commit" ]] || {
+  echo "Testnet package source is not pushed to $upstream." >&2
+  exit 1
+}
 
 rm -rf "$output_dir"
-mkdir -p "$output_dir/abi" "$output_dir/storage"
+mkdir -p "$output_dir/abi" "$output_dir/storage" "$output_dir/evidence"
 
 forge build
 forge test
-pnpm release:scan
+pnpm release:scan:mainnet
 
 # Storage layouts are not part of Foundry's default artifacts. Rebuild them
 # explicitly so `forge inspect storage-layout` is deterministic on a clean VM.
@@ -28,23 +42,44 @@ for contract in \
     >"$output_dir/$contract.bytecode.sha256"
 done
 
+[[ -z "$(git status --porcelain)" ]] || {
+  echo "Packaging checks changed the source worktree." >&2
+  exit 1
+}
+
 cp deployments/46630-v4.template.json "$output_dir/deployment-manifest.template.json"
 cp docs/operations/v4-mainnet-release-runbook.md \
   "$output_dir/testnet-smoke-runbook.md"
-git rev-parse HEAD >"$output_dir/source-commit.txt"
-git status --porcelain >"$output_dir/source-tree-status.txt"
-git diff --binary HEAD | sha256sum | awk '{print $1}' \
-  >"$output_dir/source-tree-diff.sha256"
+evidence_dir="${KEYGAME_RELEASE_EVIDENCE_DIR:-/home/hendo420/releases/evidence/$commit}"
+if [[ -f "$evidence_dir/testnet-v4-preflight.json" ]]; then
+  cp "$evidence_dir/testnet-v4-preflight.json" \
+    "$output_dir/evidence/testnet-v4-preflight.json"
+fi
+cat >"$output_dir/testnet-authorization.template" <<EOF
+sourceCommit=$commit
+twoRoundSmokeAuthorized=true
+chainId=46630
+maxDeployments=1
+maxSettledRounds=2
+EOF
+printf '%s\n' "$commit" >"$output_dir/source-commit.txt"
+printf '%s\n' "$upstream" >"$output_dir/source-upstream.txt"
+git rev-parse "$upstream" >"$output_dir/upstream-commit.txt"
+: >"$output_dir/source-tree-status.txt"
 printf '%s\n' "last-bell-v4-stock-pot" >"$output_dir/contract-version.txt"
-printf '%s\n' "NOT BROADCAST - ROBINHOOD TESTNET MOCK ASSETS ONLY" \
+printf '%s\n' \
+  "NOT BROADCAST - ROBINHOOD TESTNET MOCK ASSETS ONLY" \
+  "ONE DEPLOYMENT AND EXACTLY TWO SETTLED ROUNDS REQUIRE SEPARATE AUTHORIZATION" \
   >"$output_dir/RELEASE-STATUS.txt"
-
-tar -czf "$project_root/artifacts/last-bell-v4-testnet-ready.tgz" \
-  -C "$project_root/artifacts" testnet-v4
 (
-  cd "$project_root/artifacts"
-  sha256sum last-bell-v4-testnet-ready.tgz \
-    >last-bell-v4-testnet-ready.tgz.sha256
+  cd "$output_dir"
+  find . -type f ! -name SHA256SUMS -print0 \
+    | sort -z | xargs -0 sha256sum >SHA256SUMS
+)
+tar -czf "$archive" -C "$artifact_root" testnet-v4
+(
+  cd "$artifact_root"
+  sha256sum "$(basename "$archive")" >"$(basename "$archive").sha256"
 )
 
-echo "Testnet-ready package created at artifacts/last-bell-v4-testnet-ready.tgz"
+echo "Testnet-ready package created at $archive"

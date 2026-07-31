@@ -15,21 +15,31 @@ cd "$project_root"
 }
 
 commit="$(git rev-parse HEAD)"
-grep -Fxq "sourceCommit=$commit" "$TESTNET_RELEASE_AUTHORIZATION_FILE" || {
-  echo "Testnet authorization does not match this source commit." >&2
-  exit 1
-}
-grep -Fxq "twoRoundSmokeAuthorized=true" \
-  "$TESTNET_RELEASE_AUTHORIZATION_FILE" || {
-  echo "Authorization does not permit the two-round testnet smoke." >&2
-  exit 1
-}
-for required in ROBINHOOD_VERIFIER_TYPE ROBINHOOD_VERIFIER_URL; do
+KEYGAME_EXPECTED_SOURCE_COMMIT="$commit" \
+  pnpm exec tsx scripts/validate-testnet-v4-authorization.ts >/dev/null
+for required in \
+  ROBINHOOD_VERIFIER_TYPE ROBINHOOD_VERIFIER_URL DEPLOYER_ADDRESS \
+  KEYGAME_DEPLOYER_KEYSTORE KEYGAME_DEPLOYER_PASSWORD_FILE \
+  KEYGAME_RELEASE_UPSTREAM; do
   [[ -n "${!required:-}" ]] || {
     echo "$required is required." >&2
     exit 1
   }
 done
+for secret_file in \
+  "$KEYGAME_DEPLOYER_KEYSTORE" "$KEYGAME_DEPLOYER_PASSWORD_FILE"; do
+  [[ -f "$secret_file" && ! -L "$secret_file" ]] || {
+    echo "Release credential file is missing or is a symlink: $secret_file" >&2
+    exit 1
+  }
+done
+derived_deployer="$(cast wallet address \
+  --keystore "$KEYGAME_DEPLOYER_KEYSTORE" \
+  --password-file "$KEYGAME_DEPLOYER_PASSWORD_FILE")"
+[[ "${derived_deployer,,}" == "${DEPLOYER_ADDRESS,,}" ]] || {
+  echo "Configured deployer does not match the encrypted keystore." >&2
+  exit 1
+}
 [[ -z "$(git status --porcelain)" ]] || {
   echo "Refusing to deploy dirty or untracked source." >&2
   exit 1
@@ -39,8 +49,8 @@ if [[ -f deployments/46630.json ]] \
   echo "A v4 testnet manifest already exists; refusing a duplicate deployment." >&2
   exit 1
 fi
-upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
-[[ -n "$upstream" && "$commit" == "$(git rev-parse "$upstream")" ]] || {
+upstream_commit="$(git rev-parse "$KEYGAME_RELEASE_UPSTREAM" 2>/dev/null || true)"
+[[ -n "$upstream_commit" && "$commit" == "$upstream_commit" ]] || {
   echo "Refusing to deploy source that is not pushed to its configured upstream." >&2
   exit 1
 }
@@ -48,6 +58,9 @@ upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev
 bash scripts/preflight-testnet-v4.sh
 forge script script/DeployTestnetV4.s.sol:DeployTestnetV4 \
   --rpc-url "$ROBINHOOD_TESTNET_RPC_URL" \
+  --sender "$DEPLOYER_ADDRESS" \
+  --keystore "$KEYGAME_DEPLOYER_KEYSTORE" \
+  --password-file "$KEYGAME_DEPLOYER_PASSWORD_FILE" \
   --broadcast
 KEYGAME_WRITE_MANIFEST_CHAIN_ID=46630 \
   pnpm exec tsx scripts/write-v4-deployment-manifest.ts
@@ -63,5 +76,8 @@ if [[ -n "${ROBINHOOD_VERIFIER_API_KEY:-}" ]]; then
 fi
 forge script script/DeployTestnetV4.s.sol:DeployTestnetV4 \
   --rpc-url "$ROBINHOOD_TESTNET_RPC_URL" \
+  --sender "$DEPLOYER_ADDRESS" \
+  --keystore "$KEYGAME_DEPLOYER_KEYSTORE" \
+  --password-file "$KEYGAME_DEPLOYER_PASSWORD_FILE" \
   "${verify_args[@]}" \
   | tee artifacts/deployment-verification/46630-v4.log
