@@ -36,6 +36,9 @@ Durable project context lives here. Update this file whenever information should
   deterministic shard logs and seeds are in the same-name subdirectory.
   Preserved failed attempts document the keeper idempotency, cancellation
   predicate, and PostgreSQL recovery defects that were fixed before acceptance.
+- Final evidence includes 30 exported logs/tables plus a PostgreSQL snapshot
+  under the run directory and occupies about 107 MB. The isolated Anvil,
+  keeper, indexer, and web runtime was stopped after packaging.
 - Do not broadcast to Robinhood testnet or mainnet.
 
 ## Current State
@@ -270,6 +273,12 @@ When sources conflict, use this order:
   intentional viewport skips. Browser and integration tests now accept
   explicit devnet manifest and RPC paths so torture UAT cannot target the
   qualified port-8545 deployment.
+- 2026-07-31: The first attempted isolated Playwright run exposed that the app
+  still hardcoded the qualified manifest/RPC. Before the defect was fixed, the
+  qualified autonomous devnet advanced from block 337 to 351 and active round
+  4688; its committed manifest checksum and prior qualification evidence were
+  unchanged. Subsequent browser and integration UAT used only the explicit
+  torture manifest and port 9545, with snapshot/revert on that same chain.
 - 2026-07-31: The isolated `v4-torture` Foundry campaign completed ten
   deterministic 100,000-action shards with exactly 1,000,000 actions and no
   invariant failure at source `c9acd2d`. The first live attempt reached 394
