@@ -157,9 +157,12 @@ async function transaction(
   const existing = await pool.query<{
     transaction_hash: Hex | null;
     state: string;
+    idempotency_key: string;
   }>(
-    `SELECT transaction_hash,state FROM soak_transactions
-     WHERE run_id=$1 AND idempotency_key=$2`,
+    `SELECT transaction_hash,state,idempotency_key FROM soak_transactions
+     WHERE run_id=$1 AND lower(idempotency_key)=lower($2)
+     ORDER BY CASE state WHEN 'confirmed' THEN 0 WHEN 'broadcast' THEN 1 ELSE 2 END,
+       id DESC LIMIT 1`,
     [runId, key],
   );
   if (existing.rows[0]?.transaction_hash) {
@@ -175,7 +178,11 @@ async function transaction(
            updated_at=now()
        WHERE run_id=$1 AND idempotency_key=$2
          AND transaction_hash=$3`,
-      [runId, key, existing.rows[0].transaction_hash],
+      [
+        runId,
+        existing.rows[0].idempotency_key,
+        existing.rows[0].transaction_hash,
+      ],
     );
   }
   const nonce = await client.getTransactionCount({
