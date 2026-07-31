@@ -16,14 +16,16 @@ Durable project context lives here. Update this file whenever information should
   `artifacts/last-bell-v4-testnet-ready.tgz`; its adjacent `.sha256` file is the
   package checksum. It is explicitly marked not broadcast and records both the
   baseline commit and working-tree diff hash.
-- Next step: allow the shortened two-hour v4 devnet endurance run
-  `v4-devnet-2026-07-30T21-33-20-690Z` to complete, then reconcile and package
-  its evidence. The active target is 24 naturally timed rounds with all six
-  faults at 15-minute intervals. Source commit `b303635` passed the
-  accelerated gate. Endurance hardening commits through `176be3b` resume
-  interrupted rounds from persisted calls, safely retry reverted transactions,
-  use wall-clock-safe quote deadlines, and record fault restoration correctly.
-  Robinhood testnet remains separately authorized.
+- The shortened v4 endurance run
+  `v4-devnet-2026-07-30T21-33-20-690Z` completed 24 naturally timed rounds and
+  all scheduled recovery faults. Final reconciliation found zero basket, point,
+  assertion, action, or unresolved-transaction discrepancies. Evidence is in
+  `artifacts/qualification/` as matching JSON and Markdown reports. Source
+  commit `b303635` passed the accelerated gate; endurance hardening through
+  `f65bea5` safely classifies the preserved no-charge revert as recovered.
+- Next step: package the accepted source and qualification reports for the
+  separately authorized two-round Robinhood testnet compatibility smoke test.
+  Do not broadcast until the user explicitly authorizes it.
 
 ## Current State
 
@@ -52,16 +54,19 @@ Durable project context lives here. Update this file whenever information should
 - Source commit `b303635` passed the accelerated gate with 100 settled rounds,
   ten cancellations, 440 per-token reconciliations, zero accounting or point
   discrepancies, and exact indexer reconstruction of 111 rounds. The active
-  clean-deployment endurance run is
-  `v4-devnet-2026-07-30T21-33-20-690Z`; its first naturally timed round settled
-  and rolled successfully. The run was shortened in place to 24 rounds; five
-  rounds are confirmed with zero failed actions after recovery. A round-five
-  quote expired because Anvil advanced wall time while idle; transaction
+  clean-deployment endurance run
+  `v4-devnet-2026-07-30T21-33-20-690Z` completed 24 naturally timed rounds,
+  184 confirmed transactions, and all keeper, RPC, indexer, web, reorg, and
+  duplicate-round recovery exercises. A round-five quote expired because Anvil
+  advanced wall time while idle; transaction
   `0xefeba21a6e533ee01775fcd77f8318cf0db6485d74356a1f3576fa129f0a6134`
   reverted without charging and remains recorded as evidence. The controller
-  now safely retries reverted expected-success actions with fresh deadlines.
-  A keeper restart fault completed and restored; the remaining compressed
-  schedule continues at 15-minute intervals. Last verified 2026-07-30.
+  retried it with a fresh deadline and completed the action. Final
+  reconciliation contains 96 per-token rows, zero basket discrepancies, zero
+  point discrepancies, zero failed assertions/actions, one recovered revert,
+  and zero unresolved reverts. Reports:
+  `artifacts/qualification/v4-devnet-2026-07-30T21-33-20-690Z.{json,md}`.
+  Last verified 2026-07-30.
 - V4 application snapshots resolve `RoundManagerV4.activeRound()` and are
   read-only. `services/v4-devnet-keeper.ts` owns local lifecycle transitions;
   `scripts/v4-devnet-soak.ts` owns deterministic qualification scenarios.
