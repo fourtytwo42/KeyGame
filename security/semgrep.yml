@@ -1,0 +1,26 @@
+rules:
+  - id: solidity-tx-origin-authorization
+    languages: [solidity]
+    severity: ERROR
+    message: tx.origin must not be used for authorization.
+    pattern: tx.origin
+  - id: solidity-selfdestruct
+    languages: [solidity]
+    severity: ERROR
+    message: selfdestruct is prohibited in value-bearing contracts.
+    pattern-either:
+      - pattern: selfdestruct(...)
+      - pattern: suicide(...)
+  - id: solidity-delegatecall
+    languages: [solidity]
+    severity: ERROR
+    message: delegatecall is prohibited in the non-upgradeable v4 contracts.
+    pattern: $TARGET.delegatecall(...)
+  - id: javascript-private-key-env
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Private keys must never be loaded into application or release environment variables.
+    pattern-either:
+      - pattern: process.env.PRIVATE_KEY
+      - pattern: process.env.DEPLOYER_PRIVATE_KEY
+      - pattern: process.env.KEEPER_PRIVATE_KEY

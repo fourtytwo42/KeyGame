@@ -7,6 +7,7 @@ interface ScriptVm {
     function envBytes32(string calldata name) external returns (bytes32);
     function envUint(string calldata name) external returns (uint256);
     function startBroadcast() external;
+    function startBroadcast(address signer) external;
     function stopBroadcast() external;
 }
 

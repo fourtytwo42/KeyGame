@@ -163,10 +163,22 @@ export const roundManagerV4Abi = parseAbi([
   "function activatePrepared(uint256[4] sellMinimums,uint256[4] buyMinimums,uint64 quoteDeadline) returns (address)",
   "function finalizeActive()",
   "function cancelActive(bytes32 reason)",
+  "function admin() view returns (address)",
+  "function pendingAdmin() view returns (address)",
+  "function keeper() view returns (address)",
+  "function proposeAdmin(address nextAdmin)",
+  "function acceptAdmin()",
+  "function cancelAdminTransfer()",
+  "function setKeeper(address nextKeeper)",
   "event RoundPrepared(uint256 indexed roundId,address indexed round)",
   "event RoundActivated(uint256 indexed roundId,address indexed round,uint256[4] seed)",
   "event ActiveRoundFinalized(uint256 indexed roundId,address indexed round)",
   "event ActiveRoundCancelled(uint256 indexed roundId,address indexed round,bytes32 reason)",
+  "event AdminTransferProposed(address indexed currentAdmin,address indexed pendingAdmin)",
+  "event AdminTransferCancelled(address indexed currentAdmin,address indexed cancelledPendingAdmin)",
+  "event AdminTransferred(address indexed previousAdmin,address indexed nextAdmin)",
+  "event KeeperChanged(address indexed previousKeeper,address indexed nextKeeper)",
+  "event LifecycleAuthority(bytes4 indexed selector,address indexed actor,bool administrator)",
 ]);
 
 // Retained for archived closing-print-v1 deployments. The DEX release appends

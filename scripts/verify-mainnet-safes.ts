@@ -32,15 +32,15 @@ if (
 ) {
   throw new Error("SAFE_OWNER_ADDRESSES must contain three unique addresses.");
 }
-const auditedCodeHashes = new Set(
-  (process.env.AUDITED_SAFE_PROXY_CODE_HASHES || "")
+const pinnedCodeHashes = new Set(
+  (process.env.PINNED_SAFE_PROXY_CODE_HASHES || "")
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean),
 );
-if (!auditedCodeHashes.size) {
+if (!pinnedCodeHashes.size) {
   throw new Error(
-    "AUDITED_SAFE_PROXY_CODE_HASHES must be supplied by release review.",
+    "PINNED_SAFE_PROXY_CODE_HASHES must be supplied by internal release review.",
   );
 }
 
@@ -79,9 +79,9 @@ for (const safe of safes) {
   if (!code || code === "0x") throw new Error(`${safe.name} has no bytecode.`);
   const codeHash = keccak256(code).toLowerCase();
   const actualOwners = owners.map((owner) => owner.toLowerCase()).sort();
-  if (!auditedCodeHashes.has(codeHash)) {
+  if (!pinnedCodeHashes.has(codeHash)) {
     throw new Error(
-      `${safe.name} does not match an audited Safe proxy code hash.`,
+      `${safe.name} does not match a pinned verified Safe proxy code hash.`,
     );
   }
   if (

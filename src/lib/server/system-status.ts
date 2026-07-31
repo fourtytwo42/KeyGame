@@ -328,6 +328,20 @@ export async function getSystemStatus() {
     })),
     release: {
       gates: manifest.releaseGates ?? {},
+      assurance: {
+        label:
+          manifest.releaseEvidence?.label ??
+          "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+        internalSecurityReviewSha256:
+          manifest.releaseEvidence?.internalSecurityReviewSha256 ?? null,
+        operatorRiskAcceptanceSha256:
+          manifest.releaseEvidence?.operatorRiskAcceptanceSha256 ?? null,
+        unresolvedCriticalOrHighFindings: Number(
+          process.env.INTERNAL_SECURITY_UNRESOLVED_HIGH ?? 0,
+        ),
+        externalWalletUatEvidenceSha256:
+          manifest.releaseEvidence?.externalWalletUatEvidenceSha256 ?? null,
+      },
       safes: {
         manager: manifest.roles?.managerAdminSafe ?? null,
         market:
@@ -343,7 +357,9 @@ export async function getSystemStatus() {
         ),
       },
       protectedBuildSha256:
-        process.env.PROTECTED_BUILD_SHA256 ?? "not-recorded",
+        manifest.releaseEvidence?.protectedBuildSha256 ??
+        process.env.PROTECTED_BUILD_SHA256 ??
+        "not-recorded",
       mainnetBroadcastLocked:
         manifest.chainId !== 4663 ||
         manifest.releaseGates?.mainnetBroadcastAuthorized !== true,

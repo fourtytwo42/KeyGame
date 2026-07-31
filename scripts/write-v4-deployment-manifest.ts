@@ -78,6 +78,7 @@ const managerAbi = parseAbi([
   "function activeRound() view returns (address)",
   "function swapAdapter() view returns (address)",
   "function admin() view returns (address)",
+  "function pendingAdmin() view returns (address)",
   "function keeper() view returns (address)",
   "function treasury() view returns (address)",
 ]);
@@ -88,6 +89,7 @@ const [
   activeRound,
   configuredAdapter,
   managerAdmin,
+  pendingManagerAdmin,
   keeper,
   treasury,
 ] = (await Promise.all(
@@ -98,6 +100,7 @@ const [
     "activeRound",
     "swapAdapter",
     "admin",
+    "pendingAdmin",
     "keeper",
     "treasury",
   ].map((functionName) =>
@@ -237,6 +240,7 @@ const manifest = {
   },
   roles: {
     managerAdmin,
+    pendingManagerAdmin,
     marketAdmin: mainnet ? process.env.MARKET_ADMIN_SAFE : managerAdmin,
     treasury,
     keeper,
@@ -260,12 +264,23 @@ const manifest = {
   sourceVerification: "pending-separate-verifier-step",
   releaseGates: {
     testnetSmokePassed: false,
-    auditApproved: false,
-    legalApproved: false,
+    internalSecurityReviewPassed:
+      process.env.INTERNAL_SECURITY_REVIEW_PASSED === "true",
+    operatorRiskAcceptanceSigned:
+      process.env.OPERATOR_RISK_ACCEPTANCE_SIGNED === "true",
     safesVerified: false,
     externalWalletUatPassed: false,
     mainnetBroadcastAuthorized: mainnet,
     canaryPassed: false,
+  },
+  releaseEvidence: {
+    label: "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+    internalSecurityReviewSha256:
+      process.env.INTERNAL_SECURITY_REVIEW_SHA256 ?? null,
+    operatorRiskAcceptanceSha256:
+      process.env.OPERATOR_RISK_ACCEPTANCE_SHA256 ?? null,
+    protectedBuildSha256: process.env.PROTECTED_BUILD_SHA256 ?? null,
+    externalWalletUatEvidenceSha256: null,
   },
 };
 const deploymentPath = path.join(

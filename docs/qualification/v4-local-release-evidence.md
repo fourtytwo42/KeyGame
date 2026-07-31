@@ -45,9 +45,11 @@ the isolated harness. The final accepted run includes both fixes.
 - Live mainnet preflight: AAPL, TSLA, SPY, and NVDA safe; AMZN excluded for
   greater than 1% simulated $1,000 buy impact.
 
-## Remaining external gates
+## Remaining release gates
 
 The two-round Robinhood testnet smoke still requires separate authorization.
-Independent audit, legal approval, three verified 2-of-3 Safes, production
-Reown configuration, external-wallet UAT, incident ownership, and explicit
-mainnet broadcast authorization remain blocking.
+The internally reviewed candidate still requires a signed operator risk
+acceptance that explicitly records the absence of legal review and an
+independent smart-contract audit. Three verified 2-of-3 Safes, production Reown
+configuration, external-wallet UAT, incident ownership, and explicit mainnet
+broadcast authorization remain blocking.

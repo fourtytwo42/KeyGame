@@ -2,11 +2,11 @@
 
 Status: fail-closed. This runbook does not authorize a broadcast.
 
-## 1. Build the audit candidate
+## 1. Build the internally reviewed candidate
 
 1. Work only from the authoritative KeyGame VM.
 2. Confirm the branch is clean and pushed. GitHub is source hosting only.
-3. Run `pnpm release:package:audit`.
+3. Run `pnpm security:review`, complete the manual checklist, then run `pnpm release:package:audit`.
 4. Review the generated ABI, storage layout, bytecode hashes, mainnet-fork
    evidence, canonical-market preflight, torture baseline, and `SHA256SUMS`.
 5. Freeze the exact commit. Contract or accounting changes invalidate the
@@ -56,23 +56,21 @@ must display `TESTNET MOCK · NO VALUE`.
    manifest, transaction hashes, API snapshots, and explorer links.
 10. Stop. Do not turn this into a soak or continue spending testnet gas.
 
-## 3. Audit, legal, and role setup
+## 3. Internal assurance, risk acceptance, and role setup
 
-- Commission an independent review of the v4 contracts, direct swap adapter,
-  manager/keeper lifecycle, quotes, indexing, deployment controls, and reward
-  reconstruction.
-- Counsel must provide an approved jurisdiction and eligibility matrix covering
-  age, identity, sanctions, Stock Token eligibility, gaming treatment,
-  lifetime rewards, taxes, disclosures, and privacy.
-- Deploy three separate audited 2-of-3 Safes using the same three independently
+- Complete the pinned analyzer, manual review, negative-control, fork, invariant,
+  hostile-token, protected-build, and full torture gates.
+- Sign the checksummed operator risk acceptance acknowledging that no external
+  legal review or independent smart-contract audit was performed.
+- Deploy three separate runtime-verified 2-of-3 Safes using the same three independently
   controlled owners. Assign manager admin, market/catalog admin, and treasury.
-- Run `pnpm release:verify-safes` with reviewed Safe runtime code hashes.
+- Run `pnpm release:verify-safes` with pinned verified Safe runtime code hashes.
 - Configure isolated keeper and conversion keys with only their narrow roles.
 
 ## 4. Deferred external-wallet UAT
 
-After audit remediation and substantial legal approval, configure the
-production Reown project and exact origins. Test MetaMask, Rabby, Coinbase,
+After internal assurance and Safe setup, configure the production Reown project
+and exact origins. Test MetaMask, Rabby, Coinbase,
 Safe, WalletConnect QR, and EIP-6963 discovery. Cover chain switching,
 rejection, gas failure, edited and reused approvals, quote expiry, failed
 swaps, uncapped custom contributions, settlement, every reward, batch claims,
@@ -88,7 +86,7 @@ that deliberately removes the Solidity compile-time broadcast lock.
 
 1. Re-run canonical registry, chain, sync, pool, bytecode, Safe, source, and
    balance preflights immediately before broadcast.
-2. Deploy only the frozen audited commit and write the immutable manifest.
+2. Deploy only the frozen internally reviewed commit and write the immutable manifest.
 3. Verify runtime bytecode, roles, contract relationships, seed custody, and
    source on the explorer.
 4. Keep discovery unlisted for 24 hours. The contract remains permissionless.
@@ -103,7 +101,7 @@ that deliberately removes the Solidity compile-time broadcast lock.
 - Wrong chain, lagging RPC, exposed unlocked accounts, dirty or unpushed source.
 - Fewer than four safe approved direct markets.
 - Canonical registry, factory, pool, token, Safe, or bytecode mismatch.
-- Audit, legal, wallet, protected-build, monitoring, or ownership gate missing.
+- Internal assurance, signed risk acceptance, wallet, protected-build, monitoring, or ownership gate missing.
 - Any accounting difference, duplicate lifecycle transition, unsafe execution,
   stuck reward, or unrecovered service fault.
 

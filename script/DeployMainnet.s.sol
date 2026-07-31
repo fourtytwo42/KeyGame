@@ -15,8 +15,9 @@ contract DeployMainnetV4 is ScriptBase {
     address private constant FACTORY = 0x1f7d7550B1b028f7571E69A784071F0205FD2EfA;
     address private constant USDG = 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168;
 
-    error AuditLegalAndReleaseAuthorizationRequired();
+    error InternalAssuranceAndReleaseAuthorizationRequired();
     error InvalidInitialRoster();
+    error InvalidDeploymentRelationship();
 
     function run()
         external
@@ -30,7 +31,7 @@ contract DeployMainnetV4 is ScriptBase {
         if (
             !MAINNET_BROADCAST_ENABLED || block.chainid != 4663
                 || !vm.envBool("KEYGAME_MAINNET_V4_BROADCAST")
-        ) revert AuditLegalAndReleaseAuthorizationRequired();
+        ) revert InternalAssuranceAndReleaseAuthorizationRequired();
 
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
         address keeper = vm.envAddress("KEEPER_ADDRESS");
@@ -38,7 +39,7 @@ contract DeployMainnetV4 is ScriptBase {
         address marketSafe = vm.envAddress("MARKET_ADMIN_SAFE");
         address treasurySafe = vm.envAddress("TREASURY_SAFE");
 
-        vm.startBroadcast();
+        vm.startBroadcast(deployer);
         adapter = new RobinhoodStockSwapAdapter(FACTORY, USDG, deployer);
         _configureInitialCatalog(adapter);
         manager = new RoundManagerV4(
@@ -46,6 +47,17 @@ contract DeployMainnetV4 is ScriptBase {
         );
         rewardRouter = new RewardRouterV4(manager.lifetimeVault());
         adapter.setConfigurationGuard(address(manager));
+        if (
+            address(manager.paymentToken()) != USDG
+                || address(manager.swapAdapter()) != address(adapter)
+                || manager.treasury() != treasurySafe
+                || address(manager.paymentRouter().paymentToken()) != USDG
+                || manager.paymentRouter().operator() != address(manager)
+                || manager.lifetimeVault().manager() != address(manager)
+                || address(rewardRouter.lifetimeVault())
+                    != address(manager.lifetimeVault())
+                || adapter.configurationGuard() != address(manager)
+        ) revert InvalidDeploymentRelationship();
 
         LastBellRoundV4.TickerConfig[4] memory tickers;
         for (uint8 i; i < 4; i++) {
@@ -76,8 +88,8 @@ contract DeployMainnetV4 is ScriptBase {
         uint256[4] memory zeroes;
         manager.activatePrepared(zeroes, zeroes, type(uint64).max);
         manager.setKeeper(keeper);
-        manager.transferAdmin(managerSafe);
-        adapter.transferAdmin(marketSafe);
+        manager.proposeAdmin(managerSafe);
+        adapter.proposeAdmin(marketSafe);
         vm.stopBroadcast();
     }
 

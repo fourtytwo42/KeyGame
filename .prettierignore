@@ -12,3 +12,5 @@ broadcast/
 .devnet/
 playwright-report/
 test-results/
+artifacts/
+.torture/

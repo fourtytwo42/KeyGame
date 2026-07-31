@@ -42,6 +42,13 @@ export default async function StatusPage() {
           };
           release: {
             gates: Record<string, boolean>;
+            assurance: {
+              label: string;
+              internalSecurityReviewSha256: string | null;
+              operatorRiskAcceptanceSha256: string | null;
+              unresolvedCriticalOrHighFindings: number;
+              externalWalletUatEvidenceSha256: string | null;
+            };
             safes: { configured: boolean };
             protectedBuildSha256: string;
             mainnetBroadcastLocked: boolean;
@@ -176,7 +183,7 @@ export default async function StatusPage() {
             <p>
               {production
                 ? `${Object.values(production.release.gates).filter(Boolean).length}/${Object.keys(production.release.gates).length} recorded gates · Safes ${production.release.safes.configured ? "configured" : "pending"} · broadcast ${production.release.mainnetBroadcastLocked ? "locked" : "authorized"}.`
-                : "Audit, legal, Safe, wallet, and release authorization remain required."}
+                : "Internal assurance, signed operator risk acceptance, Safes, wallet UAT, and release authorization remain required."}
             </p>
           </div>
           <strong>
@@ -221,6 +228,22 @@ export default async function StatusPage() {
           <p>
             Protected build:{" "}
             {production?.release.protectedBuildSha256 ?? "not recorded"}
+          </p>
+          <p>
+            Assurance: {production?.release.assurance.label ?? "not recorded"}
+          </p>
+          <p>
+            Internal review:{" "}
+            {production?.release.assurance.internalSecurityReviewSha256 ??
+              "pending"}
+            {" · "}unresolved critical/high{" "}
+            {production?.release.assurance.unresolvedCriticalOrHighFindings ??
+              "n/a"}
+          </p>
+          <p>
+            Operator risk acceptance:{" "}
+            {production?.release.assurance.operatorRiskAcceptanceSha256 ??
+              "unsigned"}
           </p>
           <p>
             DEX market screen:{" "}

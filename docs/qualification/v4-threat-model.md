@@ -1,6 +1,6 @@
 # Last Bell v4 threat model
 
-Status: pre-audit working threat model. It does not replace independent review.
+Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT AUDIT.**
 
 ## Assets and invariants
 
@@ -52,15 +52,14 @@ Status: pre-audit working threat model. It does not replace independent review.
   final-eligible-claimant remainder, per-token conservation and fuzz coverage.
 - **Seed/protocol conversion failure:** conversion occurs outside settlement;
   failures preserve recoverable assets and cannot block player withdrawals.
-- **Compromised admin:** three distinct audited 2-of-3 Safes, same three
+- **Compromised admin:** three distinct pinned and runtime-verified 2-of-3 Safes, same three
   independent owners, between-round change boundary, public event trail.
 - **Frontend or RPC compromise:** wallet displays transaction, server-only
   fallback secrets, chain/source/bytecode preflight, no unlocked RPC accounts.
 - **Automated Rug Zone competition:** intentionally FCFS and disclosed;
   monitoring does not throttle, cap, or change payouts.
-- **Legal bypass:** availability defaults fail closed in the product, but
-  documentation never claims frontend controls make a permissionless contract
-  inaccessible.
+- **Eligibility bypass:** documentation never claims frontend controls make a
+  permissionless contract inaccessible. No legal review has been performed.
 
 ## Residual risks requiring explicit acceptance
 
@@ -75,6 +74,5 @@ Status: pre-audit working threat model. It does not replace independent review.
 - Lost private keys and unavailable Safe quorum cannot be repaired by the
   application.
 
-Audit findings, canonical contract changes, pool changes, or legal conclusions
-must update this document and create a new frozen candidate when they affect
-code or assumptions.
+Internal findings, canonical contract changes, pool changes, or changed risk
+assumptions must update this document and create a new frozen candidate.

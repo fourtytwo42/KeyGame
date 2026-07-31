@@ -14,6 +14,7 @@ contract RoundManagerV4 {
     LifetimePointsVault public immutable lifetimeVault;
     address public immutable treasury;
     address public admin;
+    address public pendingAdmin;
     address public keeper;
     LastBellRoundV4 public activeRound;
     LastBellRoundV4 public preparedRound;
@@ -31,6 +32,17 @@ contract RoundManagerV4 {
     event ActiveRoundFinalized(uint256 indexed roundId, address indexed round);
     event ActiveRoundCancelled(
         uint256 indexed roundId, address indexed round, bytes32 reason
+    );
+    event AdminTransferProposed(
+        address indexed currentAdmin, address indexed pendingAdmin
+    );
+    event AdminTransferCancelled(
+        address indexed currentAdmin, address indexed cancelledPendingAdmin
+    );
+    event AdminTransferred(address indexed previousAdmin, address indexed nextAdmin);
+    event KeeperChanged(address indexed previousKeeper, address indexed nextKeeper);
+    event LifecycleAuthority(
+        bytes4 indexed selector, address indexed actor, bool administrator
     );
 
     error Unauthorized();
@@ -73,12 +85,30 @@ contract RoundManagerV4 {
 
     function setKeeper(address nextKeeper) external onlyAdmin {
         if (nextKeeper == address(0)) revert Unauthorized();
+        address previousKeeper = keeper;
         keeper = nextKeeper;
+        emit KeeperChanged(previousKeeper, nextKeeper);
     }
 
-    function transferAdmin(address nextAdmin) external onlyAdmin {
+    function proposeAdmin(address nextAdmin) external onlyAdmin {
         if (nextAdmin == address(0)) revert Unauthorized();
-        admin = nextAdmin;
+        pendingAdmin = nextAdmin;
+        emit AdminTransferProposed(admin, nextAdmin);
+    }
+
+    function cancelAdminTransfer() external onlyAdmin {
+        address cancelledPendingAdmin = pendingAdmin;
+        if (cancelledPendingAdmin == address(0)) revert InvalidTransition();
+        pendingAdmin = address(0);
+        emit AdminTransferCancelled(admin, cancelledPendingAdmin);
+    }
+
+    function acceptAdmin() external {
+        if (msg.sender != pendingAdmin) revert Unauthorized();
+        address previousAdmin = admin;
+        admin = msg.sender;
+        pendingAdmin = address(0);
+        emit AdminTransferred(previousAdmin, msg.sender);
     }
 
     /// @notice Production market configuration is locked while a round can
@@ -97,6 +127,7 @@ contract RoundManagerV4 {
         LastBellRoundV4.RoundSettings calldata settings,
         LastBellRoundV4.TickerConfig[4] calldata tickers
     ) external onlyKeeper returns (LastBellRoundV4 round) {
+        _emitLifecycleAuthority();
         if (address(preparedRound) != address(0) || settings.roundId <= latestRoundId) {
             revert InvalidTransition();
         }
@@ -145,6 +176,7 @@ contract RoundManagerV4 {
         uint256[4] calldata buyMinimums,
         uint64 quoteDeadline
     ) external onlyKeeper returns (LastBellRoundV4 next) {
+        _emitLifecycleAuthority();
         next = preparedRound;
         if (address(next) == address(0)) revert InvalidTransition();
         uint256[4] memory activationSeed =
@@ -166,6 +198,7 @@ contract RoundManagerV4 {
     }
 
     function finalizeActive() external onlyKeeper {
+        _emitLifecycleAuthority();
         LastBellRoundV4 round = activeRound;
         if (address(round) == address(0)) revert InvalidTransition();
         round.finalize();
@@ -177,6 +210,7 @@ contract RoundManagerV4 {
     }
 
     function cancelActive(bytes32 reason) external onlyKeeper {
+        _emitLifecycleAuthority();
         LastBellRoundV4 round = activeRound;
         if (address(round) == address(0)) revert InvalidTransition();
         round.cancel(reason);
@@ -186,6 +220,10 @@ contract RoundManagerV4 {
             seedAmounts[i] = IERC20(seedTokens[i]).balanceOf(address(this));
         }
         emit ActiveRoundCancelled(round.roundId(), address(round), reason);
+    }
+
+    function _emitLifecycleAuthority() private {
+        emit LifecycleAuthority(msg.sig, msg.sender, msg.sender == admin);
     }
 
     function _prepareSeed(

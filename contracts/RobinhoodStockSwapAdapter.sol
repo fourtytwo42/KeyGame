@@ -74,6 +74,7 @@ contract RobinhoodStockSwapAdapter is IStockSwapAdapter {
     IRobinhoodV3Factory public immutable factory;
     address public immutable usdg;
     address public admin;
+    address public pendingAdmin;
     address public configurationGuard;
     uint8 public marketCount;
     address private activePool;
@@ -99,6 +100,12 @@ contract RobinhoodStockSwapAdapter is IStockSwapAdapter {
     );
     event MarketDisabled(address indexed stock);
     event ConfigurationGuardSet(address indexed guard);
+    event AdminTransferProposed(
+        address indexed currentAdmin, address indexed pendingAdmin
+    );
+    event AdminTransferCancelled(
+        address indexed currentAdmin, address indexed cancelledPendingAdmin
+    );
     event AdminTransferred(address indexed previousAdmin, address indexed nextAdmin);
 
     modifier onlyAdmin() {
@@ -195,11 +202,25 @@ contract RobinhoodStockSwapAdapter is IStockSwapAdapter {
         emit ConfigurationGuardSet(guard);
     }
 
-    function transferAdmin(address nextAdmin) external onlyAdmin {
+    function proposeAdmin(address nextAdmin) external onlyAdmin {
         if (nextAdmin == address(0)) revert Unauthorized();
+        pendingAdmin = nextAdmin;
+        emit AdminTransferProposed(admin, nextAdmin);
+    }
+
+    function cancelAdminTransfer() external onlyAdmin {
+        address cancelledPendingAdmin = pendingAdmin;
+        if (cancelledPendingAdmin == address(0)) revert Unauthorized();
+        pendingAdmin = address(0);
+        emit AdminTransferCancelled(admin, cancelledPendingAdmin);
+    }
+
+    function acceptAdmin() external {
+        if (msg.sender != pendingAdmin) revert Unauthorized();
         address previous = admin;
-        admin = nextAdmin;
-        emit AdminTransferred(previous, nextAdmin);
+        admin = msg.sender;
+        pendingAdmin = address(0);
+        emit AdminTransferred(previous, msg.sender);
     }
 
     function quoteUsdgForStock(address stock, uint256 amountIn)

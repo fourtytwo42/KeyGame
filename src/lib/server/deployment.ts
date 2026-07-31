@@ -44,6 +44,13 @@ export type ServerDeployment = {
     keeper?: Address;
   };
   releaseGates?: Record<string, boolean>;
+  releaseEvidence?: {
+    label?: string;
+    internalSecurityReviewSha256?: string | null;
+    operatorRiskAcceptanceSha256?: string | null;
+    protectedBuildSha256?: string | null;
+    externalWalletUatEvidenceSha256?: string | null;
+  };
 };
 
 export async function loadServerDeployment(): Promise<ServerDeployment> {

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-output_dir="$project_root/artifacts/audit-candidate-v4"
+output_dir="$project_root/artifacts/internal-assurance-candidate-v4"
 cd "$project_root"
 
 rm -rf "$output_dir"
@@ -20,6 +20,7 @@ printf '%s  %s\n' \
 forge fmt --check
 forge build
 forge test
+pnpm security:review
 pnpm format:check
 pnpm lint
 pnpm typecheck
@@ -76,6 +77,12 @@ cp docs/qualification/v4-external-gates.md \
   "$output_dir/evidence/external-gates.md"
 cp docs/qualification/v4-local-release-evidence.md \
   "$output_dir/evidence/local-release-evidence.md"
+cp docs/qualification/internal-security-review-checklist.md \
+  "$output_dir/evidence/internal-security-review-checklist.md"
+cp docs/qualification/operator-risk-acceptance.template.md \
+  "$output_dir/evidence/operator-risk-acceptance.template.md"
+cp -R artifacts/internal-security-review \
+  "$output_dir/evidence/internal-security-review"
 cp docs/prd/16-stock-pot-lifetime-points.md \
   "$output_dir/evidence/authoritative-prd.md"
 cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json \
@@ -95,17 +102,18 @@ printf '%s\n' \
   "artifacts/ (generated evidence and packages)" \
   >"$output_dir/RUNTIME-EXCLUSIONS.txt"
 printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
-  "AUDIT, LEGAL, SAFES, AND EXTERNAL WALLET UAT REMAIN BLOCKING" \
+  "INTERNALLY REVIEWED - NO INDEPENDENT AUDIT" \
+  "SIGNED OPERATOR RISK ACCEPTANCE, SAFES, AND EXTERNAL WALLET UAT REMAIN BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"
 (
   cd "$output_dir"
   find . -type f ! -name SHA256SUMS -print0 \
     | sort -z | xargs -0 sha256sum >SHA256SUMS
 )
-tar -czf "$project_root/artifacts/last-bell-v4-audit-candidate.tgz" \
-  -C "$project_root/artifacts" audit-candidate-v4
+tar -czf "$project_root/artifacts/last-bell-v4-internal-assurance-candidate.tgz" \
+  -C "$project_root/artifacts" internal-assurance-candidate-v4
 (
   cd "$project_root/artifacts"
-  sha256sum last-bell-v4-audit-candidate.tgz \
-    >last-bell-v4-audit-candidate.tgz.sha256
+  sha256sum last-bell-v4-internal-assurance-candidate.tgz \
+    >last-bell-v4-internal-assurance-candidate.tgz.sha256
 )

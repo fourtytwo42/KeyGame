@@ -13,8 +13,8 @@ is authorized or claimed.
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
 | Full release regression | Passed locally | 54 Foundry tests, 64 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
 | Two-round Robinhood testnet smoke | Prepared, not authorized | Sender and keystore guards, conservative gas evidence, exact authorization scope, and two-round keeper ceiling are implemented; broadcast still needs separate written user authorization |
-| Independent audit | Blocked | External auditor and frozen candidate required |
-| Legal/eligibility matrix | Blocked | Counsel approval required |
+| Internal security review | In progress | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun |
+| Operator risk acceptance | Blocked | Signed checksummed acknowledgement of no legal review and no independent audit required |
 | Three 2-of-3 Safes | Blocked | Three owners and verified Safe deployments required |
 | External-wallet UAT | Deferred | Runs after audit remediation and before mainnet |
 | Mainnet broadcast | Compile-time locked | Separate reviewed release commit and user authorization |
@@ -65,4 +65,5 @@ permanent approval.
 Any contract or accounting change after the accepted baseline requires the
 complete one-million-action torture campaign again. Service-only changes
 require the affected live-devnet, restart, reorg, and reconciliation campaigns.
-Any audit remediation creates a new candidate.
+Any security remediation creates a new candidate. Internal review must never be
+described as an independent audit or legal approval.

@@ -3,7 +3,7 @@
   "environment": "robinhood-mainnet",
   "chainId": 4663,
   "deploymentBlock": 0,
-  "sourceCommit": "REQUIRED_FROZEN_AUDITED_COMMIT",
+  "sourceCommit": "REQUIRED_FROZEN_INTERNALLY_REVIEWED_COMMIT",
   "mockOnly": false,
   "contractVersion": "last-bell-v4-stock-pot",
   "broadcastLocked": true,
@@ -78,10 +78,17 @@
     "productionAdapterQualified": true,
     "testnetSmokeAuthorized": false,
     "testnetSmokePassed": false,
-    "auditApproved": false,
-    "legalApproved": false,
+    "internalSecurityReviewPassed": false,
+    "operatorRiskAcceptanceSigned": false,
     "safesVerified": false,
     "externalWalletUatPassed": false,
     "mainnetBroadcastAuthorized": false
+  },
+  "releaseEvidence": {
+    "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+    "internalSecurityReviewSha256": null,
+    "operatorRiskAcceptanceSha256": null,
+    "protectedBuildSha256": null,
+    "externalWalletUatEvidenceSha256": null
   }
 }

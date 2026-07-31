@@ -225,7 +225,33 @@ contract RobinhoodStockSwapAdapterTest is TestBase {
 
         vm.prank(address(0xBEEF));
         vm.expectRevert(RobinhoodStockSwapAdapter.Unauthorized.selector);
-        adapter.transferAdmin(address(0xBEEF));
+        adapter.proposeAdmin(address(0xBEEF));
+    }
+
+    function test_AdminTransferRequiresAcceptanceAndCanBeCancelled() public {
+        address nextAdmin = address(0xBEEF);
+        adapter.proposeAdmin(nextAdmin);
+        assertEq(adapter.admin(), address(this), "admin changes too early");
+        assertEq(adapter.pendingAdmin(), nextAdmin, "pending admin");
+
+        vm.prank(address(0xCAFE));
+        vm.expectRevert(RobinhoodStockSwapAdapter.Unauthorized.selector);
+        adapter.acceptAdmin();
+
+        adapter.cancelAdminTransfer();
+        assertEq(adapter.pendingAdmin(), address(0), "cancelled pending admin");
+        vm.prank(nextAdmin);
+        vm.expectRevert(RobinhoodStockSwapAdapter.Unauthorized.selector);
+        adapter.acceptAdmin();
+
+        adapter.proposeAdmin(nextAdmin);
+        vm.prank(nextAdmin);
+        adapter.acceptAdmin();
+        assertEq(adapter.admin(), nextAdmin, "accepted admin");
+        assertEq(adapter.pendingAdmin(), address(0), "pending cleared");
+
+        vm.expectRevert(RobinhoodStockSwapAdapter.Unauthorized.selector);
+        adapter.disableMarket(address(stock));
     }
 
     function test_DisabledMarketBlocksBuysButKeepsSeedExitRecoverable() public {

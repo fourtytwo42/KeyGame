@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "suppressions": [
+    {
+      "tool": "slither",
+      "rule": "arbitrary-send-erc20",
+      "sourceLocation": "contracts/RobinhoodStockSwapAdapter.sol",
+      "rationale": "The authenticated active pool callback can pull only the exact input encoded internally with payer equal to the swap caller; spoofing, reentrancy, and exact-delta tests cover the boundary.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "RobinhoodStockSwapAdapterTest.test_CallbackCannotBeSpoofed"
+    },
+    {
+      "tool": "slither",
+      "rule": "arbitrary-send-erc20",
+      "sourceLocation": "contracts/PaymentRouter.sol",
+      "rationale": "Only manager-authorized round contracts may pull and recipient must equal the calling round; the round supplies its transaction sender as player and the pull is atomic.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "LastBellRoundTest.test_PaymentRouterRejectsUnauthorizedCallers"
+    },
+    {
+      "tool": "slither",
+      "rule": "weak-prng",
+      "sourceLocation": "contracts/LastBellRoundV4.sol",
+      "rationale": "The modulo operation selects one of six deterministic five-second volume buckets and is not randomness or a source of winner entropy.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "LastBellRoundV4Test.test_VolumeCurveAndDecay"
+    },
+    {
+      "tool": "slither",
+      "rule": "incorrect-exp",
+      "sourceLocation": "contracts/libraries/FullMath.sol",
+      "rationale": "The XOR is the intentional Uniswap FullMath modular-inverse seed, not exponentiation; fork and exact-boundary tests exercise the library.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "RobinhoodMainnetForkTest.test_ProductionAdapterQuotesAndSwapsEveryApprovedPool"
+    },
+    {
+      "tool": "aderyn",
+      "rule": "incorrect-caret-operator",
+      "sourceLocation": "contracts/libraries/FullMath.sol",
+      "rationale": "The XOR is the intentional Uniswap FullMath modular-inverse seed, not exponentiation.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "RobinhoodStockSwapAdapterTest.test_ExactOnePercentExecutionBoundaryIsAccepted"
+    },
+    {
+      "tool": "aderyn",
+      "rule": "reentrancy-state-change",
+      "sourceLocation": "contracts/LastBellRoundV4.sol",
+      "rationale": "Contribution, settlement, and claims are guarded; start is manager-only, uninitialized during external balance reads, and accepts only catalog tokens. Atomic hostile-adapter and token tests cover callbacks.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "LastBellV4AdversarialTest.test_ReentrantAdapterCannotEnterClaimBell"
+    },
+    {
+      "tool": "aderyn",
+      "rule": "reentrancy-state-change",
+      "sourceLocation": "contracts/LifetimePointsVault.sol",
+      "rationale": "Claim state is settled before token transfer, reentry cannot increase entitlement, and payment always goes to the named beneficiary; only manifest-catalog tokens are registered.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "LastBellRoundV4Test.test_LifetimePointsEarnNextRoundAndNeverBurn"
+    },
+    {
+      "tool": "aderyn",
+      "rule": "reentrancy-state-change",
+      "sourceLocation": "contracts/RobinhoodStockSwapAdapter.sol",
+      "rationale": "The active-pool lock authenticates and serializes callbacks; configuration external reads occur only in an admin-controlled between-round window and atomic reverts roll back state.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "RobinhoodStockSwapAdapterTest.test_CallbackCannotBeSpoofed"
+    },
+    {
+      "tool": "aderyn",
+      "rule": "reentrancy-state-change",
+      "sourceLocation": "contracts/RoundManagerV4.sol",
+      "rationale": "Lifecycle methods are keeper/admin-only, manager transitions are fail-closed and atomic, and retry plus competing-transition tests cover external-call rollback.",
+      "reviewer": "Codex internal assurance",
+      "regressionTest": "LastBellV4AdversarialTest.test_ChangedRosterSellFailureLeavesPreparedRoundRetryable"
+    }
+  ],
+  "requiredFields": [
+    "tool",
+    "rule",
+    "sourceLocation",
+    "rationale",
+    "reviewer",
+    "regressionTest"
+  ]
+}
