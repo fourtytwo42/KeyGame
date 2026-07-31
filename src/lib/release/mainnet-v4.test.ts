@@ -19,7 +19,6 @@ const valid = {
   expiresAt: "2026-08-01T00:00:00Z",
   mainnetBroadcastAuthorized: true,
   internalSecurityReviewSha256: "c".repeat(64),
-  operatorRiskAcceptanceSha256: "d".repeat(64),
 };
 
 describe("mainnet v4 release guards", () => {
@@ -51,7 +50,7 @@ describe("mainnet v4 release guards", () => {
       ),
     ).toThrow(/expired/);
     const incomplete: Record<string, unknown> = { ...valid };
-    delete incomplete.operatorRiskAcceptanceSha256;
+    delete incomplete.internalSecurityReviewSha256;
     expect(() =>
       validateMainnetReleaseAuthorization(incomplete, expected),
     ).toThrow(/incomplete/);

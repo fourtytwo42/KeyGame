@@ -11,7 +11,6 @@ export type MainnetReleaseAuthorization = {
   expiresAt: string;
   mainnetBroadcastAuthorized: true;
   internalSecurityReviewSha256: string;
-  operatorRiskAcceptanceSha256: string;
 };
 
 const keys = new Set<keyof MainnetReleaseAuthorization>([
@@ -25,7 +24,6 @@ const keys = new Set<keyof MainnetReleaseAuthorization>([
   "expiresAt",
   "mainnetBroadcastAuthorized",
   "internalSecurityReviewSha256",
-  "operatorRiskAcceptanceSha256",
 ]);
 
 export function validateMainnetReleaseAuthorization(
@@ -83,10 +81,7 @@ export function validateMainnetReleaseAuthorization(
   ) {
     throw new Error("Authorization is expired or malformed.");
   }
-  for (const field of [
-    "internalSecurityReviewSha256",
-    "operatorRiskAcceptanceSha256",
-  ] as const) {
+  for (const field of ["internalSecurityReviewSha256"] as const) {
     if (!/^[0-9a-f]{64}$/i.test(String(value[field]))) {
       throw new Error(`${field} must be a SHA-256 digest.`);
     }

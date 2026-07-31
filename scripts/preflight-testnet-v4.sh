@@ -5,8 +5,7 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 
 for required in \
-  ROBINHOOD_TESTNET_RPC_URL DEPLOYER_ADDRESS KEEPER_ADDRESS FAUCET_ADDRESS \
-  TREASURY_ADDRESS INITIAL_ROUND_ID KEYGAME_DEPLOYER_KEYSTORE \
+  ROBINHOOD_TESTNET_RPC_URL DEPLOYER_ADDRESS INITIAL_ROUND_ID KEYGAME_DEPLOYER_KEYSTORE \
   KEYGAME_DEPLOYER_PASSWORD_FILE KEYGAME_RELEASE_UPSTREAM; do
   [[ -n "${!required:-}" ]] || {
     echo "$required is required." >&2
@@ -33,6 +32,17 @@ derived_deployer="$(cast wallet address \
   echo "Configured deployer does not match the encrypted keystore." >&2
   exit 1
 }
+for legacy_role in KEEPER_ADDRESS FAUCET_ADDRESS TREASURY_ADDRESS \
+  MANAGER_ADMIN_SAFE MARKET_ADMIN_SAFE TREASURY_SAFE; do
+  if [[ -n "${!legacy_role:-}" ]] \
+    && [[ "${!legacy_role,,}" != "${DEPLOYER_ADDRESS,,}" ]]; then
+    echo "$legacy_role conflicts with required single-deployer custody." >&2
+    exit 1
+  fi
+done
+keeper_address="$DEPLOYER_ADDRESS"
+faucet_address="$DEPLOYER_ADDRESS"
+treasury_address="$DEPLOYER_ADDRESS"
 
 commit="$(git rev-parse HEAD)"
 [[ -z "$(git status --porcelain)" ]] || {
@@ -59,8 +69,8 @@ upstream_commit="$(git rev-parse "$KEYGAME_RELEASE_UPSTREAM" 2>/dev/null || true
 }
 
 deployer_balance="$(cast balance --rpc-url "$ROBINHOOD_TESTNET_RPC_URL" "$DEPLOYER_ADDRESS")"
-keeper_balance="$(cast balance --rpc-url "$ROBINHOOD_TESTNET_RPC_URL" "$KEEPER_ADDRESS")"
-faucet_balance="$(cast balance --rpc-url "$ROBINHOOD_TESTNET_RPC_URL" "$FAUCET_ADDRESS")"
+keeper_balance="$deployer_balance"
+faucet_balance="$deployer_balance"
 reserve="${KEYGAME_TESTNET_ETH_RESERVE_WEI:-1000000000000000}"
 
 pnpm release:scan:mainnet
@@ -121,8 +131,9 @@ jq -n \
   --arg upstream "$KEYGAME_RELEASE_UPSTREAM" \
   --arg upstreamCommit "$upstream_commit" \
   --arg deployer "$DEPLOYER_ADDRESS" \
-  --arg keeper "$KEEPER_ADDRESS" \
-  --arg faucet "$FAUCET_ADDRESS" \
+  --arg keeper "$keeper_address" \
+  --arg faucet "$faucet_address" \
+  --arg treasury "$treasury_address" \
   --arg deployerBalanceWei "$deployer_balance" \
   --arg keeperBalanceWei "$keeper_balance" \
   --arg faucetBalanceWei "$faucet_balance" \
@@ -145,6 +156,9 @@ jq -n \
     sourcePushed: true,
     senderMatchesKeystore: true,
     deployer: {address: $deployer, balanceWei: $deployerBalanceWei},
+    roleCustodyMode: "single-deployer-eoa",
+    roles: {managerAdmin:$deployer,marketAdmin:$deployer,keeper:$keeper,
+      treasury:$treasury,conversionOperator:$deployer,faucet:$faucet},
     keeper: {address: $keeper, balanceWei: $keeperBalanceWei},
     faucet: {address: $faucet, balanceWei: $faucetBalanceWei},
     gas: {

@@ -56,20 +56,20 @@ must display `TESTNET MOCK · NO VALUE`.
    manifest, transaction hashes, API snapshots, and explorer links.
 10. Stop. Do not turn this into a soak or continue spending testnet gas.
 
-## 3. Internal assurance, risk acceptance, and role setup
+## 3. Internal assurance, acknowledgement, and role setup
 
 - Complete the pinned analyzer, manual review, negative-control, fork, invariant,
   hostile-token, protected-build, and full torture gates.
-- Sign the checksummed operator risk acceptance acknowledging that no external
-  legal review or independent smart-contract audit was performed.
-- Deploy three separate runtime-verified 2-of-3 Safes using the same three independently
-  controlled owners. Assign manager admin, market/catalog admin, and treasury.
-- Run `pnpm release:verify-safes` with pinned verified Safe runtime code hashes.
-- Configure isolated keeper and conversion keys with only their narrow roles.
+- Record the unsigned acknowledgement `No legal review or independent audit`.
+- Derive the deployer from its encrypted external keystore and require manager
+  admin, market admin, keeper, treasury, and conversion authority to match it.
+- Run `pnpm release:verify-role-custody` and archive the evidence.
+- Exercise independent manager, market, and treasury two-step transfers on a
+  fork before returning custody to the deployer.
 
 ## 4. Deferred external-wallet UAT
 
-After internal assurance and Safe setup, configure the production Reown project
+After internal assurance and role verification, configure the production Reown project
 and exact origins. Test MetaMask, Rabby, Coinbase,
 Safe, WalletConnect QR, and EIP-6963 discovery. Cover chain switching,
 rejection, gas failure, edited and reused approvals, quote expiry, failed
@@ -94,14 +94,14 @@ that deliberately removes the Solidity compile-time broadcast lock.
    lifetime activation, rollover, and one controlled service restart.
 6. Reconcile every Stock Token, point, seed movement, and reward after every
    round. Any discrepancy stops promotion and invokes the incident procedure.
-7. Announce publicly only after the signed canary report is clean.
+7. Announce publicly only after the checksummed canary report is clean.
 
 ## Stop conditions
 
 - Wrong chain, lagging RPC, exposed unlocked accounts, dirty or unpushed source.
 - Fewer than four safe approved direct markets.
 - Canonical registry, factory, pool, token, Safe, or bytecode mismatch.
-- Internal assurance, signed risk acceptance, wallet, protected-build, monitoring, or ownership gate missing.
+- Internal assurance, risk acknowledgement, wallet, protected-build, monitoring, or role-custody gate missing.
 - Any accounting difference, duplicate lifecycle transition, unsafe execution,
   stuck reward, or unrecovered service fault.
 

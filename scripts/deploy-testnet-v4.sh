@@ -40,6 +40,14 @@ derived_deployer="$(cast wallet address \
   echo "Configured deployer does not match the encrypted keystore." >&2
   exit 1
 }
+for legacy_role in KEEPER_ADDRESS FAUCET_ADDRESS TREASURY_ADDRESS \
+  MANAGER_ADMIN_SAFE MARKET_ADMIN_SAFE TREASURY_SAFE; do
+  if [[ -n "${!legacy_role:-}" ]] \
+    && [[ "${!legacy_role,,}" != "${DEPLOYER_ADDRESS,,}" ]]; then
+    echo "$legacy_role conflicts with required single-deployer custody." >&2
+    exit 1
+  fi
+done
 [[ -z "$(git status --porcelain)" ]] || {
   echo "Refusing to deploy dirty or untracked source." >&2
   exit 1
@@ -64,8 +72,11 @@ forge script script/DeployTestnetV4.s.sol:DeployTestnetV4 \
   --broadcast
 KEYGAME_WRITE_MANIFEST_CHAIN_ID=46630 \
   pnpm exec tsx scripts/write-v4-deployment-manifest.ts
-
 mkdir -p artifacts/deployment-verification
+KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/46630.json" \
+KEYGAME_ROLE_CUSTODY_EVIDENCE="$project_root/artifacts/deployment-verification/46630-role-custody.json" \
+  pnpm release:verify-role-custody
+
 verify_args=(
   --resume --verify
   --verifier "$ROBINHOOD_VERIFIER_TYPE"

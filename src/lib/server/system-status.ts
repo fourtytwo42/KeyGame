@@ -334,26 +334,46 @@ export async function getSystemStatus() {
           "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
         internalSecurityReviewSha256:
           manifest.releaseEvidence?.internalSecurityReviewSha256 ?? null,
-        operatorRiskAcceptanceSha256:
-          manifest.releaseEvidence?.operatorRiskAcceptanceSha256 ?? null,
+        operatorRiskAcknowledgement:
+          manifest.releaseEvidence?.operatorRiskAcknowledgement ??
+          (manifest.releaseEvidence?.operatorRiskAcceptanceSha256
+            ? "Archived signed operator risk acceptance"
+            : null),
+        operatorRiskAcknowledgedAt:
+          manifest.releaseEvidence?.operatorRiskAcknowledgedAt ?? null,
         unresolvedCriticalOrHighFindings: Number(
           process.env.INTERNAL_SECURITY_UNRESOLVED_HIGH ?? 0,
         ),
         externalWalletUatEvidenceSha256:
           manifest.releaseEvidence?.externalWalletUatEvidenceSha256 ?? null,
       },
-      safes: {
-        manager: manifest.roles?.managerAdminSafe ?? null,
+      roleCustody: {
+        mode:
+          manifest.roles?.roleCustodyMode ??
+          (manifest.roles?.managerAdminSafe ? "safe-separated" : "unknown"),
+        manager:
+          manifest.roles?.managerAdmin ??
+          manifest.roles?.managerAdminSafe ??
+          null,
+        pendingManager: manifest.roles?.pendingManagerAdmin ?? null,
         market:
+          manifest.roles?.marketAdmin ??
           manifest.roles?.marketAdminSafe ??
           manifest.roles?.verifierAdminSafe ??
           null,
-        treasury: manifest.roles?.treasurySafe ?? null,
+        pendingMarket: manifest.roles?.pendingMarketAdmin ?? null,
+        keeper: manifest.roles?.keeper ?? null,
+        treasury:
+          manifest.roles?.treasury ?? manifest.roles?.treasurySafe ?? null,
+        pendingTreasury: manifest.roles?.pendingTreasury ?? null,
+        conversionOperator: manifest.roles?.conversionOperator ?? null,
         configured: Boolean(
-          manifest.roles?.managerAdminSafe &&
-          (manifest.roles?.marketAdminSafe ||
+          (manifest.roles?.managerAdmin || manifest.roles?.managerAdminSafe) &&
+          (manifest.roles?.marketAdmin ||
+            manifest.roles?.marketAdminSafe ||
             manifest.roles?.verifierAdminSafe) &&
-          manifest.roles?.treasurySafe,
+          (manifest.roles?.treasury || manifest.roles?.treasurySafe) &&
+          manifest.roles?.keeper,
         ),
       },
       protectedBuildSha256:

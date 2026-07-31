@@ -79,6 +79,7 @@ const managerAbi = parseAbi([
   "function swapAdapter() view returns (address)",
   "function admin() view returns (address)",
   "function pendingAdmin() view returns (address)",
+  "function pendingTreasury() view returns (address)",
   "function keeper() view returns (address)",
   "function treasury() view returns (address)",
 ]);
@@ -90,6 +91,7 @@ const [
   configuredAdapter,
   managerAdmin,
   pendingManagerAdmin,
+  pendingTreasury,
   keeper,
   treasury,
 ] = (await Promise.all(
@@ -101,6 +103,7 @@ const [
     "swapAdapter",
     "admin",
     "pendingAdmin",
+    "pendingTreasury",
     "keeper",
     "treasury",
   ].map((functionName) =>
@@ -239,11 +242,15 @@ const manifest = {
       : stockTokens.map((asset) => asset.token),
   },
   roles: {
+    roleCustodyMode: "single-deployer-eoa",
     managerAdmin,
     pendingManagerAdmin,
-    marketAdmin: mainnet ? process.env.MARKET_ADMIN_SAFE : managerAdmin,
+    marketAdmin: managerAdmin,
     treasury,
+    pendingTreasury,
     keeper,
+    conversionOperator: managerAdmin,
+    faucet: mainnet ? undefined : managerAdmin,
   },
   rpc: {
     primary: mainnet
@@ -266,9 +273,8 @@ const manifest = {
     testnetSmokePassed: false,
     internalSecurityReviewPassed:
       process.env.INTERNAL_SECURITY_REVIEW_PASSED === "true",
-    operatorRiskAcceptanceSigned:
-      process.env.OPERATOR_RISK_ACCEPTANCE_SIGNED === "true",
-    safesVerified: false,
+    operatorRiskAcknowledged: true,
+    roleCustodyVerified: false,
     externalWalletUatPassed: false,
     mainnetBroadcastAuthorized: mainnet,
     canaryPassed: false,
@@ -277,8 +283,8 @@ const manifest = {
     label: "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
     internalSecurityReviewSha256:
       process.env.INTERNAL_SECURITY_REVIEW_SHA256 ?? null,
-    operatorRiskAcceptanceSha256:
-      process.env.OPERATOR_RISK_ACCEPTANCE_SHA256 ?? null,
+    operatorRiskAcknowledgement: "No legal review or independent audit",
+    operatorRiskAcknowledgedAt: "2026-07-31",
     protectedBuildSha256: process.env.PROTECTED_BUILD_SHA256 ?? null,
     externalWalletUatEvidenceSha256: null,
   },

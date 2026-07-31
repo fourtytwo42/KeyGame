@@ -8,15 +8,15 @@
   "contractVersion": "last-bell-v4-stock-pot",
   "broadcastLocked": true,
   "roles": {
-    "managerAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
-    "marketAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
-    "treasurySafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
-    "commonOwners": [
-      "REQUIRED_OWNER_1",
-      "REQUIRED_OWNER_2",
-      "REQUIRED_OWNER_3"
-    ],
-    "keeper": "REQUIRED_ISOLATED_KEEPER"
+    "roleCustodyMode": "single-deployer-eoa",
+    "managerAdmin": "DEPLOYER_ADDRESS",
+    "pendingManagerAdmin": null,
+    "marketAdmin": "DEPLOYER_ADDRESS",
+    "pendingMarketAdmin": null,
+    "keeper": "DEPLOYER_ADDRESS",
+    "treasury": "DEPLOYER_ADDRESS",
+    "pendingTreasury": null,
+    "conversionOperator": "DEPLOYER_ADDRESS"
   },
   "contracts": {
     "manager": null,
@@ -79,15 +79,16 @@
     "testnetSmokeAuthorized": false,
     "testnetSmokePassed": false,
     "internalSecurityReviewPassed": false,
-    "operatorRiskAcceptanceSigned": false,
-    "safesVerified": false,
+    "operatorRiskAcknowledged": true,
+    "roleCustodyVerified": false,
     "externalWalletUatPassed": false,
     "mainnetBroadcastAuthorized": false
   },
   "releaseEvidence": {
     "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
     "internalSecurityReviewSha256": null,
-    "operatorRiskAcceptanceSha256": null,
+    "operatorRiskAcknowledgement": "No legal review or independent audit",
+    "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME",
     "protectedBuildSha256": null,
     "externalWalletUatEvidenceSha256": null
   }

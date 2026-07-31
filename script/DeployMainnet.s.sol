@@ -34,23 +34,22 @@ contract DeployMainnetV4 is ScriptBase {
         ) revert InternalAssuranceAndReleaseAuthorizationRequired();
 
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
-        address keeper = vm.envAddress("KEEPER_ADDRESS");
-        address managerSafe = vm.envAddress("MANAGER_ADMIN_SAFE");
-        address marketSafe = vm.envAddress("MARKET_ADMIN_SAFE");
-        address treasurySafe = vm.envAddress("TREASURY_SAFE");
 
         vm.startBroadcast(deployer);
         adapter = new RobinhoodStockSwapAdapter(FACTORY, USDG, deployer);
         _configureInitialCatalog(adapter);
-        manager = new RoundManagerV4(
-            IERC20(USDG), adapter, deployer, deployer, treasurySafe
-        );
+        manager =
+            new RoundManagerV4(IERC20(USDG), adapter, deployer, deployer, deployer);
         rewardRouter = new RewardRouterV4(manager.lifetimeVault());
         adapter.setConfigurationGuard(address(manager));
         if (
             address(manager.paymentToken()) != USDG
                 || address(manager.swapAdapter()) != address(adapter)
-                || manager.treasury() != treasurySafe
+                || manager.admin() != deployer || manager.keeper() != deployer
+                || manager.treasury() != deployer
+                || manager.pendingAdmin() != address(0)
+                || manager.pendingTreasury() != address(0)
+                || adapter.admin() != deployer
                 || address(manager.paymentRouter().paymentToken()) != USDG
                 || manager.paymentRouter().operator() != address(manager)
                 || manager.lifetimeVault().manager() != address(manager)
@@ -87,9 +86,6 @@ contract DeployMainnetV4 is ScriptBase {
         round = manager.prepareRound(settings, tickers);
         uint256[4] memory zeroes;
         manager.activatePrepared(zeroes, zeroes, type(uint64).max);
-        manager.setKeeper(keeper);
-        manager.proposeAdmin(managerSafe);
-        adapter.proposeAdmin(marketSafe);
         vm.stopBroadcast();
     }
 

@@ -1,7 +1,8 @@
 # Last Bell v4 mainnet-readiness ledger
 
-Status: implementation candidate. No Robinhood testnet or mainnet v4 deployment
-is authorized or claimed.
+Status: implementation candidate. One mock-only Robinhood testnet deployment
+and exactly two settled smoke rounds are authorized after requalification.
+Mainnet is not authorized.
 
 ## Gate ledger
 
@@ -12,10 +13,10 @@ is authorized or claimed.
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
 | Full release regression | Passed locally | 54 Foundry tests, 64 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
-| Two-round Robinhood testnet smoke | Prepared, not authorized | Sender and keystore guards, conservative gas evidence, exact authorization scope, and two-round keeper ceiling are implemented; broadcast still needs separate written user authorization |
+| Two-round Robinhood testnet smoke | Authorized after requalification | One deployment, mock-only contracts, exactly two settlements, and a two-round keeper ceiling |
 | Internal security review | In progress | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun |
-| Operator risk acceptance | Blocked | Signed checksummed acknowledgement of no legal review and no independent audit required |
-| Three 2-of-3 Safes | Blocked | Three owners and verified Safe deployments required |
+| Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
+| Initial role custody | Implemented, requalification pending | One encrypted deployer EOA for all roles; independent future two-step transfers |
 | External-wallet UAT | Deferred | Runs after audit remediation and before mainnet |
 | Mainnet broadcast | Compile-time locked | Separate reviewed release commit and user authorization |
 | Unlisted mainnet canary | Blocked | All preceding gates plus explicit broadcast authorization |
@@ -36,7 +37,7 @@ is authorized or claimed.
 - Mainnet preflight verifies chain synchronization, canonical contracts, direct
   pools, bytecode, token decimals, safety observations, and at least four safe
   catalog markets.
-- Production catalog changes are Safe-controlled and rejected while a round is
+- Production catalog changes are deployer-controlled initially and rejected while a round is
   live.
 - The production keeper delays preparation when fewer than four markets pass
   every execution gate. It never substitutes an unsafe value-bearing market.

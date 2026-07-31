@@ -9,12 +9,18 @@ required=(
   ROBINHOOD_MAINNET_RPC_URL ROBINHOOD_MAINNET_FALLBACK_RPC_URL
   DEPLOYER_ADDRESS DEPLOYER_KEYSTORE DEPLOYER_PASSWORD_FILE
   RELEASE_UPSTREAM_REF MAINNET_RELEASE_AUTHORIZATION_FILE
-  MANAGER_ADMIN_SAFE MARKET_ADMIN_SAFE TREASURY_SAFE KEEPER_ADDRESS
   INITIAL_ROUND_ID INITIAL_STOCK_0 INITIAL_STOCK_1 INITIAL_STOCK_2 INITIAL_STOCK_3
   INITIAL_SYMBOL_0 INITIAL_SYMBOL_1 INITIAL_SYMBOL_2 INITIAL_SYMBOL_3
   ROBINHOOD_VERIFIER_TYPE ROBINHOOD_VERIFIER_URL
 )
 for name in "${required[@]}"; do [[ -n "${!name:-}" ]] || die "$name is required."; done
+for legacy_role in KEEPER_ADDRESS FAUCET_ADDRESS TREASURY_ADDRESS \
+  MANAGER_ADMIN_SAFE MARKET_ADMIN_SAFE TREASURY_SAFE; do
+  if [[ -n "${!legacy_role:-}" ]] \
+    && [[ "${!legacy_role,,}" != "${DEPLOYER_ADDRESS,,}" ]]; then
+    die "$legacy_role conflicts with required single-deployer custody."
+  fi
+done
 [[ "$DEPLOYER_KEYSTORE" = /* && -f "$DEPLOYER_KEYSTORE" ]] || die "DEPLOYER_KEYSTORE must be an existing absolute path."
 [[ "$DEPLOYER_PASSWORD_FILE" = /* && -f "$DEPLOYER_PASSWORD_FILE" ]] || die "DEPLOYER_PASSWORD_FILE must be an existing absolute path."
 case "$DEPLOYER_KEYSTORE:$DEPLOYER_PASSWORD_FILE:$MAINNET_RELEASE_AUTHORIZATION_FILE" in
@@ -60,7 +66,6 @@ for index in 0 1 2 3; do
   jq -e --arg symbol "${!variable}" '.safeSymbols | index($symbol) != null' "$preflight_file" >/dev/null || die "Initial roster symbol ${!variable} is not currently safe."
 done
 
-pnpm release:verify-safes
 pnpm release:scan:mainnet
 pnpm security:review
 forge fmt --check
@@ -79,6 +84,9 @@ forge script script/DeployMainnet.s.sol:DeployMainnetV4 \
 
 KEYGAME_WRITE_MANIFEST_CHAIN_ID=4663 pnpm exec tsx scripts/write-v4-deployment-manifest.ts
 mkdir -p artifacts/deployment-verification
+KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/4663.json" \
+KEYGAME_ROLE_CUSTODY_EVIDENCE="$project_root/artifacts/deployment-verification/4663-role-custody.json" \
+  pnpm release:verify-role-custody
 verify_args=(--resume --verify --verifier "$ROBINHOOD_VERIFIER_TYPE" --verifier-url "$ROBINHOOD_VERIFIER_URL")
 if [[ -n "${ROBINHOOD_VERIFIER_API_KEY:-}" ]]; then verify_args+=(--etherscan-api-key "$ROBINHOOD_VERIFIER_API_KEY"); fi
 forge script script/DeployMainnet.s.sol:DeployMainnetV4 \

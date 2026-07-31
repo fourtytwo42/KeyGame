@@ -25,10 +25,8 @@ contract DeployTestnetV4 is ScriptBase {
         require(block.chainid == 46_630, "WRONG_CHAIN");
         require(vm.envBool("KEYGAME_TESTNET_V4_BROADCAST"), "BROADCAST_LOCKED");
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
-        address keeper = vm.envAddress("KEEPER_ADDRESS");
-        address treasury = vm.envAddress("TREASURY_ADDRESS");
 
-        vm.startBroadcast();
+        vm.startBroadcast(deployer);
         usdg = new MockUSDG();
         adapter = new MockStockSwapAdapter(usdg);
         MockStockToken[4] memory stocks = [
@@ -40,7 +38,7 @@ contract DeployTestnetV4 is ScriptBase {
         for (uint8 i; i < 4; i++) {
             adapter.setRate(address(stocks[i]), 1e18);
         }
-        manager = new RoundManagerV4(usdg, adapter, deployer, keeper, treasury);
+        manager = new RoundManagerV4(usdg, adapter, deployer, deployer, deployer);
         rewardRouter = new RewardRouterV4(manager.lifetimeVault());
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: vm.envUint("INITIAL_ROUND_ID"),

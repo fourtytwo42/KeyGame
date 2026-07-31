@@ -25,7 +25,7 @@ Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT A
 | Robinhood metadata | Canonical identity, status, halt, corporate actions | Game scoring |
 | Keeper | Narrow lifecycle calls and retry orchestration | Editing balances, rewards, or live-round economics |
 | Indexer/database | Confirmed history, projections, leaderboards | Contract custody or payout authority |
-| Three Safes | Between-round administration and treasury | Live-round rewriting |
+| Single deployer EOA | Initial administration, keeper, conversion, and treasury | Live-round rewriting |
 | Web client | Quote presentation and transaction construction | Eligibility enforcement on a permissionless contract |
 
 ## Primary threats and controls
@@ -52,8 +52,9 @@ Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT A
   final-eligible-claimant remainder, per-token conservation and fuzz coverage.
 - **Seed/protocol conversion failure:** conversion occurs outside settlement;
   failures preserve recoverable assets and cannot block player withdrawals.
-- **Compromised admin:** three distinct pinned and runtime-verified 2-of-3 Safes, same three
-  independent owners, between-round change boundary, public event trail.
+- **Compromised deployer:** encrypted external keystore, exact role verification,
+  between-round change boundaries, two-step future role transfers, and complete
+  event trails. Initial single-key concentration remains an accepted residual risk.
 - **Frontend or RPC compromise:** wallet displays transaction, server-only
   fallback secrets, chain/source/bytecode preflight, no unlocked RPC accounts.
 - **Automated Rug Zone competition:** intentionally FCFS and disclosed;
@@ -71,8 +72,8 @@ Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT A
   manipulation and volatile-market risk.
 - Lifetime rewards and game mechanics may receive different legal treatment by
   jurisdiction.
-- Lost private keys and unavailable Safe quorum cannot be repaired by the
-  application.
+- Loss or compromise of the initial sole deployer key may be unrecoverable and
+  can affect every privileged role until roles are migrated.
 
 Internal findings, canonical contract changes, pool changes, or changed risk
 assumptions must update this document and create a new frozen candidate.

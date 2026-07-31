@@ -1,26 +1,31 @@
 # Last Bell v4 release authority gates
 
-Status: no testnet or mainnet broadcast is authorized by implementation work.
+## Internal assurance and acknowledged risk
 
-## Internal assurance and risk acceptance
+- Run pinned static analyzers, Foundry fuzz/invariants, negative controls,
+  mainnet-fork tests, the complete torture campaign, integration tests, and the
+  protected-build scan.
+- Resolve every critical/high finding or record a test-linked suppression.
+- Publish checksummed evidence labeled
+  `INTERNALLY REVIEWED · NO INDEPENDENT AUDIT`.
+- Record the operator acknowledgement `No legal review or independent audit`.
+  No signature or risk-acceptance hash is required.
 
-- Run the pinned static analyzers, Foundry fuzz/invariants, negative controls, mainnet-fork suite, full torture campaign, integration tests, and protected-build scan.
-- Resolve every critical/high finding or record a complete, test-linked suppression.
-- Publish the checksummed `INTERNALLY REVIEWED · NO INDEPENDENT AUDIT` report.
-- Sign the operator risk-acceptance artifact acknowledging the absence of external legal review and an independent security audit.
+Internal assurance is neither legal advice nor an independent audit. The
+operator retains the regulatory, economic, operational, and security risk.
 
-Internal assurance reduces risk but is not legal advice and is not an independent audit. The operator owns unresolved Stock Token, gaming, recurring-reward, tax, sanctions, privacy, jurisdiction, economic, and security risk.
+## Role custody
 
-## Safes and operational ownership
-
-- Supply three independently controlled owners and three distinct 2-of-3 Safe addresses.
-- Verify pinned runtime bytecode, implementation provenance, owners, threshold, chain, and addresses.
-- Complete two-step manager and market-admin acceptance from the appropriate Safe.
-- Isolate keeper and conversion keys and assign incident, treasury, keeper, security, and communication owners.
+- The encrypted deployer EOA initially holds every privileged role.
+- Verify all initial roles, contract relationships, and empty pending transfers
+  against the derived keystore address.
+- Preserve independent two-step migration for manager, market, and treasury;
+  keeper remains independently rotatable.
 
 ## Wallet and network gates
 
-- Separate commit-bound authorization for the two-round mock testnet smoke.
-- External-wallet UAT for MetaMask, Rabby, Coinbase, Safe, WalletConnect QR, and EIP-6963 before mainnet.
-- Separate commit-, manifest-, deployer-, and canary-bound mainnet authorization.
-- Separate approval of the reconciled 24-hour canary before public promotion.
+- The current user authorization permits one mock-only testnet deployment and
+  exactly two settled rounds, bound to the final pushed commit.
+- External-wallet UAT remains mandatory before mainnet.
+- Mainnet requires a separate commit-, manifest-, deployer-, and canary-bound
+  authorization. The compile-time lock remains closed until then.

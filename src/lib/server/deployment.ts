@@ -36,6 +36,15 @@ export type ServerDeployment = {
       | "direct-v3-stock-swap";
   };
   roles?: {
+    roleCustodyMode?: "single-deployer-eoa" | "safe-separated";
+    managerAdmin?: Address;
+    pendingManagerAdmin?: Address | null;
+    marketAdmin?: Address;
+    pendingMarketAdmin?: Address | null;
+    treasury?: Address;
+    pendingTreasury?: Address | null;
+    conversionOperator?: Address;
+    faucet?: Address;
     managerAdminSafe?: Address;
     marketAdminSafe?: Address;
     verifierAdminSafe?: Address;
@@ -48,6 +57,8 @@ export type ServerDeployment = {
     label?: string;
     internalSecurityReviewSha256?: string | null;
     operatorRiskAcceptanceSha256?: string | null;
+    operatorRiskAcknowledgement?: string | null;
+    operatorRiskAcknowledgedAt?: string | null;
     protectedBuildSha256?: string | null;
     externalWalletUatEvidenceSha256?: string | null;
   };

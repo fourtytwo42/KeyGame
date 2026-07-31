@@ -74,6 +74,7 @@
     "release:deploy:mainnet": "bash scripts/deploy-mainnet-v4.sh",
     "roles:generate": "tsx scripts/generate-role-keystores.ts",
     "release:verify-safes": "tsx scripts/verify-mainnet-safes.ts",
+    "release:verify-role-custody": "tsx scripts/verify-single-deployer-roles.ts",
     "release:verify-role-handoff": "tsx scripts/verify-v4-role-handoff.ts",
     "security:review": "bash scripts/run-internal-security-review.sh",
     "security:install": "bash scripts/install-security-toolchain.sh",

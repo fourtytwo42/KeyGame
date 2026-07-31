@@ -55,4 +55,35 @@ contract RoundManagerV4AdministrationTest is TestBase {
         manager.setKeeper(address(0xD00D));
         assertEq(manager.keeper(), address(0xD00D), "keeper rotation");
     }
+
+    function test_TreasuryTransferRequiresAcceptanceAndCanBeCancelled() public {
+        address nextTreasury = address(0xD00D);
+        manager.proposeTreasury(nextTreasury);
+        assertEq(manager.treasury(), address(0xCAFE), "treasury changed early");
+        assertEq(manager.pendingTreasury(), nextTreasury, "pending treasury");
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(RoundManagerV4.Unauthorized.selector);
+        manager.acceptTreasury();
+
+        manager.cancelTreasuryTransfer();
+        vm.prank(nextTreasury);
+        vm.expectRevert(RoundManagerV4.Unauthorized.selector);
+        manager.acceptTreasury();
+
+        manager.proposeTreasury(nextTreasury);
+        vm.prank(nextTreasury);
+        manager.acceptTreasury();
+        assertEq(manager.treasury(), nextTreasury, "accepted treasury");
+        assertEq(manager.pendingTreasury(), address(0), "pending cleared");
+    }
+
+    function test_TreasuryTransferRejectsZeroAndUnauthorizedProposal() public {
+        vm.expectRevert(RoundManagerV4.Unauthorized.selector);
+        manager.proposeTreasury(address(0));
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(RoundManagerV4.Unauthorized.selector);
+        manager.proposeTreasury(address(0xD00D));
+    }
 }

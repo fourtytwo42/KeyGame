@@ -45,11 +45,23 @@ export default async function StatusPage() {
             assurance: {
               label: string;
               internalSecurityReviewSha256: string | null;
-              operatorRiskAcceptanceSha256: string | null;
+              operatorRiskAcknowledgement: string | null;
+              operatorRiskAcknowledgedAt: string | null;
               unresolvedCriticalOrHighFindings: number;
               externalWalletUatEvidenceSha256: string | null;
             };
-            safes: { configured: boolean };
+            roleCustody: {
+              mode: string;
+              manager: string | null;
+              pendingManager: string | null;
+              market: string | null;
+              pendingMarket: string | null;
+              keeper: string | null;
+              treasury: string | null;
+              pendingTreasury: string | null;
+              conversionOperator: string | null;
+              configured: boolean;
+            };
             protectedBuildSha256: string;
             mainnetBroadcastLocked: boolean;
           };
@@ -175,15 +187,15 @@ export default async function StatusPage() {
         <article>
           <span
             className={`statusLamp ${
-              production?.release.safes.configured ? "good" : "standby"
+              production?.release.roleCustody.configured ? "good" : "standby"
             }`}
           />
           <div>
             <h2>Mainnet release gates</h2>
             <p>
               {production
-                ? `${Object.values(production.release.gates).filter(Boolean).length}/${Object.keys(production.release.gates).length} recorded gates · Safes ${production.release.safes.configured ? "configured" : "pending"} · broadcast ${production.release.mainnetBroadcastLocked ? "locked" : "authorized"}.`
-                : "Internal assurance, signed operator risk acceptance, Safes, wallet UAT, and release authorization remain required."}
+                ? `${Object.values(production.release.gates).filter(Boolean).length}/${Object.keys(production.release.gates).length} recorded gates · role custody ${production.release.roleCustody.configured ? "verified" : "pending"} · broadcast ${production.release.mainnetBroadcastLocked ? "locked" : "authorized"}.`
+                : "Internal assurance, role-custody verification, wallet UAT, and release authorization remain required."}
             </p>
           </div>
           <strong>
@@ -240,10 +252,50 @@ export default async function StatusPage() {
             {production?.release.assurance.unresolvedCriticalOrHighFindings ??
               "n/a"}
           </p>
+          <p>NO LEGAL REVIEW · NO INDEPENDENT AUDIT</p>
           <p>
-            Operator risk acceptance:{" "}
-            {production?.release.assurance.operatorRiskAcceptanceSha256 ??
-              "unsigned"}
+            Operator acknowledgement:{" "}
+            {production?.release.assurance.operatorRiskAcknowledgement ??
+              "not recorded"}
+            {production?.release.assurance.operatorRiskAcknowledgedAt
+              ? ` · ${production.release.assurance.operatorRiskAcknowledgedAt}`
+              : ""}
+          </p>
+          <p>
+            Role custody:{" "}
+            {production?.release.roleCustody.mode === "single-deployer-eoa"
+              ? "SINGLE DEPLOYER EOA"
+              : (production?.release.roleCustody.mode ?? "unavailable")}
+          </p>
+          <p>
+            Manager {production?.release.roleCustody.manager ?? "unavailable"}
+            {" · "}Market{" "}
+            {production?.release.roleCustody.market ?? "unavailable"}
+            {" · "}Keeper{" "}
+            {production?.release.roleCustody.keeper ?? "unavailable"}
+            {" · "}Treasury{" "}
+            {production?.release.roleCustody.treasury ?? "unavailable"}
+            {" · "}Conversion{" "}
+            {production?.release.roleCustody.conversionOperator ??
+              "unavailable"}
+          </p>
+          <p>
+            Pending transfers: manager{" "}
+            {production?.release.roleCustody.pendingManager ?? "none"}
+            {" · "}market{" "}
+            {production?.release.roleCustody.pendingMarket ?? "none"}
+            {" · "}treasury{" "}
+            {production?.release.roleCustody.pendingTreasury ?? "none"}
+          </p>
+          <p>
+            Testnet smoke:{" "}
+            {production?.release.gates.testnetSmokePassed
+              ? "passed"
+              : "pending"}
+            {" · "}External wallet UAT{" "}
+            {production?.release.gates.externalWalletUatPassed
+              ? "passed"
+              : "deferred"}
           </p>
           <p>
             DEX market screen:{" "}

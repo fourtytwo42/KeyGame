@@ -15,11 +15,12 @@ const required = (name: string) => {
   if (!value) throw new Error(`${name} is required.`);
   return getAddress(value);
 };
+const deployer = required("DEPLOYER_ADDRESS");
 const expected = {
-  managerAdmin: required("MANAGER_ADMIN_SAFE"),
-  marketAdmin: required("MARKET_ADMIN_SAFE"),
-  treasury: required("TREASURY_SAFE"),
-  keeper: required("KEEPER_ADDRESS"),
+  managerAdmin: deployer,
+  marketAdmin: deployer,
+  treasury: deployer,
+  keeper: deployer,
 };
 const client = createPublicClient({ transport: http(manifest.rpc.primary) });
 const managerAbi = parseAbi([
@@ -27,6 +28,7 @@ const managerAbi = parseAbi([
   "function pendingAdmin() view returns (address)",
   "function keeper() view returns (address)",
   "function treasury() view returns (address)",
+  "function pendingTreasury() view returns (address)",
   "function swapAdapter() view returns (address)",
 ]);
 const adapterAbi = parseAbi([
@@ -39,6 +41,7 @@ const [
   pendingManagerAdmin,
   keeper,
   treasury,
+  pendingTreasury,
   adapterAddress,
   marketAdmin,
   pendingMarketAdmin,
@@ -63,6 +66,11 @@ const [
     address: manifest.contracts.manager,
     abi: managerAbi,
     functionName: "treasury",
+  }),
+  client.readContract({
+    address: manifest.contracts.manager,
+    abi: managerAbi,
+    functionName: "pendingTreasury",
   }),
   client.readContract({
     address: manifest.contracts.manager,
@@ -93,6 +101,7 @@ const checks = {
   marketPendingCleared: getAddress(pendingMarketAdmin) === zero,
   keeper: getAddress(keeper) === expected.keeper,
   treasury: getAddress(treasury) === expected.treasury,
+  treasuryPendingCleared: getAddress(pendingTreasury) === zero,
   managerAdapter:
     getAddress(adapterAddress) === getAddress(manifest.contracts.swapAdapter),
   adapterGuard:

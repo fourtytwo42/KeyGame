@@ -6,7 +6,7 @@
 > requirements. Older versions remain replay history.
 
 > `D-026` (2026-07-31): v4 production readiness uses a direct
-> Robinhood-mainnet Stock Token/USDG adapter, Safe-controlled 16-asset catalog,
+> Robinhood-mainnet Stock Token/USDG adapter, deployer-controlled 16-asset catalog,
 > dynamic safe four-stock roster, two-round mock-only testnet compatibility
 > gate, independent audit/legal/Safe gates, deferred external-wallet UAT, and
 > an unlisted reconciled mainnet canary. No v4 testnet or mainnet deployment is
@@ -95,7 +95,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-023` | Add estimated reward clarity, opt-in SIWE caller profiles, and community-triggered featured raids without changing contract economics. | `IMPLEMENTED / MAINNET GATED` | PRD 14 defines deployment-aware history and the remaining audit-candidate gates. |
 | `D-024` | Make DEX momentum nonfinancial and award the 30% Airtime Pool to all callers by total raw control time. | `IMPLEMENTED CANDIDATE / SOAK OPEN` | PRD 15 supersedes all current-version payout language in PRDs 01-14. |
 | `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTED / DEVNET QUALIFIED` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
-| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, fork qualification, a two-round mock testnet smoke, independent audit/legal/Safes, deferred external-wallet UAT, and an unlisted mainnet canary. | `IMPLEMENTED THROUGH LOCAL RELEASE GATES / EXTERNAL GATES BLOCKED` | No broadcast is authorized; see the readiness ledger and release runbook. |
+| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, internal assurance, one authorized two-round mock testnet smoke, single-deployer initial custody, deferred external-wallet UAT, and an unlisted mainnet canary. | `REQUALIFICATION IN PROGRESS / TESTNET AUTHORIZED AFTER PASS` | Mainnet remains compile-time locked and separately authorized. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |

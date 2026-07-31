@@ -8,11 +8,14 @@ import { LifetimePointsVault } from "./LifetimePointsVault.sol";
 import { LastBellRoundV4 } from "./LastBellRoundV4.sol";
 
 contract RoundManagerV4 {
+    bytes32 private constant MANAGER_ADMIN_ROLE = keccak256("MANAGER_ADMIN");
+    bytes32 private constant TREASURY_ROLE = keccak256("TREASURY");
     IERC20 public immutable paymentToken;
     IStockSwapAdapter public immutable swapAdapter;
     PaymentRouter public immutable paymentRouter;
     LifetimePointsVault public immutable lifetimeVault;
-    address public immutable treasury;
+    address public treasury;
+    address public pendingTreasury;
     address public admin;
     address public pendingAdmin;
     address public keeper;
@@ -33,13 +36,13 @@ contract RoundManagerV4 {
     event ActiveRoundCancelled(
         uint256 indexed roundId, address indexed round, bytes32 reason
     );
-    event AdminTransferProposed(
-        address indexed currentAdmin, address indexed pendingAdmin
+    /// @dev action: 0 proposed, 1 cancelled, 2 accepted.
+    event RoleTransfer(
+        bytes32 indexed role,
+        uint8 indexed action,
+        address indexed previousAuthority,
+        address nextAuthority
     );
-    event AdminTransferCancelled(
-        address indexed currentAdmin, address indexed cancelledPendingAdmin
-    );
-    event AdminTransferred(address indexed previousAdmin, address indexed nextAdmin);
     event KeeperChanged(address indexed previousKeeper, address indexed nextKeeper);
     event LifecycleAuthority(
         bytes4 indexed selector, address indexed actor, bool administrator
@@ -93,14 +96,14 @@ contract RoundManagerV4 {
     function proposeAdmin(address nextAdmin) external onlyAdmin {
         if (nextAdmin == address(0)) revert Unauthorized();
         pendingAdmin = nextAdmin;
-        emit AdminTransferProposed(admin, nextAdmin);
+        emit RoleTransfer(MANAGER_ADMIN_ROLE, 0, admin, nextAdmin);
     }
 
     function cancelAdminTransfer() external onlyAdmin {
         address cancelledPendingAdmin = pendingAdmin;
         if (cancelledPendingAdmin == address(0)) revert InvalidTransition();
         pendingAdmin = address(0);
-        emit AdminTransferCancelled(admin, cancelledPendingAdmin);
+        emit RoleTransfer(MANAGER_ADMIN_ROLE, 1, admin, cancelledPendingAdmin);
     }
 
     function acceptAdmin() external {
@@ -108,7 +111,28 @@ contract RoundManagerV4 {
         address previousAdmin = admin;
         admin = msg.sender;
         pendingAdmin = address(0);
-        emit AdminTransferred(previousAdmin, msg.sender);
+        emit RoleTransfer(MANAGER_ADMIN_ROLE, 2, previousAdmin, msg.sender);
+    }
+
+    function proposeTreasury(address nextTreasury) external onlyAdmin {
+        if (nextTreasury == address(0)) revert Unauthorized();
+        pendingTreasury = nextTreasury;
+        emit RoleTransfer(TREASURY_ROLE, 0, treasury, nextTreasury);
+    }
+
+    function cancelTreasuryTransfer() external onlyAdmin {
+        address cancelledPendingTreasury = pendingTreasury;
+        if (cancelledPendingTreasury == address(0)) revert InvalidTransition();
+        pendingTreasury = address(0);
+        emit RoleTransfer(TREASURY_ROLE, 1, treasury, cancelledPendingTreasury);
+    }
+
+    function acceptTreasury() external {
+        if (msg.sender != pendingTreasury) revert Unauthorized();
+        address previousTreasury = treasury;
+        treasury = msg.sender;
+        pendingTreasury = address(0);
+        emit RoleTransfer(TREASURY_ROLE, 2, previousTreasury, msg.sender);
     }
 
     /// @notice Production market configuration is locked while a round can

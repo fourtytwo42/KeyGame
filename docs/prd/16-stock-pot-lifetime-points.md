@@ -16,16 +16,24 @@ The extended economic qualification runs on Anvil: 100 accelerated settled
 rounds, ten cancellation rounds, exact per-token and per-point reconciliation,
 fault injection, and a two-hour unattended stability pass. The non-broadcast Robinhood testnet handoff is
 `artifacts/last-bell-v4-testnet-ready.tgz`. Testnet remains a mock-asset
-environment. Robinhood testnet is limited to a separately authorized two-round
-network-compatibility smoke test. Production canonical swaps, audit, legal
-review, and explicit release authorization remain separate gates.
+environment. The operator authorized one mock-only testnet deployment and
+exactly two settled network-compatibility rounds after requalification.
+Production canonical swaps, internal assurance, external-wallet UAT, and
+explicit mainnet authorization remain separate gates.
 
 The production-readiness implementation adds a non-upgradeable,
-Robinhood-mainnet-only direct Uniswap V3 adapter, a Safe-controlled catalog
+Robinhood-mainnet-only direct Uniswap V3 adapter, a deployer-controlled catalog
 capped at 16 assets, dynamic four-market screening, deployment-keyed roster
 evidence, a durable v4 keeper, canonical reward indexing, schema-v4 manifests,
 and fail-closed testnet/mainnet release scripts. This is implementation
 evidence, not deployment or approval.
+
+Initially, one encrypted deployer EOA holds manager admin, market admin,
+keeper, treasury, conversion, and testnet faucet authority. Manager admin,
+market admin, and treasury support independent two-step migration; keeper is
+independently rotatable. Treasury acceptance affects only later-prepared rounds.
+The operator acknowledgement is recorded as `No legal review or independent
+audit`; it is not signed and is not represented as either form of approval.
 
 This document supersedes current-economy requirements in PRDs 10–15. Legacy
 contracts and parsers remain available for old receipts and replays.

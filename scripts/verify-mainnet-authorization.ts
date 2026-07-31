@@ -47,7 +47,6 @@ process.stdout.write(
       canaryMaximumSettledRounds: authorization.canaryMaximumSettledRounds,
       expiresAt: authorization.expiresAt,
       internalSecurityReviewSha256: authorization.internalSecurityReviewSha256,
-      operatorRiskAcceptanceSha256: authorization.operatorRiskAcceptanceSha256,
     },
     null,
     2,

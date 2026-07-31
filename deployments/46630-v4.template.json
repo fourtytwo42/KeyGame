@@ -11,6 +11,18 @@
     "primaryEnv": "ROBINHOOD_TESTNET_RPC_URL",
     "fallbackEnv": "ROBINHOOD_TESTNET_FALLBACK_RPC_URL"
   },
+  "roles": {
+    "roleCustodyMode": "single-deployer-eoa",
+    "managerAdmin": "DEPLOYER_ADDRESS",
+    "pendingManagerAdmin": null,
+    "marketAdmin": "DEPLOYER_ADDRESS",
+    "pendingMarketAdmin": null,
+    "keeper": "DEPLOYER_ADDRESS",
+    "treasury": "DEPLOYER_ADDRESS",
+    "pendingTreasury": null,
+    "conversionOperator": "DEPLOYER_ADDRESS",
+    "faucet": "DEPLOYER_ADDRESS"
+  },
   "contracts": {
     "manager": null,
     "paymentRouter": null,
@@ -24,6 +36,19 @@
     "activeRound": null
   },
   "broadcastAuthorized": false,
+  "releaseGates": {
+    "operatorRiskAcknowledged": true,
+    "roleCustodyVerified": false,
+    "testnetSmokeAuthorized": false,
+    "testnetSmokePassed": false,
+    "externalWalletUatPassed": false,
+    "mainnetBroadcastAuthorized": false
+  },
+  "releaseEvidence": {
+    "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+    "operatorRiskAcknowledgement": "No legal review or independent audit",
+    "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME"
+  },
   "verifier": {
     "type": "mock-stock-swap-adapter",
     "mainnetAllowed": false

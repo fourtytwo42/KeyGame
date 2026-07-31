@@ -138,8 +138,8 @@ cp docs/qualification/v4-local-release-evidence.md \
   "$output_dir/evidence/local-release-evidence.md"
 cp docs/qualification/internal-security-review-checklist.md \
   "$output_dir/evidence/internal-security-review-checklist.md"
-cp docs/qualification/operator-risk-acceptance.template.md \
-  "$output_dir/evidence/operator-risk-acceptance.template.md"
+cp docs/qualification/operator-risk-acknowledgement.md \
+  "$output_dir/evidence/operator-risk-acknowledgement.md"
 cp -R artifacts/internal-security-review \
   "$output_dir/evidence/internal-security-review"
 cp docs/prd/16-stock-pot-lifetime-points.md \
@@ -162,7 +162,8 @@ printf '%s\n' \
   >"$output_dir/RUNTIME-EXCLUSIONS.txt"
 printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
   "INTERNALLY REVIEWED - NO INDEPENDENT AUDIT" \
-  "SIGNED OPERATOR RISK ACCEPTANCE, SAFES, AND EXTERNAL WALLET UAT REMAIN BLOCKING" \
+  "SINGLE DEPLOYER EOA - NO LEGAL REVIEW - NO INDEPENDENT AUDIT" \
+  "EXTERNAL WALLET UAT AND EXPLICIT MAINNET AUTHORIZATION REMAIN BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"
 (
   cd "$output_dir"

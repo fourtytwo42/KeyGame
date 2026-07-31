@@ -4,6 +4,16 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- Current user-authorized path: replace three-Safe initial custody with one
+  encrypted deployer EOA holding manager admin, market admin, keeper, treasury,
+  conversion, and testnet faucet roles. Manager, market, and treasury retain
+  independent two-step future migration; keeper remains rotatable. Record the
+  unsigned acknowledgement `No legal review or independent audit`. Last
+  verified 2026-07-31.
+- The user authorized one mock-only Robinhood testnet v4 deployment and exactly
+  two settled smoke rounds after the treasury-rotation bytecode and full local
+  requalification pass. This authorization does not cover mainnet. Do not ask
+  again unless implementation scope or economics changes.
 - Current task: qualify the hardened `last-bell-v4-stock-pot` internal-assurance
   candidate. Do not broadcast v4 to Robinhood testnet or mainnet without a
   separate authorization bound to the exact commit and manifest.
@@ -62,11 +72,13 @@ Durable project context lives here. Update this file whenever information should
   simulation-only. Authorization is scoped to chain 46630, one deployment,
   and exactly two settled rounds; the v4 keeper stops lifecycle preparation
   after round two. Last verified 2026-07-31.
-- Do not broadcast to Robinhood testnet or mainnet.
+- Do not broadcast mainnet. Testnet broadcast is authorized only after the new
+  candidate passes every local gate and the one-shot external authorization is
+  bound to the exact pushed commit.
 - The operator has explicitly declined independent audit and external legal
-  review and accepts that internal review does not replace either. A signed,
-  checksummed operator-risk artifact, verified Safes, separately authorized
-  two-round testnet smoke, and later external-wallet UAT remain blocking gates.
+  review and accepts that internal review does not replace either. No signature
+  is required. Single-deployer custody verification, the authorized two-round
+  testnet smoke, and later external-wallet UAT remain gates.
 - Live mainnet-fork qualification found AMZN/USDG at about 8,515 USDG depth,
   below the immutable 10,000 USDG safety floor. The production adapter correctly
   reverted `UnsafeMarket`; AMZN must remain out of active rosters until it
@@ -566,6 +578,22 @@ When sources conflict, use this order:
 
 ## Completed Work
 
+### 2026-07-31 - Single-deployer custody decision and testnet authorization
+
+- Context: User rejected three independent wallets, a signed risk artifact,
+  legal review, and an independent audit, and requested implementation rather
+  than further approvals.
+- Decision: One encrypted deployer EOA initially owns all privileged roles;
+  role migration remains available individually. The acknowledgement is
+  unsigned. One mock-only testnet deployment and exactly two settlements are
+  authorized after full requalification. Mainnet remains unauthorized.
+- Files: `contracts/RoundManagerV4.sol`, schema-v4 manifests, deployment and
+  role-verification scripts, Status, current PRD, and operations docs.
+- Result: Implementation in progress; treasury rotation changes bytecode and
+  therefore requires a fresh one-million-action and 10,000-transaction run.
+- Follow-up: Finish local gates, bind authorization to the exact pushed commit,
+  deploy once to chain 46630, run two rounds, reconcile, and stop.
+
 ### 2026-07-31 - V4 internal-assurance hardening and torture qualification
 
 - Context: Operator declined external legal review and independent contract
@@ -740,11 +768,10 @@ When sources conflict, use this order:
 
 - Preserve the checksummed internal-assurance archive and bind any later
   deployment authorization to its exact source commit and manifest hash.
-- Broadcast v4 to Robinhood testnet only after explicit user authorization.
-  Testnet uses mock Stock Tokens and deterministic mock swaps labeled
-  `TESTNET MOCK · NO VALUE`.
-- Limit Robinhood testnet to a separately authorized two-round compatibility
-  smoke test after estimating gas and preserving an operating reserve.
+- Broadcast v4 to Robinhood testnet only after the changed bytecode passes full
+  local requalification. The existing authorization covers one mock-only
+  deployment and exactly two settled rounds, after estimating gas and
+  preserving an operating reserve.
 - Preserve the internal-review report, accepted suppressions, mutation controls,
   bytecode hashes, and residual-risk disclosure. Do not call this evidence an
   independent audit. V4 testnet intentionally packages only the deterministic
@@ -754,12 +781,10 @@ When sources conflict, use this order:
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
-- Move manager admin, market admin, and treasury to three documented 2-of-3
-  Safes before a mainnet release candidate.
-- Obtain the operator's signed and checksummed risk-acceptance artifact stating
-  that no external legal review or independent audit occurred and that the
-  remaining jurisdiction, Stock Token, gaming, tax, sanctions, security, and
-  uncapped-contribution risks are accepted.
+- Verify single-deployer custody and empty pending transfers. A later EOA,
+  Safe, or authority contract may receive each role independently.
+- Preserve the unsigned acknowledgement that no external legal review or
+  independent audit occurred. Never describe internal assurance as either.
 - Select real testnet payment token, treasury, operator, and monitoring before
   deployment. RPC-provider routing is configured and verified.
 

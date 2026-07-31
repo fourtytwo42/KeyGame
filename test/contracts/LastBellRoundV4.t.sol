@@ -112,6 +112,30 @@ contract LastBellRoundV4Test is TestBase {
         assertEq(active, 100e6, "claim does not burn points");
     }
 
+    function test_TreasuryRotationOnlyAffectsFutureRounds() public {
+        address nextTreasury = address(0x7EA5);
+        _claim(ALICE, 0, 100e6);
+        vm.warp(round.deadline());
+        manager.finalizeActive();
+        LastBellRoundV4 prepared = _prepare(2);
+
+        manager.proposeTreasury(nextTreasury);
+        vm.prank(nextTreasury);
+        manager.acceptTreasury();
+
+        assertEq(prepared.treasury(), address(this), "prepared treasury changed");
+        assertEq(manager.treasury(), nextTreasury, "manager treasury not rotated");
+
+        uint256[4] memory zeroes;
+        manager.activatePrepared(zeroes, zeroes, uint64(block.timestamp + 30));
+        round = prepared;
+        _claim(BOB, 0, 100e6);
+        vm.warp(round.deadline());
+        manager.finalizeActive();
+        LastBellRoundV4 future = _prepare(3);
+        assertEq(future.treasury(), nextTreasury, "future round kept old treasury");
+    }
+
     function test_CancelRefundsPurchasedStockAndDiscardsPoints() public {
         _claim(ALICE, 2, 25e6);
         manager.cancelActive("TEST_CANCEL");
@@ -244,17 +268,21 @@ contract LastBellRoundV4Test is TestBase {
         internal
         returns (LastBellRoundV4 deployed)
     {
-        LastBellRoundV4.RoundSettings memory
-            settings =
-            LastBellRoundV4.RoundSettings({
-                roundId: id,
-                startDuration: 45,
-                extensionDuration: 2,
-                rugDuration: 10,
-                hardCapDuration: 180,
-                heatTarget: 4_000e6,
-                producerPassRequired: false
-            });
+        deployed = _prepare(id);
+        uint256[4] memory zeroes;
+        manager.activatePrepared(zeroes, zeroes, uint64(block.timestamp + 30));
+    }
+
+    function _prepare(uint256 id) internal returns (LastBellRoundV4 deployed) {
+        LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
+            roundId: id,
+            startDuration: 45,
+            extensionDuration: 2,
+            rugDuration: 10,
+            hardCapDuration: 180,
+            heatTarget: 4_000e6,
+            producerPassRequired: false
+        });
         LastBellRoundV4.TickerConfig[4] memory tickers;
         bytes32[4] memory symbols =
             [bytes32("NVDA"), bytes32("AAPL"), bytes32("TSLA"), bytes32("SPY")];
@@ -266,8 +294,6 @@ contract LastBellRoundV4Test is TestBase {
             });
         }
         deployed = manager.prepareRound(settings, tickers);
-        uint256[4] memory zeroes;
-        manager.activatePrepared(zeroes, zeroes, uint64(block.timestamp + 30));
     }
 
     function _fund(address player, uint256 amount) internal {
