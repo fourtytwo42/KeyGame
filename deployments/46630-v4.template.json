@@ -42,6 +42,9 @@
     "testnetSmokeAuthorized": false,
     "testnetSmokePassed": false,
     "externalWalletUatPassed": false,
+    "externalWalletUatStatus": "NOT_PERFORMED",
+    "browserWalletCompatibility": "UNVERIFIED",
+    "walletUatRequiredForCanary": false,
     "mainnetBroadcastAuthorized": false
   },
   "releaseEvidence": {

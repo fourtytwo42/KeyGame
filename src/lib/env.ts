@@ -86,13 +86,7 @@ export function readPublicEnvironment(
       );
     }
   }
-  if (mode === "mainnet") {
-    if (!walletConnectProjectId) {
-      literalError(
-        "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID",
-        "is required for a mainnet build.",
-      );
-    }
+  if (mode === "mainnet" && walletConnectProjectId) {
     if (!walletConnectAllowedOrigins.includes(new URL(appUrl).origin)) {
       literalError(
         "NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS",

@@ -52,7 +52,14 @@ export type ServerDeployment = {
     commonOwners?: Address[];
     keeper?: Address;
   };
-  releaseGates?: Record<string, boolean>;
+  releaseGates?: Record<string, boolean | string> & {
+    externalWalletUatPassed?: boolean;
+    externalWalletUatStatus?:
+      "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
+    browserWalletCompatibility?: "VERIFIED" | "UNVERIFIED";
+    walletUatRequiredForCanary?: boolean;
+    mainnetBroadcastAuthorized?: boolean;
+  };
   releaseEvidence?: {
     label?: string;
     internalSecurityReviewSha256?: string | null;
@@ -61,6 +68,7 @@ export type ServerDeployment = {
     operatorRiskAcknowledgedAt?: string | null;
     protectedBuildSha256?: string | null;
     externalWalletUatEvidenceSha256?: string | null;
+    externalWalletUatDispositionRecordedAt?: string | null;
   };
 };
 

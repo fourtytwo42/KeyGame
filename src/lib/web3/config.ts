@@ -53,3 +53,5 @@ export const walletConfig = createConfig({
 });
 
 export const walletConnectConfigured = Boolean(walletConnectProjectId);
+export const browserWalletCompatibilityUnverified =
+  publicEnvironment.mode === "mainnet";

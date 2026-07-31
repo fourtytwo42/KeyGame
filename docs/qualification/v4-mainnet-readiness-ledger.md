@@ -1,7 +1,8 @@
 # Last Bell v4 mainnet-readiness ledger
 
-Status: implementation candidate. One mock-only Robinhood testnet deployment
-and exactly two settled smoke rounds are authorized after requalification.
+Status: internally reviewed candidate. The mock-only Robinhood testnet
+deployment and exactly two-round smoke are complete and reconciled. Browser
+wallet testing is intentionally skipped and compatibility remains unverified.
 Mainnet is not authorized.
 
 ## Gate ledger
@@ -13,13 +14,13 @@ Mainnet is not authorized.
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
 | Full release regression | Passed locally | 54 Foundry tests, 64 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
-| Two-round Robinhood testnet smoke | Authorized after requalification | One deployment, mock-only contracts, exactly two settlements, and a two-round keeper ceiling |
-| Internal security review | In progress | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun |
+| Two-round Robinhood testnet smoke | Passed | Commit `2b4fcfa`, deployment block `95718412`, exactly two settlements, two players per round, all reward categories, exact eight-row allocation reconciliation, and unstarted round three |
+| Internal security review | Passed internally | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun; no independent audit |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
-| Initial role custody | Implemented, requalification pending | One encrypted deployer EOA for all roles; independent future two-step transfers |
-| External-wallet UAT | Deferred | Runs after audit remediation and before mainnet |
+| Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
+| External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
 | Mainnet broadcast | Compile-time locked | Separate reviewed release commit and user authorization |
-| Unlisted mainnet canary | Blocked | All preceding gates plus explicit broadcast authorization |
+| Unlisted mainnet canary | Awaiting authorization | Scripted deployer-plus-one runner, 24 hours, ten rounds, and 100 USDG operator budget |
 
 ## Implemented release controls
 
@@ -37,6 +38,12 @@ Mainnet is not authorized.
 - Mainnet preflight verifies chain synchronization, canonical contracts, direct
   pools, bytecode, token decimals, safety observations, and at least four safe
   catalog markets.
+- Mainnet authorization binds the explicit wallet-UAT disposition, unverified
+  compatibility, deployer and non-admin canary player, 24-hour duration,
+  ten-round ceiling, and 100 USDG scripted budget.
+- The canary runner stores the signed transaction and hash before broadcast,
+  clears the signed payload after confirmation, and reconciles receipts and
+  nonces after restart.
 - Production catalog changes are deployer-controlled initially and rejected while a round is
   live.
 - The production keeper delays preparation when fewer than four markets pass

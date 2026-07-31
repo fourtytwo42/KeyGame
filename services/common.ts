@@ -50,6 +50,19 @@ export type DeploymentManifest = {
       | "direct-v3-stock-swap";
     proxy?: Address;
   };
+  roles?: {
+    roleCustodyMode?: string;
+    managerAdmin?: Address;
+    pendingManagerAdmin?: Address | null;
+    marketAdmin?: Address;
+    pendingMarketAdmin?: Address | null;
+    keeper?: Address;
+    treasury?: Address;
+    pendingTreasury?: Address | null;
+    conversionOperator?: Address;
+  };
+  releaseGates?: Record<string, boolean | string>;
+  releaseEvidence?: Record<string, string | null>;
 };
 
 export const pool = new Pool({
@@ -113,7 +126,7 @@ export function publicClientFor(manifest: DeploymentManifest) {
 
 export async function walletClientFor(
   manifest: DeploymentManifest,
-  role: "keeper" | "deployer" | "attestor" | "faucet",
+  role: "keeper" | "deployer" | "attestor" | "faucet" | "canary",
 ) {
   const prefix = `KEYGAME_${role.toUpperCase()}`;
   const keystorePath = process.env[`${prefix}_KEYSTORE`];
@@ -140,7 +153,7 @@ export async function walletClientFor(
 }
 
 export async function encryptedWalletFor(
-  role: "keeper" | "deployer" | "attestor" | "faucet",
+  role: "keeper" | "deployer" | "attestor" | "faucet" | "canary",
 ) {
   const prefix = `KEYGAME_${role.toUpperCase()}`;
   const keystorePath = process.env[`${prefix}_KEYSTORE`];

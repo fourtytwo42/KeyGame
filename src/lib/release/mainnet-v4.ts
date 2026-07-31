@@ -1,13 +1,65 @@
 import { getAddress } from "viem";
 
+export type WalletUatDisposition = {
+  status: "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
+  passed: boolean;
+  browserWalletCompatibility: "VERIFIED" | "UNVERIFIED";
+  requiredForCanary: boolean;
+};
+
+export function resolveWalletUatDisposition(
+  gates: Record<string, unknown> | undefined,
+): WalletUatDisposition {
+  const legacyPassed = gates?.externalWalletUatPassed === true;
+  const explicit = gates?.externalWalletUatStatus;
+  const status =
+    explicit === "PASSED" ||
+    explicit === "SKIPPED_BY_OPERATOR" ||
+    explicit === "NOT_PERFORMED"
+      ? explicit
+      : legacyPassed
+        ? "PASSED"
+        : "NOT_PERFORMED";
+  const passed = status === "PASSED";
+  if (legacyPassed !== passed && explicit !== undefined) {
+    throw new Error(
+      "External wallet UAT status conflicts with the legacy pass flag.",
+    );
+  }
+  const compatibility = gates?.browserWalletCompatibility;
+  const browserWalletCompatibility =
+    compatibility === "VERIFIED" || compatibility === "UNVERIFIED"
+      ? compatibility
+      : passed
+        ? "VERIFIED"
+        : "UNVERIFIED";
+  if (passed !== (browserWalletCompatibility === "VERIFIED")) {
+    throw new Error(
+      "Browser wallet compatibility conflicts with the UAT disposition.",
+    );
+  }
+  return {
+    status,
+    passed,
+    browserWalletCompatibility,
+    requiredForCanary: gates?.walletUatRequiredForCanary !== false,
+  };
+}
+
 export type MainnetReleaseAuthorization = {
   authorizationId: string;
   sourceCommit: string;
   manifestSha256: string;
   chainId: 4663;
   deployerAddress: string;
+  canaryPlayerAddress: string;
   maximumDeployments: 1;
   canaryMaximumSettledRounds: 10;
+  canaryDurationHours: 24;
+  canaryUsdgBudget: 100;
+  walletUatDisposition: "SKIPPED_BY_OPERATOR";
+  browserWalletCompatibility: "UNVERIFIED";
+  canaryWalletMode: "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER";
   expiresAt: string;
   mainnetBroadcastAuthorized: true;
   internalSecurityReviewSha256: string;
@@ -19,8 +71,14 @@ const keys = new Set<keyof MainnetReleaseAuthorization>([
   "manifestSha256",
   "chainId",
   "deployerAddress",
+  "canaryPlayerAddress",
   "maximumDeployments",
   "canaryMaximumSettledRounds",
+  "canaryDurationHours",
+  "canaryUsdgBudget",
+  "walletUatDisposition",
+  "browserWalletCompatibility",
+  "canaryWalletMode",
   "expiresAt",
   "mainnetBroadcastAuthorized",
   "internalSecurityReviewSha256",
@@ -32,6 +90,7 @@ export function validateMainnetReleaseAuthorization(
     sourceCommit: string;
     manifestSha256: string;
     deployerAddress: string;
+    canaryPlayerAddress: string;
     now?: number;
   },
 ): MainnetReleaseAuthorization {
@@ -65,11 +124,42 @@ export function validateMainnetReleaseAuthorization(
   ) {
     throw new Error("Authorization deployer mismatch.");
   }
+  if (
+    getAddress(String(value.canaryPlayerAddress)) !==
+    getAddress(expected.canaryPlayerAddress)
+  ) {
+    throw new Error("Authorization canary player mismatch.");
+  }
+  if (
+    getAddress(String(value.canaryPlayerAddress)) ===
+    getAddress(expected.deployerAddress)
+  ) {
+    throw new Error("Canary player must differ from the privileged deployer.");
+  }
   if (value.maximumDeployments !== 1) {
     throw new Error("Authorization must permit exactly one deployment.");
   }
   if (value.canaryMaximumSettledRounds !== 10) {
     throw new Error("Authorization must bind the ten-round canary scope.");
+  }
+  if (value.canaryDurationHours !== 24) {
+    throw new Error("Authorization must bind the 24-hour canary duration.");
+  }
+  if (value.canaryUsdgBudget !== 100) {
+    throw new Error("Authorization must bind the 100 USDG canary budget.");
+  }
+  if (value.walletUatDisposition !== "SKIPPED_BY_OPERATOR") {
+    throw new Error(
+      "External wallet UAT must be explicitly skipped by the operator.",
+    );
+  }
+  if (value.browserWalletCompatibility !== "UNVERIFIED") {
+    throw new Error("Browser wallet compatibility must remain UNVERIFIED.");
+  }
+  if (value.canaryWalletMode !== "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER") {
+    throw new Error(
+      "Authorization must bind the deployer-plus-one canary wallet mode.",
+    );
   }
   if (value.mainnetBroadcastAuthorized !== true) {
     throw new Error("Authorization does not permit mainnet broadcast.");

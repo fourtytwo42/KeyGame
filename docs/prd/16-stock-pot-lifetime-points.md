@@ -18,7 +18,9 @@ fault injection, and a two-hour unattended stability pass. The non-broadcast Rob
 `artifacts/last-bell-v4-testnet-ready.tgz`. Testnet remains a mock-asset
 environment. The operator authorized one mock-only testnet deployment and
 exactly two settled network-compatibility rounds after requalification.
-Production canonical swaps, internal assurance, external-wallet UAT, and
+The mock-only two-round testnet smoke and internal assurance are complete.
+External-wallet UAT is intentionally skipped, remains unpassed, and browser
+compatibility is labeled unverified. Fresh production market checks and an
 explicit mainnet authorization remain separate gates.
 
 The production-readiness implementation adds a non-upgradeable,
@@ -34,6 +36,11 @@ market admin, and treasury support independent two-step migration; keeper is
 independently rotatable. Treasury acceptance affects only later-prepared rounds.
 The operator acknowledgement is recorded as `No legal review or independent
 audit`; it is not signed and is not represented as either form of approval.
+
+The unlisted mainnet canary uses server-side transactions from the deployer and
+one encrypted non-admin player. Its operational ceiling is ten settled rounds,
+24 hours, and 100 USDG of scripted contributions. This ceiling does not alter
+the permissionless contract or impose a player contribution maximum.
 
 This document supersedes current-economy requirements in PRDs 10–15. Legacy
 contracts and parsers remain available for old receipts and replays.

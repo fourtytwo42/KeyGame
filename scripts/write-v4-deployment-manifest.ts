@@ -276,17 +276,22 @@ const manifest = {
     operatorRiskAcknowledged: true,
     roleCustodyVerified: false,
     externalWalletUatPassed: false,
+    externalWalletUatStatus: mainnet ? "SKIPPED_BY_OPERATOR" : "NOT_PERFORMED",
+    browserWalletCompatibility: "UNVERIFIED",
+    walletUatRequiredForCanary: false,
     mainnetBroadcastAuthorized: mainnet,
     canaryPassed: false,
   },
   releaseEvidence: {
-    label: "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+    label:
+      "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT · EXTERNAL WALLET COMPATIBILITY UNVERIFIED",
     internalSecurityReviewSha256:
       process.env.INTERNAL_SECURITY_REVIEW_SHA256 ?? null,
     operatorRiskAcknowledgement: "No legal review or independent audit",
     operatorRiskAcknowledgedAt: "2026-07-31",
     protectedBuildSha256: process.env.PROTECTED_BUILD_SHA256 ?? null,
     externalWalletUatEvidenceSha256: null,
+    externalWalletUatDispositionRecordedAt: "2026-07-31",
   },
 };
 const deploymentPath = path.join(

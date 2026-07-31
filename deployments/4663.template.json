@@ -82,14 +82,18 @@
     "operatorRiskAcknowledged": true,
     "roleCustodyVerified": false,
     "externalWalletUatPassed": false,
+    "externalWalletUatStatus": "SKIPPED_BY_OPERATOR",
+    "browserWalletCompatibility": "UNVERIFIED",
+    "walletUatRequiredForCanary": false,
     "mainnetBroadcastAuthorized": false
   },
   "releaseEvidence": {
-    "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+    "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT · EXTERNAL WALLET COMPATIBILITY UNVERIFIED",
     "internalSecurityReviewSha256": null,
     "operatorRiskAcknowledgement": "No legal review or independent audit",
     "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME",
     "protectedBuildSha256": null,
-    "externalWalletUatEvidenceSha256": null
+    "externalWalletUatEvidenceSha256": null,
+    "externalWalletUatDispositionRecordedAt": "SET_AT_PACKAGE_TIME"
   }
 }

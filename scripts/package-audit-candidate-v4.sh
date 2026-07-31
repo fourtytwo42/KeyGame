@@ -7,6 +7,7 @@ cd "$project_root"
 
 torture_report_json="${V4_TORTURE_REPORT_JSON:-}"
 release_upstream_ref="${RELEASE_UPSTREAM_REF:-}"
+release_baseline_commit="${RELEASE_BASELINE_COMMIT:-d26b06cf0963f19c9c5248935fc7c51077304a83}"
 if [[ -z "$release_upstream_ref" ]]; then
   echo "RELEASE_UPSTREAM_REF must identify the pushed release commit." >&2
   exit 1
@@ -36,6 +37,10 @@ for report in "$torture_report_json" "$torture_report_md"; do
   )
 done
 source_commit="$(git rev-parse HEAD)"
+git merge-base --is-ancestor "$release_baseline_commit" "$source_commit" || {
+  echo "Release source does not descend from the accepted internal-assurance baseline." >&2
+  exit 1
+}
 qualified_commit="$(jq -r '.sourceCommit // empty' "$torture_report_json")"
 [[ "$qualified_commit" =~ ^[0-9a-f]{40}$ ]] || {
   echo "Torture evidence has no valid source commit." >&2
@@ -47,13 +52,18 @@ git merge-base --is-ancestor "$qualified_commit" "$source_commit" || {
 }
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|docs/*|docs/**/*|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/verify-mainnet-authorization.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/mainnet-canary.ts|scripts/generate-mainnet-canary-wallet.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
       exit 1
       ;;
   esac
-done < <(git diff --name-only "$qualified_commit".."$source_commit")
+done < <(git diff --name-only "$release_baseline_commit".."$source_commit")
+
+if [[ -n "$(git diff --name-only "$release_baseline_commit".."$source_commit" -- contracts script/DeployMainnet.s.sol)" ]]; then
+  echo "Contract or mainnet deployment bytecode changed after the accepted release baseline." >&2
+  exit 1
+fi
 jq -e --arg commit "$qualified_commit" '
   .sourceCommit == $commit and
   .contractCampaign.state == "passed" and
@@ -85,6 +95,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm test:integration
+pnpm test:e2e
 NEXT_DIST_DIR=.next-protected \
   NEXT_PUBLIC_GAME_MODE=mainnet \
   KEYGAME_CHAIN_ID=4663 \
@@ -95,8 +106,6 @@ NEXT_DIST_DIR=.next-protected \
   NEXT_PUBLIC_ROUND_MANAGER_ADDRESS=0x2222222222222222222222222222222222222222 \
   NEXT_PUBLIC_DEV_DOLLAR_ADDRESS=0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 \
   NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS=0x3333333333333333333333333333333333333333 \
-  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=assurance-scan-only \
-  NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS=https://assurance.invalid \
   pnpm release:scan
 RUN_ROBINHOOD_MAINNET_FORK=true \
   ROBINHOOD_MAINNET_FORK_RPC_URL="${ROBINHOOD_MAINNET_RPC_URL:-http://192.168.50.173:8547}" \
@@ -128,6 +137,8 @@ cp docs/qualification/v4-mainnet-readiness-ledger.md \
   "$output_dir/evidence/mainnet-readiness-ledger.md"
 cp docs/operations/v4-mainnet-release-runbook.md \
   "$output_dir/evidence/mainnet-release-runbook.md"
+cp docs/operations/mainnet-authorization.template.json \
+  "$output_dir/evidence/mainnet-authorization.template.json"
 cp docs/operations/privileged-roles-and-incidents.md \
   "$output_dir/evidence/privileged-roles-and-incidents.md"
 cp docs/qualification/v4-threat-model.md \
@@ -149,6 +160,8 @@ cp "$torture_report_md" "$output_dir/evidence/torture-report.md"
 printf '%s\n' "$source_commit" >"$output_dir/source-commit.txt"
 printf '%s\n' "$qualified_commit" \
   >"$output_dir/torture-qualified-source-commit.txt"
+printf '%s\n' "$release_baseline_commit" \
+  >"$output_dir/release-baseline-commit.txt"
 git status --porcelain --untracked-files=all -- \
   . \
   ":(exclude)deployments/31337.json" \
@@ -163,7 +176,8 @@ printf '%s\n' \
 printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
   "INTERNALLY REVIEWED - NO INDEPENDENT AUDIT" \
   "SINGLE DEPLOYER EOA - NO LEGAL REVIEW - NO INDEPENDENT AUDIT" \
-  "EXTERNAL WALLET UAT AND EXPLICIT MAINNET AUTHORIZATION REMAIN BLOCKING" \
+  "EXTERNAL WALLET UAT SKIPPED - BROWSER WALLET COMPATIBILITY UNVERIFIED" \
+  "EXPLICIT MAINNET AUTHORIZATION REMAINS BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"
 (
   cd "$output_dir"

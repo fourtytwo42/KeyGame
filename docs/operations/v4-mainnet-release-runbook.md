@@ -14,47 +14,10 @@ Status: fail-closed. This runbook does not authorize a broadcast.
 
 ## 2. Two-round testnet smoke
 
-This step requires a new, explicit user authorization. It uses mock assets and
-must display `TESTNET MOCK · NO VALUE`.
-
-1. Run `pnpm release:prepare:testnet:v4` from the authoritative VM repository.
-   Perform every remaining release command inside the clean detached worktree
-   it prints. Set `KEYGAME_RELEASE_UPSTREAM` to the pushed release branch.
-2. Configure the encrypted deployer keystore and password-file paths outside
-   the repository. Preflight derives the address and requires it to equal
-   `DEPLOYER_ADDRESS`; neither secret is copied into evidence or logs.
-3. Run `pnpm release:preflight:testnet:v4`. This simulates deployment from the
-   exact deployer sender without broadcasting. It records deployer, keeper,
-   and faucet balances plus the higher of RPC and simulated gas prices, a
-   10-million-gas smoke budget, 20% margin, and a 0.001 ETH reserve. The
-   2026-07-31 reference requirement is 0.001720306900015344 ETH and must be
-   recalculated immediately before authorization.
-4. Create an authorization file outside the repository with exactly:
-
-   ```text
-   sourceCommit=<full pushed commit>
-   twoRoundSmokeAuthorized=true
-   chainId=46630
-   maxDeployments=1
-   maxSettledRounds=2
-   ```
-
-5. Only after reviewing the estimate, run
-   `TESTNET_RELEASE_AUTHORIZATION_FILE=... pnpm contracts:deploy:testnet:v4`.
-6. Start `service:v4-keeper` with
-   `KEYGAME_TESTNET_SMOKE_INITIAL_ROUND_ID` set to the deployed first round and
-   `KEYGAME_TESTNET_SMOKE_MAX_SETTLED_ROUNDS=2`. The keeper finalizes round two
-   and refuses to prepare round three.
-7. Use two built-in session wallets. Complete exactly two representative
-   rounds, including allowance reuse, rollover, and round-one lifetime-point
-   eligibility in round two.
-8. Withdraw Last Bell, Winning Stock, Lifetime, and batch rewards. Restart the
-   keeper once after transaction-hash persistence and confirm recovery.
-9. Run `pnpm release:reconcile:testnet:v4`. It must see exactly two database
-   rounds, both settled, two distinct contributing wallets in each, and no
-   cancellations. Archive its report, deployment
-   manifest, transaction hashes, API snapshots, and explorer links.
-10. Stop. Do not turn this into a soak or continue spending testnet gas.
+Complete. The mock-only deployment from commit `2b4fcfa` settled exactly two
+rounds with two players per round, exercised every reward class, reconciled all
+eight token allocations, and left round three unstarted. The keeper is stopped
+and this evidence must remain immutable.
 
 ## 3. Internal assurance, acknowledgement, and role setup
 
@@ -67,41 +30,53 @@ must display `TESTNET MOCK · NO VALUE`.
 - Exercise independent manager, market, and treasury two-step transfers on a
   fork before returning custody to the deployer.
 
-## 4. Deferred external-wallet UAT
+## 4. External-wallet UAT disposition
 
-After internal assurance and role verification, configure the production Reown project
-and exact origins. Test MetaMask, Rabby, Coinbase,
-Safe, WalletConnect QR, and EIP-6963 discovery. Cover chain switching,
-rejection, gas failure, edited and reused approvals, quote expiry, failed
-swaps, uncapped custom contributions, settlement, every reward, batch claims,
-and replacement transactions at 1280x720 and 390x844.
+External-wallet UAT is `SKIPPED_BY_OPERATOR`. It remains false in the legacy
+pass field and browser compatibility is `UNVERIFIED`. Injected connectors may
+remain available with that disclosure. WalletConnect must be hidden when no
+valid production Reown project is configured. This disposition is not evidence
+that MetaMask, Rabby, Coinbase, Safe, WalletConnect, or EIP-6963 work.
 
-The protected bundle scan must prove that built-in wallets, generated keys,
-faucets, mock adapters, test credentials, and torture controls are absent.
+The protected bundle must still exclude built-in wallets, generated keys,
+faucets, mock adapters, test credentials, and torture controls.
 
 ## 5. Mainnet release and canary
 
 Mainnet needs a second explicit authorization and a dedicated reviewed commit
 that deliberately removes the Solidity compile-time broadcast lock.
 
-1. Re-run canonical registry, chain, sync, pool, bytecode, Safe, source, and
+Copy `docs/operations/mainnet-authorization.template.json` outside the
+repository, replace every placeholder, and bind it to the exact release
+commit, manifest hash, deployer, canary player, and expiry. The repository copy
+is a schema example only and can never authorize deployment.
+
+1. Re-run canonical registry, chain, sync, pool, bytecode, role-custody, source, and
    balance preflights immediately before broadcast.
 2. Deploy only the frozen internally reviewed commit and write the immutable manifest.
 3. Verify runtime bytecode, roles, contract relationships, seed custody, and
    source on the explorer.
-4. Keep discovery unlisted for 24 hours. The contract remains permissionless.
-5. Require at least ten settled rounds, all reward paths, protocol conversion,
-   lifetime activation, rollover, and one controlled service restart.
-6. Reconcile every Stock Token, point, seed movement, and reward after every
+4. Configure one encrypted non-admin canary player outside the repository.
+   The deployer and player must match the authorization and alternate calls.
+5. Run `mainnet-canary:start`, then invoke `mainnet-canary:run` from a systemd
+   timer. Keep discovery unlisted for 24 hours. The contract remains
+   permissionless.
+6. Require exactly ten settled rounds distributed through the window, at least
+   two callers per round, no more than 100 USDG of scripted contributions, all
+   reward paths, protocol conversion, lifetime activation, rollover, and one
+   keeper plus one indexer restart.
+7. Reconcile every Stock Token, point, seed movement, and reward after every
    round. Any discrepancy stops promotion and invokes the incident procedure.
-7. Announce publicly only after the checksummed canary report is clean.
+8. Run `mainnet-canary:report` and announce publicly only after its checksummed
+   report is clean. Browser-wallet compatibility remains unverified.
 
 ## Stop conditions
 
 - Wrong chain, lagging RPC, exposed unlocked accounts, dirty or unpushed source.
 - Fewer than four safe approved direct markets.
 - Canonical registry, factory, pool, token, Safe, or bytecode mismatch.
-- Internal assurance, risk acknowledgement, wallet, protected-build, monitoring, or role-custody gate missing.
+- Internal assurance, explicit wallet-UAT disposition, protected-build,
+  monitoring, or role-custody gate missing.
 - Any accounting difference, duplicate lifecycle transition, unsafe execution,
   stuck reward, or unrecovered service fault.
 

@@ -9,6 +9,7 @@ import {
   pinnedDexMarkets,
 } from "../src/lib/game/dex-config";
 import { robinhoodChainMainnet } from "../src/lib/web3/chains";
+import { resolveWalletUatDisposition } from "../src/lib/release/mainnet-v4";
 import {
   mainnetDexClient,
   readDexObservation,
@@ -72,6 +73,20 @@ const [chainId, syncing, head, templateText, assetsResponse] =
   ]);
 if (chainId !== ROBINHOOD_MAINNET_CHAIN_ID || syncing.result !== false) {
   throw new Error("Robinhood mainnet RPC is not synchronized chain 4663.");
+}
+const template = JSON.parse(templateText) as {
+  releaseGates?: Record<string, unknown>;
+};
+const walletUat = resolveWalletUatDisposition(template.releaseGates);
+if (
+  walletUat.status !== "SKIPPED_BY_OPERATOR" ||
+  walletUat.passed ||
+  walletUat.browserWalletCompatibility !== "UNVERIFIED" ||
+  walletUat.requiredForCanary
+) {
+  throw new Error(
+    "Mainnet template must explicitly record skipped wallet UAT and unverified compatibility.",
+  );
 }
 if (!assetsResponse.ok) {
   throw new Error(
@@ -239,6 +254,7 @@ const evidence = {
   sourcePushed: true,
   runtimeExclusions,
   templateSha256: createHash("sha256").update(templateText).digest("hex"),
+  walletUat,
   contracts: codeEvidence,
   markets,
   safeSymbols,

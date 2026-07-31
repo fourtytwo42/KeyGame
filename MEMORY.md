@@ -4,6 +4,43 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-07-31 wallet-UAT decision: the user explicitly skipped all external
+  browser-wallet testing for the initial release. Keep
+  `externalWalletUatPassed=false`, record `SKIPPED_BY_OPERATOR`, and display
+  browser compatibility as `UNVERIFIED`. Mainnet canary transactions use the
+  privileged deployer plus one encrypted, non-admin player wallet. The canary
+  is limited operationally to ten settled rounds over 24 hours and 100 USDG;
+  this is not a contract or user contribution cap. Mainnet remains separately
+  authorized and compile-time locked.
+
+- Wallet-waiver implementation is complete on
+  `codex/v4-wallet-uat-waiver`, based on pushed baseline `d26b06c`. The release
+  models require `SKIPPED_BY_OPERATOR`, preserve
+  `externalWalletUatPassed=false`, and reject missing or conflicting legacy
+  status. WalletConnect is hidden without a production Reown ID. A durable
+  PostgreSQL-backed canary runner enforces one deployment, ten rounds, 24
+  hours, and 100 USDG of operator-scripted contributions. Contract and
+  mainnet deployment bytecode are unchanged and the compile-time broadcast
+  lock remains false. Last verified 2026-07-31.
+- Canary player `0x12354Fb6272D0E1a2f9d3CB0e2B4936803F2Db23` was generated
+  as an encrypted non-admin wallet under
+  `~/.config/keygame/mainnet-canary/`; the directory is mode 0700 and its
+  keystore/password files are mode 0600. Never store or print its password or
+  private key. Last verified 2026-07-31.
+- Wallet-waiver qualification passed: 73 Vitest tests, 61 Foundry tests plus
+  invariant/fuzz runs, isolated integration, scripted-canary Anvil dry run,
+  protected-mainnet build scan, live Robinhood mainnet fork, and deterministic
+  Playwright against an isolated Anvil deployment (20 passed, two intentional
+  cross-viewport skips). `scripts/run-v4-e2e.sh` now prevents browser tests
+  from using or mutating the qualified shared devnet. Last verified 2026-07-31.
+- The wallet-waiver release commit is pushed on
+  `codex/v4-wallet-uat-waiver`. Clean mainnet preflight passed with AAPL, TSLA,
+  SPY, and NVDA safe and AMZN excluded. The checksummed non-broadcast package
+  is `artifacts/last-bell-v4-internal-assurance-candidate.tgz`; its embedded
+  source-tree status is empty and its release status explicitly records the
+  wallet waiver and unverified browser compatibility. Last verified
+  2026-07-31.
+
 - Current user-authorized path: replace three-Safe initial custody with one
   encrypted deployer EOA holding manager admin, market admin, keeper, treasury,
   conversion, and testnet faucet roles. Manager, market, and treasury retain
@@ -32,9 +69,9 @@ Durable project context lives here. Update this file whenever information should
   timeouts. The v4 indexer is active; the keeper and obsolete soak controller
   are disabled after the authorized two-round ceiling. Last verified
   2026-07-31.
-- Current task: qualify the hardened `last-bell-v4-stock-pot` internal-assurance
-  candidate. Do not broadcast v4 to Robinhood testnet or mainnet without a
-  separate authorization bound to the exact commit and manifest.
+- Current task: obtain separate mainnet authorization for the wallet-UAT-waived
+  candidate. Do not broadcast mainnet without authorization bound to the exact
+  commit, manifest, deployer, canary player, and canary scope.
 - Torture-qualified contract/runtime commit
   `3f05a541f48b93135895ed93011e5217194c00fe` implements two-step
   manager/market-adapter administration, complete lifecycle authority events,
@@ -95,8 +132,8 @@ Durable project context lives here. Update this file whenever information should
   bound to the exact pushed commit.
 - The operator has explicitly declined independent audit and external legal
   review and accepts that internal review does not replace either. No signature
-  is required. Single-deployer custody verification, the authorized two-round
-  testnet smoke, and later external-wallet UAT remain gates.
+  is required. External-wallet UAT is skipped, not passed, and browser-wallet
+  compatibility remains an explicit unverified post-launch backlog item.
 - Live mainnet-fork qualification found AMZN/USDG at about 8,515 USDG depth,
   below the immutable 10,000 USDG safety floor. The production adapter correctly
   reverted `UnsafeMarket`; AMZN must remain out of active rosters until it

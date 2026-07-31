@@ -24,8 +24,13 @@ operator retains the regulatory, economic, operational, and security risk.
 
 ## Wallet and network gates
 
-- The current user authorization permits one mock-only testnet deployment and
-  exactly two settled rounds, bound to the final pushed commit.
-- External-wallet UAT remains mandatory before mainnet.
+- The authorized mock-only testnet deployment and exactly two settled rounds
+  are complete and reconciled.
+- External-wallet UAT is explicitly `SKIPPED_BY_OPERATOR`, not passed.
+  Browser-wallet compatibility remains `UNVERIFIED` and must be displayed as
+  such. WalletConnect is hidden when no production Reown project is configured.
 - Mainnet requires a separate commit-, manifest-, deployer-, and canary-bound
   authorization. The compile-time lock remains closed until then.
+- The canary uses the privileged deployer plus one encrypted non-admin player
+  through server-side signed transactions; this does not validate extensions
+  or WalletConnect.

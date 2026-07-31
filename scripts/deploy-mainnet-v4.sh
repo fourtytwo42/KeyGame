@@ -8,6 +8,7 @@ die() { echo "$*" >&2; exit 1; }
 required=(
   ROBINHOOD_MAINNET_RPC_URL ROBINHOOD_MAINNET_FALLBACK_RPC_URL
   DEPLOYER_ADDRESS DEPLOYER_KEYSTORE DEPLOYER_PASSWORD_FILE
+  KEYGAME_CANARY_ADDRESS KEYGAME_CANARY_KEYSTORE KEYGAME_CANARY_PASSWORD_FILE
   RELEASE_UPSTREAM_REF MAINNET_RELEASE_AUTHORIZATION_FILE
   INITIAL_ROUND_ID INITIAL_STOCK_0 INITIAL_STOCK_1 INITIAL_STOCK_2 INITIAL_STOCK_3
   INITIAL_SYMBOL_0 INITIAL_SYMBOL_1 INITIAL_SYMBOL_2 INITIAL_SYMBOL_3
@@ -23,7 +24,9 @@ for legacy_role in KEEPER_ADDRESS FAUCET_ADDRESS TREASURY_ADDRESS \
 done
 [[ "$DEPLOYER_KEYSTORE" = /* && -f "$DEPLOYER_KEYSTORE" ]] || die "DEPLOYER_KEYSTORE must be an existing absolute path."
 [[ "$DEPLOYER_PASSWORD_FILE" = /* && -f "$DEPLOYER_PASSWORD_FILE" ]] || die "DEPLOYER_PASSWORD_FILE must be an existing absolute path."
-case "$DEPLOYER_KEYSTORE:$DEPLOYER_PASSWORD_FILE:$MAINNET_RELEASE_AUTHORIZATION_FILE" in
+[[ "$KEYGAME_CANARY_KEYSTORE" = /* && -f "$KEYGAME_CANARY_KEYSTORE" ]] || die "KEYGAME_CANARY_KEYSTORE must be an existing absolute path."
+[[ "$KEYGAME_CANARY_PASSWORD_FILE" = /* && -f "$KEYGAME_CANARY_PASSWORD_FILE" ]] || die "KEYGAME_CANARY_PASSWORD_FILE must be an existing absolute path."
+case "$DEPLOYER_KEYSTORE:$DEPLOYER_PASSWORD_FILE:$KEYGAME_CANARY_KEYSTORE:$KEYGAME_CANARY_PASSWORD_FILE:$MAINNET_RELEASE_AUTHORIZATION_FILE" in
   *"$project_root"*) die "Keys, passwords, and authorization must remain outside the repository." ;;
 esac
 
@@ -36,6 +39,9 @@ fi
 
 keystore_address="$(cast wallet address --keystore "$DEPLOYER_KEYSTORE" --password-file "$DEPLOYER_PASSWORD_FILE")"
 [[ "${keystore_address,,}" == "${DEPLOYER_ADDRESS,,}" ]] || die "Encrypted keystore does not match DEPLOYER_ADDRESS."
+canary_address="$(cast wallet address --keystore "$KEYGAME_CANARY_KEYSTORE" --password-file "$KEYGAME_CANARY_PASSWORD_FILE")"
+[[ "${canary_address,,}" == "${KEYGAME_CANARY_ADDRESS,,}" ]] || die "Encrypted canary keystore does not match KEYGAME_CANARY_ADDRESS."
+[[ "${canary_address,,}" != "${DEPLOYER_ADDRESS,,}" ]] || die "Canary player must differ from the privileged deployer."
 
 check_rpc() {
   local url="$1"
@@ -57,6 +63,12 @@ fallback_hash="$(cast block "$common_head" --field hash --rpc-url "$ROBINHOOD_MA
 export SOURCE_COMMIT="$commit"
 export MAINNET_MANIFEST_PATH="$project_root/deployments/4663.template.json"
 pnpm exec tsx scripts/verify-mainnet-authorization.ts > /tmp/keygame-mainnet-authorization.json
+jq -e '.walletUatDisposition == "SKIPPED_BY_OPERATOR"
+  and .browserWalletCompatibility == "UNVERIFIED"
+  and .canaryWalletMode == "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER"
+  and .canaryDurationHours == 24
+  and .canaryUsdgBudget == 100' /tmp/keygame-mainnet-authorization.json >/dev/null \
+  || die "Mainnet authorization does not match the approved wallet waiver and canary scope."
 
 preflight_file="$(mktemp)"
 trap 'rm -f "$preflight_file" /tmp/keygame-mainnet-authorization.json' EXIT

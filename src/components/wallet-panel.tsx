@@ -12,7 +12,10 @@ import {
 import { shortAddress } from "@/lib/game/constants";
 import { UatControls } from "@/components/uat-controls-runtime";
 import { ProfileControls } from "@/components/profile-controls";
-import { walletConnectConfigured } from "@/lib/web3/config";
+import {
+  browserWalletCompatibilityUnverified,
+  walletConnectConfigured,
+} from "@/lib/web3/config";
 import {
   configuredGameChain,
   configuredPaymentRouter,
@@ -205,6 +208,16 @@ export function WalletPanel() {
                   Spectating is free. Connect only when you want to enter a bag
                   or take the bell.
                 </p>
+                {browserWalletCompatibilityUnverified ? (
+                  <div className="tapeNotice">
+                    <strong>BROWSER WALLET COMPATIBILITY UNVERIFIED</strong>
+                    <span>
+                      External wallet UAT was skipped for this release. Review
+                      every network, approval, amount, and recipient in your
+                      wallet before signing.
+                    </span>
+                  </div>
+                ) : null}
                 <div className="connectorList">
                   {uniqueConnectors.map((connector) => (
                     <button
@@ -229,7 +242,8 @@ export function WalletPanel() {
                     </button>
                   ))}
                 </div>
-                {!walletConnectConfigured ? (
+                {!walletConnectConfigured &&
+                !browserWalletCompatibilityUnverified ? (
                   <div className="tapeNotice">
                     <strong>WALLETCONNECT NEEDS A PROJECT ID</strong>
                     <span>

@@ -8,9 +8,9 @@
 > `D-026` (2026-07-31): v4 production readiness uses a direct
 > Robinhood-mainnet Stock Token/USDG adapter, deployer-controlled 16-asset catalog,
 > dynamic safe four-stock roster, two-round mock-only testnet compatibility
-> gate, independent audit/legal/Safe gates, deferred external-wallet UAT, and
-> an unlisted reconciled mainnet canary. No v4 testnet or mainnet deployment is
-> authorized.
+> gate, internal assurance, single-deployer custody, explicit skipped wallet
+> UAT with unverified compatibility, and an unlisted scripted mainnet canary.
+> The two-round v4 testnet smoke is complete. Mainnet is not authorized.
 
 > `D-020` (2026-07-29): Closing Print is the implemented product.
 > [10-closing-print-market-reactive.md](./10-closing-print-market-reactive.md)
@@ -95,7 +95,8 @@ The complete mobile and desktop concept set is embedded in
 | `D-023` | Add estimated reward clarity, opt-in SIWE caller profiles, and community-triggered featured raids without changing contract economics. | `IMPLEMENTED / MAINNET GATED` | PRD 14 defines deployment-aware history and the remaining audit-candidate gates. |
 | `D-024` | Make DEX momentum nonfinancial and award the 30% Airtime Pool to all callers by total raw control time. | `IMPLEMENTED CANDIDATE / SOAK OPEN` | PRD 15 supersedes all current-version payout language in PRDs 01-14. |
 | `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTED / DEVNET QUALIFIED` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
-| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, internal assurance, one authorized two-round mock testnet smoke, single-deployer initial custody, deferred external-wallet UAT, and an unlisted mainnet canary. | `REQUALIFICATION IN PROGRESS / TESTNET AUTHORIZED AFTER PASS` | Mainnet remains compile-time locked and separately authorized. |
+| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, internal assurance, one authorized two-round mock testnet smoke, single-deployer initial custody, and an unlisted mainnet canary. | `TESTNET SMOKE PASSED / MAINNET LOCKED` | D-027 supersedes its wallet-UAT gate. |
+| `D-027` | Skip browser-wallet UAT for the initial release without marking it passed; run the canary through the deployer plus one encrypted non-admin player. | `IMPLEMENTED RELEASE POLICY` | Compatibility remains `UNVERIFIED`; testnet smoke passed and mainnet remains separately authorized. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |
@@ -116,10 +117,11 @@ The original FoMo3D research is authoritative only for historical behavior. It i
 ## Current release scope
 
 - Devnet remains the economic and adversarial qualification environment.
-- Robinhood testnet is mock-only and limited to a separately authorized
-  two-round network-compatibility smoke.
+- Robinhood testnet is mock-only; its authorized two-round compatibility smoke
+  is complete and round three remains unstarted.
 - Robinhood mainnet accepts only canonical USDG and approved direct canonical
-  Stock Token pools after audit, legal, Safe, wallet, and operations gates.
+  Stock Token pools after internal assurance, explicit risk acknowledgement,
+  role-custody, market-safety, operations, and authorization gates.
 - The first mainnet release is an unlisted, monitored, fully reconciled canary.
 - No player selling, aggregator, multihop route, account abstraction, session
   key, gas sponsorship, referral reward, game token, spending cap, or pot cap is

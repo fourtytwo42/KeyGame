@@ -1,9 +1,9 @@
 # Last Bell v4 local release evidence
 
-The prior baseline below was verified 2026-07-31 on the KeyGame VM. Treasury
-rotation changes contract bytecode, so a fresh qualification run is required
-before the authorized testnet smoke. No v4 testnet or mainnet transaction has
-yet been broadcast from this candidate.
+The baseline below was verified 2026-07-31 on the KeyGame VM. The later
+treasury-rotation candidate passed a complete clean torture rerun and internal
+assurance. One mock-only v4 testnet deployment and exactly two smoke rounds
+have since completed. Mainnet has not been broadcast.
 
 ## Accepted source
 
@@ -49,9 +49,9 @@ the isolated harness. The final accepted run includes both fixes.
 
 ## Remaining release gates
 
-The user authorized one mock-only Robinhood testnet deployment and exactly two
-settled smoke rounds after the new candidate passes every local gate. The
+The mock-only testnet smoke and single-deployer role verification passed. The
 unsigned acknowledgement `No legal review or independent audit` is recorded.
-Single-deployer role verification, production Reown configuration,
-external-wallet UAT, incident ownership, and explicit mainnet broadcast
-authorization remain blocking.
+External-wallet UAT is skipped, not passed, and browser compatibility remains
+unverified. Fresh mainnet market safety, incident ownership, funding, the
+dedicated compile-lock commit, and explicit mainnet broadcast authorization
+remain blocking.

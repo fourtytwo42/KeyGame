@@ -99,6 +99,9 @@ Endpoints:
 
 The following are release gates, not claims of completed external approval:
 
+> Wallet-UAT note: D-027 supersedes this release gate for the initial mainnet
+> candidate. The following matrix remains future backlog; it is not passed.
+
 1. Configure a real Reown project ID and production origin allowlist.
 2. Manually UAT MetaMask, Rabby, Coinbase, Safe, WalletConnect QR, wrong-chain,
    rejection, allowance reuse, and reward withdrawal.

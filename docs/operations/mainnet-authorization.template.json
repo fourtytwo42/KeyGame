@@ -1,0 +1,18 @@
+{
+  "authorizationId": "REQUIRED_UNIQUE_IDENTIFIER",
+  "sourceCommit": "REQUIRED_40_HEX_COMMIT",
+  "manifestSha256": "REQUIRED_64_HEX_SHA256",
+  "chainId": 4663,
+  "deployerAddress": "REQUIRED_DEPLOYER_ADDRESS",
+  "canaryPlayerAddress": "REQUIRED_NON_ADMIN_CANARY_ADDRESS",
+  "maximumDeployments": 1,
+  "canaryMaximumSettledRounds": 10,
+  "canaryDurationHours": 24,
+  "canaryUsdgBudget": 100,
+  "walletUatDisposition": "SKIPPED_BY_OPERATOR",
+  "browserWalletCompatibility": "UNVERIFIED",
+  "canaryWalletMode": "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER",
+  "expiresAt": "REQUIRED_ISO_TIMESTAMP_AFTER_CANARY_END",
+  "mainnetBroadcastAuthorized": true,
+  "internalSecurityReviewSha256": "REQUIRED_64_HEX_SHA256"
+}

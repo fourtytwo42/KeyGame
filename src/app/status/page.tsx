@@ -41,7 +41,15 @@ export default async function StatusPage() {
             }>;
           };
           release: {
-            gates: Record<string, boolean>;
+            gates: Record<string, boolean | string>;
+            walletUat: {
+              status: "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
+              passed: boolean;
+              browserWalletCompatibility: "VERIFIED" | "UNVERIFIED";
+              requiredForCanary: boolean;
+              evidenceSha256: string | null;
+              dispositionRecordedAt: string | null;
+            };
             assurance: {
               label: string;
               internalSecurityReviewSha256: string | null;
@@ -70,6 +78,17 @@ export default async function StatusPage() {
             status: string;
             observedAt: string;
           }>;
+          canary: {
+            id: string;
+            state: string;
+            settledRounds: number;
+            targetRounds: number;
+            spentUsdg: number;
+            budgetUsdg: number;
+            startedAt: string;
+            endsAt: string;
+            lastError: string | null;
+          } | null;
         })
       : null;
   const qualification =
@@ -194,13 +213,29 @@ export default async function StatusPage() {
             <h2>Mainnet release gates</h2>
             <p>
               {production
-                ? `${Object.values(production.release.gates).filter(Boolean).length}/${Object.keys(production.release.gates).length} recorded gates · role custody ${production.release.roleCustody.configured ? "verified" : "pending"} · broadcast ${production.release.mainnetBroadcastLocked ? "locked" : "authorized"}.`
-                : "Internal assurance, role-custody verification, wallet UAT, and release authorization remain required."}
+                ? `${Object.values(production.release.gates).filter((value) => value === true).length} passing gates · wallet UAT ${production.release.walletUat.status.toLowerCase().replaceAll("_", " ")} · role custody ${production.release.roleCustody.configured ? "verified" : "pending"} · broadcast ${production.release.mainnetBroadcastLocked ? "locked" : "authorized"}.`
+                : "Internal assurance, role-custody verification, and release authorization remain required."}
             </p>
           </div>
           <strong>
             {production?.release.mainnetBroadcastLocked ? "LOCKED" : "REVIEW"}
           </strong>
+        </article>
+        <article>
+          <span
+            className={`statusLamp ${
+              production?.canary?.state === "completed" ? "good" : "standby"
+            }`}
+          />
+          <div>
+            <h2>Mainnet canary</h2>
+            <p>
+              {production?.canary
+                ? `${production.canary.settledRounds}/${production.canary.targetRounds} settled · $${production.canary.spentUsdg.toFixed(2)}/$${production.canary.budgetUsdg.toFixed(2)} scripted budget · ${production.canary.state}.`
+                : "No mainnet canary has been authorized or started."}
+            </p>
+          </div>
+          <strong>{production?.canary?.state.toUpperCase() ?? "LOCKED"}</strong>
         </article>
         {production?.services.map((service) => (
           <article key={service.name}>
@@ -222,10 +257,17 @@ export default async function StatusPage() {
         <article>
           <span className="statusLamp standby" />
           <div>
-            <h2>WalletConnect</h2>
-            <p>Requires an allowlisted Reown project ID per environment.</p>
+            <h2>Browser wallets</h2>
+            <p>
+              {production
+                ? `External wallet UAT ${production.release.walletUat.status.toLowerCase().replaceAll("_", " ")} · compatibility ${production.release.walletUat.browserWalletCompatibility.toLowerCase()}.`
+                : "External wallet compatibility has not been verified."}
+            </p>
           </div>
-          <strong>CONFIG</strong>
+          <strong>
+            {production?.release.walletUat.browserWalletCompatibility ??
+              "UNVERIFIED"}
+          </strong>
         </article>
       </div>
       <section className="disclosureBlock">
@@ -293,9 +335,10 @@ export default async function StatusPage() {
               ? "passed"
               : "pending"}
             {" · "}External wallet UAT{" "}
-            {production?.release.gates.externalWalletUatPassed
-              ? "passed"
-              : "deferred"}
+            {production?.release.walletUat.status ?? "not performed"}
+            {" · "}Browser compatibility{" "}
+            {production?.release.walletUat.browserWalletCompatibility ??
+              "UNVERIFIED"}
           </p>
           <p>
             DEX market screen:{" "}

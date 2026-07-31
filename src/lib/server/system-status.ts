@@ -5,6 +5,7 @@ import { deploymentPublicClient } from "./rpc-client";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
 import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet-runtime";
 import { isV4DevnetRuntime } from "./runtime-deployment";
+import { resolveWalletUatDisposition } from "@/lib/release/mainnet-v4";
 
 async function probe(url: string) {
   const started = Date.now();
@@ -145,6 +146,7 @@ export async function getSystemStatus() {
   }
   const { manifest, deploymentKey, manifestHash } =
     await loadServerDeploymentWithKey();
+  const walletUat = resolveWalletUatDisposition(manifest.releaseGates);
   const client = deploymentPublicClient(manifest);
   const [
     block,
@@ -221,7 +223,7 @@ export async function getSystemStatus() {
     process.env.OPERATIONS_POT_CRITICAL_USD || 5_000,
   );
   const currentPotUsd = currentRound?.potUsd ?? 0;
-  const [catalog, poolSafety] = await Promise.all([
+  const [catalog, canary, poolSafety] = await Promise.all([
     database
       .query<{
         catalog_version: string;
@@ -230,6 +232,25 @@ export async function getSystemStatus() {
         `SELECT catalog_version,activated_at FROM market_catalog_versions
          WHERE deployment_key=$1 AND retired_at IS NULL
          ORDER BY activated_at DESC LIMIT 1`,
+        [deploymentKey],
+      )
+      .catch(() => ({ rows: [], rowCount: 0 })),
+    database
+      .query<{
+        id: string;
+        state: string;
+        settled_rounds: number;
+        target_rounds: number;
+        spent_usdg: string;
+        usdg_budget: string;
+        started_at: Date;
+        ends_at: Date;
+        last_error: string | null;
+      }>(
+        `SELECT id,state,settled_rounds,target_rounds,spent_usdg::text,
+                usdg_budget::text,started_at,ends_at,last_error
+         FROM mainnet_canary_runs WHERE deployment_key=$1
+         ORDER BY created_at DESC LIMIT 1`,
         [deploymentKey],
       )
       .catch(() => ({ rows: [], rowCount: 0 })),
@@ -326,8 +347,29 @@ export async function getSystemStatus() {
       details: service.details,
       observedAt: service.observed_at.toISOString(),
     })),
+    canary: canary.rows[0]
+      ? {
+          id: canary.rows[0].id,
+          state: canary.rows[0].state,
+          settledRounds: canary.rows[0].settled_rounds,
+          targetRounds: canary.rows[0].target_rounds,
+          spentUsdg: Number(canary.rows[0].spent_usdg) / 1e6,
+          budgetUsdg: Number(canary.rows[0].usdg_budget) / 1e6,
+          startedAt: canary.rows[0].started_at.toISOString(),
+          endsAt: canary.rows[0].ends_at.toISOString(),
+          lastError: canary.rows[0].last_error,
+        }
+      : null,
     release: {
       gates: manifest.releaseGates ?? {},
+      walletUat: {
+        ...walletUat,
+        evidenceSha256:
+          manifest.releaseEvidence?.externalWalletUatEvidenceSha256 ?? null,
+        dispositionRecordedAt:
+          manifest.releaseEvidence?.externalWalletUatDispositionRecordedAt ??
+          null,
+      },
       assurance: {
         label:
           manifest.releaseEvidence?.label ??

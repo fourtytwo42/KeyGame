@@ -27,11 +27,12 @@ if (!insideProject.startsWith("..") && !isAbsolute(insideProject)) {
 
 const sourceCommit = required("SOURCE_COMMIT").toLowerCase();
 const deployerAddress = getAddress(required("DEPLOYER_ADDRESS"));
+const canaryPlayerAddress = getAddress(required("KEYGAME_CANARY_ADDRESS"));
 const manifestPath = resolve(required("MAINNET_MANIFEST_PATH"));
 const manifestSha256 = sha256(await readFile(manifestPath));
 const authorization = validateMainnetReleaseAuthorization(
   JSON.parse(await readFile(resolvedAuthorization, "utf8")),
-  { sourceCommit, manifestSha256, deployerAddress },
+  { sourceCommit, manifestSha256, deployerAddress, canaryPlayerAddress },
 );
 
 process.stdout.write(
@@ -43,8 +44,14 @@ process.stdout.write(
       manifestSha256,
       chainId: authorization.chainId,
       deployerAddress,
+      canaryPlayerAddress,
       maximumDeployments: authorization.maximumDeployments,
       canaryMaximumSettledRounds: authorization.canaryMaximumSettledRounds,
+      canaryDurationHours: authorization.canaryDurationHours,
+      canaryUsdgBudget: authorization.canaryUsdgBudget,
+      walletUatDisposition: authorization.walletUatDisposition,
+      browserWalletCompatibility: authorization.browserWalletCompatibility,
+      canaryWalletMode: authorization.canaryWalletMode,
       expiresAt: authorization.expiresAt,
       internalSecurityReviewSha256: authorization.internalSecurityReviewSha256,
     },

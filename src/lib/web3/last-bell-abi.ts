@@ -42,6 +42,8 @@ export const lastBellAbi = parseAbi([
   "function tickerScore(uint8) view returns (uint256)",
   "function playerTickerScore(address,uint8) view returns (uint256)",
   "function paid(address) view returns (uint256)",
+  "function holder() view returns (address)",
+  "function winningTicker() view returns (uint8)",
   "function controlTime(address) view returns (uint256)",
   "function totalControlTime() view returns (uint256)",
   "function holderPool() view returns (uint256)",
