@@ -3,7 +3,7 @@
   "status": "accepted",
   "runId": "v4-torture-live-2026-07-31T07-10-55-856Z",
   "qualifiedSourceCommit": "8f96285784d57d05229fb12cf829281932f7d6f0",
-  "qualificationRecordCommit": "pending-final-evidence-commit",
+  "qualificationRecordCommit": "2a07fe2",
   "reportSha256": "6e1535550ad5087acc8163500a1341a7d518cfb6e9d2de551992c69f32565362",
   "markdownSha256": "6d89d4ced375afdd0547edc9590b247e07db0d37033ff06a757e81c1a85102a6",
   "evidenceTreeSha256": "2feecebc6caa8563f63c50fa1500652a0da18c6b149d40c8ddc63caee864838f",
