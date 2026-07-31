@@ -4,15 +4,28 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: `last-bell-v4-stock-pot` production adapter and
-  mainnet-readiness implementation are complete locally. Do not broadcast v4
-  to Robinhood testnet or mainnet without separate user authorization.
-- Last meaningful result: commit-bound torture run
-  `v4-torture-live-2026-07-31T07-10-55-856Z` passed 1,000,000 contract actions,
-  10,000 accepted contributions, 500 settlements, 50 cancellations, 13,825
-  distinct confirmed transactions, exact asset/point reconciliation, and 11
-  restored faults. Qualified source commit is
-  `8f96285784d57d05229fb12cf829281932f7d6f0`. Last verified 2026-07-31.
+- Current task: qualify the hardened `last-bell-v4-stock-pot` internal-assurance
+  candidate. Do not broadcast v4 to Robinhood testnet or mainnet without a
+  separate authorization bound to the exact commit and manifest.
+- Candidate source commit `3f05a541f48b93135895ed93011e5217194c00fe`
+  implements two-step manager/market-adapter administration, complete lifecycle
+  authority events, relationship checks, structured mainnet authorization, and
+  the pinned internal security pipeline. It is pushed on
+  `codex/v4-internal-assurance`. Last verified 2026-07-31.
+- Commit-bound internal review passed with zero unresolved critical/high
+  findings after documented source-specific suppressions and two mutation
+  negative controls. JSON review SHA-256 is
+  `7ece5c68897b61b9ccbdc1332b7ab035c08ae06ad4d1898d1a61e30ae4f8dfb6`.
+  This is explicitly `INTERNALLY REVIEWED - NO INDEPENDENT AUDIT`.
+- The required torture rerun `v4-torture-live-2026-07-31T14-39-57-216Z` at
+  `3f05a54` passed exactly 1,000,000 deterministic contract actions, 10,000
+  accepted contributions, 500 settlements, 50 cancellations, 13,825 confirmed
+  transaction hashes, 11/11 restored faults, and exact 2,200-row asset and
+  point reconciliation. JSON SHA-256 is
+  `a0bf32d38c60ad370e1f96accf19c0dce9891072a5be42d9551575c950a1d2ef`;
+  Markdown SHA-256 is
+  `3df3032f840a8a1eb62cbd884a5c8c74bd9db4a652ab67470df43566f5e2cb31`.
+  Last verified 2026-07-31.
 - Testnet-ready archive:
   `artifacts/last-bell-v4-testnet-ready.tgz`; its adjacent `.sha256` file is the
   package checksum. It is explicitly marked not broadcast and records both the
@@ -36,7 +49,7 @@ Durable project context lives here. Update this file whenever information should
 - Final evidence includes 30 exported logs/tables plus a PostgreSQL snapshot
   under the run directory and occupies about 107 MB. The isolated Anvil,
   keeper, indexer, and web runtime was stopped after packaging.
-- Audit and testnet package scripts explicitly rebuild Foundry artifacts with
+- Internal-assurance and testnet package scripts explicitly rebuild Foundry artifacts with
   `storageLayout` output before collecting storage layouts. This prevents clean
   VM packaging from failing after the ordinary build/test steps replace those
   artifacts. Last verified 2026-07-31.
@@ -47,8 +60,15 @@ Durable project context lives here. Update this file whenever information should
   and exactly two settled rounds; the v4 keeper stops lifecycle preparation
   after round two. Last verified 2026-07-31.
 - Do not broadcast to Robinhood testnet or mainnet.
-- Next step is independent audit/legal/Safe work. The two-round Robinhood
-  testnet smoke and later external-wallet UAT remain separate gates.
+- The operator has explicitly declined independent audit and external legal
+  review and accepts that internal review does not replace either. A signed,
+  checksummed operator-risk artifact, verified Safes, separately authorized
+  two-round testnet smoke, and later external-wallet UAT remain blocking gates.
+- Live mainnet-fork qualification found AMZN/USDG at about 8,515 USDG depth,
+  below the immutable 10,000 USDG safety floor. The production adapter correctly
+  reverted `UnsafeMarket`; AMZN must remain out of active rosters until it
+  qualifies again. Four other catalog markets were still available. Last
+  verified 2026-07-31.
 
 ## Current State
 
@@ -526,13 +546,38 @@ When sources conflict, use this order:
   extending the pinned mappings.
 - GitHub Actions is intentionally disabled. Do not add or enable hosted workflows without explicit new user authorization.
 - The production build emits non-blocking fallback-metric warnings for Atkinson Hyperlegible Next and Big Shoulders Stencil.
-- Contracts have extensive local tests but no independent security audit.
+- Contracts have extensive local and internal security review but no independent
+  security audit. Internal Codex review must never be described as an audit.
 - Original FoMo3D includes predictable airdrop randomness, block-stuffing exposure, contract-wallet exclusions, external-call dependencies, integer-boundary quirks, and several documented accounting/view defects.
-- Any real-money implementation would require security and current legal/regulatory review.
+- The operator explicitly chose to proceed without external legal/regulatory
+  review or an independent audit. The remaining regulatory, economic, and
+  security risks must be disclosed and accepted in a signed release artifact.
 - Robinhood Stock Tokens are unavailable to U.S. persons and restricted in other jurisdictions. A permissionless contract plus frontend geo-block is not automatically a sufficient compliance design.
 - First-come/first-served sequencing reduces gas-price queue jumping but does not eliminate latency advantages, Sybil activity, sequencer censorship risk, or automated play.
 
 ## Completed Work
+
+### 2026-07-31 - V4 internal-assurance hardening and torture qualification
+
+- Context: Operator declined external legal review and independent contract
+  audit and requested a clearly labeled internal-assurance release path.
+- Decision: Never describe the result as audited; retain signed operator risk
+  acceptance, Safes, testnet smoke, external-wallet UAT, and explicit broadcast
+  authorization as release gates.
+- Files: `contracts/RoundManagerV4.sol`,
+  `contracts/RobinhoodStockSwapAdapter.sol`, `script/DeployMainnet.s.sol`,
+  `scripts/run-internal-security-review.sh`, `scripts/deploy-mainnet-v4.sh`,
+  `scripts/package-audit-candidate-v4.sh`, `security/`, and qualification docs.
+- Commands/tests: 58 Foundry tests, 67 Vitest tests, four integration tests,
+  protected-mainnet build scan, internal static review, two mutation controls,
+  1,000,000 invariant actions, 10,000 accepted live contributions, 500
+  settlements, 50 cancellations, and 11 recovery faults.
+- Result: Zero unresolved critical/high findings after documented suppressions;
+  zero torture reconciliation differences. AMZN was safely rejected on the live
+  mainnet fork because its USDG depth had fallen below 10,000.
+- Follow-up: Package the candidate, configure three verified Safes, obtain the
+  signed operator risk acceptance, then request separate authorization for the
+  two-round mock-only Robinhood testnet smoke.
 
 - 2026-07-30: Implemented and deployed the `closing-print-v3-airtime` audit
   candidate. Weighted DEX points now select only the nonfinancial Closing Print
@@ -682,23 +727,28 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
+- Generate the internal-assurance package from the explicit checksummed torture
+  report path after the live fork test confirms at least four safe markets.
 - Broadcast v4 to Robinhood testnet only after explicit user authorization.
   Testnet uses mock Stock Tokens and deterministic mock swaps labeled
   `TESTNET MOCK · NO VALUE`.
 - Limit Robinhood testnet to a separately authorized two-round compatibility
   smoke test after estimating gas and preserving an operating reserve.
-- Submit the implemented production canonical Stock Token swap adapter,
-  manager, keeper, indexer, and reward paths for independent audit. V4 testnet
-  intentionally packages only the deterministic mock adapter.
+- Preserve the internal-review report, accepted suppressions, mutation controls,
+  bytecode hashes, and residual-risk disclosure. Do not call this evidence an
+  independent audit. V4 testnet intentionally packages only the deterministic
+  mock adapter.
 - Keep Rug Zone latency evidence current and disclose FCFS automation advantage.
   Automation advantage is an accepted product property, not a freeze failure.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
-- Arrange independent smart-contract security and economic review.
 - Move manager admin, market admin, and treasury to three documented 2-of-3
   Safes before a mainnet release candidate.
-- Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
+- Obtain the operator's signed and checksummed risk-acceptance artifact stating
+  that no external legal review or independent audit occurred and that the
+  remaining jurisdiction, Stock Token, gaming, tax, sanctions, security, and
+  uncapped-contribution risks are accepted.
 - Select real testnet payment token, treasury, operator, and monitoring before
   deployment. RPC-provider routing is configured and verified.
 

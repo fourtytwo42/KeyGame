@@ -49,7 +49,7 @@ contract RobinhoodMainnetForkTest is TestBase {
         assertTrue(sourceBlockHash != bytes32(0), "source block hash");
     }
 
-    function test_ProductionAdapterQuotesAndSwapsEveryApprovedPool() public {
+    function test_ProductionAdapterExecutesSafePoolsAndRejectsUnsafeCatalogEntries() public {
         if (!vm.envOr("RUN_ROBINHOOD_MAINNET_FORK", false)) return;
         vm.createSelectFork(vm.envString("ROBINHOOD_MAINNET_FORK_RPC_URL"));
         RobinhoodStockSwapAdapter adapter =
@@ -77,6 +77,7 @@ contract RobinhoodMainnetForkTest is TestBase {
         ];
         uint24[5] memory fees = [uint24(3_000), 3_000, 3_000, 3_000, 500];
 
+        uint256 safeMarkets;
         for (uint8 i; i < stocks.length; i++) {
             adapter.configureMarket(
                 symbols[i],
@@ -87,7 +88,24 @@ contract RobinhoodMainnetForkTest is TestBase {
                 1,
                 10_000e6
             );
-            uint256 quote = adapter.quoteUsdgForStock(stocks[i], 1e6);
+            uint256 quote;
+            try adapter.quoteUsdgForStock(stocks[i], 1e6) returns (
+                uint256 safeQuote
+            ) {
+                quote = safeQuote;
+                safeMarkets++;
+            } catch (bytes memory reason) {
+                assertEq(
+                    keccak256(reason),
+                    keccak256(
+                        abi.encodeWithSelector(
+                            RobinhoodStockSwapAdapter.UnsafeMarket.selector
+                        )
+                    ),
+                    "unexpected catalog rejection"
+                );
+                continue;
+            }
             assertTrue(quote > 0, "zero buy quote");
             vm.prank(pools[i]);
             bool funded = IERC20(USDG).transfer(address(this), 2e6);
@@ -108,5 +126,6 @@ contract RobinhoodMainnetForkTest is TestBase {
             assertTrue(sold >= 980_000, "round trip outside guard");
         }
         assertEq(adapter.marketCount(), 5, "catalog size");
+        assertTrue(safeMarkets >= 4, "fewer than four safe roster markets");
     }
 }

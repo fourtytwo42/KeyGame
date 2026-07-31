@@ -5,17 +5,70 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="$project_root/artifacts/internal-assurance-candidate-v4"
 cd "$project_root"
 
+torture_report_json="${V4_TORTURE_REPORT_JSON:-}"
+if [[ -z "$torture_report_json" ]]; then
+  echo "V4_TORTURE_REPORT_JSON must identify the accepted commit-bound torture report." >&2
+  exit 1
+fi
+torture_report_json="$(realpath "$torture_report_json")"
+case "$torture_report_json" in
+  "$project_root"/artifacts/torture/*.json) ;;
+  *)
+    echo "Torture evidence must be under artifacts/torture/." >&2
+    exit 1
+    ;;
+esac
+torture_report_md="${torture_report_json%.json}.md"
+for report in "$torture_report_json" "$torture_report_md"; do
+  [[ -f "$report" && -f "$report.sha256" ]] || {
+    echo "Missing report or checksum: $report" >&2
+    exit 1
+  }
+  (
+    cd "$(dirname "$report")"
+    sha256sum --check "$(basename "$report.sha256")"
+  )
+done
+source_commit="$(git rev-parse HEAD)"
+qualified_commit="$(jq -r '.sourceCommit // empty' "$torture_report_json")"
+[[ "$qualified_commit" =~ ^[0-9a-f]{40}$ ]] || {
+  echo "Torture evidence has no valid source commit." >&2
+  exit 1
+}
+git merge-base --is-ancestor "$qualified_commit" "$source_commit" || {
+  echo "Torture evidence is not an ancestor of the packaging commit." >&2
+  exit 1
+}
+while IFS= read -r changed_file; do
+  case "$changed_file" in
+    MEMORY.md|scripts/package-audit-candidate-v4.sh|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    *)
+      echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
+      exit 1
+      ;;
+  esac
+done < <(git diff --name-only "$qualified_commit".."$source_commit")
+jq -e --arg commit "$qualified_commit" '
+  .sourceCommit == $commit and
+  .contractCampaign.state == "passed" and
+  (.contractCampaign.totalActions | tonumber) == 1000000 and
+  (.reconciliation.acceptedContributions | tonumber) == 10000 and
+  (.reconciliation.discrepancies | tonumber) == 0 and
+  (.reconciliation.pointDiscrepancies | tonumber) == 0 and
+  (.reconciliation.failedAssertions | tonumber) == 0 and
+  (.reconciliation.failedActions | tonumber) == 0 and
+  (.reconciliation.unresolvedRevertedTransactions | tonumber) == 0 and
+  any(.scenarios[];
+    .action_type == "v4-settled-round" and (.count | tonumber) >= 500) and
+  any(.scenarios[];
+    .action_type == "v4-cancelled-round" and (.count | tonumber) >= 50)
+' "$torture_report_json" >/dev/null || {
+  echo "Torture evidence does not satisfy the internal-assurance gate." >&2
+  exit 1
+}
+
 rm -rf "$output_dir"
 mkdir -p "$output_dir/abi" "$output_dir/storage" "$output_dir/evidence"
-
-printf '%s  %s\n' \
-  "6e1535550ad5087acc8163500a1341a7d518cfb6e9d2de551992c69f32565362" \
-  "artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json" \
-  | sha256sum --check
-printf '%s  %s\n' \
-  "6d89d4ced375afdd0547edc9590b247e07db0d37033ff06a757e81c1a85102a6" \
-  "artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.md" \
-  | sha256sum --check
 
 forge fmt --check
 forge build
@@ -30,14 +83,14 @@ NEXT_DIST_DIR=.next-protected \
   NEXT_PUBLIC_GAME_MODE=mainnet \
   KEYGAME_CHAIN_ID=4663 \
   KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/4663.template.json" \
-  NEXT_PUBLIC_APP_URL=https://audit.invalid \
+  NEXT_PUBLIC_APP_URL=https://assurance.invalid \
   NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot \
   NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS=0x1111111111111111111111111111111111111111 \
   NEXT_PUBLIC_ROUND_MANAGER_ADDRESS=0x2222222222222222222222222222222222222222 \
   NEXT_PUBLIC_DEV_DOLLAR_ADDRESS=0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 \
   NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS=0x3333333333333333333333333333333333333333 \
-  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=audit-scan-only \
-  NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS=https://audit.invalid \
+  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=assurance-scan-only \
+  NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS=https://assurance.invalid \
   pnpm release:scan
 RUN_ROBINHOOD_MAINNET_FORK=true \
   ROBINHOOD_MAINNET_FORK_RPC_URL="${ROBINHOOD_MAINNET_RPC_URL:-http://192.168.50.173:8547}" \
@@ -85,11 +138,11 @@ cp -R artifacts/internal-security-review \
   "$output_dir/evidence/internal-security-review"
 cp docs/prd/16-stock-pot-lifetime-points.md \
   "$output_dir/evidence/authoritative-prd.md"
-cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json \
-  "$output_dir/evidence/torture-report.json"
-cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.md \
-  "$output_dir/evidence/torture-report.md"
-git rev-parse HEAD >"$output_dir/source-commit.txt"
+cp "$torture_report_json" "$output_dir/evidence/torture-report.json"
+cp "$torture_report_md" "$output_dir/evidence/torture-report.md"
+printf '%s\n' "$source_commit" >"$output_dir/source-commit.txt"
+printf '%s\n' "$qualified_commit" \
+  >"$output_dir/torture-qualified-source-commit.txt"
 git status --porcelain --untracked-files=all -- \
   . \
   ":(exclude)deployments/31337.json" \
