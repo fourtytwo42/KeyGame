@@ -49,7 +49,9 @@ contract RobinhoodMainnetForkTest is TestBase {
         assertTrue(sourceBlockHash != bytes32(0), "source block hash");
     }
 
-    function test_ProductionAdapterExecutesSafePoolsAndRejectsUnsafeCatalogEntries() public {
+    function test_ProductionAdapterExecutesSafePoolsAndRejectsUnsafeCatalogEntries()
+        public
+    {
         if (!vm.envOr("RUN_ROBINHOOD_MAINNET_FORK", false)) return;
         vm.createSelectFork(vm.envString("ROBINHOOD_MAINNET_FORK_RPC_URL"));
         RobinhoodStockSwapAdapter adapter =
@@ -89,9 +91,7 @@ contract RobinhoodMainnetForkTest is TestBase {
                 10_000e6
             );
             uint256 quote;
-            try adapter.quoteUsdgForStock(stocks[i], 1e6) returns (
-                uint256 safeQuote
-            ) {
+            try adapter.quoteUsdgForStock(stocks[i], 1e6) returns (uint256 safeQuote) {
                 quote = safeQuote;
                 safeMarkets++;
             } catch (bytes memory reason) {
