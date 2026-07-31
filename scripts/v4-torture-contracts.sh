@@ -26,6 +26,7 @@ if [[ "$parallelism" -lt 1 || "$parallelism" -gt 2 ]]; then
 fi
 
 cd "$project_root"
+export PATH="$HOME/.foundry/bin:$PATH"
 export FOUNDRY_PROFILE=v4-torture
 export FOUNDRY_INVARIANT_RUNS="$runs"
 export FOUNDRY_INVARIANT_DEPTH="$depth"
