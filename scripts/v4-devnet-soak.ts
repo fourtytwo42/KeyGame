@@ -69,21 +69,36 @@ const adapter = deployment.contracts.swapAdapter as Address;
 const paymentToken = deployment.contracts.paymentToken;
 const paymentRouter = deployment.contracts.paymentRouter;
 const scenarioSeed = Number(process.env.V4_SOAK_SCENARIO_SEED || 4663);
+const requestedProfile = process.env.V4_SOAK_PROFILE;
 const runProfile =
-  process.env.V4_SOAK_PROFILE === "endurance"
+  requestedProfile === "endurance"
     ? "v4-endurance"
-    : "v4-accelerated";
+    : requestedProfile === "torture"
+      ? "v4-torture"
+      : "v4-accelerated";
+const tortureMode = runProfile === "v4-torture";
+const campaignPlayers = tortureMode
+  ? deployment.players.slice(0, 64)
+  : deployment.players.slice(0, 4);
+if (tortureMode && campaignPlayers.length !== 64) {
+  throw new Error("V4 torture requires exactly 64 deterministic players.");
+}
 const targetSettled = Number(
   process.env.V4_SOAK_TARGET_ROUNDS ||
-    (runProfile === "v4-endurance" ? 24 : 100),
+    (runProfile === "v4-endurance" ? 24 : tortureMode ? 500 : 100),
 );
 const targetCancelled = Number(
-  process.env.V4_SOAK_CANCEL_ROUNDS || (runProfile === "v4-endurance" ? 0 : 10),
+  process.env.V4_SOAK_CANCEL_ROUNDS ||
+    (runProfile === "v4-endurance" ? 0 : tortureMode ? 50 : 10),
 );
 const enduranceIntervalMs = Number(
   process.env.V4_SOAK_ENDURANCE_INTERVAL_MS || 300_000,
 );
-const reportDirectory = path.join(process.cwd(), "artifacts", "qualification");
+const reportDirectory = path.join(
+  process.cwd(),
+  "artifacts",
+  tortureMode ? "torture" : "qualification",
+);
 
 const erc20Abi = parseAbi([
   "function balanceOf(address) view returns (uint256)",
@@ -198,7 +213,7 @@ async function transaction(
 }
 
 async function ensurePlayers(runId: string) {
-  for (const player of deployment.players.slice(0, 4)) {
+  for (const player of campaignPlayers) {
     const balance = await client.readContract({
       address: paymentToken,
       abi: erc20Abi,
@@ -613,7 +628,7 @@ async function reconcileRound(
     eventName: "BellClaimed",
     fromBlock: BigInt(deployment.deploymentBlock),
   });
-  for (const player of deployment.players.slice(0, 4)) {
+  for (const player of campaignPlayers) {
     for (let ticker = 0; ticker < 4; ticker += 1) {
       const eventPoints = claimEvents.reduce((total, event) => {
         const args = event.args;
@@ -714,7 +729,7 @@ async function claimSettledRewards(
       args: [holder],
     }),
   );
-  for (const player of deployment.players.slice(0, 4)) {
+  for (const player of campaignPlayers) {
     const points = await client.readContract({
       address: round,
       abi: lastBellV4Abi,
@@ -822,20 +837,39 @@ async function runSettledRound(
     5_000_000_000n,
     25_000_000_000n,
   ];
-  const callCount = ordinal % 8 === 0 ? 6 : 4;
+  const callCount = tortureMode
+    ? ordinal <= 350
+      ? 20
+      : 19
+    : ordinal % 8 === 0
+      ? 6
+      : 4;
+  const calls = [];
   for (let index = 0; index < callCount; index += 1) {
     const player = deployment.players[(ordinal + index) % 4];
     const ticker = (ordinal + index * 3) % 4;
     const amount = amounts[(scenarioSeed + ordinal + index) % amounts.length];
-    await contribute(
-      runId,
-      actionId,
-      round,
-      player,
-      ticker,
-      amount,
-      `round:${ordinal}:call:${index}`,
+    const selectedPlayer = tortureMode
+      ? campaignPlayers[(ordinal + index) % campaignPlayers.length]
+      : player;
+    calls.push(() =>
+      contribute(
+        runId,
+        actionId,
+        round,
+        selectedPlayer,
+        ticker,
+        amount,
+        `round:${ordinal}:call:${index}`,
+      ),
     );
+  }
+  if (tortureMode) {
+    for (let index = 0; index < calls.length; index += 4) {
+      await Promise.all(calls.slice(index, index + 4).map((call) => call()));
+    }
+  } else {
+    for (const call of calls) await call();
   }
   await finishRoundClock(round, natural);
   if (natural) {
@@ -954,7 +988,9 @@ async function start() {
   if (existing.rowCount) {
     throw new Error(`Active soak already exists: ${existing.rows[0].id}`);
   }
-  const runId = `v4-devnet-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  const runId = `${tortureMode ? "v4-torture-live" : "v4-devnet"}-${new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-")}`;
   await pool.query(
     `INSERT INTO soak_runs(
        id,deployment_key,chain_id,state,target_hours,target_rounds,
@@ -1104,8 +1140,8 @@ async function status() {
 
 async function reconcile() {
   const current = await currentRun();
-  const [assets, points, assertions, actions, transactions] = await Promise.all(
-    [
+  const [assets, points, assertions, actions, transactions, accepted] =
+    await Promise.all([
       pool.query<{
         rows: string;
         discrepancies: string;
@@ -1160,8 +1196,16 @@ async function reconcile() {
        FROM soak_transactions failed WHERE failed.run_id=$1`,
         [current.id],
       ),
-    ],
-  );
+      pool.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM soak_transactions
+         WHERE run_id=$1 AND state='confirmed'
+           AND (
+             idempotency_key ~ '^round:[0-9]+:call:[0-9]+$'
+             OR idempotency_key ~ '^cancel:[0-9]+:call:[0-9]+$'
+           )`,
+        [current.id],
+      ),
+    ]);
   const summary = {
     runId: current.id,
     assetRows: Number(assets.rows[0]?.rows ?? 0),
@@ -1173,13 +1217,16 @@ async function reconcile() {
     unresolvedRevertedTransactions: Number(
       transactions.rows[0]?.unresolved ?? 0,
     ),
+    acceptedContributions: Number(accepted.rows[0]?.count ?? 0),
   };
   if (
     summary.discrepancies ||
     summary.pointDiscrepancies ||
     summary.failedAssertions ||
     summary.failedActions ||
-    summary.unresolvedRevertedTransactions
+    summary.unresolvedRevertedTransactions ||
+    (current.run_profile === "v4-torture" &&
+      summary.acceptedContributions !== 10_000)
   ) {
     process.exitCode = 1;
   }
@@ -1212,7 +1259,7 @@ async function report() {
   await writeFile(
     markdownPath,
     [
-      `# Last Bell v4 Devnet Qualification`,
+      `# Last Bell v4 ${tortureMode ? "Torture Campaign" : "Devnet Qualification"}`,
       ``,
       `- Run: \`${current.id}\``,
       `- Source: \`${deployment.sourceCommit}\``,
@@ -1223,6 +1270,7 @@ async function report() {
       `- Failed actions: ${reconciliation.failedActions}`,
       `- Recovered reverted transactions: ${reconciliation.recoveredRevertedTransactions}`,
       `- Unresolved reverted transactions: ${reconciliation.unresolvedRevertedTransactions}`,
+      `- Accepted contributions: ${reconciliation.acceptedContributions}`,
       ``,
     ].join("\n"),
   );
