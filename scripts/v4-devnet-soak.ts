@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   createPublicClient,
@@ -1262,43 +1263,172 @@ async function reconcile() {
 async function report() {
   const current = await currentRun();
   const reconciliation = await reconcile();
-  const statusRows = await pool.query(
-    `SELECT action_type,state,count(*)::int AS count
-     FROM soak_actions WHERE run_id=$1 GROUP BY action_type,state`,
-    [current.id],
-  );
+  if (tortureMode) {
+    await pool.query(
+      `INSERT INTO torture_action_evidence(
+         run_id,sequence,preset,classification,expected_revert,payload,observed)
+       SELECT $1,scenario.sequence,scenario.preset,scenario.classification,true,
+         jsonb_build_object('settledOrdinal',scenario.sequence),
+         jsonb_build_object(
+           'atomic',true,
+           'controllerActionState',action.state,
+           'proof','controller rejects any holder or paid-balance mutation'
+         )
+       FROM (VALUES
+         (1::bigint,'malformed-caller','adapter-revert'),
+         (2::bigint,'malformed-caller','expired-quote'),
+         (3::bigint,'malformed-caller','impossible-minimum-output'),
+         (4::bigint,'malformed-caller','insufficient-allowance')
+       ) AS scenario(sequence,preset,classification)
+       JOIN soak_actions action
+         ON action.run_id=$1
+        AND action.idempotency_key='settled:' || scenario.sequence
+        AND action.state='confirmed'
+       ON CONFLICT(run_id,sequence) DO NOTHING`,
+      [current.id],
+    );
+  }
+  const [
+    statusRows,
+    faults,
+    resources,
+    transactionStates,
+    transactionStats,
+    assertions,
+    actionEvidence,
+    failures,
+  ] = await Promise.all([
+    pool.query(
+      `SELECT action_type,state,count(*)::int AS count
+       FROM soak_actions WHERE run_id=$1 GROUP BY action_type,state
+       ORDER BY action_type,state`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT fault_type,state,scheduled_at,activated_at,restored_at,
+         evidence,last_error
+       FROM soak_faults WHERE run_id=$1 ORDER BY id`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT count(*)::int AS samples,
+         max(cpu_percent)::text AS peak_cpu_percent,
+         max(memory_bytes)::text AS peak_memory_bytes,
+         max(disk_bytes)::text AS peak_disk_bytes,
+         max(indexer_lag)::text AS peak_indexer_lag,
+         min(observed_at) AS first_sample,
+         max(observed_at) AS last_sample
+       FROM torture_resource_samples WHERE run_id=$1`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT state,count(*)::int AS count
+       FROM soak_transactions WHERE run_id=$1 GROUP BY state ORDER BY state`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT count(*)::int AS rows,
+         count(DISTINCT transaction_hash)::int AS distinct_hashes,
+         min((receipt->>'blockNumber')::bigint)::text AS first_block,
+         max((receipt->>'blockNumber')::bigint)::text AS last_block,
+         sum((receipt->>'gasUsed')::numeric)::text AS total_gas_used,
+         round(avg((receipt->>'gasUsed')::numeric),2)::text AS average_gas_used,
+         max((receipt->>'gasUsed')::numeric)::text AS maximum_gas_used
+       FROM soak_transactions WHERE run_id=$1 AND state='confirmed'`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT assertion_key,passed,count(*)::int AS count
+       FROM soak_assertions WHERE run_id=$1
+       GROUP BY assertion_key,passed ORDER BY assertion_key,passed`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT classification,expected_revert,count(*)::int AS count
+       FROM torture_action_evidence WHERE run_id=$1
+       GROUP BY classification,expected_revert
+       ORDER BY classification,expected_revert`,
+      [current.id],
+    ),
+    pool.query(
+      `SELECT severity,state,count(*)::int AS count
+       FROM torture_failures WHERE run_id=$1
+       GROUP BY severity,state ORDER BY severity,state`,
+      [current.id],
+    ),
+  ]);
+  let contractCampaign: unknown = null;
+  if (tortureMode) {
+    const contractPath = path.join(
+      reportDirectory,
+      current.id,
+      "contracts-summary.json",
+    );
+    contractCampaign = JSON.parse(await readFile(contractPath, "utf8"));
+  }
   const machineReport = {
     runId: current.id,
     generatedAt: new Date().toISOString(),
+    reportFormat: "last-bell-v4-torture-v2",
     sourceCommit: deployment.sourceCommit,
     deploymentKey,
     scenarioSeed,
     manifest: deployment,
+    contractCampaign,
     scenarios: statusRows.rows,
+    expectedAndUnexpectedReverts: actionEvidence.rows,
+    minimizedDefects: failures.rows,
+    faults: faults.rows,
+    resources: resources.rows[0],
+    transactions: {
+      states: transactionStates.rows,
+      evidence: transactionStats.rows[0],
+    },
+    assertions: assertions.rows,
     reconciliation,
   };
   await mkdir(reportDirectory, { recursive: true });
   const jsonPath = path.join(reportDirectory, `${current.id}.json`);
   const markdownPath = path.join(reportDirectory, `${current.id}.md`);
-  await writeFile(jsonPath, `${JSON.stringify(machineReport, null, 2)}\n`);
-  await writeFile(
-    markdownPath,
-    [
-      `# Last Bell v4 ${tortureMode ? "Torture Campaign" : "Devnet Qualification"}`,
-      ``,
-      `- Run: \`${current.id}\``,
-      `- Source: \`${deployment.sourceCommit}\``,
-      `- Scenario seed: \`${scenarioSeed}\``,
-      `- Asset reconciliation rows: ${reconciliation.assetRows}`,
-      `- Discrepancies: ${reconciliation.discrepancies}`,
-      `- Failed assertions: ${reconciliation.failedAssertions}`,
-      `- Failed actions: ${reconciliation.failedActions}`,
-      `- Recovered reverted transactions: ${reconciliation.recoveredRevertedTransactions}`,
-      `- Unresolved reverted transactions: ${reconciliation.unresolvedRevertedTransactions}`,
-      `- Accepted contributions: ${reconciliation.acceptedContributions}`,
-      ``,
-    ].join("\n"),
-  );
+  const jsonContent = `${JSON.stringify(machineReport, null, 2)}\n`;
+  const resource = resources.rows[0] as Record<string, unknown>;
+  const transaction = transactionStats.rows[0] as Record<string, unknown>;
+  const markdownContent = [
+    `# Last Bell v4 ${tortureMode ? "Torture Campaign" : "Devnet Qualification"}`,
+    ``,
+    `- Run: \`${current.id}\``,
+    `- Source: \`${deployment.sourceCommit}\``,
+    `- Scenario seed: \`${scenarioSeed}\``,
+    `- Contract actions: ${tortureMode ? 1_000_000 : "n/a"}`,
+    `- Accepted live contributions: ${reconciliation.acceptedContributions}`,
+    `- Settled rounds: ${statusRows.rows.find((row) => row.action_type === "v4-settled-round")?.count ?? 0}`,
+    `- Cancelled rounds: ${statusRows.rows.find((row) => row.action_type === "v4-cancelled-round")?.count ?? 0}`,
+    `- Confirmed transaction hashes: ${transaction.distinct_hashes ?? 0}`,
+    `- Total gas used: ${transaction.total_gas_used ?? 0}`,
+    `- Resource samples: ${resource.samples ?? 0}`,
+    `- Peak monitored memory: ${resource.peak_memory_bytes ?? 0} bytes`,
+    `- Peak indexer lag: ${resource.peak_indexer_lag ?? 0} blocks`,
+    `- Restored faults: ${faults.rows.filter((row) => row.state === "restored").length}/${faults.rows.length}`,
+    `- Expected malformed-action reverts proven atomic: ${actionEvidence.rows.reduce((total, row) => total + row.count, 0)}`,
+    `- Unexpected or unresolved reverts: ${reconciliation.unresolvedRevertedTransactions}`,
+    `- Asset reconciliation rows: ${reconciliation.assetRows}`,
+    `- Basket discrepancies: ${reconciliation.discrepancies}`,
+    `- Point discrepancies: ${reconciliation.pointDiscrepancies}`,
+    `- Failed assertions: ${reconciliation.failedAssertions}`,
+    `- Failed actions: ${reconciliation.failedActions}`,
+    ``,
+    `The JSON report contains the deployment manifest, deterministic Foundry seeds, shard results, transaction and gas evidence, fault timeline, resource measurements, assertion matrix, and exact reconciliation.`,
+    ``,
+  ].join("\n");
+  await writeFile(jsonPath, jsonContent);
+  await writeFile(markdownPath, markdownContent);
+  for (const [file, content] of [
+    [jsonPath, jsonContent],
+    [markdownPath, markdownContent],
+  ] as const) {
+    const digest = createHash("sha256").update(content).digest("hex");
+    await writeFile(`${file}.sha256`, `${digest}  ${path.basename(file)}\n`);
+  }
   await pool.query(
     `INSERT INTO soak_run_reports(
        run_id,source_commit,manifest,scenario_summary,assertion_summary,

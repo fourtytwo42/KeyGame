@@ -41,7 +41,9 @@
     ".next-uat/dev/types/**/*.ts",
     ".next-protected/types/**/*.ts",
     ".next-protected/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".next-torture/types/**/*.ts",
+    ".next-torture/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
