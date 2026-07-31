@@ -4,7 +4,7 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runtime_dir="$project_root/.torture"
 rpc_url="http://127.0.0.1:9545"
-database_url="postgresql:///keygame?host=/var/run/postgresql&options=-c%20search_path%3Dkeygame_torture"
+database_url="postgresql:///keygame?host=/var/run/postgresql&options=-c%20search_path%3Dkeygame_torture&application_name=keygame_torture_runtime"
 manifest="$runtime_dir/deployment.json"
 deployer="0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
@@ -50,6 +50,8 @@ stop_pid() {
 
 stop_runtime() {
   stop_pid "$runtime_dir/controller.pid" "v4-soak:run"
+  stop_pid "$runtime_dir/monitor.pid" "v4-torture-monitor.sh"
+  stop_pid "$runtime_dir/faults.pid" "v4-torture-faults.sh"
   stop_pid "$runtime_dir/app.pid" "next start"
   stop_pid "$runtime_dir/keeper.pid" "service:v4-devnet-keeper"
   stop_pid "$runtime_dir/indexer.pid" "service:indexer"
@@ -190,7 +192,7 @@ case "${1:-status}" in
   start) start_runtime ;;
   stop) stop_runtime ;;
   *)
-    for file in anvil indexer keeper app controller; do
+    for file in anvil indexer keeper app controller monitor faults; do
       if [[ -f "$runtime_dir/$file.pid" ]]; then
         pid="$(cat "$runtime_dir/$file.pid")"
         if kill -0 "$pid" 2>/dev/null; then state=running; else state=stopped; fi
