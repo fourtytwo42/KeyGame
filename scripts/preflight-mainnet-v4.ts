@@ -186,9 +186,40 @@ if (safeSymbols.length < 4) {
 const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
-const sourceStatus = execFileSync("git", ["status", "--porcelain"], {
-  encoding: "utf8",
-}).trim();
+const runtimeExclusions = [
+  ":(exclude)deployments/31337.json",
+  ":(exclude).torture/**",
+  ":(exclude)artifacts/**",
+];
+const sourceStatus = execFileSync(
+  "git",
+  [
+    "status",
+    "--porcelain",
+    "--untracked-files=all",
+    "--",
+    ".",
+    ...runtimeExclusions,
+  ],
+  { encoding: "utf8" },
+).trim();
+if (sourceStatus.length !== 0) {
+  throw new Error(`Source tree is dirty:\n${sourceStatus}`);
+}
+let upstreamCommit: string;
+try {
+  upstreamCommit = execFileSync("git", ["rev-parse", "@{upstream}"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+} catch {
+  throw new Error("Release branch has no configured upstream.");
+}
+if (upstreamCommit !== sourceCommit) {
+  throw new Error(
+    `Release source is not pushed: HEAD ${sourceCommit}, upstream ${upstreamCommit}.`,
+  );
+}
 const evidence = {
   ok: true,
   checkedAt: new Date().toISOString(),
@@ -196,7 +227,10 @@ const evidence = {
   head: head.number.toString(),
   headHash: head.hash,
   sourceCommit,
-  sourceClean: sourceStatus.length === 0,
+  upstreamCommit,
+  sourceClean: true,
+  sourcePushed: true,
+  runtimeExclusions,
   templateSha256: createHash("sha256").update(templateText).digest("hex"),
   contracts: codeEvidence,
   markets,

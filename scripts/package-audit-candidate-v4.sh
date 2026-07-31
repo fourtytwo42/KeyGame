@@ -83,7 +83,17 @@ cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json \
 cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.md \
   "$output_dir/evidence/torture-report.md"
 git rev-parse HEAD >"$output_dir/source-commit.txt"
-git status --porcelain >"$output_dir/source-tree-status.txt"
+git status --porcelain --untracked-files=all -- \
+  . \
+  ":(exclude)deployments/31337.json" \
+  ":(exclude).torture/**" \
+  ":(exclude)artifacts/**" \
+  >"$output_dir/source-tree-status.txt"
+printf '%s\n' \
+  "deployments/31337.json (mutable devnet deployment manifest)" \
+  ".torture/ (isolated torture runtime)" \
+  "artifacts/ (generated evidence and packages)" \
+  >"$output_dir/RUNTIME-EXCLUSIONS.txt"
 printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
   "AUDIT, LEGAL, SAFES, AND EXTERNAL WALLET UAT REMAIN BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"
