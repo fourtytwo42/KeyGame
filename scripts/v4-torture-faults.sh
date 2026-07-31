@@ -53,7 +53,7 @@ stop_group() {
     kill "$pid" 2>/dev/null || true
   fi
   for _ in $(seq 1 50); do
-    kill -0 "$pid" 2>/dev/null || return
+    kill -0 "$pid" 2>/dev/null || return 0
     sleep 0.1
   done
 }

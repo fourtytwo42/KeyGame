@@ -35,14 +35,15 @@ case "${1:-status}" in
       V4_SOAK_CANCEL_ROUNDS=50 \
       pnpm v4-soak:run \
       >"$runtime_dir/controller.log" 2>&1 &
-    echo "$!" >"$runtime_dir/controller.pid"
+    controller_pid="$!"
+    echo "$controller_pid" >"$runtime_dir/controller.pid"
     nohup setsid bash scripts/v4-torture-monitor.sh \
       >"$runtime_dir/monitor.log" 2>&1 &
     echo "$!" >"$runtime_dir/monitor.pid"
     nohup setsid bash scripts/v4-torture-faults.sh \
       >"$runtime_dir/faults.log" 2>&1 &
     echo "$!" >"$runtime_dir/faults.pid"
-    echo "Torture controller started as PID $!."
+    echo "Torture controller started as PID $controller_pid."
     ;;
   status)
     bash scripts/v4-torture-runtime.sh status
