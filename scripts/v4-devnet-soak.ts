@@ -1130,11 +1130,34 @@ async function reconcile() {
        FROM soak_actions WHERE run_id=$1`,
         [current.id],
       ),
-      pool.query<{ reverted: string }>(
-        `SELECT count(*) FILTER (
-         WHERE state IN ('reverted','abandoned')
-       )::text AS reverted
-       FROM soak_transactions WHERE run_id=$1`,
+      pool.query<{ recovered: string; unresolved: string }>(
+        `SELECT
+         count(*) FILTER (
+           WHERE failed.state='reverted'
+             AND EXISTS (
+               SELECT 1 FROM soak_transactions retry
+               WHERE retry.run_id=failed.run_id
+                 AND retry.idempotency_key=regexp_replace(
+                   failed.idempotency_key, ':reverted:[0-9]+$', ''
+                 )
+                 AND retry.state='confirmed'
+             )
+         )::text AS recovered,
+         count(*) FILTER (
+           WHERE failed.state IN ('reverted','abandoned')
+             AND NOT (
+               failed.state='reverted'
+               AND EXISTS (
+                 SELECT 1 FROM soak_transactions retry
+                 WHERE retry.run_id=failed.run_id
+                   AND retry.idempotency_key=regexp_replace(
+                     failed.idempotency_key, ':reverted:[0-9]+$', ''
+                   )
+                   AND retry.state='confirmed'
+               )
+             )
+         )::text AS unresolved
+       FROM soak_transactions failed WHERE failed.run_id=$1`,
         [current.id],
       ),
     ],
@@ -1146,14 +1169,17 @@ async function reconcile() {
     pointDiscrepancies: Number(points.rows[0]?.discrepancies ?? 0),
     failedAssertions: Number(assertions.rows[0]?.failed ?? 0),
     failedActions: Number(actions.rows[0]?.failed ?? 0),
-    revertedTrackedTransactions: Number(transactions.rows[0]?.reverted ?? 0),
+    recoveredRevertedTransactions: Number(transactions.rows[0]?.recovered ?? 0),
+    unresolvedRevertedTransactions: Number(
+      transactions.rows[0]?.unresolved ?? 0,
+    ),
   };
   if (
     summary.discrepancies ||
     summary.pointDiscrepancies ||
     summary.failedAssertions ||
     summary.failedActions ||
-    summary.revertedTrackedTransactions
+    summary.unresolvedRevertedTransactions
   ) {
     process.exitCode = 1;
   }
@@ -1195,6 +1221,8 @@ async function report() {
       `- Discrepancies: ${reconciliation.discrepancies}`,
       `- Failed assertions: ${reconciliation.failedAssertions}`,
       `- Failed actions: ${reconciliation.failedActions}`,
+      `- Recovered reverted transactions: ${reconciliation.recoveredRevertedTransactions}`,
+      `- Unresolved reverted transactions: ${reconciliation.unresolvedRevertedTransactions}`,
       ``,
     ].join("\n"),
   );
