@@ -820,8 +820,16 @@ async function runSettledRound(
     }),
   );
   if (phase === 4) {
-    const discrepancies = await reconcileRound(runId, round, false);
-    if (discrepancies) throw new Error(`Round ${ordinal} did not conserve.`);
+    const prior = await pool.query<{ clean: string }>(
+      `SELECT count(*) FILTER (WHERE discrepancy_raw=0)::text AS clean
+       FROM soak_asset_reconciliations
+       WHERE run_id=$1 AND lower(round_contract)=lower($2)`,
+      [runId, round],
+    );
+    if (Number(prior.rows[0]?.clean ?? 0) < 4) {
+      const discrepancies = await reconcileRound(runId, round, false);
+      if (discrepancies) throw new Error(`Round ${ordinal} did not conserve.`);
+    }
     await claimSettledRewards(runId, actionId, round, ordinal);
     return;
   }
