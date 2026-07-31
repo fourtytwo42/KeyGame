@@ -23,6 +23,15 @@ Durable project context lives here. Update this file whenever information should
   Token allocation reconciliation. Round 3 is unstarted with zero calls. Smoke
   evidence is under `artifacts/testnet-v4-smoke/` in the clean release
   worktree. Last verified 2026-07-31.
+- The chain-46630 v4 UAT application now runs from the detached runtime
+  worktree at `http://192.168.50.138:3001`. Its live snapshot reports round 3
+  in `entry` with zero calls and contract version `last-bell-v4-stock-pot`.
+  The v4 UAT build includes shared v4 read/quote support, while protected
+  mainnet builds still exclude devnet/UAT facilities. Event queries begin at
+  the manifest deployment block instead of block zero, avoiding LAN RPC log
+  timeouts. The v4 indexer is active; the keeper and obsolete soak controller
+  are disabled after the authorized two-round ceiling. Last verified
+  2026-07-31.
 - Current task: qualify the hardened `last-bell-v4-stock-pot` internal-assurance
   candidate. Do not broadcast v4 to Robinhood testnet or mainnet without a
   separate authorization bound to the exact commit and manifest.

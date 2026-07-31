@@ -109,6 +109,20 @@ describe("testnet v4 release guards", () => {
     expect(preflight).not.toMatch(/\n\s*--broadcast(?:\s|$)/);
   });
 
+  it("includes v4 reads in UAT testnet but not protected mainnet builds", () => {
+    const config = readFileSync("next.config.ts", "utf8");
+    expect(config).toContain('process.env.NEXT_PUBLIC_GAME_MODE === "testnet"');
+    expect(config).toContain(
+      'process.env.NEXT_PUBLIC_UAT_WALLET_ENABLED === "true"',
+    );
+    expect(config).not.toMatch(
+      /NEXT_PUBLIC_GAME_MODE === "mainnet"[\s\S]{0,120}v4-devnet\.ts/,
+    );
+    const runtime = readFileSync("src/lib/web3/v4-devnet.ts", "utf8");
+    expect(runtime).toContain("fromBlock: deploymentBlock");
+    expect(runtime).not.toContain("fromBlock: 0n");
+  });
+
   it("keeps wrong-chain, unlocked-RPC, credential, and duplicate guards", () => {
     const preflight = readFileSync("scripts/preflight-testnet-v4.sh", "utf8");
     const deploy = readFileSync("scripts/deploy-testnet-v4.sh", "utf8");

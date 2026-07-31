@@ -12,8 +12,10 @@ const uatFundingModule =
   process.env.KEYGAME_UAT_ENABLED === "true"
     ? "./src/lib/server/uat-funding.enabled.ts"
     : "./src/lib/server/uat-funding.disabled.ts";
-const v4DevnetModule =
-  process.env.NEXT_PUBLIC_GAME_MODE === "devnet"
+const v4RuntimeModule =
+  process.env.NEXT_PUBLIC_GAME_MODE === "devnet" ||
+  (process.env.NEXT_PUBLIC_GAME_MODE === "testnet" &&
+    process.env.NEXT_PUBLIC_UAT_WALLET_ENABLED === "true")
     ? "./src/lib/web3/v4-devnet.ts"
     : "./src/lib/web3/v4-devnet.disabled.ts";
 
@@ -25,7 +27,7 @@ const nextConfig: NextConfig = {
       "@/lib/web3/uat-connector-runtime": uatWalletModule,
       "@/components/uat-controls-runtime": uatControlsModule,
       "@/lib/server/uat-funding-runtime": uatFundingModule,
-      "@/lib/web3/v4-devnet-runtime": v4DevnetModule,
+      "@/lib/web3/v4-devnet-runtime": v4RuntimeModule,
     },
   },
   async headers() {

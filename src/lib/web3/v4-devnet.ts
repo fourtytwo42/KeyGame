@@ -60,6 +60,11 @@ const deploymentPath =
 const rawDeployment = JSON.parse(
   readFileSync(deploymentPath, "utf8"),
 ) as Record<string, unknown>;
+const deploymentBlock = BigInt(
+  typeof rawDeployment.deploymentBlock === "number"
+    ? rawDeployment.deploymentBlock
+    : 0,
+);
 
 function deployment(): DeploymentV4 {
   if ("contracts" in rawDeployment) {
@@ -307,13 +312,13 @@ export async function getV4DevnetSnapshot(
         address,
         abi: lastBellV4Abi,
         eventName: "BellClaimed",
-        fromBlock: 0n,
+        fromBlock: deploymentBlock,
       }),
       client.getContractEvents({
         address,
         abi: lastBellV4Abi,
         eventName: "RoundSettled",
-        fromBlock: 0n,
+        fromBlock: deploymentBlock,
       }),
     ]);
   const symbols = configs.map((config) =>
