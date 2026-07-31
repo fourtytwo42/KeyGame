@@ -7,11 +7,14 @@ Durable project context lives here. Update this file whenever information should
 - Current task: qualify the hardened `last-bell-v4-stock-pot` internal-assurance
   candidate. Do not broadcast v4 to Robinhood testnet or mainnet without a
   separate authorization bound to the exact commit and manifest.
-- Candidate source commit `3f05a541f48b93135895ed93011e5217194c00fe`
-  implements two-step manager/market-adapter administration, complete lifecycle
-  authority events, relationship checks, structured mainnet authorization, and
-  the pinned internal security pipeline. It is pushed on
-  `codex/v4-internal-assurance`. Last verified 2026-07-31.
+- Torture-qualified contract/runtime commit
+  `3f05a541f48b93135895ed93011e5217194c00fe` implements two-step
+  manager/market-adapter administration, complete lifecycle authority events,
+  relationship checks, structured mainnet authorization, and the pinned
+  internal security pipeline. Later commits on `codex/v4-internal-assurance`
+  change only release evidence, the fork test, preflight, and this handoff; the
+  package script rejects any post-torture runtime or contract change. Last
+  verified 2026-07-31.
 - Commit-bound internal review passed with zero unresolved critical/high
   findings after documented source-specific suppressions and two mutation
   negative controls. JSON review SHA-256 is
@@ -69,6 +72,12 @@ Durable project context lives here. Update this file whenever information should
   reverted `UnsafeMarket`; AMZN must remain out of active rosters until it
   qualifies again. Four other catalog markets were still available. Last
   verified 2026-07-31.
+- The complete internal-assurance package gate passed from a clean detached
+  worktree with the exact remote commit. It reran Foundry, internal security,
+  negative controls, application/integration tests, protected-mainnet build,
+  live mainnet fork, and mainnet preflight. The generated archive is
+  `artifacts/last-bell-v4-internal-assurance-candidate.tgz` in the clean release
+  worktree and is explicitly non-broadcast. Last verified 2026-07-31.
 
 ## Current State
 
@@ -729,8 +738,8 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Generate the internal-assurance package from the explicit checksummed torture
-  report path after the live fork test confirms at least four safe markets.
+- Preserve the checksummed internal-assurance archive and bind any later
+  deployment authorization to its exact source commit and manifest hash.
 - Broadcast v4 to Robinhood testnet only after explicit user authorization.
   Testnet uses mock Stock Tokens and deterministic mock swaps labeled
   `TESTNET MOCK · NO VALUE`.
