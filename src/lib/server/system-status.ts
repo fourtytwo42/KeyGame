@@ -46,13 +46,19 @@ export async function getSystemStatus() {
           run_profile: string;
           started_at: Date;
           completed_at: Date | null;
+          target_rounds: number;
           confirmed: string;
           failed: string;
           settled: string;
           cancelled: string;
           discrepancies: string;
+          accepted_contributions: string;
+          restored_faults: string;
+          resource_samples: string;
+          peak_memory_bytes: string;
         }>(
           `SELECT r.id,r.state,r.run_profile,r.started_at,r.completed_at,
+             r.target_rounds,
              count(DISTINCT a.id) FILTER (
                WHERE a.state='confirmed'
              )::text AS confirmed,
@@ -69,7 +75,21 @@ export async function getSystemStatus() {
              )::text AS cancelled,
              count(DISTINCT ar.round_contract) FILTER (
                WHERE ar.discrepancy_raw<>0
-             )::text AS discrepancies
+             )::text AS discrepancies,
+             (SELECT count(*)::text FROM soak_transactions tx
+                WHERE tx.run_id=r.id AND tx.state='confirmed'
+                  AND (
+                    tx.idempotency_key ~ '^round:[0-9]+:call:[0-9]+$'
+                    OR tx.idempotency_key ~ '^cancel:[0-9]+:call:[0-9]+$'
+                  )) AS accepted_contributions,
+             (SELECT count(*)::text FROM soak_faults fault
+                WHERE fault.run_id=r.id AND fault.state='restored'
+             ) AS restored_faults,
+             (SELECT count(*)::text FROM torture_resource_samples sample
+                WHERE sample.run_id=r.id) AS resource_samples,
+             (SELECT COALESCE(max(memory_bytes),0)::text
+                FROM torture_resource_samples sample
+                WHERE sample.run_id=r.id) AS peak_memory_bytes
            FROM soak_runs r
            LEFT JOIN soak_actions a ON a.run_id=r.id
            LEFT JOIN soak_asset_reconciliations ar ON ar.run_id=r.id
@@ -98,11 +118,16 @@ export async function getSystemStatus() {
             runId: latest.id,
             profile: latest.run_profile,
             state: latest.state,
+            targetRounds: latest.target_rounds,
             settledRounds: Number(latest.settled),
             cancelledRounds: Number(latest.cancelled),
             confirmedActions: Number(latest.confirmed),
             failedActions: Number(latest.failed),
             discrepancies: Number(latest.discrepancies),
+            acceptedContributions: Number(latest.accepted_contributions),
+            restoredFaults: Number(latest.restored_faults),
+            resourceSamples: Number(latest.resource_samples),
+            peakMemoryBytes: Number(latest.peak_memory_bytes),
             startedAt: latest.started_at.toISOString(),
             completedAt: latest.completed_at?.toISOString(),
           }

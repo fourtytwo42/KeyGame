@@ -872,7 +872,7 @@ async function runSettledRound(
     for (const call of calls) await call();
   }
   await finishRoundClock(round, natural);
-  if (natural) {
+  if (natural || tortureMode) {
     await waitForKeeperRollover(round);
   } else {
     await managerCall(
@@ -885,7 +885,9 @@ async function runSettledRound(
   const discrepancies = await reconcileRound(runId, round, false);
   if (discrepancies) throw new Error(`Round ${ordinal} did not conserve.`);
   await claimSettledRewards(runId, actionId, round, ordinal);
-  if (!natural) await prepareAndActivate(runId, actionId, round);
+  if (!natural && !tortureMode) {
+    await prepareAndActivate(runId, actionId, round);
+  }
 }
 
 async function runCancelledRound(
@@ -975,7 +977,11 @@ async function runCancelledRound(
     throw new Error("Cancellation did not discard pending points.");
   }
   await reconcileRound(runId, round, true);
-  await prepareAndActivate(runId, actionId, round);
+  if (tortureMode) {
+    await waitForKeeperRollover(round);
+  } else {
+    await prepareAndActivate(runId, actionId, round);
+  }
 }
 
 async function start() {

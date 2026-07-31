@@ -43,11 +43,16 @@ export default async function StatusPage() {
           runId: string;
           profile: string;
           state: string;
+          targetRounds: number;
           settledRounds: number;
           cancelledRounds: number;
           confirmedActions: number;
           failedActions: number;
           discrepancies: number;
+          acceptedContributions: number;
+          restoredFaults: number;
+          resourceSamples: number;
+          peakMemoryBytes: number;
           startedAt: string;
           completedAt?: string;
         } | null)
@@ -78,10 +83,16 @@ export default async function StatusPage() {
             }`}
           />
           <div>
-            <h2>v4 devnet qualification</h2>
+            <h2>
+              {qualification?.profile === "v4-torture"
+                ? "v4 isolated torture campaign"
+                : "v4 devnet qualification"}
+            </h2>
             <p>
               {qualification
-                ? `${qualification.settledRounds} settled · ${qualification.cancelledRounds} cancelled · ${qualification.discrepancies} discrepancies.`
+                ? qualification.profile === "v4-torture"
+                  ? `${qualification.settledRounds}/${qualification.targetRounds} settled · ${qualification.acceptedContributions}/10,000 contributions · ${qualification.restoredFaults} faults restored · ${qualification.discrepancies} discrepancies.`
+                  : `${qualification.settledRounds} settled · ${qualification.cancelledRounds} cancelled · ${qualification.discrepancies} discrepancies.`
                 : "No v4 qualification run has been recorded yet."}
             </p>
           </div>
