@@ -40,6 +40,13 @@ Durable project context lives here. Update this file whenever information should
   (Settled), not phase 5 (Cancelled), and falsely timed out. Cancellation
   rollover polling must accept both terminal phases before the final clean
   rerun.
+- Source `9e4509a` then completed the full 500 settlements and 50 cancellations
+  with zero action failures. Its post-run PostgreSQL fault exposed that the
+  fault scheduler marked recovery after the database accepted a new query even
+  though the terminated keeper and indexer processes had exited. The scheduler
+  must act as the isolated supervisor, restart keeper/indexer/web, and verify
+  live PIDs, healthy heartbeats, API reachability, and indexer catch-up before
+  recording the fault restored.
 - Do not broadcast to Robinhood testnet or mainnet.
 
 ## Current State

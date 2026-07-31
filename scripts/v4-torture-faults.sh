@@ -45,6 +45,7 @@ wait_rounds() {
 
 stop_group() {
   local pid="$1"
+  kill -0 "$pid" 2>/dev/null || return 0
   local sid
   sid="$(ps -o sid= -p "$pid" | tr -d ' ')"
   if [[ "$sid" == "$pid" ]]; then
@@ -58,25 +59,19 @@ stop_group() {
   done
 }
 
-restart_service() {
+launch_service() {
   local service="$1"
-  local threshold="$2"
-  wait_rounds "$threshold"
-  id="$(record_start "$service-restart")"
   if [[ "$service" == "keeper" ]]; then
-    stop_group "$(cat "$runtime_dir/keeper.pid")"
     nohup setsid env DATABASE_URL="$database_url" KEYGAME_CHAIN_ID=31337 \
       KEYGAME_DEPLOYMENT_MANIFEST="$manifest" V4_KEEPER_POLL_MS=50 \
       pnpm service:v4-devnet-keeper >"$runtime_dir/keeper.log" 2>&1 &
     echo "$!" >"$runtime_dir/keeper.pid"
   elif [[ "$service" == "indexer" ]]; then
-    stop_group "$(cat "$runtime_dir/indexer.pid")"
     nohup setsid env DATABASE_URL="$database_url" KEYGAME_CHAIN_ID=31337 \
       KEYGAME_DEPLOYMENT_MANIFEST="$manifest" INDEXER_CONFIRMATIONS=0 \
       pnpm service:indexer >"$runtime_dir/indexer.log" 2>&1 &
     echo "$!" >"$runtime_dir/indexer.pid"
   else
-    stop_group "$(cat "$runtime_dir/app.pid")"
     nohup setsid env DATABASE_URL="$database_url" KEYGAME_CHAIN_ID=31337 \
       KEYGAME_DEPLOYMENT_MANIFEST="$manifest" NEXT_DIST_DIR=.next-torture \
       NEXT_PUBLIC_GAME_MODE=devnet \
@@ -87,8 +82,47 @@ restart_service() {
     echo "$!" >"$runtime_dir/app.pid"
     pnpm exec wait-on --timeout 30000 http://127.0.0.1:3100/status
   fi
+}
+
+restart_service() {
+  local service="$1"
+  local threshold="$2"
+  local pid_name="$service"
+  [[ "$service" == "web" ]] && pid_name="app"
+  wait_rounds "$threshold"
+  id="$(record_start "$service-restart")"
+  stop_group "$(cat "$runtime_dir/$pid_name.pid")"
+  launch_service "$service"
   sleep 1
   record_end "$id" "$service restarted after $threshold settled rounds"
+}
+
+wait_for_postgres_recovery() {
+  for _ in $(seq 1 120); do
+    local keeper_pid indexer_pid app_pid head indexed keeper_status
+    keeper_pid="$(cat "$runtime_dir/keeper.pid")"
+    indexer_pid="$(cat "$runtime_dir/indexer.pid")"
+    app_pid="$(cat "$runtime_dir/app.pid")"
+    head="$(cast block-number --rpc-url "$rpc_url" 2>/dev/null || echo -1)"
+    indexed="$(psql "$database_url" -qAtc \
+      "SELECT COALESCE((details->>'indexedBlock')::bigint,-1)
+       FROM service_heartbeats WHERE service='chain-indexer'" 2>/dev/null ||
+      echo -1)"
+    keeper_status="$(psql "$database_url" -qAtc \
+      "SELECT status FROM service_heartbeats
+       WHERE service='v4-devnet-keeper'" 2>/dev/null || true)"
+    if kill -0 "$keeper_pid" 2>/dev/null &&
+      kill -0 "$indexer_pid" 2>/dev/null &&
+      kill -0 "$app_pid" 2>/dev/null &&
+      [[ "$keeper_status" == "ok" ]] &&
+      [[ "$indexed" -ge "$head" ]] &&
+      curl -fsS http://127.0.0.1:3100/api/status >/dev/null; then
+      return
+    fi
+    sleep 1
+  done
+  echo "Torture services did not recover from PostgreSQL termination." >&2
+  exit 1
 }
 
 restart_service keeper 50
@@ -118,7 +152,15 @@ psql "postgresql:///keygame?host=/var/run/postgresql" -c \
      AND pid <> pg_backend_pid()" >/dev/null || true
 sleep 2
 psql "$database_url" -Atc "SELECT 1" >/dev/null
-record_end "$id" "torture-scoped PostgreSQL clients reconnected"
+for service in keeper indexer web; do
+  pid_name="$service"
+  [[ "$service" == "web" ]] && pid_name="app"
+  stop_group "$(cat "$runtime_dir/$pid_name.pid")"
+  launch_service "$service"
+done
+wait_for_postgres_recovery
+record_end "$id" \
+  "torture-scoped PostgreSQL clients restarted and caught up automatically"
 
 id="$(record_start isolated-reorg-fixture)"
 DATABASE_URL="$database_url" KEYGAME_DEPLOYMENT_MANIFEST="$manifest" \
