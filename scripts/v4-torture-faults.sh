@@ -145,6 +145,16 @@ psql "postgresql:///keygame?host=/var/run/postgresql" -c \
   "SELECT pg_terminate_backend(pid) FROM pg_stat_activity
    WHERE application_name LIKE 'keygame_torture%'
      AND pid <> pg_backend_pid()" >/dev/null
+sleep 1
+for service in keeper indexer web; do
+  pid_name="$service"
+  [[ "$service" == "web" ]] && pid_name="app"
+  service_pid="$(cat "$runtime_dir/$pid_name.pid")"
+  if ! kill -0 "$service_pid" 2>/dev/null; then
+    launch_service "$service"
+  fi
+done
+wait_for_postgres_recovery
 wait_rounds 260
 record_end "$id" \
   "controller and services resumed after all torture database sessions dropped"
