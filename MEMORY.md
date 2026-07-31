@@ -23,9 +23,17 @@ Durable project context lives here. Update this file whenever information should
   `artifacts/qualification/` as matching JSON and Markdown reports. Source
   commit `b303635` passed the accelerated gate; endurance hardening through
   `f65bea5` safely classifies the preserved no-charge revert as recovered.
-- Next step: package the accepted source and qualification reports for the
-  separately authorized two-round Robinhood testnet compatibility smoke test.
-  Do not broadcast until the user explicitly authorizes it.
+- Current task: qualify the isolated Last Bell v4 adversarial campaign without
+  touching the accepted devnet. The clean 1,000,000-action Foundry campaign
+  passed at source commit `c9acd2d`.
+- The first 10,000-transaction live attempt stopped at settlement 395 after a
+  stale keeper lifecycle read queued round 5058 before round 5057 finalized.
+  The expected `InvalidTransition` left a failed idempotency row that blocked
+  the later valid retry. The failed run and its database are preserved before
+  reset. Keeper retries and pruned-history-safe indexing are being hardened,
+  then the complete live campaign must restart from a clean isolated
+  deployment.
+- Do not broadcast to Robinhood testnet or mainnet.
 
 ## Current State
 
@@ -244,6 +252,15 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-31: The isolated `v4-torture` Foundry campaign completed ten
+  deterministic 100,000-action shards with exactly 1,000,000 actions and no
+  invariant failure at source `c9acd2d`. The first live attempt reached 394
+  clean settlements before action 395 exposed a keeper retry defect. The
+  failure is a harness lifecycle issue, not an accounting mismatch: round 5057
+  finalized successfully, but an earlier expected `InvalidTransition` had
+  poisoned round 5058's idempotency key. The indexer also exposed a reliance on
+  pruned historical state for immutable ticker metadata. Both paths require a
+  clean live rerun after repair.
 - 2026-07-30: Implemented `last-bell-v4-stock-pot`. Final local gates passed:
   48 Vitest tests, 4 clean-chain integration tests, 37 Foundry tests including
   512-run v4 fuzzing, 20 Playwright desktop/mobile checks with two intentional
@@ -622,15 +639,15 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Complete and reconcile endurance run
-  `v4-devnet-2026-07-30T21-33-20-690Z`, including its scheduled keeper, RPC,
-  indexer, web, reorg, and duplicate-round faults.
+- Complete a clean isolated v4 torture rerun: 10,000 accepted contributions,
+  500 settlements, 50 cancellations, all scheduled recovery faults, exact
+  canonical/indexer/API reconciliation, and checksummed final reports.
+- Verify that failed keeper lifecycle jobs with no transaction hash are safely
+  re-queued and that immutable ticker metadata indexing no longer depends on
+  pruned historical Anvil state.
 - Broadcast v4 to Robinhood testnet only after explicit user authorization.
   Testnet uses mock Stock Tokens and deterministic mock swaps labeled
   `TESTNET MOCK · NO VALUE`.
-- Run 100 accelerated settled rounds, ten cancellation rounds, and an
-  two-hour devnet stability pass with exact event-derived basket/point
-  reconciliation. The archived v3 soak remains infrastructure evidence only.
 - Limit Robinhood testnet to a separately authorized two-round compatibility
   smoke test after estimating gas and preserving an operating reserve.
 - Implement and audit the production canonical Stock Token swap adapter and

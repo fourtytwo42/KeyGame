@@ -66,7 +66,15 @@ async function enqueue(
     `INSERT INTO keeper_jobs(
        deployment_key,chain_id,idempotency_key,job_type,payload)
      VALUES($1,31337,$2,$3,$4)
-     ON CONFLICT(deployment_key,idempotency_key) DO NOTHING`,
+     ON CONFLICT(deployment_key,idempotency_key) DO UPDATE SET
+       job_type=excluded.job_type,
+       payload=excluded.payload,
+       state='pending',
+       transaction_hash=NULL,
+       last_error=NULL,
+       updated_at=now()
+     WHERE keeper_jobs.state='failed'
+       AND keeper_jobs.transaction_hash IS NULL`,
     [deploymentKey, key, type, JSON.stringify(payload)],
   );
 }

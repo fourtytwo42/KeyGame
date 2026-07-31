@@ -308,7 +308,6 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
             abi: lastBellV4Abi,
             functionName: "tickerConfigs",
             args: [BigInt(claim.ticker)],
-            blockNumber: log.blockNumber,
           });
           await connection.query(
             `INSERT INTO stock_pot_contributions(
