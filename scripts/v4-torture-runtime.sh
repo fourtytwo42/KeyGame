@@ -4,7 +4,7 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runtime_dir="$project_root/.torture"
 rpc_url="http://127.0.0.1:9545"
-database_url="postgresql:///keygame_torture?host=/var/run/postgresql"
+database_url="postgresql:///keygame?host=/var/run/postgresql&options=-c%20search_path%3Dkeygame_torture"
 manifest="$runtime_dir/deployment.json"
 deployer="0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
@@ -65,8 +65,10 @@ start_runtime() {
       >"$runtime_dir/qualified-manifest-before.sha256"
   fi
 
-  dropdb --if-exists keygame_torture
-  createdb keygame_torture
+  psql "postgresql:///keygame?host=/var/run/postgresql" -v ON_ERROR_STOP=1 \
+    -c "DROP SCHEMA IF EXISTS keygame_torture CASCADE"
+  psql "postgresql:///keygame?host=/var/run/postgresql" -v ON_ERROR_STOP=1 \
+    -c "CREATE SCHEMA keygame_torture AUTHORIZATION CURRENT_USER"
   for migration in "$project_root"/db/*.sql; do
     psql "$database_url" -v ON_ERROR_STOP=1 -f "$migration" >/dev/null
   done

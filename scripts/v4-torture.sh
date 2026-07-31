@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runtime_dir="$project_root/.torture"
-database_url="postgresql:///keygame_torture?host=/var/run/postgresql"
+database_url="postgresql:///keygame?host=/var/run/postgresql&options=-c%20search_path%3Dkeygame_torture"
 manifest="$runtime_dir/deployment.json"
 cd "$project_root"
 export NVM_DIR="$HOME/.nvm"
