@@ -7,6 +7,7 @@ import { MockStockToken } from "../../contracts/mocks/MockStockToken.sol";
 import {
     AdversarialStockSwapAdapter
 } from "../../contracts/mocks/AdversarialStockSwapAdapter.sol";
+import { AdversarialERC20 } from "../../contracts/mocks/AdversarialERC20.sol";
 import { RoundManagerV4 } from "../../contracts/RoundManagerV4.sol";
 import { LastBellRoundV4 } from "../../contracts/LastBellRoundV4.sol";
 
@@ -101,6 +102,73 @@ contract LastBellV4AdversarialTest is TestBase {
         assertEq(
             address(manager.activeRound()), address(prepared), "retry did not activate"
         );
+    }
+
+    function test_FeeOnTransferRewardRevertsWithoutMarkingClaimed() public {
+        MockUSDG hostileUsdg = new MockUSDG();
+        AdversarialStockSwapAdapter hostileAdapter =
+            new AdversarialStockSwapAdapter(hostileUsdg);
+        AdversarialERC20[4] memory hostileStocks;
+        LastBellRoundV4.TickerConfig[4] memory tickers;
+        for (uint8 i; i < 4; i++) {
+            hostileStocks[i] = new AdversarialERC20("FEE", uint8(6 + i));
+            hostileAdapter.setRate(address(hostileStocks[i]), 1e6);
+            tickers[i] = LastBellRoundV4.TickerConfig({
+                symbol: bytes32("FEE"),
+                assetId: keccak256(abi.encode("FEE", i)),
+                token: address(hostileStocks[i])
+            });
+        }
+        RoundManagerV4 hostileManager = new RoundManagerV4(
+            hostileUsdg, hostileAdapter, address(this), address(this), address(this)
+        );
+        LastBellRoundV4 hostileRound =
+            hostileManager.prepareRound(_settings(101), tickers);
+        uint256[4] memory zeroes;
+        hostileManager.activatePrepared(zeroes, zeroes, type(uint64).max);
+        hostileUsdg.mint(ALICE, 100e6);
+        address router = address(hostileManager.paymentRouter());
+        vm.prank(ALICE);
+        hostileUsdg.approve(router, type(uint256).max);
+        vm.prank(ALICE);
+        hostileRound.claimBell(0, 100e6, 100e6, type(uint64).max, 255);
+        vm.warp(hostileRound.deadline());
+        hostileManager.finalizeActive();
+
+        hostileStocks[0].configure(
+            AdversarialERC20.Mode.FeeOnTransfer, 100, address(0), ""
+        );
+        vm.expectRevert(LastBellRoundV4.TransferFailed.selector);
+        hostileRound.claimHolderRewardFor(ALICE);
+        assertTrue(
+            !hostileRound.holderRewardClaimed(ALICE),
+            "failed exact transfer marked the claim"
+        );
+    }
+
+    function test_DuplicateTokenOrAssetRosterIsRejected() public {
+        MockUSDG duplicateUsdg = new MockUSDG();
+        AdversarialStockSwapAdapter duplicateAdapter =
+            new AdversarialStockSwapAdapter(duplicateUsdg);
+        RoundManagerV4 duplicateManager = new RoundManagerV4(
+            duplicateUsdg, duplicateAdapter, address(this), address(this), address(this)
+        );
+        LastBellRoundV4.TickerConfig[4] memory tickers;
+        for (uint8 i; i < 4; i++) {
+            tickers[i] = LastBellRoundV4.TickerConfig({
+                symbol: bytes32("DUP"),
+                assetId: keccak256(abi.encode("DUP", i)),
+                token: address(stocks[i])
+            });
+        }
+        tickers[1].token = tickers[0].token;
+        vm.expectRevert(LastBellRoundV4.InvalidConfiguration.selector);
+        duplicateManager.prepareRound(_settings(201), tickers);
+
+        tickers[1].token = address(stocks[1]);
+        tickers[1].assetId = tickers[0].assetId;
+        vm.expectRevert(LastBellRoundV4.InvalidConfiguration.selector);
+        duplicateManager.prepareRound(_settings(202), tickers);
     }
 
     function _activate(uint256 id) internal returns (LastBellRoundV4 deployed) {

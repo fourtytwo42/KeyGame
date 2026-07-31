@@ -221,7 +221,13 @@ contract LifetimePointsVault {
             rewardDebt[player][token] = accumulated;
             if (amount == 0) continue;
             totalClaimed[player][token] += amount;
+            uint256 vaultBefore = IERC20(token).balanceOf(address(this));
+            uint256 playerBefore = IERC20(token).balanceOf(player);
             if (!IERC20(token).transfer(player, amount)) revert TransferFailed();
+            if (
+                vaultBefore - IERC20(token).balanceOf(address(this)) != amount
+                    || IERC20(token).balanceOf(player) - playerBefore != amount
+            ) revert TransferFailed();
             emit LifetimeRewardClaimed(player, token, amount);
         }
     }

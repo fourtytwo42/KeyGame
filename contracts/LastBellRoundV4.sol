@@ -176,6 +176,12 @@ contract LastBellRoundV4 {
                 tickers_[i].symbol == bytes32(0) || tickers_[i].assetId == bytes32(0)
                     || tickers_[i].token == address(0)
             ) revert InvalidConfiguration();
+            for (uint8 j; j < i; j++) {
+                if (
+                    tickers_[i].assetId == tickers_[j].assetId
+                        || tickers_[i].token == tickers_[j].token
+                ) revert InvalidConfiguration();
+            }
             tickerConfigs[i] = tickers_[i];
         }
         paymentToken = paymentToken_;
@@ -345,10 +351,9 @@ contract LastBellRoundV4 {
             tokens[i] = tickerConfigs[i].token;
             lifetimeRewards[i] = lifetimePool[i];
             if (lifetimePool[i] != 0) {
-                if (!IERC20(tokens[i])
-                        .transfer(address(lifetimeVault), lifetimePool[i])) {
-                    revert TransferFailed();
-                }
+                _transferExact(
+                    IERC20(tokens[i]), address(lifetimeVault), lifetimePool[i]
+                );
             }
         }
         lifetimeVault.settleRound(roundId, tokens, lifetimeRewards);
@@ -487,11 +492,20 @@ contract LastBellRoundV4 {
 
     function _transferBasket(address recipient, uint256[4] memory amounts) internal {
         for (uint8 i; i < 4; i++) {
-            if (
-                amounts[i] != 0
-                    && !IERC20(tickerConfigs[i].token).transfer(recipient, amounts[i])
-            ) revert TransferFailed();
+            if (amounts[i] != 0) {
+                _transferExact(IERC20(tickerConfigs[i].token), recipient, amounts[i]);
+            }
         }
+    }
+
+    function _transferExact(IERC20 token, address recipient, uint256 amount) internal {
+        uint256 senderBefore = token.balanceOf(address(this));
+        uint256 recipientBefore = token.balanceOf(recipient);
+        if (!token.transfer(recipient, amount)) revert TransferFailed();
+        if (
+            senderBefore - token.balanceOf(address(this)) != amount
+                || token.balanceOf(recipient) - recipientBefore != amount
+        ) revert TransferFailed();
     }
 
     function _sqrt(uint256 value) internal pure returns (uint256 result) {
