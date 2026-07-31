@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { assertSmokeReconciliationScope } from "../src/lib/release/testnet-v4";
+import { lastBellV4Abi } from "../src/lib/web3/last-bell-abi";
 import {
   deploymentKeyFor,
   loadManifest,
@@ -34,11 +35,31 @@ const rounds = await pool.query<{
   [deploymentKey],
 );
 const settled = rounds.rows.filter((round) => round.state === "settled");
+const successorRounds = rounds.rows.filter(
+  (round) => round.state !== "settled" && round.state !== "cancelled",
+);
+let unstartedSuccessorRounds = 0;
+for (const round of successorRounds) {
+  const [startedAt, acceptedClaims] = await Promise.all([
+    client.readContract({
+      address: round.contract_address as `0x${string}`,
+      abi: lastBellV4Abi,
+      functionName: "startedAt",
+    }),
+    client.readContract({
+      address: round.contract_address as `0x${string}`,
+      abi: lastBellV4Abi,
+      functionName: "acceptedClaims",
+    }),
+  ]);
+  if (startedAt === 0n && acceptedClaims === 0n) unstartedSuccessorRounds += 1;
+}
 assertSmokeReconciliationScope({
   totalRounds: rounds.rows.length,
   settledRounds: settled.length,
   cancelledRounds: rounds.rows.filter((round) => round.state === "cancelled")
     .length,
+  unstartedSuccessorRounds,
 });
 
 const roundIds = settled.map((round) => round.round_id);

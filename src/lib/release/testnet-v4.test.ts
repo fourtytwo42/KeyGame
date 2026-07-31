@@ -69,21 +69,31 @@ describe("testnet v4 release guards", () => {
     expect(() => smokeRoundLimitReached(2n, 1n, 3)).toThrow(/exactly two/);
   });
 
-  it("rejects extra, incomplete, or cancelled smoke rounds", () => {
+  it("allows one unstarted successor and rejects extra, incomplete, or cancelled rounds", () => {
     expect(() =>
       assertSmokeReconciliationScope({
         totalRounds: 3,
         settledRounds: 2,
         cancelledRounds: 0,
+        unstartedSuccessorRounds: 1,
       }),
-    ).toThrow(/exactly two/);
+    ).not.toThrow();
     expect(() =>
       assertSmokeReconciliationScope({
         totalRounds: 2,
         settledRounds: 1,
         cancelledRounds: 1,
+        unstartedSuccessorRounds: 0,
       }),
     ).toThrow(/no cancellations/);
+    expect(() =>
+      assertSmokeReconciliationScope({
+        totalRounds: 3,
+        settledRounds: 2,
+        cancelledRounds: 0,
+        unstartedSuccessorRounds: 0,
+      }),
+    ).toThrow(/unstarted successor/);
   });
 
   it("pins the configured deployer sender in simulation and broadcast", () => {
@@ -95,6 +105,7 @@ describe("testnet v4 release guards", () => {
     expect(deploy).toContain(
       '--password-file "$KEYGAME_DEPLOYER_PASSWORD_FILE"',
     );
+    expect(deploy).toContain("--resume --broadcast --verify");
     expect(preflight).not.toMatch(/\n\s*--broadcast(?:\s|$)/);
   });
 

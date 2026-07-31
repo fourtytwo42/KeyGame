@@ -113,14 +113,16 @@ export function assertSmokeReconciliationScope(input: {
   totalRounds: number;
   settledRounds: number;
   cancelledRounds: number;
+  unstartedSuccessorRounds: number;
 }) {
   if (
-    input.totalRounds !== 2 ||
+    (input.totalRounds !== 2 && input.totalRounds !== 3) ||
     input.settledRounds !== 2 ||
-    input.cancelledRounds !== 0
+    input.cancelledRounds !== 0 ||
+    input.unstartedSuccessorRounds !== input.totalRounds - 2
   ) {
     throw new Error(
-      `Expected exactly two settled rounds and no cancellations; found ${JSON.stringify(input)}.`,
+      `Expected exactly two settled rounds, no cancellations, and at most one unstarted successor; found ${JSON.stringify(input)}.`,
     );
   }
 }

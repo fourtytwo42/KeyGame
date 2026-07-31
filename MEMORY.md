@@ -14,6 +14,15 @@ Durable project context lives here. Update this file whenever information should
   two settled smoke rounds after the treasury-rotation bytecode and full local
   requalification pass. This authorization does not cover mainnet. Do not ask
   again unless implementation scope or economics changes.
+- The authorized mock-only v4 package was deployed once on Robinhood testnet
+  from commit `2b4fcfaa8c52eff89246e6cf0c40d16200c1d6a9` at block
+  `95718412`. Manager `0xe139ee0bf3060dca03a154eb2f297c07f0d198f8`
+  has single-deployer custody verified for all initial roles. Exactly two
+  rounds settled with two players each, seven accepted calls total, all reward
+  categories exercised, zero failed keeper jobs, and exact eight-row Stock
+  Token allocation reconciliation. Round 3 is unstarted with zero calls. Smoke
+  evidence is under `artifacts/testnet-v4-smoke/` in the clean release
+  worktree. Last verified 2026-07-31.
 - Current task: qualify the hardened `last-bell-v4-stock-pot` internal-assurance
   candidate. Do not broadcast v4 to Robinhood testnet or mainnet without a
   separate authorization bound to the exact commit and manifest.
@@ -768,10 +777,9 @@ When sources conflict, use this order:
 
 - Preserve the checksummed internal-assurance archive and bind any later
   deployment authorization to its exact source commit and manifest hash.
-- Broadcast v4 to Robinhood testnet only after the changed bytecode passes full
-  local requalification. The existing authorization covers one mock-only
-  deployment and exactly two settled rounds, after estimating gas and
-  preserving an operating reserve.
+- Preserve the completed one-deployment, two-settlement Robinhood testnet smoke
+  evidence. Do not start round 3 or broadcast another testnet deployment unless
+  implementation scope or economics changes and the user authorizes it.
 - Preserve the internal-review report, accepted suppressions, mutation controls,
   bytecode hashes, and residual-risk disclosure. Do not call this evidence an
   independent audit. V4 testnet intentionally packages only the deterministic
@@ -781,8 +789,9 @@ When sources conflict, use this order:
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
-- Verify single-deployer custody and empty pending transfers. A later EOA,
-  Safe, or authority contract may receive each role independently.
+- Single-deployer custody and empty pending manager/treasury transfers are
+  verified. A later EOA, Safe, or authority contract may receive each role
+  independently.
 - Preserve the unsigned acknowledgement that no external legal review or
   independent audit occurred. Never describe internal assurance as either.
 - Select real testnet payment token, treasury, operator, and monitoring before

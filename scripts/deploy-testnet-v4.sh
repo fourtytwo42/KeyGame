@@ -78,7 +78,7 @@ KEYGAME_ROLE_CUSTODY_EVIDENCE="$project_root/artifacts/deployment-verification/4
   pnpm release:verify-role-custody
 
 verify_args=(
-  --resume --verify
+  --resume --broadcast --verify
   --verifier "$ROBINHOOD_VERIFIER_TYPE"
   --verifier-url "$ROBINHOOD_VERIFIER_URL"
 )

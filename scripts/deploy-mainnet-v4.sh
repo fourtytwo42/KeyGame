@@ -87,7 +87,7 @@ mkdir -p artifacts/deployment-verification
 KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/4663.json" \
 KEYGAME_ROLE_CUSTODY_EVIDENCE="$project_root/artifacts/deployment-verification/4663-role-custody.json" \
   pnpm release:verify-role-custody
-verify_args=(--resume --verify --verifier "$ROBINHOOD_VERIFIER_TYPE" --verifier-url "$ROBINHOOD_VERIFIER_URL")
+verify_args=(--resume --broadcast --verify --verifier "$ROBINHOOD_VERIFIER_TYPE" --verifier-url "$ROBINHOOD_VERIFIER_URL")
 if [[ -n "${ROBINHOOD_VERIFIER_API_KEY:-}" ]]; then verify_args+=(--etherscan-api-key "$ROBINHOOD_VERIFIER_API_KEY"); fi
 forge script script/DeployMainnet.s.sol:DeployMainnetV4 \
   --rpc-url "$ROBINHOOD_MAINNET_RPC_URL" \
