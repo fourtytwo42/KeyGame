@@ -47,7 +47,11 @@ stop_group() {
   local pid="$1"
   local sid
   sid="$(ps -o sid= -p "$pid" | tr -d ' ')"
-  if [[ "$sid" == "$pid" ]]; then kill -- "-$pid"; else kill "$pid"; fi
+  if [[ "$sid" == "$pid" ]]; then
+    kill -- "-$pid" 2>/dev/null || true
+  else
+    kill "$pid" 2>/dev/null || true
+  fi
   for _ in $(seq 1 50); do
     kill -0 "$pid" 2>/dev/null || return
     sleep 0.1
