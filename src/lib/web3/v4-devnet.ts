@@ -44,8 +44,13 @@ type DeploymentV4 = {
   sessionPlayer: Address;
 };
 
-const deploymentPath = path.join(process.cwd(), "deployments", "31337.json");
-const rpcUrl = process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545";
+const deploymentPath =
+  process.env.V4_DEVNET_DEPLOYMENT_MANIFEST ||
+  path.join(process.cwd(), "deployments", "31337.json");
+const rpcUrl =
+  process.env.LOCAL_RPC_URL ||
+  process.env.NEXT_PUBLIC_LOCAL_RPC_URL ||
+  "http://127.0.0.1:8545";
 const client = createPublicClient({
   chain: localDevnet,
   cacheTime: 0,

@@ -146,6 +146,9 @@ start_runtime() {
       schemaVersion:4,environment:"anvil",chainId:$chainId,
       deploymentBlock:$deploymentBlock,sourceCommit:$sourceCommit,mockOnly:true,
       rpc:{primary:$rpc},deployer:$deployer,players:$players,stockTokens:$stocks,
+      devDollar:$token,paymentRouter:$paymentRouter,swapAdapter:$adapter,
+      roundManager:$manager,lifetimePointsVault:$vault,rewardRouter:$rewardRouter,
+      lastBellRound:$round,sessionPlayer:$players[0],
       contractVersion:"last-bell-v4-stock-pot",
       contracts:{manager:$manager,paymentRouter:$paymentRouter,
         paymentToken:$token,marketVerifier:$adapter,lifetimePointsVault:$vault,
@@ -170,12 +173,16 @@ start_runtime() {
     NEXT_PUBLIC_GAME_MODE=devnet \
     NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot \
     NEXT_PUBLIC_LOCAL_RPC_URL="$rpc_url" \
+    LOCAL_RPC_URL="$rpc_url" \
+    V4_DEVNET_DEPLOYMENT_MANIFEST="$manifest" \
     pnpm build >"$runtime_dir/build.log" 2>&1
   nohup setsid env "${common_env[@]}" \
     NEXT_DIST_DIR=.next-torture \
     NEXT_PUBLIC_GAME_MODE=devnet \
     NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot \
     NEXT_PUBLIC_LOCAL_RPC_URL="$rpc_url" \
+    LOCAL_RPC_URL="$rpc_url" \
+    V4_DEVNET_DEPLOYMENT_MANIFEST="$manifest" \
     PORT=3100 \
     pnpm exec next start --hostname 127.0.0.1 --port 3100 \
     >"$runtime_dir/app.log" 2>&1 &

@@ -2,13 +2,14 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
 let cleanDevnetSnapshot: string;
+const devnetRpc = process.env.PLAYWRIGHT_RPC_URL || "http://127.0.0.1:8545";
 
 async function rpc(
   request: APIRequestContext,
   method: string,
   params: unknown[] = [],
 ) {
-  const response = await request.post("http://127.0.0.1:8545", {
+  const response = await request.post(devnetRpc, {
     data: { jsonrpc: "2.0", id: 1, method, params },
   });
   const payload = (await response.json()) as { result: string | boolean };

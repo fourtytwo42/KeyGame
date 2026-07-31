@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   createPublicClient,
   createTestClient,
@@ -8,7 +10,6 @@ import {
   type Address,
 } from "viem";
 import { beforeAll, describe, expect, it } from "vitest";
-import deployment from "../../deployments/31337.json";
 import { localDevnet } from "@/lib/web3/chains";
 import { devDollarAbi, lastBellV4Abi } from "@/lib/web3/last-bell-abi";
 import {
@@ -20,6 +21,13 @@ import {
 } from "@/lib/web3/v4-devnet";
 
 const rpc = process.env.LOCAL_RPC_URL || "http://127.0.0.1:8545";
+const deploymentPath =
+  process.env.V4_DEVNET_DEPLOYMENT_MANIFEST ||
+  path.join(process.cwd(), "deployments", "31337.json");
+const deployment = JSON.parse(readFileSync(deploymentPath, "utf8")) as Record<
+  string,
+  unknown
+>;
 const d = deployment as {
   lastBellRound: Address;
   devDollar: Address;

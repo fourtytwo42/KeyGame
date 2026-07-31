@@ -23,30 +23,19 @@ Durable project context lives here. Update this file whenever information should
   `artifacts/qualification/` as matching JSON and Markdown reports. Source
   commit `b303635` passed the accelerated gate; endurance hardening through
   `f65bea5` safely classifies the preserved no-charge revert as recovered.
-- Current task: qualify the isolated Last Bell v4 adversarial campaign without
-  touching the accepted devnet. The clean 1,000,000-action Foundry campaign
-  passed at source commit `c9acd2d`.
-- The first 10,000-transaction live attempt stopped at settlement 395 after a
-  stale keeper lifecycle read queued round 5058 before round 5057 finalized.
-  The expected `InvalidTransition` left a failed idempotency row that blocked
-  the later valid retry. The failed run and its database are preserved before
-  reset. Keeper retries and pruned-history-safe indexing are being hardened,
-  then the complete live campaign must restart from a clean isolated
-  deployment.
-- The next clean live attempt passed all 500 settlement rounds and all six
-  scheduled service restarts with zero failed actions, then exposed a
-  cancellation-only harness assertion: the keeper prepared and activated the
-  next round immediately, but `waitForKeeperRollover` accepted only phase 4
-  (Settled), not phase 5 (Cancelled), and falsely timed out. Cancellation
-  rollover polling must accept both terminal phases before the final clean
-  rerun.
-- Source `9e4509a` then completed the full 500 settlements and 50 cancellations
-  with zero action failures. Its post-run PostgreSQL fault exposed that the
-  fault scheduler marked recovery after the database accepted a new query even
-  though the terminated keeper and indexer processes had exited. The scheduler
-  must act as the isolated supervisor, restart keeper/indexer/web, and verify
-  live PIDs, healthy heartbeats, API reachability, and indexer catch-up before
-  recording the fault restored.
+- The isolated v4 torture campaign is accepted. Run
+  `v4-torture-live-2026-07-31T03-44-39-339Z` completed exactly 1,000,000
+  deterministic Foundry state actions, 10,000 accepted live contributions,
+  500 settlements, 50 cancellations, 13,825 confirmed transaction hashes, and
+  all ten recovery faults. Reconciliation found zero basket, point, assertion,
+  action, or unresolved-revert discrepancies. The campaign source is
+  `1c4926e`; reporting and fully isolated browser/integration routing were
+  hardened afterward.
+- Checksummed evidence is
+  `artifacts/torture/v4-torture-live-2026-07-31T03-44-39-339Z.json` and `.md`;
+  deterministic shard logs and seeds are in the same-name subdirectory.
+  Preserved failed attempts document the keeper idempotency, cancellation
+  predicate, and PostgreSQL recovery defects that were fixed before acceptance.
 - Do not broadcast to Robinhood testnet or mainnet.
 
 ## Current State
@@ -266,6 +255,21 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-07-31: Accepted isolated torture run
+  `v4-torture-live-2026-07-31T03-44-39-339Z`. Ten 100,000-action Foundry
+  shards passed; the live campaign produced 10,000 accepted contributions,
+  500 settlements, 50 cancellations, 2,200 per-token reconciliation rows,
+  13,825 distinct confirmed transaction hashes, and 4,760,602,565 total gas
+  units. All ten faults restored, the indexer caught up exactly to block 14715,
+  and basket, point, assertion, action, and unresolved-revert discrepancies
+  were all zero.
+- 2026-07-31: Final local gates passed on the VM: formatting, ESLint,
+  TypeScript, 50 Vitest tests, 43 Foundry tests including 512-run fuzz and
+  8,192-call invariant coverage, four isolated integration tests, production
+  build, protected-bundle scan, and 20 Playwright desktop/mobile tests with two
+  intentional viewport skips. Browser and integration tests now accept
+  explicit devnet manifest and RPC paths so torture UAT cannot target the
+  qualified port-8545 deployment.
 - 2026-07-31: The isolated `v4-torture` Foundry campaign completed ten
   deterministic 100,000-action shards with exactly 1,000,000 actions and no
   invariant failure at source `c9acd2d`. The first live attempt reached 394
@@ -660,12 +664,6 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Complete a clean isolated v4 torture rerun: 10,000 accepted contributions,
-  500 settlements, 50 cancellations, all scheduled recovery faults, exact
-  canonical/indexer/API reconciliation, and checksummed final reports.
-- Verify that failed keeper lifecycle jobs with no transaction hash are safely
-  re-queued and that immutable ticker metadata indexing no longer depends on
-  pruned historical Anvil state.
 - Broadcast v4 to Robinhood testnet only after explicit user authorization.
   Testnet uses mock Stock Tokens and deterministic mock swaps labeled
   `TESTNET MOCK · NO VALUE`.

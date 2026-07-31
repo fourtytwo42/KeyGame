@@ -77,6 +77,8 @@ launch_service() {
       NEXT_PUBLIC_GAME_MODE=devnet \
       NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot \
       NEXT_PUBLIC_LOCAL_RPC_URL="$rpc_url" PORT=3100 \
+      LOCAL_RPC_URL="$rpc_url" \
+      V4_DEVNET_DEPLOYMENT_MANIFEST="$manifest" \
       pnpm exec next start --hostname 127.0.0.1 --port 3100 \
       >"$runtime_dir/app.log" 2>&1 &
     echo "$!" >"$runtime_dir/app.pid"
