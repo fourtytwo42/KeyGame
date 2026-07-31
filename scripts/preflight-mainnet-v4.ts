@@ -206,14 +206,20 @@ const sourceStatus = execFileSync(
 if (sourceStatus.length !== 0) {
   throw new Error(`Source tree is dirty:\n${sourceStatus}`);
 }
+const upstreamRef = process.env.RELEASE_UPSTREAM_REF?.trim();
+if (!upstreamRef) {
+  throw new Error(
+    "RELEASE_UPSTREAM_REF is required for detached release preflight.",
+  );
+}
 let upstreamCommit: string;
 try {
-  upstreamCommit = execFileSync("git", ["rev-parse", "@{upstream}"], {
+  upstreamCommit = execFileSync("git", ["rev-parse", upstreamRef], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim();
 } catch {
-  throw new Error("Release branch has no configured upstream.");
+  throw new Error(`Release upstream ref cannot be resolved: ${upstreamRef}.`);
 }
 if (upstreamCommit !== sourceCommit) {
   throw new Error(
@@ -227,6 +233,7 @@ const evidence = {
   head: head.number.toString(),
   headHash: head.hash,
   sourceCommit,
+  upstreamRef,
   upstreamCommit,
   sourceClean: true,
   sourcePushed: true,

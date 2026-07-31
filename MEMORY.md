@@ -574,7 +574,9 @@ When sources conflict, use this order:
   settlements, 50 cancellations, and 11 recovery faults.
 - Result: Zero unresolved critical/high findings after documented suppressions;
   zero torture reconciliation differences. AMZN was safely rejected on the live
-  mainnet fork because its USDG depth had fallen below 10,000.
+  mainnet fork because its USDG depth had fallen below 10,000. Mainnet preflight
+  now requires an explicit `RELEASE_UPSTREAM_REF`, so a detached exact-commit
+  worktree proves pushed-source identity without relying on branch tracking.
 - Follow-up: Package the candidate, configure three verified Safes, obtain the
   signed operator risk acceptance, then request separate authorization for the
   two-round mock-only Robinhood testnet smoke.

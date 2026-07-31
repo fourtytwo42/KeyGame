@@ -6,6 +6,12 @@ output_dir="$project_root/artifacts/internal-assurance-candidate-v4"
 cd "$project_root"
 
 torture_report_json="${V4_TORTURE_REPORT_JSON:-}"
+release_upstream_ref="${RELEASE_UPSTREAM_REF:-}"
+if [[ -z "$release_upstream_ref" ]]; then
+  echo "RELEASE_UPSTREAM_REF must identify the pushed release commit." >&2
+  exit 1
+fi
+export RELEASE_UPSTREAM_REF="$release_upstream_ref"
 if [[ -z "$torture_report_json" ]]; then
   echo "V4_TORTURE_REPORT_JSON must identify the accepted commit-bound torture report." >&2
   exit 1
@@ -41,7 +47,7 @@ git merge-base --is-ancestor "$qualified_commit" "$source_commit" || {
 }
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|scripts/package-audit-candidate-v4.sh|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
       exit 1
