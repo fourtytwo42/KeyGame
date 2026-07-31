@@ -10,7 +10,11 @@ export PATH="$HOME/.foundry/bin:$PATH"
 
 while true; do
   state="$(psql "$database_url" -Atc \
-    "SELECT state FROM soak_runs WHERE id='$run_id'")"
+    "SELECT state FROM soak_runs WHERE id='$run_id'" 2>/dev/null || true)"
+  if [[ -z "$state" ]]; then
+    sleep 1
+    continue
+  fi
   rss="$(ps -o rss= -p "$(cat "$runtime_dir/anvil.pid")" \
     -p "$(cat "$runtime_dir/indexer.pid")" \
     -p "$(cat "$runtime_dir/keeper.pid")" \
@@ -31,7 +35,7 @@ while true; do
   psql "$database_url" -v ON_ERROR_STOP=1 -c \
     "INSERT INTO torture_resource_samples(
        run_id,cpu_percent,memory_bytes,disk_bytes,rpc_block,indexer_lag)
-     VALUES('$run_id',$cpu,$rss,$disk,$block,$lag)" >/dev/null
+     VALUES('$run_id',$cpu,$rss,$disk,$block,$lag)" >/dev/null 2>&1 || true
   [[ "$state" == "completed" || "$state" == "failed" ]] && break
   sleep 5
 done

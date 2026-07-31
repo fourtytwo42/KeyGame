@@ -11,8 +11,15 @@ export PATH="$HOME/.foundry/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
 source "$NVM_DIR/nvm.sh"
 
+wait_database() {
+  until psql "$database_url" -qAtc "SELECT 1" >/dev/null 2>&1; do
+    sleep 1
+  done
+}
+
 record_start() {
   local fault="$1"
+  wait_database
   psql "$database_url" -qAt -v run_id="$run_id" -v fault="$fault" <<'SQL'
 INSERT INTO soak_faults(
   run_id,fault_type,auth_digest,state,scheduled_at,activated_at,parameters)
@@ -24,6 +31,7 @@ SQL
 record_end() {
   local id="$1"
   local evidence="$2"
+  wait_database
   psql "$database_url" -v id="$id" -v evidence="$evidence" <<'SQL' >/dev/null
 UPDATE soak_faults SET state='restored',restored_at=now(),
   evidence=jsonb_build_object('result',:'evidence')
@@ -37,7 +45,7 @@ wait_rounds() {
     settled="$(psql "$database_url" -Atc \
       "SELECT count(*) FROM soak_actions
        WHERE run_id='$run_id' AND action_type='v4-settled-round'
-         AND state='confirmed'")"
+         AND state='confirmed'" 2>/dev/null || echo 0)"
     [[ "$settled" -ge "$target" ]] && return
     sleep 0.2
   done
@@ -130,12 +138,24 @@ wait_for_postgres_recovery() {
 restart_service keeper 50
 restart_service indexer 125
 restart_service web 200
+
+wait_rounds 250
+id="$(record_start postgres-backend-drop)"
+psql "postgresql:///keygame?host=/var/run/postgresql" -c \
+  "SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+   WHERE application_name LIKE 'keygame_torture%'
+     AND pid <> pg_backend_pid()" >/dev/null
+wait_rounds 260
+record_end "$id" \
+  "controller and services resumed after all torture database sessions dropped"
+
 restart_service keeper 300
 restart_service indexer 375
 restart_service web 450
 
 while [[ "$(psql "$database_url" -Atc \
-  "SELECT state FROM soak_runs WHERE id='$run_id'")" == "running" ]]; do
+  "SELECT state FROM soak_runs WHERE id='$run_id'" 2>/dev/null ||
+  echo running)" == "running" ]]; do
   sleep 1
 done
 

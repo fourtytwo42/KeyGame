@@ -23,6 +23,10 @@ import {
 import { isCompletedRollover } from "../src/lib/server/v4-soak";
 import { localDevnet } from "../src/lib/web3/chains";
 import { deploymentKeyFor, loadManifest, pool } from "../services/common";
+import {
+  isTransientDatabaseError,
+  waitForDatabaseRecovery,
+} from "../services/database-resilience";
 
 const command = process.argv[2] ?? "status";
 process.env.KEYGAME_CHAIN_ID ??= "31337";
@@ -1061,44 +1065,64 @@ async function currentRun() {
   return run.rows[0];
 }
 
+async function waitForDatabase(label: string) {
+  return waitForDatabaseRecovery(() => pool.query("SELECT 1"), label);
+}
+
 async function run() {
+  await waitForDatabase("controller startup");
   const current = await currentRun();
   const natural = current.run_profile === "v4-endurance";
   for (let ordinal = 1; ordinal <= current.config.targetSettled; ordinal += 1) {
     const intervalStarted = Date.now();
-    const action = await pool.query<{ id: string }>(
-      `INSERT INTO soak_actions(
-         run_id,idempotency_key,action_type,scheduled_at,state,payload,started_at)
-       VALUES($1,$2,'v4-settled-round',now(),'running',$3,now())
-       ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
-         state=CASE WHEN soak_actions.state='confirmed'
-           THEN 'confirmed' ELSE 'running' END
-       RETURNING id`,
-      [current.id, `settled:${ordinal}`, JSON.stringify({ ordinal })],
-    );
-    const already = await pool.query<{ state: string }>(
-      `SELECT state FROM soak_actions
-       WHERE run_id=$1 AND idempotency_key=$2`,
-      [current.id, `settled:${ordinal}`],
-    );
-    if (already.rows[0]?.state === "confirmed") continue;
-    try {
-      await runSettledRound(current.id, ordinal, action.rows[0].id, natural);
-      await pool.query(
-        `UPDATE soak_actions SET state='confirmed',completed_at=now()
-         WHERE id=$1`,
-        [action.rows[0].id],
-      );
-    } catch (error) {
-      await pool.query(
-        `UPDATE soak_actions SET state='failed',completed_at=now(),last_error=$2
-         WHERE id=$1`,
-        [
-          action.rows[0].id,
-          error instanceof Error ? error.message : String(error),
-        ],
-      );
-      throw error;
+    for (;;) {
+      let actionId: string | undefined;
+      try {
+        const action = await pool.query<{ id: string }>(
+          `INSERT INTO soak_actions(
+             run_id,idempotency_key,action_type,scheduled_at,state,payload,started_at)
+           VALUES($1,$2,'v4-settled-round',now(),'running',$3,now())
+           ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
+             state=CASE WHEN soak_actions.state='confirmed'
+               THEN 'confirmed' ELSE 'running' END
+           RETURNING id`,
+          [current.id, `settled:${ordinal}`, JSON.stringify({ ordinal })],
+        );
+        actionId = action.rows[0].id;
+        const already = await pool.query<{ state: string }>(
+          `SELECT state FROM soak_actions
+           WHERE run_id=$1 AND idempotency_key=$2`,
+          [current.id, `settled:${ordinal}`],
+        );
+        if (already.rows[0]?.state !== "confirmed") {
+          await runSettledRound(current.id, ordinal, actionId, natural);
+          await pool.query(
+            `UPDATE soak_actions SET state='confirmed',completed_at=now()
+             WHERE id=$1`,
+            [actionId],
+          );
+        }
+        break;
+      } catch (error) {
+        if (isTransientDatabaseError(error)) {
+          await waitForDatabase(`settled round ${ordinal}`);
+          continue;
+        }
+        if (actionId) {
+          await pool
+            .query(
+              `UPDATE soak_actions
+               SET state='failed',completed_at=now(),last_error=$2
+               WHERE id=$1`,
+              [
+                actionId,
+                error instanceof Error ? error.message : String(error),
+              ],
+            )
+            .catch(() => undefined);
+        }
+        throw error;
+      }
     }
     if (natural && ordinal < current.config.targetSettled) {
       const remaining =
@@ -1114,34 +1138,52 @@ async function run() {
     ordinal <= current.config.targetCancelled;
     ordinal += 1
   ) {
-    const action = await pool.query<{ id: string }>(
-      `INSERT INTO soak_actions(
-         run_id,idempotency_key,action_type,scheduled_at,state,payload,started_at)
-       VALUES($1,$2,'v4-cancelled-round',now(),'running',$3,now())
-       ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
-         state=CASE WHEN soak_actions.state='confirmed'
-           THEN 'confirmed' ELSE 'running' END
-       RETURNING id`,
-      [current.id, `cancelled:${ordinal}`, JSON.stringify({ ordinal })],
-    );
-    const already = await pool.query<{ state: string }>(
-      `SELECT state FROM soak_actions
-       WHERE run_id=$1 AND idempotency_key=$2`,
-      [current.id, `cancelled:${ordinal}`],
-    );
-    if (already.rows[0]?.state === "confirmed") continue;
-    await runCancelledRound(current.id, ordinal, action.rows[0].id);
-    await pool.query(
-      `UPDATE soak_actions SET state='confirmed',completed_at=now()
-       WHERE id=$1`,
-      [action.rows[0].id],
-    );
+    for (;;) {
+      try {
+        const action = await pool.query<{ id: string }>(
+          `INSERT INTO soak_actions(
+             run_id,idempotency_key,action_type,scheduled_at,state,payload,started_at)
+           VALUES($1,$2,'v4-cancelled-round',now(),'running',$3,now())
+           ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
+             state=CASE WHEN soak_actions.state='confirmed'
+               THEN 'confirmed' ELSE 'running' END
+           RETURNING id`,
+          [current.id, `cancelled:${ordinal}`, JSON.stringify({ ordinal })],
+        );
+        const already = await pool.query<{ state: string }>(
+          `SELECT state FROM soak_actions
+           WHERE run_id=$1 AND idempotency_key=$2`,
+          [current.id, `cancelled:${ordinal}`],
+        );
+        if (already.rows[0]?.state !== "confirmed") {
+          await runCancelledRound(current.id, ordinal, action.rows[0].id);
+          await pool.query(
+            `UPDATE soak_actions SET state='confirmed',completed_at=now()
+             WHERE id=$1`,
+            [action.rows[0].id],
+          );
+        }
+        break;
+      } catch (error) {
+        if (!isTransientDatabaseError(error)) throw error;
+        await waitForDatabase(`cancelled round ${ordinal}`);
+      }
+    }
   }
-  await pool.query(
-    `UPDATE soak_runs SET state='completed',completed_at=now(),updated_at=now()
-     WHERE id=$1`,
-    [current.id],
-  );
+  for (;;) {
+    try {
+      await pool.query(
+        `UPDATE soak_runs
+         SET state='completed',completed_at=now(),updated_at=now()
+         WHERE id=$1`,
+        [current.id],
+      );
+      break;
+    } catch (error) {
+      if (!isTransientDatabaseError(error)) throw error;
+      await waitForDatabase("run completion");
+    }
+  }
 }
 
 async function status() {

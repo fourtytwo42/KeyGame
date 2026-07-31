@@ -58,6 +58,16 @@ export const pool = new Pool({
     "postgresql:///keygame?host=/var/run/postgresql",
 });
 
+// PostgreSQL may restart during planned fault injection or host maintenance.
+// Pool emits an error for an idle client before later queries reconnect; an
+// explicit listener prevents that transient disconnect from terminating the
+// keeper, indexer, or qualification controller.
+pool.on("error", (error) => {
+  process.stderr.write(
+    `${new Date().toISOString()} PostgreSQL pool disconnect: ${error.message}\n`,
+  );
+});
+
 export async function loadManifest(): Promise<DeploymentManifest> {
   const explicit = process.env.KEYGAME_DEPLOYMENT_MANIFEST;
   const chainId = Number(process.env.KEYGAME_CHAIN_ID || 46630);

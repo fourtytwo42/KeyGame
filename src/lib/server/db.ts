@@ -19,6 +19,12 @@ if (process.env.NODE_ENV !== "production") {
   globalThis.__keyGamePool = database;
 }
 
+database.on("error", (error) => {
+  process.stderr.write(
+    `${new Date().toISOString()} PostgreSQL pool disconnect: ${error.message}\n`,
+  );
+});
+
 export async function databaseHealth() {
   const started = Date.now();
   const result = await database.query<{ now: Date }>("SELECT now()");
