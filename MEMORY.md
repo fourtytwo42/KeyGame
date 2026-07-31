@@ -36,6 +36,10 @@ Durable project context lives here. Update this file whenever information should
 - Final evidence includes 30 exported logs/tables plus a PostgreSQL snapshot
   under the run directory and occupies about 107 MB. The isolated Anvil,
   keeper, indexer, and web runtime was stopped after packaging.
+- Audit and testnet package scripts explicitly rebuild Foundry artifacts with
+  `storageLayout` output before collecting storage layouts. This prevents clean
+  VM packaging from failing after the ordinary build/test steps replace those
+  artifacts. Last verified 2026-07-31.
 - Do not broadcast to Robinhood testnet or mainnet.
 - Next step is independent audit/legal/Safe work. The two-round Robinhood
   testnet smoke and later external-wallet UAT remain separate gates.

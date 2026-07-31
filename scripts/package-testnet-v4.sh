@@ -12,6 +12,10 @@ forge build
 forge test
 pnpm release:scan
 
+# Storage layouts are not part of Foundry's default artifacts. Rebuild them
+# explicitly so `forge inspect storage-layout` is deterministic on a clean VM.
+forge build --force --extra-output storageLayout
+
 for contract in \
   LastBellRoundV4 RoundManagerV4 LifetimePointsVault RewardRouterV4 \
   PaymentRouter MockStockSwapAdapter MockUSDG MockStockToken; do

@@ -45,6 +45,10 @@ RUN_ROBINHOOD_MAINNET_FORK=true \
 pnpm exec tsx scripts/preflight-mainnet-v4.ts \
   >"$output_dir/evidence/mainnet-preflight.json"
 
+# Storage layouts are not part of Foundry's default artifacts. Rebuild them
+# explicitly so `forge inspect storage-layout` is deterministic on a clean VM.
+forge build --force --extra-output storageLayout
+
 for contract in \
   LastBellRoundV4 RoundManagerV4 LifetimePointsVault RewardRouterV4 \
   RobinhoodStockSwapAdapter PaymentRouter; do
