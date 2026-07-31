@@ -33,6 +33,13 @@ Durable project context lives here. Update this file whenever information should
   reset. Keeper retries and pruned-history-safe indexing are being hardened,
   then the complete live campaign must restart from a clean isolated
   deployment.
+- The next clean live attempt passed all 500 settlement rounds and all six
+  scheduled service restarts with zero failed actions, then exposed a
+  cancellation-only harness assertion: the keeper prepared and activated the
+  next round immediately, but `waitForKeeperRollover` accepted only phase 4
+  (Settled), not phase 5 (Cancelled), and falsely timed out. Cancellation
+  rollover polling must accept both terminal phases before the final clean
+  rerun.
 - Do not broadcast to Robinhood testnet or mainnet.
 
 ## Current State
@@ -261,6 +268,13 @@ When sources conflict, use this order:
   poisoned round 5058's idempotency key. The indexer also exposed a reliance on
   pruned historical state for immutable ticker metadata. Both paths require a
   clean live rerun after repair.
+- 2026-07-31: Clean torture source `7a15248` passed a fresh 1,000,000-action
+  contract campaign and 500 live settlement rounds with all six restart faults,
+  no failed keeper jobs, and no failed actions. The first cancellation did
+  cancel and roll onchain, but the controller falsely failed because its wait
+  predicate excluded the Cancelled terminal phase. This is a harness
+  observation defect; its evidence is preserved and requires a clean rerun
+  after the predicate fix.
 - 2026-07-30: Implemented `last-bell-v4-stock-pot`. Final local gates passed:
   48 Vitest tests, 4 clean-chain integration tests, 37 Foundry tests including
   512-run v4 fuzzing, 20 Playwright desktop/mobile checks with two intentional

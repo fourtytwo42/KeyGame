@@ -19,6 +19,7 @@ import {
   roundManagerV4Abi,
   stockSwapAdapterAbi,
 } from "../src/lib/web3/last-bell-abi";
+import { isCompletedRollover } from "../src/lib/server/v4-soak";
 import { localDevnet } from "../src/lib/web3/chains";
 import { deploymentKeyFor, loadManifest, pool } from "../services/common";
 
@@ -457,7 +458,7 @@ async function waitForKeeperRollover(round: Address, timeoutMs = 30_000) {
           functionName: "activeRound",
         }),
       ]);
-      if (Number(phase) === 4 && active.toLowerCase() !== round.toLowerCase()) {
+      if (isCompletedRollover(Number(phase), active, round)) {
         return;
       }
     } catch {
