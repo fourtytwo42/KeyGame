@@ -152,11 +152,26 @@ export interface StockPotAsset {
 
 export interface StockSwapQuote {
   ticker: TickerId;
+  tickerIndex: number;
   usdgAmount: number;
   estimatedStockOut: number;
   minimumStockOut: string;
   quoteBlock: number;
   expiresAt: number;
+  canonicalToken?: `0x${string}`;
+  poolAddress?: `0x${string}`;
+  marketId?: `0x${string}`;
+  feeTier?: number;
+  twapWindowSeconds?: number;
+  twapPriceUsd?: number;
+  executionDeviationBps?: number;
+  maximumExecutionDeviationBps?: number;
+  usdgDepth?: number;
+  buyImpactBps?: number;
+  sellImpactBps?: number;
+  safetyObservedAt?: number;
+  priceSourceChainId?: number;
+  mockOnly?: boolean;
   multiplierBps: number;
   projectedPoints: number;
   projectedLeader: TickerId;
@@ -463,6 +478,9 @@ export interface ScreeningAsset {
   halted: boolean;
   canonical: boolean;
   dailyVolume: number;
+  recentTradingActivity?: number;
+  marketSafetyObservedAt?: number;
+  metadataCheckedAt?: number;
   currentMultiplier?: number;
   quoteGeneratedAt?: number;
   mockOnly?: boolean;
@@ -476,4 +494,10 @@ export interface RosterSnapshot {
   delayed: boolean;
   screenedAt: number;
   reason?: string;
+  catalogVersion?: `0x${string}`;
+  approvedCatalogSize?: number;
+  exclusions?: Array<{
+    ticker: string;
+    reasons: string[];
+  }>;
 }

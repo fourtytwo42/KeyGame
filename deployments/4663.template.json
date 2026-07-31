@@ -1,36 +1,87 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 4,
   "environment": "robinhood-mainnet",
   "chainId": 4663,
   "deploymentBlock": 0,
-  "sourceCommit": "REQUIRED_AFTER_AUDIT",
+  "sourceCommit": "REQUIRED_FROZEN_AUDITED_COMMIT",
   "mockOnly": false,
-  "contractVersion": "closing-print-v3-airtime",
+  "contractVersion": "last-bell-v4-stock-pot",
   "broadcastLocked": true,
   "roles": {
     "managerAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
-    "verifierAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
+    "marketAdminSafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
     "treasurySafe": "REQUIRED_VERIFIED_2_OF_3_SAFE",
     "commonOwners": [
       "REQUIRED_OWNER_1",
       "REQUIRED_OWNER_2",
       "REQUIRED_OWNER_3"
-    ]
+    ],
+    "keeper": "REQUIRED_ISOLATED_KEEPER"
   },
   "contracts": {
-    "manager": "0x0000000000000000000000000000000000000000",
-    "paymentRouter": "0x0000000000000000000000000000000000000000",
-    "paymentToken": "0x0000000000000000000000000000000000000000",
-    "marketVerifier": "0x0000000000000000000000000000000000000000"
+    "manager": null,
+    "paymentRouter": null,
+    "paymentToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "lifetimePointsVault": null,
+    "rewardRouter": null,
+    "swapAdapter": null,
+    "activeRound": null
   },
   "rpc": {
     "primary": "http://192.168.50.173:8547",
     "fallback": "SERVER_ONLY_REQUIRED"
   },
-  "verifier": {
-    "type": "dex-onchain",
+  "market": {
+    "type": "direct-uniswap-v3-stock-swap",
     "factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
     "quoteToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-    "twapWindowSeconds": 600
+    "twapWindowSeconds": 600,
+    "requiredHistorySeconds": 1800,
+    "maximumExecutionDeviationBps": 100,
+    "minimumUsdgDepth": 10000,
+    "catalogLimit": 16,
+    "approvedCatalog": [
+      {
+        "symbol": "AAPL",
+        "stockToken": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+        "pool": "0x783c9bbb765047cfdd2b84b92b2ca9f11d34b7ed",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "TSLA",
+        "stockToken": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d",
+        "pool": "0xf4acdaeeb7022862a763c9b1b885e11191c889e3",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "AMZN",
+        "stockToken": "0x12f190a9F9d7D37a250758b26824B97CE941bF54",
+        "pool": "0x8ac92da74ab5f3b1d024dc1943ad7e15dc4179ef",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "SPY",
+        "stockToken": "0x117cc2133c37B721F49dE2A7a74833232B3B4C0C",
+        "pool": "0xa43b424bc609495aed4bcd88d654934b510b0ad9",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "NVDA",
+        "stockToken": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+        "pool": "0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3",
+        "feeTier": 500
+      }
+    ]
+  },
+  "releaseGates": {
+    "tortureBaselinePreserved": true,
+    "productionAdapterQualified": false,
+    "testnetSmokeAuthorized": false,
+    "testnetSmokePassed": false,
+    "auditApproved": false,
+    "legalApproved": false,
+    "safesVerified": false,
+    "externalWalletUatPassed": false,
+    "mainnetBroadcastAuthorized": false
   }
 }

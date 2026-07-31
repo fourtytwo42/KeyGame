@@ -77,3 +77,94 @@ export function screenRoster(
     reason: "Fewer than four active, canonical, non-halted assets.",
   };
 }
+
+const MARKET_SAFETY_MAX_AGE = 45;
+const METADATA_MAX_AGE = 300;
+const SAMPLE_MAX_AGE = 30;
+
+const exclusionReasons = (asset: ScreeningAsset, screenedAt: number) => {
+  const reasons: string[] = [];
+  if (!asset.canonical) reasons.push("not-canonical");
+  if (!asset.active) reasons.push("inactive");
+  if (asset.halted) reasons.push("halted");
+  if (!asset.marketId || !asset.dexMarket)
+    reasons.push("no-approved-direct-pool");
+  if (asset.dexMarket && !asset.dexMarket.safety.eligible) {
+    reasons.push(...asset.dexMarket.safety.reasons);
+  }
+  if (asset.samples.length < MIN_COMPLETE_SAMPLES) {
+    reasons.push("insufficient-30-minute-samples");
+  }
+  if (
+    !asset.marketSafetyObservedAt ||
+    asset.marketSafetyObservedAt > screenedAt + 5 ||
+    screenedAt - asset.marketSafetyObservedAt > MARKET_SAFETY_MAX_AGE
+  ) {
+    reasons.push("stale-market-safety");
+  }
+  if (
+    !asset.metadataCheckedAt ||
+    asset.metadataCheckedAt > screenedAt + 5 ||
+    screenedAt - asset.metadataCheckedAt > METADATA_MAX_AGE
+  ) {
+    reasons.push("stale-asset-metadata");
+  }
+  const latestSample = asset.samples.at(-1)?.timestamp;
+  if (
+    !latestSample ||
+    latestSample > screenedAt + 5 ||
+    screenedAt - latestSample > SAMPLE_MAX_AGE
+  ) {
+    reasons.push("stale-market-samples");
+  }
+  return [...new Set(reasons)];
+};
+
+/// V4 cannot place value through an unsafe fallback market. It delays the next
+/// prepared round until four catalog assets satisfy every execution gate.
+export function screenStockPotRoster(
+  assets: ScreeningAsset[],
+  catalogVersion?: `0x${string}`,
+  screenedAt = Math.floor(Date.now() / 1000),
+): RosterSnapshot {
+  const ranked = assets
+    .filter((asset) => exclusionReasons(asset, screenedAt).length === 0)
+    .sort((left, right) => {
+      const activity =
+        (right.recentTradingActivity ?? 0) - (left.recentTradingActivity ?? 0);
+      if (activity !== 0) return activity;
+      if (right.dailyVolume !== left.dailyVolume) {
+        return right.dailyVolume - left.dailyVolume;
+      }
+      return left.ticker.localeCompare(right.ticker);
+    });
+  const exclusions = assets
+    .map((asset) => ({
+      ticker: asset.ticker,
+      reasons: exclusionReasons(asset, screenedAt),
+    }))
+    .filter((asset) => asset.reasons.length > 0);
+  if (ranked.length < 4) {
+    return {
+      mode: "DEX",
+      label: "HEAT CHECK",
+      selected: [],
+      delayed: true,
+      screenedAt,
+      catalogVersion,
+      approvedCatalogSize: assets.length,
+      exclusions,
+      reason: "Fewer than four approved Stock Token markets are safe.",
+    };
+  }
+  return {
+    mode: "DEX",
+    label: "HEAT CHECK",
+    selected: ranked.slice(0, 4),
+    delayed: false,
+    screenedAt,
+    catalogVersion,
+    approvedCatalogSize: assets.length,
+    exclusions,
+  };
+}

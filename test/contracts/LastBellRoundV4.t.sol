@@ -170,6 +170,68 @@ contract LastBellRoundV4Test is TestBase {
         assertEq(stocks[0].balanceOf(address(manager)), 0, "old roster seed fully sold");
     }
 
+    function test_MarketConfigurationLocksBeforeAndAfterRosterPreparation() public {
+        assertTrue(!manager.marketConfigurationAllowed(), "active round locks catalog");
+        _claim(ALICE, 0, 10e6);
+        vm.warp(round.deadline());
+        manager.finalizeActive();
+        assertTrue(manager.marketConfigurationAllowed(), "settlement opens window");
+
+        LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
+            roundId: 2,
+            startDuration: 45,
+            extensionDuration: 2,
+            rugDuration: 10,
+            hardCapDuration: 180,
+            heatTarget: 4_000e6,
+            producerPassRequired: false
+        });
+        LastBellRoundV4.TickerConfig[4] memory tickers;
+        for (uint8 i; i < 4; i++) {
+            (bytes32 symbol, bytes32 assetId, address token) = round.tickerConfigs(i);
+            tickers[i] = LastBellRoundV4.TickerConfig({
+                symbol: symbol, assetId: assetId, token: token
+            });
+        }
+        manager.prepareRound(settings, tickers);
+        assertTrue(
+            !manager.marketConfigurationAllowed(), "prepared roster locks catalog"
+        );
+    }
+
+    function test_ManagerRejectsDuplicateOrUnsupportedRosterTokens() public {
+        _claim(ALICE, 0, 10e6);
+        vm.warp(round.deadline());
+        manager.finalizeActive();
+        LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
+            roundId: 2,
+            startDuration: 45,
+            extensionDuration: 2,
+            rugDuration: 10,
+            hardCapDuration: 180,
+            heatTarget: 4_000e6,
+            producerPassRequired: false
+        });
+        LastBellRoundV4.TickerConfig[4] memory tickers;
+        for (uint8 i; i < 4; i++) {
+            (bytes32 symbol, bytes32 assetId, address token) = round.tickerConfigs(i);
+            tickers[i] = LastBellRoundV4.TickerConfig({
+                symbol: symbol, assetId: assetId, token: token
+            });
+        }
+        tickers[3] = tickers[0];
+        vm.expectRevert(RoundManagerV4.InvalidTransition.selector);
+        manager.prepareRound(settings, tickers);
+
+        MockStockToken unsupported = new MockStockToken("UNSUPPORTED");
+        (bytes32 symbol3, bytes32 assetId3,) = round.tickerConfigs(3);
+        tickers[3] = LastBellRoundV4.TickerConfig({
+            symbol: symbol3, assetId: assetId3, token: address(unsupported)
+        });
+        vm.expectRevert(RoundManagerV4.InvalidTransition.selector);
+        manager.prepareRound(settings, tickers);
+    }
+
     function testFuzz_PointsMonotonicAndCapped(uint256 amount) public {
         amount = bound(amount, 1e6, 500_000e6);
         _claim(ALICE, 0, amount);

@@ -23,12 +23,15 @@ type MarketRow = {
   current_multiplier: string;
   daily_volume: string;
   quote_generated_at: Date | null;
+  dex_observed_at: Date | null;
+  metadata_checked_at: Date;
 };
 
 type SampleRow = {
   symbol: string;
   sampled_at: Date;
   adjusted_mid: string;
+  daily_volume: string;
 };
 
 export async function loadScreeningAssets(): Promise<ScreeningAsset[]> {
@@ -38,11 +41,12 @@ export async function loadScreeningAssets(): Promise<ScreeningAsset[]> {
               pool_address,fee_tier,twap_window_seconds,source_chain_id,
               pool_usdg_depth,buy_impact_bps,sell_impact_bps,
               spot_twap_deviation_bps,dex_safe,dex_safety_reasons,
-              active,halted,current_multiplier,daily_volume,quote_generated_at
+              active,halted,current_multiplier,daily_volume,quote_generated_at,
+              dex_observed_at,metadata_checked_at
        FROM market_assets ORDER BY symbol`,
     ),
     database.query<SampleRow>(
-      `SELECT symbol,sampled_at,adjusted_mid
+      `SELECT symbol,sampled_at,adjusted_mid,daily_volume
        FROM market_samples
        WHERE sampled_at >= now() - interval '30 minutes'
          AND source='uniswap-v3-twap'
@@ -100,6 +104,17 @@ export async function loadScreeningAssets(): Promise<ScreeningAsset[]> {
       halted: asset.halted,
       canonical: Boolean(asset.canonical_address),
       dailyVolume: Number(asset.daily_volume),
+      recentTradingActivity: (() => {
+        const activitySamples = bySymbol.get(asset.symbol) ?? [];
+        if (activitySamples.length < 2) return 0;
+        const first = Number(activitySamples[0].daily_volume);
+        const last = Number(activitySamples.at(-1)?.daily_volume ?? first);
+        return Math.max(0, last - first);
+      })(),
+      marketSafetyObservedAt: asset.dex_observed_at
+        ? Math.floor(asset.dex_observed_at.getTime() / 1000)
+        : undefined,
+      metadataCheckedAt: Math.floor(asset.metadata_checked_at.getTime() / 1000),
       currentMultiplier: Number(asset.current_multiplier),
       quoteGeneratedAt: asset.quote_generated_at
         ? Math.floor(asset.quote_generated_at.getTime() / 1000)

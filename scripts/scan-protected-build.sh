@@ -19,9 +19,11 @@ pnpm build
 dist_dir="${NEXT_DIST_DIR:-.next}"
 forbidden='keygame:uat-testnet-wallet|Built-in Testnet Wallet|FUND TEST WALLET|Test ETH and mock USDG funded|Injected testnet-only stale DEX observation fault|SOAK_CONTROL_TOKEN'
 if [[ "${NEXT_PUBLIC_GAME_MODE:-}" == "mainnet" ]]; then
-  forbidden="${forbidden}|TestnetAttestedMarketDataVerifier|testnet-dex-attested"
+  forbidden="${forbidden}|TestnetAttestedMarketDataVerifier|testnet-dex-attested|MockStockSwapAdapter|TestnetMockUSDG|mock-stock-swap-adapter|v4-torture:"
 fi
-if grep -R -a -n -E "$forbidden" "$dist_dir/static" "$dist_dir/server"; then
+if find "$dist_dir/static" "$dist_dir/server" -type f \
+  -name '*.js' -print0 \
+  | xargs -0 -r grep -a -n -E "$forbidden"; then
   echo "Protected bundle contains forbidden UAT/testnet-only code." >&2
   exit 1
 fi

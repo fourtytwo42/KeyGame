@@ -1,13 +1,16 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { heartbeat, pool } from "./common";
+import { hexToString } from "viem";
+import { heartbeat, loadManifest, pool, publicClientFor } from "./common";
 import {
+  dexMarketId,
   pinnedDexMarkets,
-  pinnedMarketBySymbol,
   REQUIRED_HISTORY_SECONDS,
   ROBINHOOD_MAINNET_CHAIN_ID,
   TWAP_WINDOW_SECONDS,
+  type PinnedDexMarket,
 } from "../src/lib/game/dex-config";
+import { stockSwapAdapterAbi } from "../src/lib/web3/last-bell-abi";
 import { mainnetDexClient, readDexObservation } from "./dex-observation";
 
 type Catalog = {
@@ -41,7 +44,8 @@ type RobinhoodQuote = {
   generatedAt: string;
 };
 
-const chainId = Number(process.env.KEYGAME_CHAIN_ID || 46630);
+const runtimeManifest = await loadManifest();
+const chainId = runtimeManifest.chainId;
 const intervalMs = Number(process.env.MARKET_SAMPLE_INTERVAL_MS || 15_000);
 const apiBase =
   process.env.ROBINHOOD_STOCK_TOKEN_API_URL ?? "https://api.robinhood.com/rhj";
@@ -52,6 +56,55 @@ const catalog = JSON.parse(
     "utf8",
   ),
 ) as Catalog;
+
+async function approvedMarkets(): Promise<PinnedDexMarket[]> {
+  const manifest = runtimeManifest;
+  if (
+    manifest.chainId !== 4663 ||
+    manifest.contractVersion !== "last-bell-v4-stock-pot" ||
+    !manifest.contracts.swapAdapter
+  ) {
+    return [...pinnedDexMarkets];
+  }
+  const client = publicClientFor(manifest);
+  const count = Number(
+    await client.readContract({
+      address: manifest.contracts.swapAdapter,
+      abi: stockSwapAdapterAbi,
+      functionName: "marketCount",
+    }),
+  );
+  if (count > 16) throw new Error("The onchain market catalog exceeds 16.");
+  const markets = await Promise.all(
+    Array.from({ length: count }, async (_, index) => {
+      const stockToken = await client.readContract({
+        address: manifest.contracts.swapAdapter!,
+        abi: stockSwapAdapterAbi,
+        functionName: "catalog",
+        args: [BigInt(index)],
+      });
+      const configured = await client.readContract({
+        address: manifest.contracts.swapAdapter!,
+        abi: stockSwapAdapterAbi,
+        functionName: "markets",
+        args: [stockToken],
+      });
+      return {
+        symbol: hexToString(configured[0], { size: 32 }).replace(/\0+$/g, ""),
+        stockToken,
+        pool: configured[2],
+        feeTier: configured[3],
+        enabled: configured[6],
+      };
+    }),
+  );
+  return markets
+    .filter((market) => market.enabled)
+    .map(({ enabled, ...market }) => {
+      void enabled;
+      return market;
+    });
+}
 
 async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url, {
@@ -64,6 +117,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 export async function collectOnce() {
+  const markets = await approvedMarkets();
   const assetsPayload = await fetchJson<{ assets: RobinhoodAsset[] }>(
     `${apiBase}/assets`,
   );
@@ -74,7 +128,7 @@ export async function collectOnce() {
   const observations = new Map(
     (
       await Promise.allSettled(
-        pinnedDexMarkets.map((market) => readDexObservation(market, dexClient)),
+        markets.map((market) => readDexObservation(market, dexClient)),
       )
     )
       .filter(
@@ -86,13 +140,26 @@ export async function collectOnce() {
       )
       .map((result) => [result.value.symbol, result.value]),
   );
+  const marketBySymbol = new Map(
+    markets.map((market) => [market.symbol, market]),
+  );
+  const mockBySymbol = new Map(
+    catalog.assets.map((asset) => [asset.symbol, asset]),
+  );
+  await pool.query(
+    `UPDATE market_assets SET dex_safe=false,
+       dex_safety_reasons='["Not in active Safe catalog"]'::jsonb
+     WHERE NOT (symbol=ANY($1::text[]))`,
+    [markets.map((market) => market.symbol)],
+  );
 
   let collected = 0;
-  for (const mapped of catalog.assets) {
-    const asset = official.get(mapped.symbol);
+  for (const market of markets) {
+    const mapped = mockBySymbol.get(market.symbol);
+    const asset = official.get(market.symbol);
     if (!asset) continue;
     const quotePayload = await fetchJson<{ quotes: RobinhoodQuote[] }>(
-      `${apiBase}/prices/${encodeURIComponent(mapped.symbol)}`,
+      `${apiBase}/prices/${encodeURIComponent(market.symbol)}`,
     );
     const quote = quotePayload.quotes[0];
     if (!quote) continue;
@@ -108,17 +175,25 @@ export async function collectOnce() {
       multiplier <= 0
     )
       continue;
-    const dex = observations.get(mapped.symbol);
-    const pinned = pinnedMarketBySymbol.get(
-      mapped.symbol as Parameters<typeof pinnedMarketBySymbol.get>[0],
-    );
-    const canonicalAddress =
-      asset.deployments.find((deployment) => deployment.chainId === 4663)
-        ?.contractAddress ?? mapped.mainnetAddress;
+    const dex = observations.get(market.symbol);
+    const pinned = marketBySymbol.get(market.symbol);
+    const canonicalAddress = asset.deployments.find(
+      (deployment) => deployment.chainId === 4663,
+    )?.contractAddress;
+    const canonicalMatches =
+      canonicalAddress?.toLowerCase() === market.stockToken.toLowerCase();
     const provenance = {
-      catalogCommit: catalog.sourceGitCommit,
-      catalogSha256: catalog.sourceManifestSha256,
-      disclosure: catalog.disclosure,
+      ...(runtimeManifest.chainId === 4663
+        ? {
+            sourceCommit: runtimeManifest.sourceCommit,
+            catalogAuthority: runtimeManifest.contracts.swapAdapter,
+            disclosure: "Safe-controlled canonical mainnet catalog",
+          }
+        : {
+            catalogCommit: catalog.sourceGitCommit,
+            catalogSha256: catalog.sourceManifestSha256,
+            disclosure: catalog.disclosure,
+          }),
     };
     await pool.query(
       `INSERT INTO market_assets(
@@ -153,11 +228,11 @@ export async function collectOnce() {
          dex_safety_reasons=excluded.dex_safety_reasons,
          dex_observed_at=excluded.dex_observed_at`,
       [
-        mapped.symbol,
-        asset.tokenName || mapped.name,
-        canonicalAddress,
-        mapped.testnetMockAddress,
-        asset.status === "ASSET_STATUS_ACTIVE",
+        market.symbol,
+        asset.tokenName || mapped?.name || market.symbol,
+        canonicalAddress ?? market.stockToken,
+        mapped?.testnetMockAddress ?? null,
+        asset.status === "ASSET_STATUS_ACTIVE" && canonicalMatches,
         quote.isTradingHalt,
         multiplier,
         asset.pendingMultiplier || null,
@@ -167,7 +242,7 @@ export async function collectOnce() {
         ask,
         quote.generatedAt,
         JSON.stringify(provenance),
-        dex?.marketId ?? null,
+        dex?.marketId ?? dexMarketId(market),
         pinned?.pool ?? null,
         pinned?.feeTier ?? null,
         pinned ? TWAP_WINDOW_SECONDS : null,
@@ -177,15 +252,16 @@ export async function collectOnce() {
         Number.isFinite(dex?.sellImpactBps) ? dex?.sellImpactBps : null,
         dex?.spotTwapDeviationBps ?? null,
         dex?.liquidity.toString() ?? null,
-        Boolean(dex?.safe),
-        JSON.stringify(
-          dex?.reasons ??
+        Boolean(dex?.safe && canonicalMatches),
+        JSON.stringify([
+          ...(canonicalMatches ? [] : ["Canonical registry mismatch"]),
+          ...(dex?.reasons ??
             (pinned
               ? [
                   `${REQUIRED_HISTORY_SECONDS}-second DEX observation unavailable`,
                 ]
-              : ["No pinned direct Stock Token/USDG market"]),
-        ),
+              : ["No approved direct Stock Token/USDG market"])),
+        ]),
         dex ? new Date(dex.observedAt * 1000) : null,
       ],
     );
@@ -199,7 +275,7 @@ export async function collectOnce() {
          VALUES($1,$2,$3,$3,$4,$5,'uniswap-v3-twap',$6,$7,$8)
          ON CONFLICT(symbol,sampled_at) DO NOTHING`,
         [
-          mapped.symbol,
+          market.symbol,
           sampledAt,
           dex.price,
           quote.dailyTradingVolume || "0",

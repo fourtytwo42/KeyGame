@@ -10,7 +10,7 @@ if (manifest.chainId !== 4663 || manifest.mockOnly) {
 
 const names = [
   "MANAGER_ADMIN_SAFE",
-  "VERIFIER_ADMIN_SAFE",
+  "MARKET_ADMIN_SAFE",
   "TREASURY_SAFE",
 ] as const;
 const safes = names.map((name) => {

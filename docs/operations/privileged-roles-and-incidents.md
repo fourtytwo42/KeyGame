@@ -1,81 +1,102 @@
-# Last Bell privileged roles and incident procedures
+# Last Bell v4 privileged roles and incident procedures
 
-Status: audit-candidate runbook. Mainnet remains broadcast-locked.
+Status: pre-audit runbook. Mainnet remains compile-time broadcast-locked.
 
 ## Role matrix
 
 | Role | Mainnet authority | Required owner |
 |---|---|---|
-| Manager admin | Manager configuration between rounds, keeper rotation, emergency cancellation | Dedicated 2-of-3 Safe |
-| Verifier admin | Verifier and attestor rotation between rounds | Separate 2-of-3 Safe |
-| Treasury | Withdraw the settled 5% protocol allocation | Separate 2-of-3 Safe |
-| Keeper | Prepare, activate, settle, cancel, and roll rounds through narrow manager methods | Isolated encrypted operational key |
-| Attestor | Sign domain-bound testnet DEX observations only | Isolated encrypted testnet operational key |
+| Manager admin | Keeper rotation, between-round manager settings, emergency cancellation | Dedicated 2-of-3 Safe |
+| Market/catalog admin | Approved Stock Token and direct-pool catalog changes between rounds | Separate 2-of-3 Safe |
+| Treasury | Withdraw and convert the settled 5% protocol basket | Separate 2-of-3 Safe |
+| Keeper | Prepare, activate, settle, cancel, rebalance seeds, and roll rounds through narrow manager methods | Isolated encrypted operational key |
+| Conversion operator | Execute guarded post-settlement protocol conversion | Separate narrowly funded operational key |
 
-All three Safes must use the same three independently controlled, hardware-backed
-or otherwise isolated owner wallets. The three Safe addresses must be different.
-No private key, recovery phrase, or password belongs in the repository.
+All three Safes use the same three independently controlled, hardware-backed or
+otherwise isolated owners. The Safe addresses are distinct. Private keys,
+recovery phrases, and passwords never belong in the repository.
 
-No privileged action may change a live round's roster, clock, scoring constants,
-fee, or payout split.
+No privileged action may change a live round's roster, clock, heat target,
+points, contribution minimum, or 50/30/10/5/5 payout split. The market adapter
+queries the manager before accepting a catalog mutation.
 
 ## Before any mainnet release
 
-1. Supply the three owner addresses and the three separately deployed Safe
+1. Supply the three common owner addresses and three separately deployed Safe
    addresses.
-2. Confirm each Safe is an audited deployment on Robinhood Chain, has exactly
-   the common three owners, and has threshold two.
-3. Run `pnpm exec tsx scripts/verify-mainnet-safes.ts` against the locked
-   mainnet manifest with release-reviewed runtime bytecode hashes.
-4. Archive the JSON evidence with the audit candidate.
-5. Keep the compile-time mainnet broadcast lock in place until a separate,
-   explicit release change is reviewed.
+2. Verify audited Safe runtime code, exactly those owners, threshold two, and
+   three distinct addresses.
+3. Run `pnpm release:verify-safes` and archive the JSON evidence.
+4. Confirm keeper and conversion keys have only their documented permissions.
+5. Keep the Solidity mainnet broadcast constant false until a dedicated,
+   separately authorized release commit is reviewed.
 
-## Emergency cancellation
+## Unsafe market
 
-- The keeper may invoke only the published cancellation path while a round is
-  active and the documented market-data outage condition is true.
-- Cancellation never reallocates accepted fees. Each payer withdraws their own
-  accepted fees through the refund path.
-- Record the reason, transaction, canonical block, affected round, report age,
-  and operator in the incident log.
+1. Stop preparing new rounds when fewer than four approved direct markets pass
+   canonical identity, history, depth, impact, TWAP-deviation, and halt checks.
+2. Do not swap through a fallback market that failed a value-safety check.
+3. A failure before activation leaves the round unprepared and charges nobody.
+4. A live-round swap failure reverts the entire contribution before USDG is
+   charged or the bell, timer, points, or rewards change.
+5. Record the market, observations, block, exclusion reason, and incident owner.
+
+## Stuck seed rebalance
+
+1. Do not activate the prepared round.
+2. Preserve the failed sell or rebuy transaction and current seed balances.
+3. Requote through the same approved direct pools and adapter safety rules.
+4. Retry through the keeper's idempotent job. Never edit seed accounting in
+   PostgreSQL or transfer assets outside the manager's published path.
+5. Escalate to the Manager Safe only if cancellation or a role rotation is
+   required.
 
 ## Compromised keeper
 
 1. Remove keeper authorization through the Manager Admin Safe.
-2. Stop the keeper service and preserve its logs, nonce state, and keystore.
-3. Reconcile every pending transaction hash before authorizing a replacement.
+2. Stop the service and preserve logs, nonces, pending hashes, and keystore.
+3. Reconcile every persisted hash before authorizing a replacement.
 4. Rotate to a new isolated encrypted key with only keeper permissions.
-5. Cancel an affected active round only through the published cancellation path.
+5. Cancel an affected round only through the published contract path.
 
-## Compromised attestor
+## Compromised market admin
 
-1. Stop the DEX adapter. Claims with missing or invalid reports fail before the
-   $1 transfer.
-2. Rotate the attestor through the Verifier Admin Safe.
-3. Preserve signed observations and source-block evidence for incident review.
-4. Cancel any active testnet-style attested round if trustworthy reports remain
-   unavailable for the published outage window.
+1. Remove the compromised Safe owner using the other two owners.
+2. Stop future preparation until catalog and adapter events are reconciled.
+3. Verify no catalog change occurred during an active round.
+4. Re-run canonical registry, pool bytecode, and safety preflight before
+   resuming.
 
 ## Safe signer loss or compromise
 
-- One lost signer: the remaining two owners rotate the lost owner in each of
-  the three Safes after identity verification.
-- One compromised signer: the other two owners remove it immediately and add a
-  clean replacement.
+- One lost signer: the remaining two owners rotate it across all three Safes
+  after identity verification.
+- One compromised signer: the other two owners remove it immediately.
 - Two unavailable or compromised signers: privileged changes stop. Do not
   deploy a custom recovery multisig or bypass the threshold.
 
-## Treasury withdrawal
+## Treasury conversion
 
-- Treasury withdrawals occur only after canonical settlement.
-- Two Safe owners review the round event totals, Airtime Pool conservation,
-  next-round seed transfer, and requested 5% amount before signing.
-- The treasury cannot pull the holder or Airtime pools.
+- The protocol basket is claimable only after canonical settlement.
+- Two Safe owners review settlement allocation and token balances before
+  authorizing withdrawal.
+- Conversion uses the same approved direct pools, quote deadline, minimum
+  output, exact balance deltas, and TWAP-deviation boundary as player swaps.
+- Conversion failure cannot block settlement or any player withdrawal.
 
-## Pause and recovery
+## RPC or indexer incident
 
-There is no privileged live-round rewrite. Operational services may stop
-submitting transactions, and the published cancellation path may refund fees.
-Recovery requires canonical event reconciliation, service-health recovery, and
-an incident owner before normal automation resumes.
+1. The server may fail over from the LAN RPC to the configured server-only
+   provider. Compare chain ID, canonical head, and block hash.
+2. Stop keeper writes if providers disagree on canonical state.
+3. The indexer deletes deployment-derived rows and rebuilds from deployment
+   block after a detected reorganization.
+4. Never repair player history, rewards, or leaderboards manually.
+
+## Public incident communication
+
+Assign one incident owner before launch. State the affected deployment, rounds,
+assets, user action required, whether contributions are still possible, and
+the canonical transactions. Do not claim a frontend restriction prevents
+permissionless contract access. Promotion stays paused until exact
+reconciliation and the incident owner approve recovery.

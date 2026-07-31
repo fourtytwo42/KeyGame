@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
-import { isV4DevnetRuntime } from "@/lib/server/runtime-deployment";
-import { quoteV4Devnet } from "@/lib/web3/v4-devnet";
+import {
+  isV4DevnetRuntime,
+  isV4Runtime,
+} from "@/lib/server/runtime-deployment";
+import { quoteV4Production } from "@/lib/server/v4-production";
+import { quoteV4Devnet } from "@/lib/web3/v4-devnet-runtime";
 import type { TickerId } from "@/lib/game/types";
 
 export const dynamic = "force-dynamic";
@@ -12,17 +16,23 @@ export async function POST(request: Request) {
       amountUsd?: number;
       slippageBps?: number;
     };
-    if (!isV4DevnetRuntime()) {
+    if (!isV4Runtime()) {
       return NextResponse.json(
         { ok: false, error: "Stock-pot quotes are not enabled." },
         { status: 409 },
       );
     }
-    const quote = await quoteV4Devnet(
-      body.ticker ?? "NVDA",
-      body.amountUsd ?? 1,
-      body.slippageBps ?? 100,
-    );
+    const quote = isV4DevnetRuntime()
+      ? await quoteV4Devnet(
+          body.ticker ?? "NVDA",
+          body.amountUsd ?? 1,
+          body.slippageBps ?? 100,
+        )
+      : await quoteV4Production(
+          body.ticker ?? "NVDA",
+          body.amountUsd ?? 1,
+          body.slippageBps ?? 100,
+        );
     return NextResponse.json({ ok: true, quote });
   } catch (error) {
     return NextResponse.json(

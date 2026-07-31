@@ -3,6 +3,7 @@ import {
   MIN_COMPLETE_SAMPLES,
   realizedMovementBps,
   screenRoster,
+  screenStockPotRoster,
 } from "./market-screen";
 import type { ScreeningAsset } from "./types";
 
@@ -11,6 +12,7 @@ const makeAsset = (
   options: Partial<ScreeningAsset> & { movement?: number } = {},
 ): ScreeningAsset => {
   const movement = options.movement ?? 1;
+  const now = Math.floor(Date.now() / 1000);
   return {
     ticker,
     tokenAddress: `0x${ticker.charCodeAt(0).toString(16).padStart(40, "0")}`,
@@ -38,8 +40,10 @@ const makeAsset = (
     halted: false,
     canonical: true,
     dailyVolume: 100,
+    marketSafetyObservedAt: now,
+    metadataCheckedAt: now,
     samples: Array.from({ length: MIN_COMPLETE_SAMPLES }, (_, index) => ({
-      timestamp: index * 15,
+      timestamp: now - (MIN_COMPLETE_SAMPLES - 1 - index) * 15,
       price: 100 + (index % 2 === 0 ? 0 : movement),
     })),
     ...options,
@@ -112,5 +116,103 @@ describe("Closing Print roster screening", () => {
         ]),
       ),
     ).toBe(199);
+  });
+
+  it("v4 delays instead of swapping through an unsafe fallback", () => {
+    const assets = ["NVDA", "AAPL", "TSLA", "SPY"].map((ticker) =>
+      makeAsset(ticker),
+    );
+    assets[0].dexMarket!.safety.eligible = false;
+    assets[0].dexMarket!.safety.reasons = ["USDG depth below 10,000"];
+    const result = screenStockPotRoster(
+      assets,
+      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    );
+    expect(result.delayed).toBe(true);
+    expect(result.selected).toEqual([]);
+    expect(result.exclusions).toContainEqual({
+      ticker: "NVDA",
+      reasons: ["USDG depth below 10,000"],
+    });
+  });
+
+  it("v4 exposes deterministic catalog and exclusion evidence", () => {
+    const assets = [
+      makeAsset("AAPL", { recentTradingActivity: 1 }),
+      makeAsset("TSLA", { recentTradingActivity: 4 }),
+      makeAsset("NVDA", { recentTradingActivity: 3 }),
+      makeAsset("SPY", { recentTradingActivity: 2 }),
+      makeAsset("PLTR", { halted: true }),
+    ];
+    const version =
+      "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const screenedAt = Math.floor(Date.now() / 1000);
+    const result = screenStockPotRoster(assets, version, screenedAt);
+    expect(result.selected.map((asset) => asset.ticker)).toEqual([
+      "TSLA",
+      "NVDA",
+      "SPY",
+      "AAPL",
+    ]);
+    expect(result.catalogVersion).toBe(version);
+    expect(result.approvedCatalogSize).toBe(5);
+    expect(result.screenedAt).toBe(screenedAt);
+    expect(result.exclusions?.[0]).toEqual({
+      ticker: "PLTR",
+      reasons: ["halted"],
+    });
+  });
+
+  it("v4 ranks recent trading activity before daily volume and symbol", () => {
+    const result = screenStockPotRoster([
+      makeAsset("AAPL", {
+        recentTradingActivity: 10,
+        dailyVolume: 1_000,
+      }),
+      makeAsset("TSLA", {
+        recentTradingActivity: 20,
+        dailyVolume: 10,
+      }),
+      makeAsset("NVDA", {
+        recentTradingActivity: 10,
+        dailyVolume: 2_000,
+      }),
+      makeAsset("SPY", {
+        recentTradingActivity: 10,
+        dailyVolume: 1_000,
+      }),
+    ]);
+    expect(result.selected.map((asset) => asset.ticker)).toEqual([
+      "TSLA",
+      "NVDA",
+      "AAPL",
+      "SPY",
+    ]);
+  });
+
+  it("v4 rejects stale safety, metadata, and samples", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const stale = makeAsset("AAPL", {
+      marketSafetyObservedAt: now - 46,
+      metadataCheckedAt: now - 301,
+      samples: Array.from({ length: MIN_COMPLETE_SAMPLES }, (_, index) => ({
+        timestamp: now - 60 - (MIN_COMPLETE_SAMPLES - 1 - index) * 15,
+        price: 100,
+      })),
+    });
+    const result = screenStockPotRoster(
+      [stale, makeAsset("TSLA"), makeAsset("NVDA"), makeAsset("SPY")],
+      undefined,
+      now,
+    );
+    expect(result.delayed).toBe(true);
+    expect(result.exclusions?.[0]).toEqual({
+      ticker: "AAPL",
+      reasons: [
+        "stale-market-safety",
+        "stale-asset-metadata",
+        "stale-market-samples",
+      ],
+    });
   });
 });

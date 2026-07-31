@@ -41,12 +41,26 @@ contract AdversarialStockSwapAdapter is IStockSwapAdapter {
         callbackData = data;
     }
 
+    function isStockSupported(address stock) external view returns (bool) {
+        return stockPerUsdg[stock] != 0;
+    }
+
     function quoteUsdgForStock(address stock, uint256 amountIn)
         public
         view
         returns (uint256)
     {
         return (amountIn * stockPerUsdg[stock]) / 1e6;
+    }
+
+    function quoteStockForUsdg(address stock, uint256 amountIn)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 rate = stockPerUsdg[stock];
+        if (rate == 0) revert InvalidQuote();
+        return (amountIn * 1e6) / rate;
     }
 
     function swapUsdgForStock(
@@ -79,9 +93,7 @@ contract AdversarialStockSwapAdapter is IStockSwapAdapter {
     ) external returns (uint256 amountOut) {
         if (mode == Mode.RevertSell) revert AdversarialFailure();
         if (block.timestamp > deadline) revert Expired();
-        uint256 rate = stockPerUsdg[stock];
-        if (rate == 0) revert InvalidQuote();
-        amountOut = (amountIn * 1e6) / rate;
+        amountOut = quoteStockForUsdg(stock, amountIn);
         if (amountOut < minimumOut) revert InvalidQuote();
         require(IERC20(stock).transferFrom(msg.sender, address(this), amountIn));
         usdg.mint(recipient, amountOut);

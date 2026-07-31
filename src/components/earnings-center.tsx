@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import deployment from "../../deployments/31337.json";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { publicEnvironment } from "@/lib/env";
+import { configuredGameChain } from "@/lib/web3/use-wallet-game";
+import { rewardRouterV4Abi } from "@/lib/web3/last-bell-abi";
 
 type Rewards = {
   address: string;
@@ -25,12 +28,26 @@ type Rewards = {
     claimedUsd: number;
     totalEarnedUsd: number;
   };
+  batchClaimPlan: {
+    rewardRouter: `0x${string}`;
+    lifetimeVault: `0x${string}`;
+    tokens: `0x${string}`[];
+    holderRounds: `0x${string}`[];
+    winningRounds: `0x${string}`[];
+    cancelledRounds: `0x${string}`[];
+    hasMoreRoundClaims?: boolean;
+  };
 };
 
 export function EarningsCenter() {
   const { address } = useAccount();
+  const publicClient = usePublicClient({ chainId: configuredGameChain.id });
+  const walletClient = useWalletClient({ chainId: configuredGameChain.id });
   const player =
-    address ?? (deployment as { sessionPlayer?: `0x${string}` }).sessionPlayer;
+    address ??
+    (publicEnvironment.mode === "devnet"
+      ? (deployment as { sessionPlayer?: `0x${string}` }).sessionPlayer
+      : undefined);
   const [rewards, setRewards] = useState<Rewards | null>(null);
   const [message, setMessage] = useState("Loading the reward tape…");
 
@@ -62,19 +79,53 @@ export function EarningsCenter() {
   }, [refresh]);
 
   const claim = async () => {
-    setMessage("Claiming every lifetime token…");
-    const response = await fetch("/api/devnet/action", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "claim-lifetime" }),
-    });
-    const payload = (await response.json()) as { ok: boolean; error?: string };
-    if (!payload.ok) {
-      setMessage(payload.error || "Claim failed.");
-      return;
+    if (!rewards || !player) return;
+    setMessage("Claiming the available reward basket…");
+    if (publicEnvironment.mode === "devnet" && !address) {
+      const response = await fetch("/api/devnet/action", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "claim-lifetime" }),
+      });
+      const payload = (await response.json()) as {
+        ok: boolean;
+        error?: string;
+      };
+      if (!payload.ok) {
+        setMessage(payload.error || "Claim failed.");
+        return;
+      }
+    } else {
+      if (!address || !publicClient || !walletClient.data) {
+        setMessage("Connect the wallet that earned these rewards.");
+        return;
+      }
+      const plan = rewards.batchClaimPlan;
+      const hash = await walletClient.data.writeContract({
+        account: address,
+        chain: configuredGameChain,
+        address: plan.rewardRouter,
+        abi: rewardRouterV4Abi,
+        functionName: "claimAll",
+        args: [
+          address,
+          plan.holderRounds ?? [],
+          plan.winningRounds ?? [],
+          plan.cancelledRounds ?? [],
+          plan.tokens,
+        ],
+      });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== "success") {
+        throw new Error("The reward transaction reverted.");
+      }
     }
     await refresh();
-    setMessage("Lifetime basket claimed. Your points did not change.");
+    setMessage(
+      rewards.batchClaimPlan.hasMoreRoundClaims
+        ? "Batch claimed. More older round rewards are ready for another batch."
+        : "Available basket claimed. Lifetime points did not change.",
+    );
   };
 
   if (!rewards) return <p>{message}</p>;
@@ -120,10 +171,21 @@ export function EarningsCenter() {
       <button
         type="button"
         className="primaryAction"
-        onClick={() => void claim()}
-        disabled={rewards.totals.claimableUsd <= 0}
+        onClick={() =>
+          void claim().catch((error: unknown) =>
+            setMessage(
+              error instanceof Error ? error.message : "Claim failed.",
+            ),
+          )
+        }
+        disabled={
+          rewards.totals.claimableUsd <= 0 &&
+          rewards.batchClaimPlan.holderRounds.length === 0 &&
+          rewards.batchClaimPlan.winningRounds.length === 0 &&
+          rewards.batchClaimPlan.cancelledRounds.length === 0
+        }
       >
-        CLAIM LIFETIME STOCK BASKET
+        CLAIM AVAILABLE STOCK BASKETS
       </button>
       <p className="actionFinePrint">{message}</p>
     </div>

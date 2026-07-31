@@ -10,7 +10,7 @@ import {
   ensureV4DevnetRoundProgression,
   getV4DevnetSession,
   getV4DevnetSnapshot,
-} from "@/lib/web3/v4-devnet";
+} from "@/lib/web3/v4-devnet-runtime";
 
 export const dynamic = "force-dynamic";
 

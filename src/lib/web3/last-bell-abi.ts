@@ -17,6 +17,8 @@ export const lastBellAbi = parseAbi([
   "function deadline() view returns (uint64)",
   "function hardEnd() view returns (uint64)",
   "function settledAt() view returns (uint64)",
+  "function settled() view returns (bool)",
+  "function cancelled() view returns (bool)",
   "function pot() view returns (uint256)",
   "function holder() view returns (address)",
   "function holderTicker() view returns (uint8)",
@@ -117,7 +119,11 @@ export const lastBellV4Abi = parseAbi([
 ]);
 
 export const stockSwapAdapterAbi = parseAbi([
+  "function marketCount() view returns (uint8)",
+  "function catalog(uint256) view returns (address)",
   "function quoteUsdgForStock(address stock,uint256 amountIn) view returns (uint256)",
+  "function quoteStockForUsdg(address stock,uint256 amountIn) view returns (uint256)",
+  "function markets(address stock) view returns (bytes32 symbol,bytes32 assetId,address pool,uint24 fee,uint128 minimumLiquidity,uint256 minimumUsdgDepth,bool enabled)",
 ]);
 
 export const lifetimePointsVaultAbi = parseAbi([
@@ -138,14 +144,21 @@ export const lifetimePointsVaultAbi = parseAbi([
   "event LifetimeRewardClaimed(address indexed player,address indexed token,uint256 amount)",
 ]);
 
+export const rewardRouterV4Abi = parseAbi([
+  "function claimAll(address player,address[] holderRounds,address[] winningRounds,address[] cancelledRounds,address[] lifetimeTokens)",
+]);
+
 export const roundManagerV4Abi = parseAbi([
   "function activeRound() view returns (address)",
   "function preparedRound() view returns (address)",
   "function latestRoundId() view returns (uint256)",
+  "function roundById(uint256) view returns (address)",
   "function paymentRouter() view returns (address)",
   "function lifetimeVault() view returns (address)",
   "function swapAdapter() view returns (address)",
+  "function seedTokens(uint256) view returns (address)",
   "function seedAmounts(uint256) view returns (uint256)",
+  "function marketConfigurationAllowed() view returns (bool)",
   "function prepareRound((uint256 roundId,uint64 startDuration,uint64 extensionDuration,uint64 rugDuration,uint64 hardCapDuration,uint256 heatTarget,bool producerPassRequired) settings,(bytes32 symbol,bytes32 assetId,address token)[4] tickers) returns (address)",
   "function activatePrepared(uint256[4] sellMinimums,uint256[4] buyMinimums,uint64 quoteDeadline) returns (address)",
   "function finalizeActive()",

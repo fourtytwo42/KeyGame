@@ -21,7 +21,11 @@ import type {
   TickerId,
 } from "@/lib/game/types";
 import { tickerSlots } from "@/lib/game/constants";
-import { localDevnet } from "./chains";
+import {
+  localDevnet,
+  robinhoodChainMainnet,
+  robinhoodChainTestnet,
+} from "./chains";
 import {
   devDollarAbi,
   lastBellV4Abi,
@@ -42,25 +46,87 @@ type DeploymentV4 = {
   lastBellRound: Address;
   players: Address[];
   sessionPlayer: Address;
+  chainId: number;
 };
 
 const deploymentPath =
   process.env.V4_DEVNET_DEPLOYMENT_MANIFEST ||
-  path.join(process.cwd(), "deployments", "31337.json");
+  process.env.KEYGAME_DEPLOYMENT_MANIFEST ||
+  path.join(
+    process.cwd(),
+    "deployments",
+    `${process.env.KEYGAME_CHAIN_ID || "31337"}.json`,
+  );
+const rawDeployment = JSON.parse(
+  readFileSync(deploymentPath, "utf8"),
+) as Record<string, unknown>;
+
+function deployment(): DeploymentV4 {
+  if ("contracts" in rawDeployment) {
+    const manifest = rawDeployment as {
+      chainId: number;
+      deployer?: Address;
+      players?: Address[];
+      sessionPlayer?: Address;
+      stockTokens?: Address[];
+      contracts: {
+        manager: Address;
+        paymentRouter: Address;
+        paymentToken: Address;
+        swapAdapter: Address;
+        lifetimePointsVault: Address;
+        rewardRouter: Address;
+        activeRound?: Address;
+        mockStockTokens?: Address[];
+      };
+      market?: {
+        approvedCatalog?: Array<{ stockToken: Address }>;
+      };
+      rpc: { primary: string };
+    };
+    return {
+      deployer: manifest.deployer ?? zeroAddress,
+      devDollar: manifest.contracts.paymentToken,
+      paymentRouter: manifest.contracts.paymentRouter,
+      swapAdapter: manifest.contracts.swapAdapter,
+      roundManager: manifest.contracts.manager,
+      lifetimePointsVault: manifest.contracts.lifetimePointsVault,
+      rewardRouter: manifest.contracts.rewardRouter,
+      stockTokens:
+        manifest.contracts.mockStockTokens ??
+        manifest.market?.approvedCatalog?.map((asset) => asset.stockToken) ??
+        manifest.stockTokens ??
+        [],
+      lastBellRound: manifest.contracts.activeRound ?? zeroAddress,
+      players: manifest.players ?? [],
+      sessionPlayer: manifest.sessionPlayer ?? zeroAddress,
+      chainId: manifest.chainId,
+    };
+  }
+  return {
+    ...(rawDeployment as unknown as Omit<DeploymentV4, "chainId">),
+    chainId: Number(process.env.KEYGAME_CHAIN_ID || 31337),
+  };
+}
+
+const normalizedDeployment = deployment();
 const rpcUrl =
   process.env.LOCAL_RPC_URL ||
   process.env.NEXT_PUBLIC_LOCAL_RPC_URL ||
+  (rawDeployment.rpc as { primary?: string } | undefined)?.primary ||
   "http://127.0.0.1:8545";
+const runtimeChain =
+  normalizedDeployment.chainId === 4663
+    ? robinhoodChainMainnet
+    : normalizedDeployment.chainId === 46630
+      ? robinhoodChainTestnet
+      : localDevnet;
 const client = createPublicClient({
-  chain: localDevnet,
+  chain: runtimeChain,
   cacheTime: 0,
   pollingInterval: 100,
   transport: http(rpcUrl),
 });
-
-function deployment(): DeploymentV4 {
-  return JSON.parse(readFileSync(deploymentPath, "utf8")) as DeploymentV4;
-}
 
 async function activeRoundAddress(d = deployment()): Promise<Address> {
   const active = await client.readContract({
@@ -250,6 +316,9 @@ export async function getV4DevnetSnapshot(
         fromBlock: 0n,
       }),
     ]);
+  const symbols = configs.map((config) =>
+    hexToString(config[0], { size: 32 }).replace(/\0/g, ""),
+  );
   const now = Math.max(Number(block.timestamp), Math.floor(Date.now() / 1_000));
   const deadlineNumber = Number(deadline);
   const hardEndNumber = Number(hardEnd);
@@ -269,7 +338,7 @@ export async function getV4DevnetSnapshot(
       claimant: {
         address: player,
         displayName: `caller-${player.slice(2, 7)}`,
-        ticker: tickerId(Number(args.ticker)),
+        ticker: symbols[Number(args.ticker)] ?? tickerId(Number(args.ticker)),
         claimNumber: Number(args.sequence),
         band: "FLAT",
         multiplierBps: Number(args.multiplierBps),
@@ -332,7 +401,7 @@ export async function getV4DevnetSnapshot(
         : {
             address: holderAddress,
             displayName: `caller-${holderAddress.slice(2, 7)}`,
-            ticker: tickerId(holderIndex),
+            ticker: symbols[holderIndex] ?? tickerId(holderIndex),
             claimNumber: Number(acceptedClaims),
             band: "FLAT",
             multiplierBps: Number(multipliers[holderIndex] ?? 10_000),
@@ -341,7 +410,7 @@ export async function getV4DevnetSnapshot(
             producerPass: false,
           },
     tickerScores: indexes.map((index) => ({
-      ticker: hexToString(configs[index][0], { size: 32 }).replace(/\0/g, ""),
+      ticker: symbols[index],
       rawSeconds: 0,
       weightedScore: usd(points[index]),
       lastAcquisitionAt: Number(acquired[index]),
@@ -354,7 +423,7 @@ export async function getV4DevnetSnapshot(
     claims,
     freshness: "live",
     updatedAt: new Date(now * 1_000).toISOString(),
-    chainId: 31337,
+    chainId: normalizedDeployment.chainId,
     contractAddress: address,
     contractVersion: "last-bell-v4-stock-pot",
     blockNumber: Number(block.number),
@@ -362,9 +431,9 @@ export async function getV4DevnetSnapshot(
     deadline: deadlineNumber,
     hardEnd: hardEndNumber,
     settledAt: Number(settledAt) || undefined,
-    winningTicker: Number(winner) < 4 ? tickerId(Number(winner)) : undefined,
+    winningTicker: Number(winner) < 4 ? symbols[Number(winner)] : undefined,
     stockPot: indexes.map((index) => ({
-      ticker: tickerId(index),
+      ticker: symbols[index],
       tokenAddress: configs[index][2] as Address,
       tokenAmount: stock(basket[index]),
       estimatedUsd: stock(basket[index]),
@@ -482,6 +551,7 @@ export async function quoteV4Devnet(
   );
   return {
     ticker,
+    tickerIndex: index,
     usdgAmount: amountUsd,
     estimatedStockOut: stock(output),
     minimumStockOut: (
@@ -591,6 +661,10 @@ export async function getV4DevnetRewards(player: Address) {
       rewardRouter: d.rewardRouter,
       lifetimeVault: d.lifetimePointsVault,
       tokens: d.stockTokens,
+      holderRounds: [],
+      winningRounds: [],
+      cancelledRounds: [],
+      hasMoreRoundClaims: false,
     },
     contractVersion: "last-bell-v4-stock-pot" as const,
   };

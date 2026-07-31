@@ -41,8 +41,13 @@ export type DeploymentManifest = {
     activeRound?: Address;
   };
   rpc: { primary: string; fallback?: string };
-  verifier: {
-    type: "mock" | "testnet-dex-attested" | "dex-onchain";
+  verifier?: {
+    type:
+      | "mock"
+      | "testnet-dex-attested"
+      | "dex-onchain"
+      | "mock-stock-swap-adapter"
+      | "direct-v3-stock-swap";
     proxy?: Address;
   };
 };

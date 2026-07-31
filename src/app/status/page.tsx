@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { getDevnetSnapshot } from "@/lib/web3/devnet";
-import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
+import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet-runtime";
 import { getSystemStatus } from "@/lib/server/system-status";
 
 export const metadata: Metadata = { title: "Signal Status" };
@@ -24,11 +24,27 @@ export default async function StatusPage() {
           chainId: number;
           block: number;
           sourceCommit: string;
+          manifestHash: string;
           indexer: { lag: number };
           market: {
             assets: number;
             completeStreams: number;
             safeDexMarkets: number;
+            quoteAgeSeconds: number | null;
+            catalogVersion: string | null;
+            poolSafety: Array<{
+              ticker: string;
+              safe: boolean;
+              usdgDepth: number;
+              buyImpactBps: number;
+              sellImpactBps: number;
+            }>;
+          };
+          release: {
+            gates: Record<string, boolean>;
+            safes: { configured: boolean };
+            protectedBuildSha256: string;
+            mainnetBroadcastLocked: boolean;
           };
           services: Array<{
             name: string;
@@ -124,6 +140,49 @@ export default async function StatusPage() {
           </div>
           <strong>{production ? "ONLINE" : "STANDBY"}</strong>
         </article>
+        <article>
+          <span
+            className={`statusLamp ${
+              production &&
+              production.market.safeDexMarkets >= 4 &&
+              (production.market.quoteAgeSeconds ?? Infinity) <= 30
+                ? "good"
+                : "standby"
+            }`}
+          />
+          <div>
+            <h2>Stock Pot market catalog</h2>
+            <p>
+              {production
+                ? `${production.market.safeDexMarkets} safe direct pools · quote age ${production.market.quoteAgeSeconds ?? "n/a"}s · catalog ${production.market.catalogVersion?.slice(0, 10) ?? "not activated"}.`
+                : "Mainnet catalog evidence is unavailable."}
+            </p>
+          </div>
+          <strong>
+            {production?.market.safeDexMarkets &&
+            production.market.safeDexMarkets >= 4
+              ? "READY"
+              : "WAITING"}
+          </strong>
+        </article>
+        <article>
+          <span
+            className={`statusLamp ${
+              production?.release.safes.configured ? "good" : "standby"
+            }`}
+          />
+          <div>
+            <h2>Mainnet release gates</h2>
+            <p>
+              {production
+                ? `${Object.values(production.release.gates).filter(Boolean).length}/${Object.keys(production.release.gates).length} recorded gates · Safes ${production.release.safes.configured ? "configured" : "pending"} · broadcast ${production.release.mainnetBroadcastLocked ? "locked" : "authorized"}.`
+                : "Audit, legal, Safe, wallet, and release authorization remain required."}
+            </p>
+          </div>
+          <strong>
+            {production?.release.mainnetBroadcastLocked ? "LOCKED" : "REVIEW"}
+          </strong>
+        </article>
         {production?.services.map((service) => (
           <article key={service.name}>
             <span
@@ -158,6 +217,11 @@ export default async function StatusPage() {
           <p>Round contract: {snapshot?.contractAddress ?? "unavailable"}</p>
           <p>Latest verified block: {snapshot?.blockNumber ?? "unavailable"}</p>
           <p>Deployment commit: {production?.sourceCommit ?? "unavailable"}</p>
+          <p>Manifest hash: {production?.manifestHash ?? "unavailable"}</p>
+          <p>
+            Protected build:{" "}
+            {production?.release.protectedBuildSha256 ?? "not recorded"}
+          </p>
           <p>
             DEX market screen:{" "}
             {production

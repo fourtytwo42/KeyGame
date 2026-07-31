@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
-import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
+import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet-runtime";
+import { isV4DevnetRuntime } from "@/lib/server/runtime-deployment";
+import { getV4ProductionLeaderboards } from "@/lib/server/v4-production";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!isV4DevnetRuntime()) {
+    return NextResponse.json({
+      ok: true,
+      ...(await getV4ProductionLeaderboards()),
+    });
+  }
   const state = await getV4DevnetSnapshot();
   const callers = new Map<
     string,

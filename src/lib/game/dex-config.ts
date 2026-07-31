@@ -14,10 +14,10 @@ export const MAX_SPOT_TWAP_DEVIATION_BPS = 100;
 export const QUOTE_NOTIONAL_USDG = 1_000;
 
 export type PinnedDexMarket = {
-  symbol: "AAPL" | "TSLA" | "AMZN" | "SPY" | "NVDA";
+  symbol: string;
   stockToken: Address;
   pool: Address;
-  feeTier: 500 | 3000;
+  feeTier: number;
 };
 
 export const pinnedDexMarkets: readonly PinnedDexMarket[] = [

@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Address } from "viem";
@@ -11,14 +12,38 @@ export type ServerDeployment = {
   deploymentBlock: number;
   sourceCommit: string;
   mockOnly: boolean;
+  contractVersion?:
+    | "last-bell-v4-stock-pot"
+    | "closing-print-v3-airtime"
+    | "closing-print-v2-dex";
   contracts: {
     manager: Address;
     paymentRouter: Address;
     paymentToken: Address;
-    marketVerifier: Address;
+    marketVerifier?: Address;
+    lifetimePointsVault?: Address;
+    rewardRouter?: Address;
+    swapAdapter?: Address;
+    activeRound?: Address;
   };
   rpc: { primary: string; fallback?: string };
-  verifier: { type: "mock" | "testnet-dex-attested" | "dex-onchain" };
+  verifier?: {
+    type:
+      | "mock"
+      | "testnet-dex-attested"
+      | "dex-onchain"
+      | "mock-stock-swap-adapter"
+      | "direct-v3-stock-swap";
+  };
+  roles?: {
+    managerAdminSafe?: Address;
+    marketAdminSafe?: Address;
+    verifierAdminSafe?: Address;
+    treasurySafe?: Address;
+    commonOwners?: Address[];
+    keeper?: Address;
+  };
+  releaseGates?: Record<string, boolean>;
 };
 
 export async function loadServerDeployment(): Promise<ServerDeployment> {
@@ -26,8 +51,20 @@ export async function loadServerDeployment(): Promise<ServerDeployment> {
     process.env.NEXT_PUBLIC_GAME_MODE === "mainnet" ? 4663 : 46630;
   const file =
     process.env.KEYGAME_DEPLOYMENT_MANIFEST ??
-    path.join(process.cwd(), "deployments", `${chainId}.json`);
-  const manifest = JSON.parse(await readFile(file, "utf8")) as ServerDeployment;
+    (chainId === 4663
+      ? path.join(
+          /* turbopackIgnore: true*/ process.cwd(),
+          "deployments",
+          "4663.json",
+        )
+      : path.join(
+          /* turbopackIgnore: true*/ process.cwd(),
+          "deployments",
+          "46630.json",
+        ));
+  const manifest = JSON.parse(
+    await readFile(/* turbopackIgnore: true*/ file, "utf8"),
+  ) as ServerDeployment;
   if (chainId === 46630 && process.env.ROBINHOOD_TESTNET_FALLBACK_RPC_URL) {
     manifest.rpc.fallback = process.env.ROBINHOOD_TESTNET_FALLBACK_RPC_URL;
   }
@@ -38,7 +75,11 @@ export async function loadServerDeployment(): Promise<ServerDeployment> {
     manifest.chainId !== chainId ||
     !manifest.contracts?.manager ||
     !manifest.contracts?.paymentRouter ||
-    !manifest.contracts?.paymentToken
+    !manifest.contracts?.paymentToken ||
+    (manifest.contractVersion === "last-bell-v4-stock-pot" &&
+      (!manifest.contracts.swapAdapter ||
+        !manifest.contracts.lifetimePointsVault ||
+        !manifest.contracts.rewardRouter))
   ) {
     throw new Error("The active deployment manifest is incomplete.");
   }
@@ -47,5 +88,11 @@ export async function loadServerDeployment(): Promise<ServerDeployment> {
 
 export async function loadServerDeploymentWithKey() {
   const manifest = await loadServerDeployment();
-  return { manifest, deploymentKey: deploymentKeyFor(manifest) };
+  return {
+    manifest,
+    deploymentKey: deploymentKeyFor(manifest),
+    manifestHash: createHash("sha256")
+      .update(JSON.stringify(manifest))
+      .digest("hex"),
+  };
 }

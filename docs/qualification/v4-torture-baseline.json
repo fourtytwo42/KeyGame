@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "status": "accepted",
+  "runId": "v4-torture-live-2026-07-31T03-44-39-339Z",
+  "qualifiedSourceCommit": "1c4926eaca9c491cd1f54486dec9a3f7a0a65f4b",
+  "qualificationRecordCommit": "4486fd4",
+  "reportSha256": "4bd458bbe6da728b8dcf4d6ffe70b16b29e828d1fc9f41b5bef7f96fc6ca463b",
+  "markdownSha256": "82454f8106ba34e6db9983722de43436e177c88c16328a2d8c9a781523c80b09",
+  "evidenceTreeSha256": "f05a3e974a4002a275408a64c974efa6a1302084deafcc824de418688c410daf",
+  "counts": {
+    "stateMachineActions": 1000000,
+    "acceptedLiveContributions": 10000,
+    "settledRounds": 500,
+    "cancelledRounds": 50,
+    "confirmedTransactions": 13825,
+    "assetReconciliationRows": 2200
+  },
+  "acceptance": {
+    "basketDiscrepancies": 0,
+    "pointDiscrepancies": 0,
+    "failedAssertions": 0,
+    "failedActions": 0,
+    "unresolvedRevertedTransactions": 0,
+    "faultsRestored": 10
+  },
+  "broadcasts": {
+    "robinhoodTestnet": false,
+    "robinhoodMainnet": false
+  }
+}

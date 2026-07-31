@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { isAddress, type Address } from "viem";
-import { getV4DevnetRewards } from "@/lib/web3/v4-devnet";
+import { getV4DevnetRewards } from "@/lib/web3/v4-devnet-runtime";
+import { isV4DevnetRuntime } from "@/lib/server/runtime-deployment";
+import { getV4ProductionRewards } from "@/lib/server/v4-production";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,9 @@ export async function GET(
   try {
     return NextResponse.json({
       ok: true,
-      rewards: await getV4DevnetRewards(address as Address),
+      rewards: isV4DevnetRuntime()
+        ? await getV4DevnetRewards(address as Address)
+        : await getV4ProductionRewards(address as Address),
     });
   } catch (error) {
     return NextResponse.json(

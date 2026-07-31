@@ -155,6 +155,7 @@ contract LastBellV4AdversarialTest is TestBase {
         );
         LastBellRoundV4.TickerConfig[4] memory tickers;
         for (uint8 i; i < 4; i++) {
+            duplicateAdapter.setRate(address(stocks[i]), 1e18);
             tickers[i] = LastBellRoundV4.TickerConfig({
                 symbol: bytes32("DUP"),
                 assetId: keccak256(abi.encode("DUP", i)),
@@ -162,7 +163,7 @@ contract LastBellV4AdversarialTest is TestBase {
             });
         }
         tickers[1].token = tickers[0].token;
-        vm.expectRevert(LastBellRoundV4.InvalidConfiguration.selector);
+        vm.expectRevert(RoundManagerV4.InvalidTransition.selector);
         duplicateManager.prepareRound(_settings(201), tickers);
 
         tickers[1].token = address(stocks[1]);

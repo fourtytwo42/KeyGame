@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { tickerSlots } from "@/lib/game/constants";
-import { screenRoster } from "@/lib/game/market-screen";
+import { screenRoster, screenStockPotRoster } from "@/lib/game/market-screen";
 import type { ScreeningAsset } from "@/lib/game/types";
 import { loadScreeningAssets } from "@/lib/server/market-store";
+import { isV4Runtime } from "@/lib/server/runtime-deployment";
+import { keccak256, toHex } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +36,9 @@ const devnetAssets = (): ScreeningAsset[] =>
     halted: false,
     canonical: true,
     dailyVolume: ticker.dailyVolume,
+    recentTradingActivity: ticker.dailyVolume / 100,
+    marketSafetyObservedAt: Math.floor(Date.now() / 1000),
+    metadataCheckedAt: Math.floor(Date.now() / 1000),
     samples: Array.from({ length: 120 }, (_, index) => ({
       timestamp: Math.floor(Date.now() / 1000) - (119 - index) * 15,
       price:
@@ -44,14 +49,35 @@ const devnetAssets = (): ScreeningAsset[] =>
     })),
   }));
 
+const versionFor = (assets: ScreeningAsset[]) =>
+  keccak256(
+    toHex(
+      JSON.stringify(
+        assets
+          .map((asset) => ({
+            ticker: asset.ticker,
+            canonical: asset.canonicalAddress ?? asset.tokenAddress,
+            market: asset.marketId,
+            pool: asset.dexMarket?.poolAddress,
+          }))
+          .sort((left, right) => left.ticker.localeCompare(right.ticker)),
+      ),
+    ),
+  );
+
+const screen = (assets: ScreeningAsset[]) =>
+  isV4Runtime()
+    ? screenStockPotRoster(assets, versionFor(assets))
+    : screenRoster(assets);
+
 export async function GET() {
   if (process.env.NEXT_PUBLIC_GAME_MODE === "devnet") {
-    return NextResponse.json({ ok: true, ...screenRoster(devnetAssets()) });
+    return NextResponse.json({ ok: true, ...screen(devnetAssets()) });
   }
 
   if (process.env.DATABASE_URL) {
     try {
-      const roster = screenRoster(await loadScreeningAssets());
+      const roster = screen(await loadScreeningAssets());
       return NextResponse.json(
         { ok: !roster.delayed, ...roster },
         { status: roster.delayed ? 503 : 200 },
@@ -80,7 +106,7 @@ export async function GET() {
     if (!response.ok || !Array.isArray(assets)) {
       throw new Error("Malformed market-screen response.");
     }
-    const roster = screenRoster(assets);
+    const roster = screen(assets);
     return NextResponse.json(
       { ok: !roster.delayed, ...roster },
       { status: roster.delayed ? 503 : 200 },

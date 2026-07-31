@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { maxUint256 } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import deploymentJson from "../../../deployments/31337.json";
-import { sessionApproval, tickerSlots } from "@/lib/game/constants";
+import { sessionApproval } from "@/lib/game/constants";
 import type {
   ClaimableBalances,
   SessionBudget,
@@ -374,6 +374,7 @@ export function useWalletGame(
           const payload = (await response.json()) as {
             ok: boolean;
             quote?: {
+              tickerIndex: number;
               minimumStockOut: string;
               expiresAt: number;
             };
@@ -382,9 +383,6 @@ export function useWalletGame(
           if (!response.ok || !payload.quote) {
             throw new Error(payload.error || "Stock quote unavailable.");
           }
-          const tickerIndex = tickerSlots.findIndex(
-            (slot) => slot.id === ticker,
-          );
           const hash = await walletClient.data.writeContract({
             account: address,
             chain: configuredGameChain,
@@ -392,7 +390,7 @@ export function useWalletGame(
             abi: lastBellV4Abi,
             functionName: "claimBell",
             args: [
-              tickerIndex,
+              payload.quote.tickerIndex,
               amount,
               BigInt(payload.quote.minimumStockOut),
               BigInt(payload.quote.expiresAt),

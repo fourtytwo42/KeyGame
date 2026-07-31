@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
-import { screenRoster } from "@/lib/game/market-screen";
+import { screenRoster, screenStockPotRoster } from "@/lib/game/market-screen";
 import { buildRoundProjection } from "@/lib/game/projections";
 import { loadScreeningAssets } from "@/lib/server/market-store";
 import {
   isDevnetRuntime,
   isV4DevnetRuntime,
+  isV4Runtime,
 } from "@/lib/server/runtime-deployment";
 import { getDevnetSession, getDevnetSnapshot } from "@/lib/web3/devnet";
-import { getV4DevnetSession, getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
+import {
+  getV4DevnetSession,
+  getV4DevnetSnapshot,
+} from "@/lib/web3/v4-devnet-runtime";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
 
 export const dynamic = "force-dynamic";
@@ -38,11 +42,16 @@ export async function GET() {
         { status: 409 },
       );
     }
-    const state = await getLiveSnapshot();
+    const v4 = isV4Runtime();
+    const state = v4 ? await getV4DevnetSnapshot() : await getLiveSnapshot();
     const assets = await loadScreeningAssets().catch(() => []);
     const byTicker = new Map(assets.map((asset) => [asset.ticker, asset]));
-    const roster = screenRoster(assets);
+    const roster = v4 ? screenStockPotRoster(assets) : screenRoster(assets);
     state.marketExplanation = roster.reason;
+    if (v4) {
+      state.freshness = roster.delayed ? "delayed" : "live";
+      return NextResponse.json({ ok: true, chainId: state.chainId, state });
+    }
     const now = Math.floor(Date.now() / 1_000);
     let newestObservation = 0;
     state.tickerScores = state.tickerScores.map((score) => {

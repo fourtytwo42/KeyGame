@@ -5,6 +5,13 @@
 > supersedes v3 Airtime payouts and all fixed-$1 or DEX-momentum scoring
 > requirements. Older versions remain replay history.
 
+> `D-026` (2026-07-31): v4 production readiness uses a direct
+> Robinhood-mainnet Stock Token/USDG adapter, Safe-controlled 16-asset catalog,
+> dynamic safe four-stock roster, two-round mock-only testnet compatibility
+> gate, independent audit/legal/Safe gates, deferred external-wallet UAT, and
+> an unlisted reconciled mainnet canary. No v4 testnet or mainnet deployment is
+> authorized.
+
 > `D-020` (2026-07-29): Closing Print is the implemented product.
 > [10-closing-print-market-reactive.md](./10-closing-print-market-reactive.md)
 > supersedes every permanent-faction, asset-lock, separate-entry, and
@@ -21,8 +28,9 @@ Current implementation documents:
 - [PRD 15: Audit candidate, Airtime Pool, and mainnet readiness](./15-audit-candidate-airtime-pool.md)
 - [PRD 16: Stock Pot and Lifetime Points](./16-stock-pot-lifetime-points.md)
 
-Status: Product baseline approved for Stage 0 implementation and a testnet-points
-first public MVP. Value-bearing and Stock Token stages remain gated.
+Status: v4 is qualified on Anvil and has a production-readiness implementation.
+Value-bearing deployment remains blocked by the ledger in
+`docs/qualification/v4-mainnet-readiness-ledger.md`.
 
 This directory turns the historical FoMo3D research, Last Bell product concept, Channel 4663 visual direction, and Robinhood Chain constraints into implementation-facing requirements.
 
@@ -86,7 +94,8 @@ The complete mobile and desktop concept set is embedded in
 | `D-022` | Replace Chainlink scoring with direct ten-minute Uniswap V3 Stock Token/USDG TWAPs; weighted points pick the ticker and raw airtime divides its pool. | `IMPLEMENTED / ECONOMIC REVIEW GATED` | PRD 13 overrides conflicting price-source and contributor-share requirements. |
 | `D-023` | Add estimated reward clarity, opt-in SIWE caller profiles, and community-triggered featured raids without changing contract economics. | `IMPLEMENTED / MAINNET GATED` | PRD 14 defines deployment-aware history and the remaining audit-candidate gates. |
 | `D-024` | Make DEX momentum nonfinancial and award the 30% Airtime Pool to all callers by total raw control time. | `IMPLEMENTED CANDIDATE / SOAK OPEN` | PRD 15 supersedes all current-version payout language in PRDs 01-14. |
-| `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTING / DEVNET ACCEPTANCE` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
+| `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTED / DEVNET QUALIFIED` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
+| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, fork qualification, a two-round mock testnet smoke, independent audit/legal/Safes, deferred external-wallet UAT, and an unlisted mainnet canary. | `IMPLEMENTED THROUGH LOCAL RELEASE GATES / EXTERNAL GATES BLOCKED` | No broadcast is authorized; see the readiness ledger and release runbook. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |
@@ -104,21 +113,17 @@ Use these sources in this order:
 
 The original FoMo3D research is authoritative only for historical behavior. It is not the specification for Last Bell.
 
-## Approved MVP scope
+## Current release scope
 
-`MVP` means:
-
-- Next.js Channel 4663 experience.
-- Robinhood Chain testnet.
-- Synthetic ticker factions.
-- Points or non-transferable test rewards.
-- A non-transferable or faucet-issued test unit mirroring the $1 action without real player value.
-- Sponsored test gas.
-- No Stock Token custody.
-- No player-funded prize.
-- Deterministic round replay and receipts.
-
-Sponsor-funded USDG and canonical Stock Token entry are later gated stages.
+- Devnet remains the economic and adversarial qualification environment.
+- Robinhood testnet is mock-only and limited to a separately authorized
+  two-round network-compatibility smoke.
+- Robinhood mainnet accepts only canonical USDG and approved direct canonical
+  Stock Token pools after audit, legal, Safe, wallet, and operations gates.
+- The first mainnet release is an unlisted, monitored, fully reconciled canary.
+- No player selling, aggregator, multihop route, account abstraction, session
+  key, gas sponsorship, referral reward, game token, spending cap, or pot cap is
+  included.
 
 ## Traceability rule
 

@@ -28,7 +28,8 @@
       ],
       "@/lib/server/uat-funding-runtime": [
         "./src/lib/server/uat-funding.disabled.ts"
-      ]
+      ],
+      "@/lib/web3/v4-devnet-runtime": ["./src/lib/web3/v4-devnet.disabled.ts"]
     }
   },
   "include": [

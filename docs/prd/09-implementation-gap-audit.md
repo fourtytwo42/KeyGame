@@ -23,23 +23,31 @@
 | Community featured raids | Implemented offchain | Eligibility, unique votes, countdown, live window, cooldown |
 | Deployment-aware history | Implemented | Migration 005 and deployment backfill script |
 | Legacy replay support | Retained | Faction, Chainlink, and DEX version parsers |
-| Devnet and Robinhood testnet | Implemented | VM-local application and service builds |
+| Devnet qualification | Passed | Accelerated, endurance, browser, and torture evidence |
+| Production direct-pool adapter | Implemented, pre-audit | Unit, hostile-token, and mainnet-fork coverage |
+| Dynamic safe-market roster | Implemented, pre-audit | Catalog, safety screen, durable keeper, and evidence tables |
+| Canonical v4 reward indexing | Implemented, pre-audit | Contributions, allocations, epochs, claims, and reorg rebuild |
+| Schema-v4 release controls | Implemented, locked | Mainnet/testnet manifests, preflights, packaging, and authorization guards |
+| Robinhood v4 testnet | Not deployed | Separate authorization required for two-round mock smoke |
+| Robinhood v4 mainnet | Not deployed | Compile-time locked |
 
 ## Deliberate launch gates
 
 - A real Reown project ID and allowlisted production origins.
 - Manual extension-wallet and WalletConnect UAT.
-- 100-round accelerated devnet qualification plus two-hour stability pass.
+- Accepted accelerated, two-hour stability, and one-million-action torture
+  baselines remain preserved.
 - Production swap-adapter audit and Rug Zone automation disclosure.
 - Independent security and economic review.
 - Legal and jurisdiction approval.
-- Separate documented 2-of-3 manager, verifier, and treasury multisigs.
+- Separate documented 2-of-3 manager, market/catalog, and treasury Safes.
 - Canonical asset verification, incident ownership, and explicit mainnet
   release authorization.
 
 ## Acceptance boundary
 
-The repository is a production-shaped v4 devnet application with a guarded
-testnet package. Testnet assets are labeled as mocks with no value. No testnet
-or mainnet deployment, contract freeze, external audit approval, or legal
-approval is claimed by this audit.
+The repository now contains the production adapter, dynamic roster, durable v4
+keeper, canonical v4 indexer, schema-v4 deployment controls, and audit-package
+workflow. Testnet assets remain mocks with no value. No v4 testnet or mainnet
+deployment, contract freeze, independent audit approval, Safe verification,
+external-wallet UAT, legal approval, or canary success is claimed.

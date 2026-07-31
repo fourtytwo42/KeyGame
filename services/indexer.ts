@@ -1,4 +1,10 @@
-import { decodeEventLog, type Address, zeroAddress } from "viem";
+import {
+  decodeEventLog,
+  hexToString,
+  type Address,
+  type Hex,
+  zeroAddress,
+} from "viem";
 import {
   lastBellAbi,
   lastBellV4Abi,
@@ -21,6 +27,37 @@ const deploymentKey = deploymentKeyFor(manifest);
 const client = publicClientFor(manifest);
 const confirmations = BigInt(process.env.INDEXER_CONFIRMATIONS || 3);
 const batchSize = BigInt(process.env.INDEXER_BATCH_SIZE || 100);
+const roundTokenCache = new Map<string, Address[]>();
+
+async function roundTokens(round: Address) {
+  const key = round.toLowerCase();
+  const cached = roundTokenCache.get(key);
+  if (cached) return cached;
+  const configs = await Promise.all(
+    [0n, 1n, 2n, 3n].map((ticker) =>
+      client.readContract({
+        address: round,
+        abi: lastBellV4Abi,
+        functionName: "tickerConfigs",
+        args: [ticker],
+      }),
+    ),
+  );
+  const tokens = configs.map((config) => config[2] as Address);
+  roundTokenCache.set(key, tokens);
+  return tokens;
+}
+
+function rewardCategory(rewardType: Hex) {
+  const decoded = hexToString(rewardType, { size: 32 }).replace(/\0/g, "");
+  const categories: Record<string, string> = {
+    FINAL_HOLDER: "LAST_BELL",
+    WINNING_STOCK: "WINNING_STOCK",
+    CANCEL_REFUND: "REFUND",
+    PROTOCOL: "PROTOCOL",
+  };
+  return categories[decoded] ?? null;
+}
 
 async function registerDeployment() {
   await pool.query(
@@ -62,7 +99,7 @@ async function rollbackIfReorged() {
     [deploymentKey],
   );
   if (!checkpoint.rowCount) return;
-  let number = BigInt(checkpoint.rows[0].block_number);
+  const number = BigInt(checkpoint.rows[0].block_number);
   const current = await client.getBlock({ blockNumber: number });
   if (
     current.hash?.toLowerCase() === checkpoint.rows[0].block_hash.toLowerCase()
@@ -70,47 +107,45 @@ async function rollbackIfReorged() {
     return;
   }
 
-  for (
-    let depth = 0;
-    depth < 200 && number >= BigInt(manifest.deploymentBlock);
-    depth++
-  ) {
-    const [stored, canonical] = await Promise.all([
-      pool.query<{ hash: string }>(
-        "SELECT hash FROM canonical_blocks WHERE chain_id=$1 AND number=$2",
-        [manifest.chainId, number.toString()],
-      ),
-      client.getBlock({ blockNumber: number }),
-    ]);
-    if (
-      stored.rowCount &&
-      canonical.hash?.toLowerCase() === stored.rows[0].hash.toLowerCase()
-    ) {
-      await pool.query("BEGIN");
-      try {
-        await pool.query(
-          "DELETE FROM chain_events WHERE deployment_key=$1 AND block_number>$2",
-          [deploymentKey, number.toString()],
-        );
-        await pool.query(
-          "DELETE FROM canonical_blocks WHERE chain_id=$1 AND number>$2",
-          [manifest.chainId, number.toString()],
-        );
-        await pool.query(
-          `UPDATE indexer_checkpoints SET block_number=$2,block_hash=$3,updated_at=now()
-           WHERE deployment_key=$1 AND service='chain-indexer'`,
-          [deploymentKey, number.toString(), canonical.hash],
-        );
-        await pool.query("COMMIT");
-      } catch (error) {
-        await pool.query("ROLLBACK");
-        throw error;
-      }
-      return;
+  // Derived rows can depend on earlier point epochs and settlement allocations.
+  // A deployment-scoped rebuild is slower than an ancestor-only rewind, but it
+  // guarantees that rewards, leaderboards, and lifetime points cannot retain
+  // orphaned state after a reorganization.
+  const connection = await pool.connect();
+  try {
+    await connection.query("BEGIN");
+    for (const table of [
+      "stock_reward_claims",
+      "stock_pot_allocations",
+      "lifetime_point_epochs",
+      "stock_pot_contributions",
+      "leaderboard_materializations",
+      "rounds",
+      "chain_events",
+    ]) {
+      await connection.query(`DELETE FROM ${table} WHERE deployment_key=$1`, [
+        deploymentKey,
+      ]);
     }
-    number -= 1n;
+    await connection.query(
+      "DELETE FROM canonical_blocks WHERE chain_id=$1 AND number>=$2",
+      [manifest.chainId, manifest.deploymentBlock],
+    );
+    const deploymentBlock = BigInt(manifest.deploymentBlock);
+    const rewindNumber = deploymentBlock > 0n ? deploymentBlock - 1n : 0n;
+    const rewind = await client.getBlock({ blockNumber: rewindNumber });
+    await connection.query(
+      `UPDATE indexer_checkpoints SET block_number=$2,block_hash=$3,updated_at=now()
+       WHERE deployment_key=$1 AND service='chain-indexer'`,
+      [deploymentKey, rewindNumber.toString(), rewind.hash],
+    );
+    await connection.query("COMMIT");
+  } catch (error) {
+    await connection.query("ROLLBACK");
+    throw error;
+  } finally {
+    connection.release();
   }
-  throw new Error("Reorg exceeds the 200-block rollback safety window");
 }
 
 async function indexedAddresses() {
@@ -275,6 +310,11 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
               log.blockNumber.toString(),
             ],
           );
+          await connection.query(
+            `UPDATE round_roster_evidence SET round_address=$3
+             WHERE deployment_key=$1 AND round_id=$2`,
+            [deploymentKey, prepared.roundId, prepared.round],
+          );
         }
       }
       if (
@@ -384,6 +424,134 @@ async function indexBatch(fromBlock: bigint, toBlock: bigint) {
                  SET pending_points=0,cancelled=true
                  WHERE deployment_key=$1 AND round_id=$2`,
             [deploymentKey, epoch.roundId],
+          );
+        }
+      }
+      if (
+        eventName === "RoundSettled" &&
+        manifest.contractVersion === "last-bell-v4-stock-pot" &&
+        args &&
+        typeof args === "object"
+      ) {
+        const settlement = args as {
+          roundId?: string;
+          accountedStock?: string[];
+        };
+        if (settlement.roundId && settlement.accountedStock?.length === 4) {
+          const tokens = await roundTokens(log.address);
+          for (let index = 0; index < 4; index += 1) {
+            const accounted = BigInt(settlement.accountedStock[index]);
+            const holder = (accounted * 5_000n) / 10_000n;
+            const winning = (accounted * 3_000n) / 10_000n;
+            const lifetime = (accounted * 1_000n) / 10_000n;
+            const seed = (accounted * 500n) / 10_000n;
+            const protocol = accounted - holder - winning - lifetime - seed;
+            await connection.query(
+              `INSERT INTO stock_pot_allocations(
+                 deployment_key,round_id,stock_token,accounted_amount,
+                 holder_amount,winning_stock_amount,lifetime_amount,
+                 seed_amount,protocol_amount)
+               VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+               ON CONFLICT(deployment_key,round_id,stock_token) DO UPDATE SET
+                 accounted_amount=excluded.accounted_amount,
+                 holder_amount=excluded.holder_amount,
+                 winning_stock_amount=excluded.winning_stock_amount,
+                 lifetime_amount=excluded.lifetime_amount,
+                 seed_amount=excluded.seed_amount,
+                 protocol_amount=excluded.protocol_amount`,
+              [
+                deploymentKey,
+                settlement.roundId,
+                tokens[index],
+                accounted.toString(),
+                holder.toString(),
+                winning.toString(),
+                lifetime.toString(),
+                seed.toString(),
+                protocol.toString(),
+              ],
+            );
+          }
+        }
+      }
+      if (
+        eventName === "BasketRewardClaimed" &&
+        manifest.contractVersion === "last-bell-v4-stock-pot" &&
+        args &&
+        typeof args === "object"
+      ) {
+        const reward = args as {
+          roundId?: string;
+          player?: Address;
+          rewardType?: Hex;
+          amounts?: string[];
+        };
+        const category = reward.rewardType
+          ? rewardCategory(reward.rewardType)
+          : null;
+        if (
+          reward.roundId &&
+          reward.player &&
+          category &&
+          reward.amounts?.length === 4
+        ) {
+          const tokens = await roundTokens(log.address);
+          for (let index = 0; index < 4; index += 1) {
+            const amount = BigInt(reward.amounts[index]);
+            if (amount === 0n) continue;
+            await connection.query(
+              `INSERT INTO stock_reward_claims(
+                 deployment_key,round_id,transaction_hash,log_index,
+                 beneficiary,category,stock_token,amount)
+               VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+               ON CONFLICT(deployment_key,transaction_hash,log_index,stock_token)
+               DO UPDATE SET amount=excluded.amount,canonical=true`,
+              [
+                deploymentKey,
+                reward.roundId,
+                log.transactionHash,
+                log.logIndex,
+                reward.player,
+                category,
+                tokens[index],
+                amount.toString(),
+              ],
+            );
+          }
+        }
+      }
+      if (
+        eventName === "LifetimeRewardClaimed" &&
+        manifest.contractVersion === "last-bell-v4-stock-pot" &&
+        args &&
+        typeof args === "object"
+      ) {
+        const reward = args as {
+          player?: Address;
+          token?: Address;
+          amount?: string;
+        };
+        if (
+          reward.player &&
+          reward.token &&
+          reward.amount &&
+          BigInt(reward.amount) > 0n
+        ) {
+          await connection.query(
+            `INSERT INTO stock_reward_claims(
+               deployment_key,round_id,transaction_hash,log_index,
+               beneficiary,category,stock_token,amount)
+             VALUES($1,NULL,$2,$3,$4,'LIFETIME',$5,$6)
+             ON CONFLICT(deployment_key,transaction_hash,log_index,stock_token)
+             DO UPDATE SET amount=excluded.amount,canonical=true`,
+            [
+              deploymentKey,
+              log.transactionHash,
+              log.logIndex,
+              reward.player,
+              reward.token,
+              reward.amount,
+            ],
           );
         }
       }

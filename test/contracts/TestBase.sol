@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 interface Vm {
+    function chainId(uint256 newChainId) external;
     function warp(uint256 newTimestamp) external;
     function roll(uint256 newHeight) external;
     function prank(address sender) external;

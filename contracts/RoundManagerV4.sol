@@ -81,6 +81,18 @@ contract RoundManagerV4 {
         admin = nextAdmin;
     }
 
+    /// @notice Production market configuration is locked while a round can
+    /// accept contributions. Settled/cancelled rounds are safe configuration
+    /// windows before the next roster is prepared.
+    function marketConfigurationAllowed() external view returns (bool) {
+        if (address(preparedRound) != address(0)) return false;
+        LastBellRoundV4 round = activeRound;
+        if (address(round) == address(0)) return true;
+        LastBellRoundV4.Phase phase = round.currentPhase();
+        return phase == LastBellRoundV4.Phase.Settled
+            || phase == LastBellRoundV4.Phase.Cancelled;
+    }
+
     function prepareRound(
         LastBellRoundV4.RoundSettings calldata settings,
         LastBellRoundV4.TickerConfig[4] calldata tickers
@@ -96,6 +108,17 @@ contract RoundManagerV4 {
             ) revert InvalidTransition();
         }
         LastBellRoundV4.TickerConfig[4] memory configs = tickers;
+        for (uint8 i; i < 4; i++) {
+            if (
+                tickers[i].token == address(0)
+                    || !swapAdapter.isStockSupported(tickers[i].token)
+            ) revert InvalidTransition();
+            for (uint8 prior; prior < i; prior++) {
+                if (tickers[prior].token == tickers[i].token) {
+                    revert InvalidTransition();
+                }
+            }
+        }
         round = new LastBellRoundV4(
             paymentToken,
             paymentRouter,

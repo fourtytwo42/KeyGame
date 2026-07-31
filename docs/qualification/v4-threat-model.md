@@ -1,0 +1,80 @@
+# Last Bell v4 threat model
+
+Status: pre-audit working threat model. It does not replace independent review.
+
+## Assets and invariants
+
+- Player USDG may leave a wallet only when a complete contribution succeeds.
+- Accounted Stock Token units must resolve exactly to Last Bell, Winning Stock,
+  Lifetime, seed, protocol, refund, or still-claimable custody.
+- Rejected swaps cannot change holder, timer, points, heat, or reward state.
+- Lifetime points activate only after settlement, never on cancellation, never
+  burn on claim, and never exceed accepted contribution points.
+- A live round's roster, clock, heat target, scoring, and payout split are
+  immutable.
+- Database and API state are projections. Canonical contracts and logs remain
+  authoritative.
+
+## Trust boundaries
+
+| Boundary | Trusted for | Not trusted for |
+|---|---|---|
+| Player wallet | Chosen ticker, amount, minimum output, deadline | Honest timing, UI use, or human control |
+| Swap adapter | Approved direct-pool execution and exact deltas | Arbitrary tokens, routers, callbacks, or offchain price claims |
+| Uniswap pool | Canonical direct execution and cumulative observations | Economic fairness when liquidity/safety gates fail |
+| Robinhood metadata | Canonical identity, status, halt, corporate actions | Game scoring |
+| Keeper | Narrow lifecycle calls and retry orchestration | Editing balances, rewards, or live-round economics |
+| Indexer/database | Confirmed history, projections, leaderboards | Contract custody or payout authority |
+| Three Safes | Between-round administration and treasury | Live-round rewriting |
+| Web client | Quote presentation and transaction construction | Eligibility enforcement on a permissionless contract |
+
+## Primary threats and controls
+
+- **Malicious or nonstandard token:** catalog allowlist, runtime bytecode review,
+  exact input/output and recipient/pool balance deltas, fee-on-transfer and
+  rebasing rejection, callback tests.
+- **Pool substitution or multihop:** pinned factory, exact pool/token/fee
+  identity, direct routes only, immutable market IDs.
+- **Sandwich or price manipulation:** user minimum output and deadline, 10-minute
+  TWAP, hard 1% execution-deviation boundary, depth and two-sided impact gates.
+- **Reentrancy or callback spoofing:** adapter lock, exact expected pool callback
+  sender, hostile callback and token tests, checks before state acceptance.
+- **Dishonest adapter output:** round counts only exact authorized-adapter token
+  balance deltas; transaction atomicity rolls back USDG and game state.
+- **Roster race:** manager-backed configuration guard blocks catalog changes
+  during active rounds; keeper serializes preparation with advisory locks and
+  idempotency keys.
+- **Keeper duplication or nonce loss:** transaction hash persisted before wait,
+  pending nonce/receipt reconciliation, unique jobs, manager lifecycle guards.
+- **Reorganization:** three-confirmation public history, canonical block hashes,
+  deployment-scoped derived-state rebuild.
+- **Reward rounding or claim-order extraction:** deterministic splits,
+  final-eligible-claimant remainder, per-token conservation and fuzz coverage.
+- **Seed/protocol conversion failure:** conversion occurs outside settlement;
+  failures preserve recoverable assets and cannot block player withdrawals.
+- **Compromised admin:** three distinct audited 2-of-3 Safes, same three
+  independent owners, between-round change boundary, public event trail.
+- **Frontend or RPC compromise:** wallet displays transaction, server-only
+  fallback secrets, chain/source/bytecode preflight, no unlocked RPC accounts.
+- **Automated Rug Zone competition:** intentionally FCFS and disclosed;
+  monitoring does not throttle, cap, or change payouts.
+- **Legal bypass:** availability defaults fail closed in the product, but
+  documentation never claims frontend controls make a permissionless contract
+  inaccessible.
+
+## Residual risks requiring explicit acceptance
+
+- Canonical Stock Token and USDG contracts, Robinhood Chain, and approved pools
+  remain external dependencies.
+- An uncapped permissionless game can create large pots and strong MEV/bot
+  incentives.
+- A 10-minute TWAP and 1% boundary reduce, but cannot eliminate, execution
+  manipulation and volatile-market risk.
+- Lifetime rewards and game mechanics may receive different legal treatment by
+  jurisdiction.
+- Lost private keys and unavailable Safe quorum cannot be repaired by the
+  application.
+
+Audit findings, canonical contract changes, pool changes, or legal conclusions
+must update this document and create a new frozen candidate when they affect
+code or assumptions.

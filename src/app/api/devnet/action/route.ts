@@ -6,7 +6,10 @@ import {
   isV4DevnetRuntime,
 } from "@/lib/server/runtime-deployment";
 import { sendDevnetAction, type DevnetAction } from "@/lib/web3/devnet";
-import { sendV4DevnetAction, type V4DevnetAction } from "@/lib/web3/v4-devnet";
+import {
+  sendV4DevnetAction,
+  type V4DevnetAction,
+} from "@/lib/web3/v4-devnet-runtime";
 
 export const dynamic = "force-dynamic";
 

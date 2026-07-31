@@ -1,6 +1,6 @@
 # PRD 16: Stock Pot and Lifetime Points
 
-Status: `AUTHORITATIVE V4 / DEVNET QUALIFICATION`
+Status: `AUTHORITATIVE V4 / MAINNET-READINESS IMPLEMENTATION`
 
 Contract version: `last-bell-v4-stock-pot`
 
@@ -19,6 +19,13 @@ fault injection, and a two-hour unattended stability pass. The non-broadcast Rob
 environment. Robinhood testnet is limited to a separately authorized two-round
 network-compatibility smoke test. Production canonical swaps, audit, legal
 review, and explicit release authorization remain separate gates.
+
+The production-readiness implementation adds a non-upgradeable,
+Robinhood-mainnet-only direct Uniswap V3 adapter, a Safe-controlled catalog
+capped at 16 assets, dynamic four-market screening, deployment-keyed roster
+evidence, a durable v4 keeper, canonical reward indexing, schema-v4 manifests,
+and fail-closed testnet/mainnet release scripts. This is implementation
+evidence, not deployment or approval.
 
 This document supersedes current-economy requirements in PRDs 10–15. Legacy
 contracts and parsers remain available for old receipts and replays.
@@ -95,6 +102,15 @@ Production swaps accept only manifest-whitelisted canonical assets, verified
 router/pool bytecode, and at most 1% deviation from a ten-minute TWAP. Devnet
 and testnet use clearly labeled mock assets and a deterministic adapter.
 
+An eligible production roster market must also be active and non-halted, use
+canonical USDG and a direct pinned-factory pool, expose at least 30 minutes of
+oracle history, have nonzero liquidity and at least 10,000 USDG depth, keep a
+simulated 1,000 USDG buy and sell below 1% impact, provide at least 100 of 120
+expected samples, and have fresh corporate-action metadata. The roster ranks
+safe markets by recent trading activity, daily volume, then symbol. Fewer than
+four safe markets delays preparation; value-bearing v4 never substitutes an
+unsafe fallback.
+
 V4 must pass Foundry unit/fuzz tests, 100 accelerated settled Anvil rounds, ten
 cancellation rounds, a two-hour stability run, changed-roster seed
 conversion, exact basket and point reconciliation, indexer reconstruction,
@@ -104,3 +120,8 @@ prepared, but broadcast requires separate authorization and is limited to two
 smoke-test rounds. Mainnet remains blocked on audit,
 economic review, legal approval, canonical asset verification, and explicit
 release authorization.
+
+The exact mainnet release sequence, external gates, stop conditions, testnet
+smoke procedure, and canary rules are maintained in
+`docs/operations/v4-mainnet-release-runbook.md`. Mainnet remains compile-time
+locked and an environment variable alone cannot authorize it.

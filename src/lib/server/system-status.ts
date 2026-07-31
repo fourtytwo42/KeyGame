@@ -3,7 +3,7 @@ import { database, databaseHealth } from "./db";
 import { loadServerDeploymentWithKey } from "./deployment";
 import { deploymentPublicClient } from "./rpc-client";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
-import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet";
+import { getV4DevnetSnapshot } from "@/lib/web3/v4-devnet-runtime";
 import { isV4DevnetRuntime } from "./runtime-deployment";
 
 async function probe(url: string) {
@@ -143,7 +143,8 @@ export async function getSystemStatus() {
   if (mode !== "testnet" && mode !== "mainnet") {
     return { ok: true, mode, checkedAt: new Date().toISOString() };
   }
-  const { manifest, deploymentKey } = await loadServerDeploymentWithKey();
+  const { manifest, deploymentKey, manifestHash } =
+    await loadServerDeploymentWithKey();
   const client = deploymentPublicClient(manifest);
   const [
     block,
@@ -220,6 +221,37 @@ export async function getSystemStatus() {
     process.env.OPERATIONS_POT_CRITICAL_USD || 5_000,
   );
   const currentPotUsd = currentRound?.potUsd ?? 0;
+  const [catalog, poolSafety] = await Promise.all([
+    database
+      .query<{
+        catalog_version: string;
+        activated_at: Date;
+      }>(
+        `SELECT catalog_version,activated_at FROM market_catalog_versions
+         WHERE deployment_key=$1 AND retired_at IS NULL
+         ORDER BY activated_at DESC LIMIT 1`,
+        [deploymentKey],
+      )
+      .catch(() => ({ rows: [], rowCount: 0 })),
+    database
+      .query<{
+        symbol: string;
+        pool_address: string | null;
+        dex_safe: boolean;
+        dex_safety_reasons: string[];
+        pool_usdg_depth: string | null;
+        buy_impact_bps: string | null;
+        sell_impact_bps: string | null;
+        spot_twap_deviation_bps: string | null;
+        dex_observed_at: Date | null;
+      }>(
+        `SELECT symbol,pool_address,dex_safe,dex_safety_reasons,
+                pool_usdg_depth,buy_impact_bps,sell_impact_bps,
+                spot_twap_deviation_bps,dex_observed_at
+         FROM market_assets WHERE pool_address IS NOT NULL ORDER BY symbol`,
+      )
+      .catch(() => ({ rows: [], rowCount: 0 })),
+  ]);
   const potAlert =
     currentPotUsd >= criticalPotUsd
       ? "critical"
@@ -232,6 +264,7 @@ export async function getSystemStatus() {
     chainId: manifest.chainId,
     block: Number(block),
     sourceCommit: manifest.sourceCommit,
+    manifestHash,
     deploymentBlock: manifest.deploymentBlock,
     deploymentKey,
     contracts: manifest.contracts,
@@ -250,6 +283,27 @@ export async function getSystemStatus() {
       newestSample: market.rows[0]?.newest_sample?.toISOString(),
       latestDexObservation: latestReport.rows[0]?.observed_at?.toISOString(),
       currentRoster: currentRound?.tickerScores ?? [],
+      quoteAgeSeconds: market.rows[0]?.newest_sample
+        ? Math.max(
+            0,
+            Math.floor(
+              (Date.now() - market.rows[0].newest_sample.getTime()) / 1_000,
+            ),
+          )
+        : null,
+      catalogVersion: catalog.rows[0]?.catalog_version ?? null,
+      catalogActivatedAt: catalog.rows[0]?.activated_at?.toISOString() ?? null,
+      poolSafety: poolSafety.rows.map((row) => ({
+        ticker: row.symbol,
+        pool: row.pool_address,
+        safe: row.dex_safe,
+        reasons: row.dex_safety_reasons,
+        usdgDepth: Number(row.pool_usdg_depth ?? 0),
+        buyImpactBps: Number(row.buy_impact_bps ?? 0),
+        sellImpactBps: Number(row.sell_impact_bps ?? 0),
+        spotTwapDeviationBps: Number(row.spot_twap_deviation_bps ?? 0),
+        observedAt: row.dex_observed_at?.toISOString() ?? null,
+      })),
     },
     round: currentRound
       ? {
@@ -272,6 +326,28 @@ export async function getSystemStatus() {
       details: service.details,
       observedAt: service.observed_at.toISOString(),
     })),
+    release: {
+      gates: manifest.releaseGates ?? {},
+      safes: {
+        manager: manifest.roles?.managerAdminSafe ?? null,
+        market:
+          manifest.roles?.marketAdminSafe ??
+          manifest.roles?.verifierAdminSafe ??
+          null,
+        treasury: manifest.roles?.treasurySafe ?? null,
+        configured: Boolean(
+          manifest.roles?.managerAdminSafe &&
+          (manifest.roles?.marketAdminSafe ||
+            manifest.roles?.verifierAdminSafe) &&
+          manifest.roles?.treasurySafe,
+        ),
+      },
+      protectedBuildSha256:
+        process.env.PROTECTED_BUILD_SHA256 ?? "not-recorded",
+      mainnetBroadcastLocked:
+        manifest.chainId !== 4663 ||
+        manifest.releaseGates?.mainnetBroadcastAuthorized !== true,
+    },
     checkedAt: new Date().toISOString(),
   };
 }

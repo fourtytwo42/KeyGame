@@ -12,17 +12,21 @@ forge build
 forge test
 pnpm release:scan
 
-for contract in LastBellRoundV4 RoundManagerV4 LifetimePointsVault RewardRouterV4; do
-  jq '.abi' "out/$contract.sol/$contract.json" >"$output_dir/abi/$contract.json"
+for contract in \
+  LastBellRoundV4 RoundManagerV4 LifetimePointsVault RewardRouterV4 \
+  PaymentRouter MockStockSwapAdapter MockUSDG MockStockToken; do
+  forge inspect "$contract" abi --json >"$output_dir/abi/$contract.json"
   forge inspect "$contract" storage-layout --json \
     >"$output_dir/storage/$contract.json"
-  jq -r '.bytecode.object' "out/$contract.sol/$contract.json" \
+  forge inspect "$contract" bytecode \
     | sha256sum \
     | awk '{print $1}' \
     >"$output_dir/$contract.bytecode.sha256"
 done
 
 cp deployments/46630-v4.template.json "$output_dir/deployment-manifest.template.json"
+cp docs/operations/v4-mainnet-release-runbook.md \
+  "$output_dir/testnet-smoke-runbook.md"
 git rev-parse HEAD >"$output_dir/source-commit.txt"
 git status --porcelain >"$output_dir/source-tree-status.txt"
 git diff --binary HEAD | sha256sum | awk '{print $1}' \

@@ -4,6 +4,10 @@ pragma solidity ^0.8.30;
 import {
     DexTwapMarketDataVerifier
 } from "../../contracts/DexTwapMarketDataVerifier.sol";
+import { IERC20 } from "../../contracts/interfaces/IERC20.sol";
+import {
+    RobinhoodStockSwapAdapter
+} from "../../contracts/RobinhoodStockSwapAdapter.sol";
 import { TestBase } from "./TestBase.sol";
 
 contract RobinhoodMainnetForkTest is TestBase {
@@ -43,5 +47,66 @@ contract RobinhoodMainnetForkTest is TestBase {
         assertEq(sourceChainId, 4663, "source chain");
         assertTrue(sourceBlockNumber > 0, "source block");
         assertTrue(sourceBlockHash != bytes32(0), "source block hash");
+    }
+
+    function test_ProductionAdapterQuotesAndSwapsEveryApprovedPool() public {
+        if (!vm.envOr("RUN_ROBINHOOD_MAINNET_FORK", false)) return;
+        vm.createSelectFork(vm.envString("ROBINHOOD_MAINNET_FORK_RPC_URL"));
+        RobinhoodStockSwapAdapter adapter =
+            new RobinhoodStockSwapAdapter(FACTORY, USDG, address(this));
+        address[5] memory stocks = [
+            address(0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9),
+            address(0x322F0929c4625eD5bAd873c95208D54E1c003b2d),
+            address(0x12f190a9F9d7D37a250758b26824B97CE941bF54),
+            address(0x117cc2133c37B721F49dE2A7a74833232B3B4C0C),
+            NVDA
+        ];
+        address[5] memory pools = [
+            address(0x783C9bbB765047CFdD2b84b92b2Ca9F11D34b7Ed),
+            address(0xf4ACdAEEB7022862A763C9B1B885e11191c889E3),
+            address(0x8AC92DA74AB5F3b1d024Dc1943Ad7e15Dc4179Ef),
+            address(0xA43b424Bc609495AED4BCD88d654934b510B0aD9),
+            NVDA_POOL
+        ];
+        bytes32[5] memory symbols = [
+            bytes32("AAPL"),
+            bytes32("TSLA"),
+            bytes32("AMZN"),
+            bytes32("SPY"),
+            bytes32("NVDA")
+        ];
+        uint24[5] memory fees = [uint24(3_000), 3_000, 3_000, 3_000, 500];
+
+        for (uint8 i; i < stocks.length; i++) {
+            adapter.configureMarket(
+                symbols[i],
+                keccak256(abi.encode("ROBINHOOD_CANONICAL", symbols[i])),
+                stocks[i],
+                pools[i],
+                fees[i],
+                1,
+                10_000e6
+            );
+            uint256 quote = adapter.quoteUsdgForStock(stocks[i], 1e6);
+            assertTrue(quote > 0, "zero buy quote");
+            vm.prank(pools[i]);
+            bool funded = IERC20(USDG).transfer(address(this), 2e6);
+            assertTrue(funded, "pool funding");
+            IERC20(USDG).approve(address(adapter), 1e6);
+            uint256 bought = adapter.swapUsdgForStock(
+                stocks[i],
+                1e6,
+                (quote * 99) / 100,
+                uint64(block.timestamp + 30),
+                address(this)
+            );
+            assertTrue(bought > 0, "zero buy");
+            IERC20(stocks[i]).approve(address(adapter), bought);
+            uint256 sold = adapter.swapStockForUsdg(
+                stocks[i], bought, 980_000, uint64(block.timestamp + 30), address(this)
+            );
+            assertTrue(sold >= 980_000, "round trip outside guard");
+        }
+        assertEq(adapter.marketCount(), 5, "catalog size");
     }
 }
