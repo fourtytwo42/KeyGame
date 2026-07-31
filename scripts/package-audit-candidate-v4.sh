@@ -9,12 +9,12 @@ rm -rf "$output_dir"
 mkdir -p "$output_dir/abi" "$output_dir/storage" "$output_dir/evidence"
 
 printf '%s  %s\n' \
-  "4bd458bbe6da728b8dcf4d6ffe70b16b29e828d1fc9f41b5bef7f96fc6ca463b" \
-  "artifacts/torture/v4-torture-live-2026-07-31T03-44-39-339Z.json" \
+  "6e1535550ad5087acc8163500a1341a7d518cfb6e9d2de551992c69f32565362" \
+  "artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json" \
   | sha256sum --check
 printf '%s  %s\n' \
-  "82454f8106ba34e6db9983722de43436e177c88c16328a2d8c9a781523c80b09" \
-  "artifacts/torture/v4-torture-live-2026-07-31T03-44-39-339Z.md" \
+  "6d89d4ced375afdd0547edc9590b247e07db0d37033ff06a757e81c1a85102a6" \
+  "artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.md" \
   | sha256sum --check
 
 forge fmt --check
@@ -24,7 +24,20 @@ pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm release:scan
+pnpm test:integration
+NEXT_DIST_DIR=.next-protected \
+  NEXT_PUBLIC_GAME_MODE=mainnet \
+  KEYGAME_CHAIN_ID=4663 \
+  KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/4663.template.json" \
+  NEXT_PUBLIC_APP_URL=https://audit.invalid \
+  NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot \
+  NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS=0x1111111111111111111111111111111111111111 \
+  NEXT_PUBLIC_ROUND_MANAGER_ADDRESS=0x2222222222222222222222222222222222222222 \
+  NEXT_PUBLIC_DEV_DOLLAR_ADDRESS=0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 \
+  NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS=0x3333333333333333333333333333333333333333 \
+  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=audit-scan-only \
+  NEXT_PUBLIC_WALLETCONNECT_ALLOWED_ORIGINS=https://audit.invalid \
+  pnpm release:scan
 RUN_ROBINHOOD_MAINNET_FORK=true \
   ROBINHOOD_MAINNET_FORK_RPC_URL="${ROBINHOOD_MAINNET_RPC_URL:-http://192.168.50.173:8547}" \
   forge test --match-contract RobinhoodMainnetForkTest -vvv \
@@ -57,11 +70,13 @@ cp docs/qualification/v4-threat-model.md \
   "$output_dir/evidence/threat-model.md"
 cp docs/qualification/v4-external-gates.md \
   "$output_dir/evidence/external-gates.md"
+cp docs/qualification/v4-local-release-evidence.md \
+  "$output_dir/evidence/local-release-evidence.md"
 cp docs/prd/16-stock-pot-lifetime-points.md \
   "$output_dir/evidence/authoritative-prd.md"
-cp artifacts/torture/v4-torture-live-2026-07-31T03-44-39-339Z.json \
+cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json \
   "$output_dir/evidence/torture-report.json"
-cp artifacts/torture/v4-torture-live-2026-07-31T03-44-39-339Z.md \
+cp artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.md \
   "$output_dir/evidence/torture-report.md"
 git rev-parse HEAD >"$output_dir/source-commit.txt"
 git status --porcelain >"$output_dir/source-tree-status.txt"

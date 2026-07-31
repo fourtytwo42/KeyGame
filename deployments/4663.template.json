@@ -75,7 +75,7 @@
   },
   "releaseGates": {
     "tortureBaselinePreserved": true,
-    "productionAdapterQualified": false,
+    "productionAdapterQualified": true,
     "testnetSmokeAuthorized": false,
     "testnetSmokePassed": false,
     "auditApproved": false,

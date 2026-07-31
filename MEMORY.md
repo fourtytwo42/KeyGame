@@ -4,14 +4,15 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- Current task: `last-bell-v4-stock-pot` is implemented and accepted on Anvil.
-  Do not broadcast v4 to Robinhood testnet or mainnet without a separate user
-  authorization.
-- Last meaningful result: v4 contract, application, API, devnet rollover,
-  lifetime rewards, changed-roster seed rebalance, browser UAT, protected build,
-  and testnet package gates passed on the project VM. The clean live devnet is
-  round 4663 in entry state with the automatic keeper running. Last verified
-  2026-07-30.
+- Current task: `last-bell-v4-stock-pot` production adapter and
+  mainnet-readiness implementation are complete locally. Do not broadcast v4
+  to Robinhood testnet or mainnet without separate user authorization.
+- Last meaningful result: commit-bound torture run
+  `v4-torture-live-2026-07-31T07-10-55-856Z` passed 1,000,000 contract actions,
+  10,000 accepted contributions, 500 settlements, 50 cancellations, 13,825
+  distinct confirmed transactions, exact asset/point reconciliation, and 11
+  restored faults. Qualified source commit is
+  `8f96285784d57d05229fb12cf829281932f7d6f0`. Last verified 2026-07-31.
 - Testnet-ready archive:
   `artifacts/last-bell-v4-testnet-ready.tgz`; its adjacent `.sha256` file is the
   package checksum. It is explicitly marked not broadcast and records both the
@@ -23,23 +24,21 @@ Durable project context lives here. Update this file whenever information should
   `artifacts/qualification/` as matching JSON and Markdown reports. Source
   commit `b303635` passed the accelerated gate; endurance hardening through
   `f65bea5` safely classifies the preserved no-charge revert as recovered.
-- The isolated v4 torture campaign is accepted. Run
-  `v4-torture-live-2026-07-31T03-44-39-339Z` completed exactly 1,000,000
-  deterministic Foundry state actions, 10,000 accepted live contributions,
-  500 settlements, 50 cancellations, 13,825 confirmed transaction hashes, and
-  all ten recovery faults. Reconciliation found zero basket, point, assertion,
-  action, or unresolved-revert discrepancies. The campaign source is
-  `1c4926e`; reporting and fully isolated browser/integration routing were
-  hardened afterward.
-- Checksummed evidence is
-  `artifacts/torture/v4-torture-live-2026-07-31T03-44-39-339Z.json` and `.md`;
+- The accepted isolated v4 torture evidence is
+  `artifacts/torture/v4-torture-live-2026-07-31T07-10-55-856Z.json` and `.md`;
   deterministic shard logs and seeds are in the same-name subdirectory.
-  Preserved failed attempts document the keeper idempotency, cancellation
-  predicate, and PostgreSQL recovery defects that were fixed before acceptance.
+  The report SHA-256 is
+  `6e1535550ad5087acc8163500a1341a7d518cfb6e9d2de551992c69f32565362`.
+  The Markdown SHA-256 is
+  `6d89d4ced375afdd0547edc9590b247e07db0d37033ff06a757e81c1a85102a6`.
+  Preserved partial runs document the PostgreSQL restart resilience defect
+  found and fixed before final acceptance.
 - Final evidence includes 30 exported logs/tables plus a PostgreSQL snapshot
   under the run directory and occupies about 107 MB. The isolated Anvil,
   keeper, indexer, and web runtime was stopped after packaging.
 - Do not broadcast to Robinhood testnet or mainnet.
+- Next step is independent audit/legal/Safe work. The two-round Robinhood
+  testnet smoke and later external-wallet UAT remain separate gates.
 
 ## Current State
 
@@ -678,17 +677,17 @@ When sources conflict, use this order:
   `TESTNET MOCK · NO VALUE`.
 - Limit Robinhood testnet to a separately authorized two-round compatibility
   smoke test after estimating gas and preserving an operating reserve.
-- Implement and audit the production canonical Stock Token swap adapter and
-  its 10-minute-TWAP/1% execution-deviation enforcement before mainnet. V4
-  testnet intentionally packages only the deterministic mock adapter.
+- Submit the implemented production canonical Stock Token swap adapter,
+  manager, keeper, indexer, and reward paths for independent audit. V4 testnet
+  intentionally packages only the deterministic mock adapter.
 - Keep Rug Zone latency evidence current and disclose FCFS automation advantage.
   Automation advantage is an accepted product property, not a freeze failure.
 - Verify the source and bytecode provenance of the user's faucet TSLA, AMZN,
   PLTR, NFLX, and AMD token contracts before using them for Producer Pass.
 - Add a real Reown project ID and origin allowlist, then UAT WalletConnect and browser extensions on Robinhood Chain testnet.
 - Arrange independent smart-contract security and economic review.
-- Move manager admin, verifier admin, and treasury to documented 2-of-3
-  multisigs before a mainnet release candidate.
+- Move manager admin, market admin, and treasury to three documented 2-of-3
+  Safes before a mainnet release candidate.
 - Define supported jurisdictions, age/identity requirements, and obtain product counsel before a value-bearing launch.
 - Select real testnet payment token, treasury, operator, and monitoring before
   deployment. RPC-provider routing is configured and verified.

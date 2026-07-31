@@ -7,11 +7,11 @@ is authorized or claimed.
 
 | Gate | State | Evidence or next authority |
 |---|---|---|
-| Accepted Anvil baseline | Passed | `v4-torture-baseline.json` and checksummed torture archive |
+| Accepted Anvil baseline | Passed | Commit-bound run `v4-torture-live-2026-07-31T07-10-55-856Z`: 1,000,000 state actions, 10,000 contributions, 500 settlements, 50 cancellations, exact reconciliation, and 11 restored faults |
 | Direct production adapter | Implemented | `RobinhoodStockSwapAdapter.sol` |
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
-| Full release regression | Pending final clean run | Audit-package command |
+| Full release regression | Passed locally | 54 Foundry tests, 57 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
 | Two-round Robinhood testnet smoke | Blocked | Separate written user authorization |
 | Independent audit | Blocked | External auditor and frozen candidate required |
 | Legal/eligibility matrix | Blocked | Counsel approval required |
@@ -39,6 +39,20 @@ is authorized or claimed.
   from canonical logs.
 - Protected builds reject mock adapters, generated wallets, faucets, torture
   controls, and test attestors.
+- Devnet transaction code is selected through a build-time alias and is absent
+  from protected mainnet JavaScript bundles.
+- PostgreSQL pool disconnects are non-fatal. The qualification controller
+  resumes idempotently after transient shutdowns, and systemd-equivalent
+  torture supervision relaunches exited services before accepting recovery.
+
+## Current live market evidence
+
+The 2026-07-31 mainnet preflight found AAPL, TSLA, SPY, and NVDA safe under the
+prototype 10-minute TWAP, depth, history, and 1% execution checks. AMZN remained
+in the approved catalog but was excluded from roster selection because its
+simulated $1,000 buy exceeded the 1% impact limit. Market safety is revalidated
+immediately before every production round; this result is evidence, not a
+permanent approval.
 
 ## Candidate-change rule
 
