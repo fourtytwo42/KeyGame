@@ -38,7 +38,7 @@ async function probe(url: string) {
 export async function getSystemStatus() {
   const mode = process.env.NEXT_PUBLIC_GAME_MODE || "simulator";
   if (mode === "devnet") {
-    const [db, run, services] = await Promise.all([
+    const [db, run, rehearsal, services] = await Promise.all([
       databaseHealth(),
       database
         .query<{
@@ -100,6 +100,27 @@ export async function getSystemStatus() {
         .catch(() => ({ rows: [], rowCount: 0 })),
       database
         .query<{
+          id: string;
+          state: string;
+          settled_rounds: number;
+          target_rounds: number;
+          duration_minutes: number;
+          spent_usdg: string;
+          usdg_budget: string;
+          started_at: Date;
+          ends_at: Date;
+          report_sha256: string | null;
+          last_error: string | null;
+        }>(
+          `SELECT id,state,settled_rounds,target_rounds,duration_minutes,
+                  spent_usdg::text,usdg_budget::text,started_at,ends_at,
+                  report_sha256,last_error
+           FROM v4_launch_rehearsal_runs
+           ORDER BY created_at DESC LIMIT 1`,
+        )
+        .catch(() => ({ rows: [], rowCount: 0 })),
+      database
+        .query<{
           service: string;
           status: string;
           observed_at: Date;
@@ -138,6 +159,27 @@ export async function getSystemStatus() {
         status: service.status,
         observedAt: service.observed_at.toISOString(),
       })),
+      rehearsal: rehearsal.rows[0]
+        ? {
+            id: rehearsal.rows[0].id,
+            state: rehearsal.rows[0].state,
+            chainId: 31_337,
+            settledRounds: rehearsal.rows[0].settled_rounds,
+            targetRounds: rehearsal.rows[0].target_rounds,
+            durationMinutes: rehearsal.rows[0].duration_minutes,
+            spentUsdg: Number(rehearsal.rows[0].spent_usdg) / 1e6,
+            budgetUsdg: Number(rehearsal.rows[0].usdg_budget) / 1e6,
+            startedAt: rehearsal.rows[0].started_at.toISOString(),
+            endsAt: rehearsal.rows[0].ends_at.toISOString(),
+            reportSha256: rehearsal.rows[0].report_sha256,
+            lastError: rehearsal.rows[0].last_error,
+          }
+        : null,
+      release: {
+        mainnetGameplayPretested: false,
+        launchValidation: "READ_ONLY",
+        promotionRequiresSeparateAuthorization: true,
+      },
       checkedAt: new Date().toISOString(),
     };
   }
