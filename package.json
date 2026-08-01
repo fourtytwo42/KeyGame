@@ -79,6 +79,7 @@
     "release:verify:mainnet:read-only": "tsx scripts/verify-mainnet-read-only.ts",
     "release:verify:mainnet:promotion": "tsx scripts/verify-mainnet-promotion-authorization.ts",
     "v4-launch-rehearsal:dry-run": "bash scripts/run-v4-launch-rehearsal-dry-run.sh",
+    "v4-launch-rehearsal:install": "sudo bash scripts/install-v4-launch-rehearsal-services.sh",
     "v4-launch-rehearsal:prepare": "bash scripts/prepare-v4-launch-rehearsal.sh",
     "v4-launch-rehearsal:start": "tsx scripts/v4-launch-rehearsal.ts start",
     "v4-launch-rehearsal:run": "tsx scripts/v4-launch-rehearsal.ts run",

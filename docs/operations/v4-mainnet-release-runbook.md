@@ -50,10 +50,11 @@ faucets, mock adapters, test credentials, and torture controls.
 
 1. Start the isolated Anvil service on `127.0.0.1:9546`, create the separate
    `keygame_v4_rehearsal` database, and run `v4-launch-rehearsal:prepare`.
-2. Install the rehearsal keeper, indexer, runner, timer, isolated Status app,
-   and the narrowly scoped root-owned restart helper. The runner must reject
-   every chain except 31337. Build the Status app into `.next-rehearsal` and
-   expose it only on the rehearsal port.
+2. Run `pnpm v4-launch-rehearsal:install` to install the rehearsal keeper,
+   indexer, runner, timer, isolated Status app, root-owned restart helper, and
+   exact two-command sudo allowlist. The runner must reject every chain except
+   31337. Build the Status app into `.next-rehearsal` and expose it only on the
+   rehearsal port.
 3. Run `v4-launch-rehearsal:start`. The timer invokes the controller every ten
    seconds for one real hour without advancing chain time.
 4. Require ten rounds at minutes 0 through 54, two non-admin callers per round,
