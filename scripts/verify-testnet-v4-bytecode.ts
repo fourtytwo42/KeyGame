@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -140,7 +141,9 @@ const evidence = {
   checkedAt: new Date().toISOString(),
   chainId: 46630,
   deployedSourceCommit: manifest.sourceCommit,
-  candidateSourceCommit: process.env.SOURCE_COMMIT ?? "WORKTREE",
+  candidateSourceCommit:
+    process.env.SOURCE_COMMIT ??
+    execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   manifestSha256: sha256(manifestBytes),
   comparisons,
   additionalTransactionsSubmitted: 0,
