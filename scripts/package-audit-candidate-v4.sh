@@ -7,8 +7,10 @@ cd "$project_root"
 
 torture_report_json="${V4_TORTURE_REPORT_JSON:-}"
 rehearsal_report_json="${V4_LAUNCH_REHEARSAL_REPORT_JSON:-}"
+testnet_smoke_report="${TESTNET_V4_SMOKE_REPORT:-}"
+testnet_deployment_manifest="${TESTNET_V4_DEPLOYMENT_MANIFEST:-}"
 release_upstream_ref="${RELEASE_UPSTREAM_REF:-}"
-release_baseline_commit="${RELEASE_BASELINE_COMMIT:-d26b06cf0963f19c9c5248935fc7c51077304a83}"
+release_baseline_commit="${RELEASE_BASELINE_COMMIT:-6198c73944a021aa24d86c03c59c8e7ee8abcea5}"
 if [[ -z "$release_upstream_ref" ]]; then
   echo "RELEASE_UPSTREAM_REF must identify the pushed release commit." >&2
   exit 1
@@ -22,6 +24,18 @@ if [[ -z "$rehearsal_report_json" ]]; then
   echo "V4_LAUNCH_REHEARSAL_REPORT_JSON must identify the completed one-hour devnet rehearsal." >&2
   exit 1
 fi
+for required_evidence in "$testnet_smoke_report" "$testnet_deployment_manifest"; do
+  [[ -n "$required_evidence" && -f "$required_evidence" ]] || {
+    echo "Current-bytecode testnet smoke report and deployment manifest are required." >&2
+    exit 1
+  }
+done
+[[ -f "$testnet_smoke_report.sha256" ]] || {
+  echo "The testnet smoke reconciliation checksum is required." >&2
+  exit 1
+}
+(cd "$(dirname "$testnet_smoke_report")" && \
+  sha256sum --check "$(basename "$testnet_smoke_report.sha256")")
 torture_report_json="$(realpath "$torture_report_json")"
 case "$torture_report_json" in
   "$project_root"/artifacts/torture/*.json) ;;
@@ -84,7 +98,7 @@ git merge-base --is-ancestor "$rehearsal_commit" "$source_commit" || {
 }
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/devnet-deploy.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/devnet-deploy.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/validate-final-mainnet-candidate.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/release/testnet-v4.ts|src/lib/release/testnet-v4.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     ops/systemd/keygame-v4-rehearsal-web.service|scripts/install-v4-launch-rehearsal-services.sh) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
@@ -151,6 +165,12 @@ pnpm exec tsx scripts/preflight-mainnet-v4.ts \
 TESTNET_V4_BYTECODE_EVIDENCE="$output_dir/evidence/testnet-current-bytecode.json" \
   pnpm release:verify:testnet:v4-bytecode \
   >"$output_dir/evidence/testnet-current-bytecode.stdout.json"
+SOURCE_COMMIT="$source_commit" \
+TESTNET_V4_BYTECODE_EVIDENCE="$output_dir/evidence/testnet-current-bytecode.json" \
+TESTNET_V4_SMOKE_REPORT="$testnet_smoke_report" \
+TESTNET_V4_DEPLOYMENT_MANIFEST="$testnet_deployment_manifest" \
+  pnpm release:validate:mainnet-candidate \
+  >"$output_dir/evidence/final-testnet-gate.json"
 
 # Storage layouts are not part of Foundry's default artifacts. Rebuild them
 # explicitly so `forge inspect storage-layout` is deterministic on a clean VM.
@@ -169,6 +189,14 @@ done
 
 cp deployments/4663.template.json "$output_dir/mainnet-manifest.template.json"
 cp deployments/46630-v4.template.json "$output_dir/testnet-manifest.template.json"
+cp "$testnet_deployment_manifest" \
+  "$output_dir/evidence/testnet-deployment-manifest.json"
+cp "$testnet_smoke_report" "$output_dir/evidence/testnet-smoke-reconciliation.json"
+(
+  cd "$output_dir/evidence"
+  sha256sum testnet-smoke-reconciliation.json \
+    >testnet-smoke-reconciliation.json.sha256
+)
 cp docs/qualification/v4-torture-baseline.json \
   "$output_dir/evidence/torture-baseline.json"
 cp docs/qualification/v4-mainnet-readiness-ledger.md \
@@ -219,8 +247,8 @@ printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
   "INTERNALLY REVIEWED - NO INDEPENDENT AUDIT" \
   "SINGLE DEPLOYER EOA - NO LEGAL REVIEW - NO INDEPENDENT AUDIT" \
   "EXTERNAL WALLET UAT SKIPPED - BROWSER WALLET COMPATIBILITY UNVERIFIED" \
-  "DEVNET ONE-HOUR REHEARSAL PASSED - TESTNET HISTORICAL SMOKE ONLY" \
-  "CURRENT TESTNET BYTECODE MISMATCH - MAINNET QUALIFICATION BLOCKED" \
+  "DEVNET ONE-HOUR REHEARSAL PASSED - CURRENT-BYTECODE TESTNET SMOKE PASSED" \
+  "CURRENT TESTNET BYTECODE MATCHED - FINAL MAINNET CANDIDATE" \
   "MAINNET GAMEPLAY NOT PRETESTED - READ-ONLY VALIDATION ONLY" \
   "EXPLICIT MAINNET AUTHORIZATION REMAINS BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"

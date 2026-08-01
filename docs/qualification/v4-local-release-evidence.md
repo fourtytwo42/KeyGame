@@ -2,8 +2,9 @@
 
 The baseline below was verified 2026-07-31 on the KeyGame VM. The later
 treasury-rotation candidate passed a complete clean torture rerun and internal
-assurance. One mock-only v4 testnet deployment and exactly two smoke rounds
-have since completed. Mainnet has not been broadcast.
+assurance. One historical mock-only v4 testnet deployment and exactly two smoke
+rounds completed, but its bytecode predates the lifetime reward rounding repair.
+Mainnet has not been broadcast.
 
 ## Accepted source
 
@@ -49,10 +50,12 @@ the isolated harness. The final accepted run includes both fixes.
 
 ## Remaining release gates
 
-The mock-only testnet smoke and single-deployer role verification passed. The
-unsigned acknowledgement `No legal review or independent audit` is recorded.
-External-wallet UAT is skipped, not passed, and browser compatibility remains
-unverified. The exact one-hour chain-31337 launch rehearsal remains the next
-local gate. Fresh mainnet market safety, incident ownership, funding, the
-dedicated compile-lock commit, read-only deployment authorization, and later
-public-promotion authorization remain blocking.
+The one-hour chain-31337 launch rehearsal and historical testnet network smoke
+passed, but the current-bytecode replacement testnet smoke remains blocking and
+requires new authorization. The final packager now rejects mismatched bytecode,
+anything other than exactly two reconciled rounds with two players, missing
+reward categories, or a started third round. External-wallet UAT is skipped,
+not passed, and browser compatibility remains unverified. Fresh mainnet market
+safety, incident ownership, funding, the dedicated compile-lock commit,
+read-only deployment authorization, and later public-promotion authorization
+remain blocking.

@@ -5,6 +5,7 @@ import {
   calculateTestnetGasBudget,
   parseTestnetSmokeAuthorization,
   smokeRoundLimitReached,
+  validateFinalTestnetSmokeEvidence,
 } from "./testnet-v4";
 
 const commit = "4e04f5f21a62476703600d332a6eb442b6fb185b";
@@ -132,5 +133,82 @@ describe("testnet v4 release guards", () => {
     expect(preflight).toContain('deployer_balance" -ge "$required_balance');
     expect(deploy).toContain("A v4 testnet manifest already exists");
     expect(deploy).toContain("validate-testnet-v4-authorization.ts");
+  });
+
+  it("freezes only a current-bytecode, exactly-two-round smoke", () => {
+    const manifestSha256 = "d".repeat(64);
+    const manifest = {
+      chainId: 46630,
+      mockOnly: true,
+      contractVersion: "last-bell-v4-stock-pot",
+      sourceCommit: commit,
+    };
+    const bytecode = {
+      allMatch: true,
+      candidateSourceCommit: commit,
+      deployedSourceCommit: commit,
+      manifestSha256,
+      additionalTransactionsSubmitted: 0,
+      comparisons: Array.from({ length: 9 }, (_, index) => ({
+        name: `Contract${index}`,
+        match: true,
+      })),
+    };
+    const reconciliation = {
+      ok: true,
+      chainId: 46630,
+      sourceCommit: commit,
+      manifestHash: manifestSha256,
+      authorizationScope: { maxDeployments: 1, maxSettledRounds: 2 },
+      scope: {
+        totalRounds: 3,
+        settledRounds: 2,
+        cancelledRounds: 0,
+        unstartedSuccessorRounds: 1,
+      },
+      failedKeeperJobs: "0",
+      contributionSummaries: [
+        { round: "1", players: "2" },
+        { round: "2", players: "2" },
+      ],
+      allocations: Array.from({ length: 8 }, (_, index) => ({ index })),
+      rewardClaims: [
+        { category: "LAST_BELL" },
+        { category: "WINNING_STOCK" },
+        { category: "LIFETIME" },
+      ],
+    };
+    expect(
+      validateFinalTestnetSmokeEvidence({
+        expectedCommit: commit,
+        manifest,
+        bytecode,
+        reconciliation,
+      }),
+    ).toMatchObject({
+      sourceCommit: commit,
+      settledRounds: 2,
+      unstartedSuccessorRounds: 1,
+      currentBytecodeMatches: true,
+    });
+    expect(() =>
+      validateFinalTestnetSmokeEvidence({
+        expectedCommit: commit,
+        manifest,
+        bytecode: { ...bytecode, allMatch: false },
+        reconciliation,
+      }),
+    ).toThrow(/bytecode/);
+    expect(() =>
+      validateFinalTestnetSmokeEvidence({
+        expectedCommit: commit,
+        manifest,
+        bytecode,
+        reconciliation: {
+          ...reconciliation,
+          scope: { ...reconciliation.scope, totalRounds: 2 },
+        },
+      }),
+    ).toThrow(/scope/);
   });
 });

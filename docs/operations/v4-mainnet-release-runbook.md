@@ -16,8 +16,9 @@ instruction.
 
 1. Work only from the authoritative KeyGame VM.
 2. Confirm the branch is clean and pushed. GitHub is source hosting only.
-3. Run `pnpm security:review`, complete the manual checklist, and complete the
-   chain-31337 launch rehearsal before running `pnpm release:package:audit`.
+3. Run `pnpm security:review`, complete the manual checklist and chain-31337
+   launch rehearsal, then obtain the current-bytecode testnet smoke evidence
+   before running `pnpm release:package:audit`.
 4. Review the generated ABI, storage layout, bytecode hashes, mainnet-fork
    evidence, canonical-market preflight, torture baseline, and `SHA256SUMS`.
 5. Freeze the exact commit. Contract or accounting changes invalidate the
@@ -36,6 +37,14 @@ bytecode in `312dd5e` to repair lifetime-reward rounding, so the historical
 smoke cannot satisfy the current release gate. Stop mainnet qualification at
 this mismatch unless a matching-bytecode smoke is separately authorized; do
 not silently submit another testnet transaction.
+
+After separate authorization, deploy once from the exact frozen commit and run
+exactly two rounds. Reconcile with `release:reconcile:testnet:v4`, compare
+runtime bytecode with `release:verify:testnet:v4-bytecode`, and provide both
+checksummed files plus the immutable deployment manifest to the final packager.
+It rejects any commit/hash mismatch, fewer than two players per round, anything
+other than eight token allocations, a missing reward category, a failed keeper
+job, or a third round that is absent or started.
 
 ## 3. Internal assurance, acknowledgement, and role setup
 
@@ -104,8 +113,9 @@ Legacy canary-scoped authorizations are invalid.
 3. Verify runtime bytecode, roles, contract relationships, seed custody, and
    source on the explorer.
 4. Run `release:verify:mainnet:read-only`. It verifies bytecode, roles,
-   relationships, the unstarted zero-call round, safe markets, RPC agreement,
-   indexer catch-up, API consistency, and zero unexpected custody.
+   relationships, the unstarted zero-call round, safe markets, LAN/reference
+   agreement, the live `LAN_ONLY` and no-automatic-failover policy, indexer
+   catch-up, API consistency, and zero unexpected custody.
 5. The verifier must report `transactionsSubmitted: 0`. Do not approve, call,
    swap, settle, claim, rebalance, or convert before promotion.
 6. Keep the application unlisted. Copy the promotion authorization template
@@ -119,7 +129,7 @@ Legacy canary-scoped authorizations are invalid.
 
 - Wrong chain, lagging RPC, exposed unlocked accounts, dirty or unpushed source.
 - Fewer than four safe approved direct markets.
-- Canonical registry, factory, pool, token, Safe, or bytecode mismatch.
+- Canonical registry, factory, pool, token, role-custody, or bytecode mismatch.
 - Internal assurance, devnet rehearsal, testnet bytecode match, explicit
   wallet-UAT disposition, protected build, monitoring, or role-custody gate
   missing.

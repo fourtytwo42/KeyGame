@@ -126,3 +126,102 @@ export function assertSmokeReconciliationScope(input: {
     );
   }
 }
+
+function record(value: unknown, label: string): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${label} evidence is missing or malformed.`);
+  }
+  return value as Record<string, unknown>;
+}
+
+export function validateFinalTestnetSmokeEvidence(input: {
+  expectedCommit: string;
+  manifest: unknown;
+  bytecode: unknown;
+  reconciliation: unknown;
+}) {
+  if (!/^[0-9a-f]{40}$/.test(input.expectedCommit)) {
+    throw new Error("Expected source commit must be a full lowercase Git SHA.");
+  }
+  const manifest = record(input.manifest, "Testnet manifest");
+  const bytecode = record(input.bytecode, "Testnet bytecode");
+  const reconciliation = record(input.reconciliation, "Testnet reconciliation");
+  const scope = record(reconciliation.scope, "Testnet reconciliation scope");
+  const authorization = record(
+    reconciliation.authorizationScope,
+    "Testnet authorization scope",
+  );
+  const contributions = Array.isArray(reconciliation.contributionSummaries)
+    ? reconciliation.contributionSummaries
+    : [];
+  const allocations = Array.isArray(reconciliation.allocations)
+    ? reconciliation.allocations
+    : [];
+  const claims = Array.isArray(reconciliation.rewardClaims)
+    ? reconciliation.rewardClaims
+    : [];
+  const comparisons = Array.isArray(bytecode.comparisons)
+    ? bytecode.comparisons
+    : [];
+
+  if (
+    manifest.chainId !== 46630 ||
+    manifest.mockOnly !== true ||
+    manifest.contractVersion !== "last-bell-v4-stock-pot" ||
+    manifest.sourceCommit !== input.expectedCommit
+  ) {
+    throw new Error("Testnet manifest does not match the frozen mock-only candidate.");
+  }
+  if (
+    bytecode.allMatch !== true ||
+    bytecode.candidateSourceCommit !== input.expectedCommit ||
+    bytecode.deployedSourceCommit !== input.expectedCommit ||
+    bytecode.additionalTransactionsSubmitted !== 0 ||
+    comparisons.length < 9 ||
+    comparisons.some(
+      (comparison) => record(comparison, "Bytecode comparison").match !== true,
+    )
+  ) {
+    throw new Error("Deployed testnet bytecode does not exactly match the candidate.");
+  }
+  if (
+    reconciliation.ok !== true ||
+    reconciliation.chainId !== 46630 ||
+    reconciliation.sourceCommit !== input.expectedCommit ||
+    reconciliation.manifestHash !== bytecode.manifestSha256 ||
+    authorization.maxDeployments !== 1 ||
+    authorization.maxSettledRounds !== 2 ||
+    scope.totalRounds !== 3 ||
+    scope.settledRounds !== 2 ||
+    scope.cancelledRounds !== 0 ||
+    scope.unstartedSuccessorRounds !== 1 ||
+    reconciliation.failedKeeperJobs !== "0"
+  ) {
+    throw new Error("Testnet smoke scope or reconciliation does not satisfy the final gate.");
+  }
+  if (
+    contributions.length !== 2 ||
+    contributions.some(
+      (summary) => Number(record(summary, "Contribution summary").players) < 2,
+    ) ||
+    allocations.length !== 8
+  ) {
+    throw new Error("Testnet smoke does not contain two players and four allocations per round.");
+  }
+  const categories = new Set(
+    claims.map((claim) => String(record(claim, "Reward claim").category)),
+  );
+  for (const category of ["LAST_BELL", "WINNING_STOCK", "LIFETIME"]) {
+    if (!categories.has(category)) {
+      throw new Error(`Testnet smoke is missing ${category} reward evidence.`);
+    }
+  }
+  return {
+    sourceCommit: input.expectedCommit,
+    manifestSha256: String(bytecode.manifestSha256),
+    settledRounds: 2,
+    unstartedSuccessorRounds: 1,
+    allocationRows: 8,
+    currentBytecodeMatches: true,
+  };
+}

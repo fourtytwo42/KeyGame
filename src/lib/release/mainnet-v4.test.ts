@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  assertMainnetLanOnlyRpcPolicy,
   resolveWalletUatDisposition,
   validateMainnetReleaseAuthorization,
 } from "./mainnet-v4";
@@ -29,6 +30,48 @@ const valid = {
 };
 
 describe("mainnet v4 release guards", () => {
+  it("requires LAN-only active RPC traffic with an observational reference", () => {
+    expect(
+      assertMainnetLanOnlyRpcPolicy({
+        primary: "http://192.168.50.173:8547",
+        fallback: "https://reference.invalid",
+        policy: "LAN_ONLY",
+        referenceUse: "HEALTH_CHECK_ONLY",
+        automaticFailover: false,
+      }),
+    ).toEqual({
+      primaryUrl: "http://192.168.50.173:8547",
+      referenceUrl: "https://reference.invalid",
+    });
+    expect(() =>
+      assertMainnetLanOnlyRpcPolicy({
+        primary: "http://192.168.50.173:8547",
+        fallback: "https://reference.invalid",
+        policy: "LAN_PRIMARY_WITH_FAILOVER",
+        referenceUse: "HEALTH_CHECK_ONLY",
+        automaticFailover: false,
+      }),
+    ).toThrow(/LAN_ONLY/);
+    expect(() =>
+      assertMainnetLanOnlyRpcPolicy({
+        primary: "http://192.168.50.173:8547",
+        fallback: "https://reference.invalid",
+        policy: "LAN_ONLY",
+        referenceUse: "ACTIVE_FALLBACK",
+        automaticFailover: false,
+      }),
+    ).toThrow(/HEALTH_CHECK_ONLY/);
+    expect(() =>
+      assertMainnetLanOnlyRpcPolicy({
+        primary: "http://192.168.50.173:8547",
+        fallback: "https://reference.invalid",
+        policy: "LAN_ONLY",
+        referenceUse: "HEALTH_CHECK_ONLY",
+        automaticFailover: true,
+      }),
+    ).toThrow(/disabled/);
+  });
+
   it("keeps an operator skip distinct from a passing wallet test", () => {
     expect(
       resolveWalletUatDisposition({

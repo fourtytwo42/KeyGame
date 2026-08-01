@@ -71,6 +71,7 @@
     "release:preflight:testnet:v4": "bash scripts/preflight-testnet-v4.sh",
     "release:reconcile:testnet:v4": "tsx scripts/reconcile-testnet-v4-smoke.ts",
     "release:verify:testnet:v4-bytecode": "tsx scripts/verify-testnet-v4-bytecode.ts",
+    "release:validate:mainnet-candidate": "tsx scripts/validate-final-mainnet-candidate.ts",
     "release:write-manifest:v4": "tsx scripts/write-v4-deployment-manifest.ts",
     "release:package:audit": "bash scripts/package-audit-candidate-v4.sh",
     "release:package:internal-assurance": "bash scripts/package-audit-candidate-v4.sh",

@@ -15,6 +15,7 @@ import {
   lastBellV4Abi,
   roundManagerV4Abi,
 } from "../src/lib/web3/last-bell-abi";
+import { assertMainnetLanOnlyRpcPolicy } from "../src/lib/release/mainnet-v4";
 
 const managerAbi = [
   ...roundManagerV4Abi,
@@ -66,7 +67,13 @@ const manifest = JSON.parse(manifestBytes.toString("utf8")) as {
   mockOnly: boolean;
   contracts: Record<string, Address>;
   roles: Record<string, Address | null>;
-  rpc: { primary: string; fallback?: string };
+  rpc: {
+    primary: string;
+    fallback?: string;
+    policy?: string;
+    referenceUse?: string;
+    automaticFailover?: boolean;
+  };
   market: {
     quoteToken: Address;
     approvedCatalog: Array<{
@@ -81,37 +88,40 @@ if (manifest.chainId !== 4663 || manifest.mockOnly) {
     "Read-only launch verification requires a value-bearing chain-4663 manifest.",
   );
 }
-const fallbackRpc =
-  manifest.rpc.fallback ?? required("ROBINHOOD_MAINNET_FALLBACK_RPC_URL");
+const rpcPolicy = assertMainnetLanOnlyRpcPolicy({
+  ...manifest.rpc,
+  fallback:
+    manifest.rpc.fallback ?? required("ROBINHOOD_MAINNET_FALLBACK_RPC_URL"),
+});
 const primary = createPublicClient({
   chain: robinhoodChainMainnet,
-  transport: http(manifest.rpc.primary),
+  transport: http(rpcPolicy.primaryUrl),
 });
-const fallback = createPublicClient({
+const reference = createPublicClient({
   chain: robinhoodChainMainnet,
-  transport: http(fallbackRpc),
+  transport: http(rpcPolicy.referenceUrl),
 });
-const [primaryChain, fallbackChain, primaryHead, fallbackHead] =
+const [primaryChain, referenceChain, primaryHead, referenceHead] =
   await Promise.all([
     primary.getChainId(),
-    fallback.getChainId(),
+    reference.getChainId(),
     primary.getBlockNumber(),
-    fallback.getBlockNumber(),
+    reference.getBlockNumber(),
   ]);
-if (primaryChain !== 4663 || fallbackChain !== 4663)
+if (primaryChain !== 4663 || referenceChain !== 4663)
   throw new Error("RPC chain mismatch.");
 const headDelta =
-  primaryHead > fallbackHead
-    ? primaryHead - fallbackHead
-    : fallbackHead - primaryHead;
+  primaryHead > referenceHead
+    ? primaryHead - referenceHead
+    : referenceHead - primaryHead;
 if (headDelta > 5n)
   throw new Error("RPC heads differ by more than five blocks.");
-const commonHead = primaryHead < fallbackHead ? primaryHead : fallbackHead;
-const [primaryBlock, fallbackBlock] = await Promise.all([
+const commonHead = primaryHead < referenceHead ? primaryHead : referenceHead;
+const [primaryBlock, referenceBlock] = await Promise.all([
   primary.getBlock({ blockNumber: commonHead }),
-  fallback.getBlock({ blockNumber: commonHead }),
+  reference.getBlock({ blockNumber: commonHead }),
 ]);
-if (primaryBlock.hash !== fallbackBlock.hash)
+if (primaryBlock.hash !== referenceBlock.hash)
   throw new Error("RPC providers disagree on the canonical block.");
 
 const contracts = Object.fromEntries(
@@ -319,6 +329,12 @@ const status = (await statusResponse.json()) as {
   ok: boolean;
   chainId: number;
   indexer?: { lag: number };
+  rpc?: {
+    policy?: string;
+    activeProvider?: string;
+    connectionStatus?: string;
+    automaticFailover?: boolean;
+  };
 };
 const snapshot = (await snapshotResponse.json()) as {
   ok: boolean;
@@ -328,6 +344,10 @@ const snapshot = (await snapshotResponse.json()) as {
 if (
   !status.ok ||
   status.chainId !== 4663 ||
+  status.rpc?.policy !== "LAN_ONLY" ||
+  status.rpc?.activeProvider !== "lan" ||
+  status.rpc?.connectionStatus !== "healthy" ||
+  status.rpc?.automaticFailover !== false ||
   (status.indexer?.lag ?? Number.MAX_SAFE_INTEGER) > 3
 ) {
   throw new Error(
@@ -356,8 +376,12 @@ const evidence = {
   launchValidation: "READ_ONLY",
   transactionsSubmitted: 0,
   rpc: {
+    policy: "LAN_ONLY",
+    activeProvider: "lan",
+    referenceUse: "HEALTH_CHECK_ONLY",
+    automaticFailover: false,
     primaryHead: primaryHead.toString(),
-    fallbackHead: fallbackHead.toString(),
+    referenceHead: referenceHead.toString(),
     commonBlockHash: primaryBlock.hash,
   },
   codeEvidence,

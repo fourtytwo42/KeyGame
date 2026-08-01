@@ -9,7 +9,11 @@ import {
   pinnedDexMarkets,
 } from "../src/lib/game/dex-config";
 import { robinhoodChainMainnet } from "../src/lib/web3/chains";
-import { resolveWalletUatDisposition } from "../src/lib/release/mainnet-v4";
+import {
+  assertMainnetLanOnlyRpcPolicy,
+  resolveWalletUatDisposition,
+  type MainnetRpcPolicy,
+} from "../src/lib/release/mainnet-v4";
 import {
   mainnetDexClient,
   readDexObservation,
@@ -76,7 +80,9 @@ if (chainId !== ROBINHOOD_MAINNET_CHAIN_ID || syncing.result !== false) {
 }
 const template = JSON.parse(templateText) as {
   releaseGates?: Record<string, unknown>;
+  rpc: MainnetRpcPolicy;
 };
+assertMainnetLanOnlyRpcPolicy(template.rpc);
 const walletUat = resolveWalletUatDisposition(template.releaseGates);
 if (
   walletUat.status !== "SKIPPED_BY_OPERATOR" ||

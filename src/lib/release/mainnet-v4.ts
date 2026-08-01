@@ -1,5 +1,37 @@
 import { getAddress } from "viem";
 
+export type MainnetRpcPolicy = {
+  primary: string;
+  fallback?: string;
+  policy?: string;
+  referenceUse?: string;
+  automaticFailover?: boolean;
+};
+
+export function assertMainnetLanOnlyRpcPolicy(
+  rpc: MainnetRpcPolicy,
+): { primaryUrl: string; referenceUrl: string } {
+  if (!rpc.primary?.trim()) {
+    throw new Error("The LAN primary RPC URL is required.");
+  }
+  if (!rpc.fallback?.trim()) {
+    throw new Error("A health-reference RPC URL is required.");
+  }
+  if (rpc.primary === rpc.fallback) {
+    throw new Error("The LAN primary and health-reference RPCs must differ.");
+  }
+  if (rpc.policy !== "LAN_ONLY") {
+    throw new Error("Mainnet RPC policy must be LAN_ONLY.");
+  }
+  if (rpc.referenceUse !== "HEALTH_CHECK_ONLY") {
+    throw new Error("The secondary RPC must be HEALTH_CHECK_ONLY.");
+  }
+  if (rpc.automaticFailover !== false) {
+    throw new Error("Automatic RPC failover must remain disabled.");
+  }
+  return { primaryUrl: rpc.primary, referenceUrl: rpc.fallback };
+}
+
 export type WalletUatDisposition = {
   status: "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
   passed: boolean;

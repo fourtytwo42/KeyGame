@@ -24,8 +24,10 @@ operator retains the regulatory, economic, operational, and security risk.
 
 ## Wallet and network gates
 
-- The authorized mock-only testnet deployment and exactly two settled rounds
-  are complete and reconciled.
+- The historical mock-only testnet deployment and exactly two settled rounds
+  remain reconciled, but do not match the current bytecode after the lifetime
+  reward rounding repair. A replacement deployment and exactly two rounds
+  require a new commit-bound authorization before the final package can freeze.
 - External-wallet UAT is explicitly `SKIPPED_BY_OPERATOR`, not passed.
   Browser-wallet compatibility remains `UNVERIFIED` and must be displayed as
   such. WalletConnect is hidden when no production Reown project is configured.
@@ -38,3 +40,7 @@ operator retains the regulatory, economic, operational, and security risk.
 - Mainnet deployment validation is read-only. Public promotion requires a
   second authorization bound to the deployed manifest and checksummed
   verification report.
+- The final candidate packager fails closed unless the replacement testnet
+  manifest, current-bytecode comparison, two-round reconciliation, two-player
+  evidence, all reward categories, and unstarted third round agree on the exact
+  frozen commit.

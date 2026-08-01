@@ -14,7 +14,8 @@ mobile browser UAT, accessibility, and protected-build scanning.
 
 The extended economic qualification runs on Anvil: 100 accelerated settled
 rounds, ten cancellation rounds, exact per-token and per-point reconciliation,
-fault injection, and a two-hour unattended stability pass. The non-broadcast Robinhood testnet handoff is
+fault injection, the completed stability campaign, the million-action torture
+campaign, and the one-hour launch rehearsal. The non-broadcast Robinhood testnet handoff is
 `artifacts/last-bell-v4-testnet-ready.tgz`. Testnet remains a mock-asset
 environment. The operator authorized one mock-only testnet deployment and
 exactly two settled network-compatibility rounds after requalification.
@@ -146,15 +147,19 @@ safe markets by recent trading activity, daily volume, then symbol. Fewer than
 four safe markets delays preparation; value-bearing v4 never substitutes an
 unsafe fallback.
 
-V4 must pass Foundry unit/fuzz tests, 100 accelerated settled Anvil rounds, ten
-cancellation rounds, a two-hour stability run, changed-roster seed
-conversion, exact basket and point reconciliation, indexer reconstruction,
-service restarts, desktop/mobile browser UAT, accessibility, protected-bundle
-scanning, and local production builds. Testnet scripts and manifests may be
-prepared, but broadcast requires separate authorization and is limited to two
-smoke-test rounds. Mainnet remains blocked on audit,
-economic review, legal approval, canonical asset verification, and explicit
-release authorization.
+V4 must pass Foundry unit/fuzz tests, the accepted million-action and
+10,000-transaction torture campaigns, the one-hour launch rehearsal,
+changed-roster seed conversion, exact basket and point reconciliation, indexer
+reconstruction, service restarts, accessibility, protected-bundle scanning,
+and local production builds. Testnet broadcast requires separate authorization
+and is limited to one mock-only deployment and exactly two smoke-test rounds.
+The final package must prove that deployment matches the frozen bytecode, both
+rounds have two players and four token allocations, every reward category was
+claimed, and round three is unstarted. Mainnet remains blocked on current
+canonical-market qualification, funding, the dedicated compile-lock commit,
+explicit deployment authorization, read-only verification, and separate
+promotion authorization. External-wallet UAT, independent audit, and legal
+review are intentionally waived and must remain disclosed as unperformed.
 
 The exact mainnet release sequence, external gates, stop conditions, testnet
 smoke procedure, and canary rules are maintained in

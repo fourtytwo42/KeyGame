@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { assertSmokeReconciliationScope } from "../src/lib/release/testnet-v4";
 import { lastBellV4Abi } from "../src/lib/web3/last-bell-abi";
@@ -25,6 +25,13 @@ if ((await client.getChainId()) !== 46630) {
   throw new Error("Connected RPC is not Robinhood testnet.");
 }
 const deploymentKey = deploymentKeyFor(manifest);
+const manifestPath = process.env.KEYGAME_DEPLOYMENT_MANIFEST;
+if (!manifestPath) {
+  throw new Error("KEYGAME_DEPLOYMENT_MANIFEST is required.");
+}
+const manifestHash = createHash("sha256")
+  .update(await readFile(manifestPath))
+  .digest("hex");
 const rounds = await pool.query<{
   round_id: string;
   contract_address: string;
@@ -179,12 +186,17 @@ const report = {
   deploymentKey,
   sourceCommit: manifest.sourceCommit,
   authorizationScope: { maxDeployments: 1, maxSettledRounds: 2 },
-  manifestHash: createHash("sha256")
-    .update(JSON.stringify(manifest))
-    .digest("hex"),
+  manifestHash,
   chainId: manifest.chainId,
   head: head.number.toString(),
   headHash: head.hash,
+  scope: {
+    totalRounds: rounds.rows.length,
+    settledRounds: settled.length,
+    cancelledRounds: rounds.rows.filter((round) => round.state === "cancelled")
+      .length,
+    unstartedSuccessorRounds,
+  },
   rounds: settled,
   contributionSummaries: contributions.rows,
   allocations: allocations.rows,
@@ -197,6 +209,12 @@ const output =
   process.env.KEYGAME_TESTNET_SMOKE_REPORT ??
   path.join("artifacts", "testnet-v4-smoke", "reconciliation.json");
 await mkdir(path.dirname(output), { recursive: true });
-await writeFile(output, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+const reportJson = `${JSON.stringify(report, null, 2)}\n`;
+await writeFile(output, reportJson, "utf8");
+await writeFile(
+  `${output}.sha256`,
+  `${createHash("sha256").update(reportJson).digest("hex")}  ${path.basename(output)}\n`,
+  "utf8",
+);
 process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 await pool.end();

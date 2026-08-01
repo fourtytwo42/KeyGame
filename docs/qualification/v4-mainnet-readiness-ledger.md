@@ -59,7 +59,12 @@ Mainnet is not authorized or currently qualified.
   nonces after restart.
 - Mainnet read-only verification uses public clients only and checks deployed
   bytecode, roles, relationships, safe markets, the unstarted initial round,
-  indexer/API agreement, and zero unexpected custody.
+  indexer/API agreement, zero unexpected custody, and an explicit
+  `LAN_ONLY`/`HEALTH_CHECK_ONLY`/no-automatic-failover manifest and live status.
+- Final release packaging is fail-closed until a replacement testnet manifest,
+  current-bytecode comparison, exact two-round reconciliation, all three reward
+  categories, two players per round, and one unstarted successor validate
+  against the same frozen commit.
 - Production catalog changes are deployer-controlled initially and rejected while a round is
   live.
 - The production keeper delays preparation when fewer than four markets pass
