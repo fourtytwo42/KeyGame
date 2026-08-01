@@ -92,6 +92,10 @@ mv -- "$MAINNET_RELEASE_AUTHORIZATION_FILE" "$consumed_authorization"
 chmod 400 "$consumed_authorization"
 sha256sum "$consumed_authorization" > "$consumed_authorization.sha256"
 sync "$consumed_authorization" "$consumed_authorization.sha256"
+for index in 0 1 2 3; do
+  variable="INITIAL_SYMBOL_${index}"
+  export "$variable=$(cast format-bytes32-string "${!variable}")"
+done
 forge script script/DeployMainnet.s.sol:DeployMainnetV4 \
   --rpc-url "$ROBINHOOD_MAINNET_RPC_URL" \
   --sender "$DEPLOYER_ADDRESS" \

@@ -61,9 +61,14 @@ done
 cast rpc --rpc-url "$simulation_rpc" anvil_setBalance "$DEPLOYER_ADDRESS" 0x3635C9ADC5DEA00000 >/dev/null
 cast rpc --rpc-url "$simulation_rpc" anvil_setNonce "$DEPLOYER_ADDRESS" "$(printf '0x%x' "$deployment_nonce")" >/dev/null
 
+human_symbols=("$INITIAL_SYMBOL_0" "$INITIAL_SYMBOL_1" "$INITIAL_SYMBOL_2" "$INITIAL_SYMBOL_3")
+for index in 0 1 2 3; do
+  export "INITIAL_SYMBOL_${index}=$(cast format-bytes32-string "${human_symbols[$index]}")"
+done
 KEYGAME_MAINNET_V4_BROADCAST=true forge script script/DeployMainnet.s.sol:DeployMainnetV4 \
   --rpc-url "$simulation_rpc" --sender "$DEPLOYER_ADDRESS" \
   --unlocked --broadcast --slow
+for index in 0 1 2 3; do export "INITIAL_SYMBOL_${index}=${human_symbols[$index]}"; done
 
 KEYGAME_MAINNET_SIMULATION_RPC_URL="$simulation_rpc" \
 KEYGAME_MAINNET_DEPLOYMENT_NONCE="$deployment_nonce" \

@@ -206,6 +206,7 @@ describe("mainnet v4 release guards", () => {
     expect(shell).toContain("verify-mainnet-planned-deployment.ts");
     expect(shell).toContain("verify-mainnet-deployment-plan.ts");
     expect(shell).toContain("$MAINNET_RELEASE_AUTHORIZATION_FILE.consumed");
+    expect(shell).toContain("cast format-bytes32-string");
     expect(rehearsal).toContain("manifest.chainId !== 31_337");
     expect(rehearsal).not.toContain("4663");
     expect(rehearsalPrepare).toContain(
