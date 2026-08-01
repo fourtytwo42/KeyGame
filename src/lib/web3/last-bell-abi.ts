@@ -144,6 +144,7 @@ export const lifetimePointsVaultAbi = parseAbi([
   "event RoundPointsCancelled(uint256 indexed roundId,uint256 discardedPoints)",
   "event LifetimeRewardAdded(uint256 indexed roundId,address indexed token,uint256 amount,uint256 eligiblePoints,uint256 carriedAmount)",
   "event LifetimeRewardClaimed(address indexed player,address indexed token,uint256 amount)",
+  "event LifetimeRewardRoundedToBalance(address indexed player,address indexed token,uint256 calculatedAmount,uint256 availableBalance)",
 ]);
 
 export const rewardRouterV4Abi = parseAbi([

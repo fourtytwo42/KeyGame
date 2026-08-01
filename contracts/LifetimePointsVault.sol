@@ -56,6 +56,12 @@ contract LifetimePointsVault {
     event LifetimeRewardClaimed(
         address indexed player, address indexed token, uint256 amount
     );
+    event LifetimeRewardRoundedToBalance(
+        address indexed player,
+        address indexed token,
+        uint256 calculatedAmount,
+        uint256 availableBalance
+    );
 
     error Unauthorized();
     error InvalidTransition();
@@ -205,7 +211,8 @@ contract LifetimePointsVault {
             amount += (pendingPoints[player]
                     * (current - activationIndex[roundId][token])) / ACC_SCALE;
         }
-        return amount;
+        uint256 available = IERC20(token).balanceOf(address(this));
+        return amount > available ? available : amount;
     }
 
     function claimFor(address player, address[] calldata tokens) external {
@@ -219,9 +226,13 @@ contract LifetimePointsVault {
             if (accumulated > debt) amount += accumulated - debt;
             storedReward[player][token] = 0;
             rewardDebt[player][token] = accumulated;
+            uint256 vaultBefore = IERC20(token).balanceOf(address(this));
+            if (amount > vaultBefore) {
+                emit LifetimeRewardRoundedToBalance(player, token, amount, vaultBefore);
+                amount = vaultBefore;
+            }
             if (amount == 0) continue;
             totalClaimed[player][token] += amount;
-            uint256 vaultBefore = IERC20(token).balanceOf(address(this));
             uint256 playerBefore = IERC20(token).balanceOf(player);
             if (!IERC20(token).transfer(player, amount)) revert TransferFailed();
             if (
