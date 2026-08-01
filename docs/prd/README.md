@@ -11,7 +11,10 @@
 > gate, internal assurance, single-deployer custody, explicit skipped wallet
 > UAT with unverified compatibility, an exact one-hour devnet launch rehearsal,
 > and read-only mainnet launch verification with separately authorized promotion.
-> The two-round v4 testnet smoke is complete. Mainnet is not authorized.
+> The historical two-round v4 testnet smoke is complete, but its bytecode no
+> longer matches the current lifetime-vault rounding repair. It cannot qualify
+> the current candidate without separate authorization. Mainnet is not
+> authorized.
 
 > `D-020` (2026-07-29): Closing Print is the implemented product.
 > [10-closing-print-market-reactive.md](./10-closing-print-market-reactive.md)

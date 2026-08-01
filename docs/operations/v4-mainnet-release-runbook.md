@@ -15,14 +15,17 @@ Status: fail-closed. This runbook does not authorize a broadcast.
 
 ## 2. Two-round testnet smoke
 
-Complete. The mock-only deployment from commit `2b4fcfa` settled exactly two
+Historical evidence only. The mock-only deployment from commit `2b4fcfa` settled exactly two
 rounds with two players per round, exercised every reward class, reconciled all
 eight token allocations, and left round three unstarted. The keeper is stopped
 and this evidence must remain immutable.
 Run `release:verify:testnet:v4-bytecode` against the immutable runtime manifest.
 The smoke remains valid only when normalized deployed bytecode matches the
-current contract artifacts exactly. This check is read-only and must not submit
-another testnet transaction.
+current contract artifacts exactly. The current candidate changed runtime
+bytecode in `312dd5e` to repair lifetime-reward rounding, so the historical
+smoke cannot satisfy the current release gate. Stop mainnet qualification at
+this mismatch unless a matching-bytecode smoke is separately authorized; do
+not silently submit another testnet transaction.
 
 ## 3. Internal assurance, acknowledgement, and role setup
 

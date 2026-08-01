@@ -1,20 +1,21 @@
 # Last Bell v4 mainnet-readiness ledger
 
-Status: internally reviewed candidate. The mock-only Robinhood testnet
-deployment and exactly two-round smoke are complete and reconciled. Browser
+Status: devnet-requalified candidate. The historical mock-only Robinhood
+testnet deployment and two-round smoke remain reconciled, but no longer match
+the current runtime bytecode after the lifetime-vault rounding repair. Browser
 wallet testing is intentionally skipped and compatibility remains unverified.
-Mainnet is not authorized.
+Mainnet is not authorized or currently qualified.
 
 ## Gate ledger
 
 | Gate | State | Evidence or next authority |
 |---|---|---|
-| Accepted Anvil baseline | Passed | Commit-bound run `v4-torture-live-2026-07-31T07-10-55-856Z`: 1,000,000 state actions, 10,000 contributions, 500 settlements, 50 cancellations, exact reconciliation, and 11 restored faults |
+| Accepted Anvil baseline | Passed | Commit-bound run `v4-torture-live-2026-08-01T03-57-02-588Z`: 1,000,000 state actions, 10,000 contributions, 500 settlements, 50 cancellations, 2,200 exact reconciliation rows, and all scheduled recovery faults |
 | Direct production adapter | Implemented | `RobinhoodStockSwapAdapter.sol` |
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
 | Full release regression | Passed locally | 54 Foundry tests, 64 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
-| Two-round Robinhood testnet smoke | Passed | Commit `2b4fcfa`, deployment block `95718412`, exactly two settlements, two players per round, all reward categories, exact eight-row allocation reconciliation, and unstarted round three |
+| Two-round Robinhood testnet smoke | Historical only / current gate blocked | Commit `2b4fcfa`, deployment block `95718412`, exactly two settlements, two players per round, all reward categories, exact eight-row allocation reconciliation, and unstarted round three. Current bytecode differs after `312dd5e`; no new testnet transaction is authorized. |
 | Internal security review | Passed internally | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun; no independent audit |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
 | Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
@@ -24,6 +25,11 @@ Mainnet is not authorized.
 | Mainnet launch verification | Read-only policy selected | No gameplay transaction; public promotion requires separate authorization bound to the deployment and verification report |
 
 ## Implemented release controls
+
+- `LifetimePointsVault` caps a calculated reward to the vault's actual token
+  custody and emits `LifetimeRewardRoundedToBalance`. The deterministic
+  seven-round regression reproduces the prior one-unit fixed-point rounding
+  shortfall and proves claims remain solvent and conserved.
 
 - Mainnet chain and broadcast restrictions exist in both the Solidity script and
   shell wrapper. An environment variable alone cannot remove the compile-time

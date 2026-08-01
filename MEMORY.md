@@ -4,6 +4,26 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-01 qualification correction: the first launch-rehearsal attempt
+  reproduced a one-unit lifetime-reward rounding insolvency in
+  `LifetimePointsVault`. Commit `312dd5e` caps a beneficiary's calculated
+  payout to actual vault custody, emits `LifetimeRewardRoundedToBalance`, and
+  adds `LifetimePointsVaultRounding.t.sol` with the deterministic seven-round
+  reproduction. Because this changes contract bytecode, the earlier v4
+  testnet smoke is historical evidence only and cannot qualify the current
+  candidate without a separately authorized matching-bytecode smoke.
+- The accepted fresh torture campaign is bound to pushed commit `6198c73`,
+  which isolates the torture web runtime on port 3101 and durably upserts every
+  broadcast hash after a PostgreSQL disconnect. Run
+  `v4-torture-live-2026-08-01T03-57-02-588Z` passed exactly 1,000,000 invariant
+  actions, 10,000 accepted contributions, 500 settlements, 50 cancellations,
+  2,200 asset rows, and zero asset, point, assertion, action, or unresolved
+  transaction discrepancies. JSON SHA-256 is
+  `53588821d781f3ab65390d3517f1ba0031fb648a4060f5cd87e8e2ae1afb40db`;
+  Markdown SHA-256 is
+  `0eedfed31cacf29d24b550afba5e64a600f013fc8b70bc90849d10512262bf4e`.
+  No testnet or mainnet transaction was sent. Last verified 2026-08-01.
+
 - 2026-07-31 no-canary policy supersedes every earlier mainnet-canary entry in
   this file. Run the exact ten-round, one-real-hour rehearsal only on isolated
   Anvil chain 31337. Mainnet launch validation is read-only, submits no
@@ -14,17 +34,17 @@ Durable project context lives here. Update this file whenever information should
   `codex/v4-wallet-uat-waiver`. It adds deployment-keyed
   `v4_launch_rehearsal_*` tables, chain-31337-only runner and systemd units,
   read-only mainnet verification, deployment and promotion authorization
-  separation, and removal of mainnet canary-player requirements. Contract and
-  accounting bytecode are unchanged; `MAINNET_BROADCAST_ENABLED` remains
-  false. Formatting, lint, TypeScript, 77 Vitest tests, four integration tests,
-  61 Foundry tests, rehearsal dry run, migrations, production build, and
-  protected-bundle scan pass. Last verified 2026-07-31.
-- Existing chain-46630 evidence remains valid without new transactions. The
-  live normalized runtime comparison matched all 11 deployed v4 contracts to
-  current artifacts. Read-only reconciliation reports two settled rounds,
+  separation, and removal of mainnet canary-player requirements.
+  `MAINNET_BROADCAST_ENABLED` remains false. The contract-bytecode-unchanged
+  assumption was superseded by the 2026-08-01 rounding fix above.
+- Existing chain-46630 evidence remains preserved without new transactions.
+  Before the rounding fix, normalized runtime comparison matched all 11
+  deployed v4 contracts. Read-only reconciliation reports two settled rounds,
   two players in each round, exact eight-row 50/30/10/5/5 allocation
   conservation, all reward categories, zero failed keeper jobs, and round
-  three unstarted. Last verified 2026-07-31.
+  three unstarted. The deployed runtime no longer matches the current
+  candidate after `312dd5e`; do not represent this smoke as the current
+  network-compatibility gate. Last verified 2026-08-01.
 
 - 2026-07-31 wallet-UAT decision: the user explicitly skipped all external
   browser-wallet testing for the initial release. Keep

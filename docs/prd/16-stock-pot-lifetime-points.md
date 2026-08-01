@@ -18,7 +18,11 @@ fault injection, and a two-hour unattended stability pass. The non-broadcast Rob
 `artifacts/last-bell-v4-testnet-ready.tgz`. Testnet remains a mock-asset
 environment. The operator authorized one mock-only testnet deployment and
 exactly two settled network-compatibility rounds after requalification.
-The mock-only two-round testnet smoke and internal assurance are complete.
+The historical mock-only two-round testnet smoke completed and reconciled, but
+its deployed runtime predates the lifetime-vault rounding repair in `312dd5e`.
+It is preserved as historical network evidence and does not qualify the current
+bytecode without a separately authorized replacement smoke. Current internal
+devnet assurance is complete.
 External-wallet UAT is intentionally skipped, remains unpassed, and browser
 compatibility is labeled unverified. Fresh production market checks and an
 explicit mainnet authorization remain separate gates.
@@ -36,6 +40,12 @@ market admin, and treasury support independent two-step migration; keeper is
 independently rotatable. Treasury acceptance affects only later-prepared rounds.
 The operator acknowledgement is recorded as `No legal review or independent
 audit`; it is not signed and is not represented as either form of approval.
+
+Lifetime reward calculations are capped to the vault's actual custody at
+claim time. When fixed-point accumulator rounding calculates one unit more than
+the vault holds, the vault pays its complete balance and emits
+`LifetimeRewardRoundedToBalance` with both amounts. Claims remain solvent,
+points remain non-consuming, and the event preserves exact audit evidence.
 
 The final launch rehearsal uses two deterministic non-admin wallets on an
 isolated chain-31337 deployment for ten rounds over one real hour. It spends 82

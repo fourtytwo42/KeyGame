@@ -28,7 +28,7 @@
 | Dynamic safe-market roster | Internally qualified | Catalog, safety screen, durable keeper, and evidence tables |
 | Canonical v4 reward indexing | Internally qualified | Contributions, allocations, epochs, claims, and reorg rebuild |
 | Schema-v4 release controls | Implemented, locked | Mainnet/testnet manifests, preflights, packaging, and authorization guards |
-| Robinhood v4 testnet | Smoke passed | One mock-only deployment, two settled rounds, unstarted round three |
+| Robinhood v4 testnet | Historical smoke; current bytecode mismatch | One mock-only deployment, two settled rounds, unstarted round three; current runtime changed after the lifetime-vault rounding repair |
 | External-wallet UAT | Skipped | Pass remains false; browser compatibility is unverified |
 | Devnet launch rehearsal | Implemented | Chain 31337 only, two non-admin players, ten rounds in one real hour, 82 mock USDG, exact reconciliation |
 | Mainnet launch verification | Implemented, locked | Read-only bytecode, role, market, RPC, indexer, API, round-state, and custody checks; no gameplay transactions |
@@ -49,6 +49,7 @@
 
 The repository now contains the production adapter, dynamic roster, durable v4
 keeper, canonical v4 indexer, schema-v4 deployment controls, and audit-package
-workflow. Testnet assets remain mocks with no value and the two-round smoke is
-complete. No mainnet deployment, independent audit, legal approval,
+workflow. Testnet assets remain mocks with no value and the historical
+two-round smoke is complete, but it does not qualify the current bytecode. No
+mainnet deployment, independent audit, legal approval,
 external-wallet compatibility, or canary success is claimed.
