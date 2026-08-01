@@ -48,6 +48,16 @@ for _ in $(seq 1 100); do
 done
 cast chain-id --rpc-url "$rpc_url" >/dev/null
 
+# The release shell may carry testnet or mainnet application configuration.
+# The E2E deployment is intentionally self-contained, so inherited KeyGame and
+# public build variables must not override the devnet .env.local generated
+# below.
+while IFS="=" read -r name _; do
+  case "$name" in
+    NEXT_PUBLIC_*|KEYGAME_*|ROBINHOOD_*|NODE_ENV) unset "$name" ;;
+  esac
+done < <(env)
+
 LOCAL_RPC_URL="$rpc_url" bash "$project_root/scripts/devnet-deploy.sh" \
   >"$runtime_dir/deploy.log"
 
