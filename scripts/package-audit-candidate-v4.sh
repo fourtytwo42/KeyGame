@@ -161,7 +161,7 @@ pnpm security:review
 pnpm format:check
 pnpm lint
 pnpm typecheck
-pnpm test
+NODE_ENV=test pnpm test
 pnpm test:integration
 pnpm test:migrations
 pnpm test:e2e
