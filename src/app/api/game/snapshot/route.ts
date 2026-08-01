@@ -67,7 +67,12 @@ export async function GET() {
         ok: true,
         chainId: state.chainId,
         state,
-        rpc: { policy: "LAN_ONLY", ...rpcHealth },
+        rpc: {
+          policy: "LAN_ONLY",
+          status: rpcHealth.status,
+          reason: rpcHealth.reason,
+          lag: rpcHealth.lag === undefined ? null : Number(rpcHealth.lag),
+        },
       });
     }
     const now = Math.floor(Date.now() / 1_000);
@@ -131,7 +136,12 @@ export async function GET() {
       ok: true,
       chainId: state.chainId,
       state,
-      rpc: { policy: "LAN_ONLY", ...rpcHealth },
+      rpc: {
+        policy: "LAN_ONLY",
+        status: rpcHealth.status,
+        reason: rpcHealth.reason,
+        lag: rpcHealth.lag === undefined ? null : Number(rpcHealth.lag),
+      },
     });
   } catch (error) {
     return NextResponse.json(
