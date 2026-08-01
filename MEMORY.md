@@ -16,8 +16,9 @@ Durable project context lives here. Update this file whenever information should
 - Read-only comparison of all 11 current runtime artifacts against the existing
   chain-46630 smoke deployment found seven matches and four mismatches:
   `RoundManagerV4`, `LifetimePointsVault`, `RewardRouterV4`, and
-  `LastBellRoundV4`. Evidence SHA-256 is
-  `47413c3b7ac300564a1f58c876c5451946e2d26773e6be6b1d4e4ba430ed1573`.
+  `LastBellRoundV4`. The final read-only comparison was generated at source
+  commit `222e750`; evidence SHA-256 is
+  `ff2fad69b4de7f29d769409c93d360de943bb8bdc7eb015ce84819bbb6ed2b61`.
   The comparison submitted zero transactions and failed the release gate as
   required. Mainnet qualification remains blocked; do not relabel the old
   smoke as current or submit another testnet deployment without authorization.
@@ -459,8 +460,11 @@ When sources conflict, use this order:
 - 2026-08-01: Read-only testnet comparison checked all 11 deployed v4
   contracts and submitted zero transactions. Seven matched; manager, lifetime
   vault, reward router, and active round mismatched current runtime bytecode.
-  The release gate failed closed. Evidence SHA-256:
-  `47413c3b7ac300564a1f58c876c5451946e2d26773e6be6b1d4e4ba430ed1573`.
+  The release gate failed closed at source commit `222e750`. Evidence SHA-256:
+  `ff2fad69b4de7f29d769409c93d360de943bb8bdc7eb015ce84819bbb6ed2b61`.
+  The same commit's internal-security report passed with no unresolved
+  critical/high finding; SHA-256 is
+  `996a228341bac0ab4a4d072c305b1dd2b490c3726f59e5b688fa13d7d457ef56`.
 - 2026-07-31: Accepted isolated torture run
   `v4-torture-live-2026-07-31T03-44-39-339Z`. Ten 100,000-action Foundry
   shards passed; the live campaign produced 10,000 accepted contributions,
