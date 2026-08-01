@@ -6,6 +6,7 @@ runtime_dir="$project_root/.torture"
 database_url="postgresql:///keygame?host=/var/run/postgresql&options=-c%20search_path%3Dkeygame_torture&application_name=keygame_torture_faults"
 manifest="$runtime_dir/deployment.json"
 rpc_url="http://127.0.0.1:9545"
+app_port=3101
 run_id="$(tr -d '\r\n' <"$runtime_dir/run-id.txt")"
 export PATH="$HOME/.foundry/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
@@ -84,13 +85,13 @@ launch_service() {
       KEYGAME_DEPLOYMENT_MANIFEST="$manifest" NEXT_DIST_DIR=.next-torture \
       NEXT_PUBLIC_GAME_MODE=devnet \
       NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot \
-      NEXT_PUBLIC_LOCAL_RPC_URL="$rpc_url" PORT=3100 \
+      NEXT_PUBLIC_LOCAL_RPC_URL="$rpc_url" PORT="$app_port" \
       LOCAL_RPC_URL="$rpc_url" \
       V4_DEVNET_DEPLOYMENT_MANIFEST="$manifest" \
-      pnpm exec next start --hostname 127.0.0.1 --port 3100 \
+      pnpm exec next start --hostname 127.0.0.1 --port "$app_port" \
       >"$runtime_dir/app.log" 2>&1 &
     echo "$!" >"$runtime_dir/app.pid"
-    pnpm exec wait-on --timeout 30000 http://127.0.0.1:3100/status
+    pnpm exec wait-on --timeout 30000 "http://127.0.0.1:$app_port/status"
   fi
 }
 
@@ -126,7 +127,7 @@ wait_for_postgres_recovery() {
       kill -0 "$app_pid" 2>/dev/null &&
       [[ "$keeper_status" == "ok" ]] &&
       [[ "$indexed" -ge "$head" ]] &&
-      curl -fsS http://127.0.0.1:3100/api/status >/dev/null; then
+      curl -fsS "http://127.0.0.1:$app_port/api/status" >/dev/null; then
       return
     fi
     sleep 1

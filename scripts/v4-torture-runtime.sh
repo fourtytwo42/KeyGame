@@ -4,6 +4,7 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runtime_dir="$project_root/.torture"
 rpc_url="http://127.0.0.1:9545"
+app_port=3101
 database_url="postgresql:///keygame?host=/var/run/postgresql&options=-c%20search_path%3Dkeygame_torture&application_name=keygame_torture_runtime"
 manifest="$runtime_dir/deployment.json"
 deployer="0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -60,6 +61,10 @@ stop_runtime() {
 
 start_runtime() {
   stop_runtime
+  if ss -H -ltn "sport = :$app_port" | grep -q .; then
+    echo "Torture app port $app_port is already in use; refusing a non-isolated run." >&2
+    exit 1
+  fi
   if cast chain-id --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; then
     cast block-number --rpc-url http://127.0.0.1:8545 \
       >"$runtime_dir/qualified-devnet-block-before.txt"
@@ -183,18 +188,18 @@ start_runtime() {
     NEXT_PUBLIC_LOCAL_RPC_URL="$rpc_url" \
     LOCAL_RPC_URL="$rpc_url" \
     V4_DEVNET_DEPLOYMENT_MANIFEST="$manifest" \
-    PORT=3100 \
-    pnpm exec next start --hostname 127.0.0.1 --port 3100 \
+    PORT="$app_port" \
+    pnpm exec next start --hostname 127.0.0.1 --port "$app_port" \
     >"$runtime_dir/app.log" 2>&1 &
   echo "$!" >"$runtime_dir/app.pid"
-  pnpm exec wait-on --timeout 30000 http://127.0.0.1:3100/status
+  pnpm exec wait-on --timeout 30000 "http://127.0.0.1:$app_port/status"
 
   run_id="$(env "${common_env[@]}" V4_SOAK_PROFILE=torture \
     V4_SOAK_TARGET_ROUNDS=500 V4_SOAK_CANCEL_ROUNDS=50 \
     pnpm v4-soak:start | tail -n1)"
   printf '%s\n' "$run_id" >"$runtime_dir/run-id.txt"
   printf '%s\n' "$run_id"
-  echo "Torture runtime ready: $rpc_url, database keygame_torture, app port 3100"
+  echo "Torture runtime ready: $rpc_url, database keygame_torture, app port $app_port"
 }
 
 case "${1:-status}" in
