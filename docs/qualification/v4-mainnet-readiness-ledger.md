@@ -20,7 +20,7 @@ Mainnet is not authorized or currently qualified.
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
 | Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
 | External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
-| One-hour devnet launch rehearsal | Awaiting execution | Chain 31337, ten rounds, two non-admin players, 82 mock USDG, keeper/indexer restart, exact reconciliation |
+| One-hour devnet launch rehearsal | Passed | Deployment key `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`: ten settlements at minutes 0-54, two non-admin callers per round, 82 mock USDG, keeper restart after round four, indexer restart after round seven, exact reconciliation, and round eleven prepared/unstarted. Report SHA-256 `0da42b0f63bcedeb38e93eea2da2ca64c9753a8c9607743fcc4770606ce12ef2`. |
 | Mainnet broadcast | Compile-time locked | Separate reviewed release commit and deployment authorization |
 | Mainnet launch verification | Read-only policy selected | No gameplay transaction; public promotion requires separate authorization bound to the deployment and verification report |
 

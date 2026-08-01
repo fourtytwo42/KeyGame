@@ -132,6 +132,10 @@ describe("mainnet v4 release guards", () => {
     const shell = readFileSync("scripts/deploy-mainnet-v4.sh", "utf8");
     const solidity = readFileSync("script/DeployMainnet.s.sol", "utf8");
     const rehearsal = readFileSync("scripts/v4-launch-rehearsal.ts", "utf8");
+    const rehearsalPrepare = readFileSync(
+      "scripts/prepare-v4-launch-rehearsal.sh",
+      "utf8",
+    );
     const readOnly = readFileSync(
       "scripts/verify-mainnet-read-only.ts",
       "utf8",
@@ -150,6 +154,12 @@ describe("mainnet v4 release guards", () => {
     expect(solidity).toContain("MAINNET_BROADCAST_ENABLED = false");
     expect(rehearsal).toContain("manifest.chainId !== 31_337");
     expect(rehearsal).not.toContain("4663");
+    expect(rehearsalPrepare).toContain(
+      "existing chain-31337 deployment(s); use a clean isolated database",
+    );
+    expect(rehearsalPrepare).toContain(
+      "previous rehearsal run(s); use a clean isolated database",
+    );
     expect(readOnly).toContain('launchValidation: "READ_ONLY"');
     expect(readOnly).not.toMatch(
       /createWalletClient|sendTransaction|writeContract|signTransaction|privateKeyToAccount/,

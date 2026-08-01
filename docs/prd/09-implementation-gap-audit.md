@@ -30,7 +30,7 @@
 | Schema-v4 release controls | Implemented, locked | Mainnet/testnet manifests, preflights, packaging, and authorization guards |
 | Robinhood v4 testnet | Historical smoke; current bytecode mismatch | One mock-only deployment, two settled rounds, unstarted round three; current runtime changed after the lifetime-vault rounding repair |
 | External-wallet UAT | Skipped | Pass remains false; browser compatibility is unverified |
-| Devnet launch rehearsal | Implemented | Chain 31337 only, two non-admin players, ten rounds in one real hour, 82 mock USDG, exact reconciliation |
+| Devnet launch rehearsal | Passed | Chain 31337 only, two non-admin players, ten rounds in one real hour, 82 mock USDG, keeper/indexer restart recovery, exact reconciliation, and round eleven prepared/unstarted |
 | Mainnet launch verification | Implemented, locked | Read-only bytecode, role, market, RPC, indexer, API, round-state, and custody checks; no gameplay transactions |
 | Robinhood v4 mainnet | Not deployed | Compile-time locked |
 

@@ -131,13 +131,12 @@ for (const target of targets) {
     expectedNormalizedHash: keccak256(expected),
     actualNormalizedHash: keccak256(actual),
   });
-  if (!match)
-    throw new Error(
-      `${target.name} deployed bytecode differs from the current candidate.`,
-    );
 }
+const allMatch = comparisons.every((comparison) => comparison.match);
 const evidence = {
-  label: "TESTNET TWO-ROUND SMOKE · CURRENT BYTECODE MATCH",
+  label: allMatch
+    ? "TESTNET TWO-ROUND SMOKE · CURRENT BYTECODE MATCH"
+    : "TESTNET TWO-ROUND SMOKE · CURRENT BYTECODE MISMATCH",
   checkedAt: new Date().toISOString(),
   chainId: 46630,
   deployedSourceCommit: manifest.sourceCommit,
@@ -146,11 +145,16 @@ const evidence = {
     execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   manifestSha256: sha256(manifestBytes),
   comparisons,
+  allMatch,
   additionalTransactionsSubmitted: 0,
 };
 const output =
   process.env.TESTNET_V4_BYTECODE_EVIDENCE ??
-  path.join("artifacts", "testnet-v4-smoke", "current-bytecode-match.json");
+  path.join(
+    "artifacts",
+    "testnet-v4-smoke",
+    allMatch ? "current-bytecode-match.json" : "current-bytecode-mismatch.json",
+  );
 await mkdir(path.dirname(output), { recursive: true });
 const json = `${JSON.stringify(evidence, null, 2)}\n`;
 await writeFile(output, json, "utf8");
@@ -160,3 +164,12 @@ await writeFile(
   "utf8",
 );
 process.stdout.write(json);
+if (!allMatch) {
+  const mismatches = comparisons
+    .filter((comparison) => !comparison.match)
+    .map((comparison) => comparison.name)
+    .join(", ");
+  throw new Error(
+    `Deployed testnet bytecode differs from the current candidate: ${mismatches}.`,
+  );
+}

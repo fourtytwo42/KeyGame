@@ -99,9 +99,9 @@ The complete mobile and desktop concept set is embedded in
 | `D-023` | Add estimated reward clarity, opt-in SIWE caller profiles, and community-triggered featured raids without changing contract economics. | `IMPLEMENTED / MAINNET GATED` | PRD 14 defines deployment-aware history and the remaining audit-candidate gates. |
 | `D-024` | Make DEX momentum nonfinancial and award the 30% Airtime Pool to all callers by total raw control time. | `IMPLEMENTED CANDIDATE / SOAK OPEN` | PRD 15 supersedes all current-version payout language in PRDs 01-14. |
 | `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTED / DEVNET QUALIFIED` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
-| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, internal assurance, one authorized two-round mock testnet smoke, single-deployer initial custody, and an unlisted mainnet canary. | `TESTNET SMOKE PASSED / MAINNET LOCKED` | D-027 supersedes its wallet-UAT gate. |
-| `D-027` | Skip browser-wallet UAT for the initial release without marking it passed; run the canary through the deployer plus one encrypted non-admin player. | `IMPLEMENTED RELEASE POLICY` | Compatibility remains `UNVERIFIED`; testnet smoke passed and mainnet remains separately authorized. |
-| `D-028` | Replace scripted mainnet canary gameplay with a ten-round, one-hour chain-31337 rehearsal; mainnet receives read-only verification and separate promotion approval. | `IMPLEMENTED RELEASE POLICY` | No additional testnet spend or pre-promotion mainnet gameplay transactions. |
+| `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, internal assurance, one authorized two-round mock testnet smoke, single-deployer initial custody, and an unlisted mainnet canary. | `HISTORICAL TESTNET SMOKE / CURRENT BYTECODE BLOCKED` | D-027 supersedes its wallet-UAT gate; the earlier smoke predates the current rounding repair. |
+| `D-027` | Skip browser-wallet UAT for the initial release without marking it passed; run the canary through the deployer plus one encrypted non-admin player. | `IMPLEMENTED RELEASE POLICY` | Compatibility remains `UNVERIFIED`; D-028 removes mainnet canary gameplay. |
+| `D-028` | Replace scripted mainnet canary gameplay with a ten-round, one-hour chain-31337 rehearsal; mainnet receives read-only verification and separate promotion approval. | `REHEARSAL PASSED / MAINNET LOCKED` | No additional testnet spend or pre-promotion mainnet gameplay transactions. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |
@@ -122,12 +122,14 @@ The original FoMo3D research is authoritative only for historical behavior. It i
 ## Current release scope
 
 - Devnet remains the economic and adversarial qualification environment.
-- Robinhood testnet is mock-only; its authorized two-round compatibility smoke
-  is complete and round three remains unstarted.
+- Robinhood testnet is mock-only; its historical two-round compatibility smoke
+  is complete and round three remains unstarted, but current contract bytecode
+  differs and the smoke cannot qualify this candidate.
 - Robinhood mainnet accepts only canonical USDG and approved direct canonical
   Stock Token pools after internal assurance, explicit risk acknowledgement,
   role-custody, market-safety, operations, and authorization gates.
-- The first mainnet release is an unlisted, monitored, fully reconciled canary.
+- Mainnet deployment receives read-only verification; public promotion is a
+  separate authorization and no pre-promotion gameplay is performed.
 - No player selling, aggregator, multihop route, account abstraction, session
   key, gas sponsorship, referral reward, game token, spending cap, or pot cap is
   included.

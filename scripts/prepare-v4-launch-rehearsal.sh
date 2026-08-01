@@ -20,6 +20,25 @@ esac
 
 mkdir -p "$runtime_dir"
 manifest="$runtime_dir/31337.json"
+
+# Never inherit a previous chain-31337 deployment or rehearsal run. A stale
+# database can otherwise create duplicate manager/round identities after the
+# new isolated deployment is indexed.
+if [[ "$(psql "$database_url" -Atqc "SELECT to_regclass('public.deployments') IS NOT NULL")" == "t" ]]; then
+  stale_deployments="$(psql "$database_url" -Atqc "SELECT count(*) FROM deployments WHERE chain_id=31337")"
+  [[ "$stale_deployments" == "0" ]] || {
+    echo "Rehearsal database contains $stale_deployments existing chain-31337 deployment(s); use a clean isolated database." >&2
+    exit 1
+  }
+fi
+if [[ "$(psql "$database_url" -Atqc "SELECT to_regclass('public.v4_launch_rehearsal_runs') IS NOT NULL")" == "t" ]]; then
+  stale_runs="$(psql "$database_url" -Atqc "SELECT count(*) FROM v4_launch_rehearsal_runs")"
+  [[ "$stale_runs" == "0" ]] || {
+    echo "Rehearsal database contains $stale_runs previous rehearsal run(s); use a clean isolated database." >&2
+    exit 1
+  }
+fi
+
 LOCAL_RPC_URL="$rpc_url" \
 DEVNET_DEPLOYMENT_MANIFEST="$manifest" \
 DEVNET_WRITE_APP_ENV=false \

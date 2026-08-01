@@ -47,9 +47,11 @@ the vault holds, the vault pays its complete balance and emits
 `LifetimeRewardRoundedToBalance` with both amounts. Claims remain solvent,
 points remain non-consuming, and the event preserves exact audit evidence.
 
-The final launch rehearsal uses two deterministic non-admin wallets on an
+The final launch rehearsal passed with two deterministic non-admin wallets on an
 isolated chain-31337 deployment for ten rounds over one real hour. It spends 82
-mock USDG under a 100 mock-USDG runner ceiling. Mainnet receives read-only
+mock USDG under a 100 mock-USDG runner ceiling, recovered cleanly from the
+required keeper and indexer restarts, reconciled every basket and point, and
+left round eleven prepared with no contribution or timer. Mainnet receives read-only
 deployment verification only; no scripted gameplay precedes separately
 authorized public promotion.
 

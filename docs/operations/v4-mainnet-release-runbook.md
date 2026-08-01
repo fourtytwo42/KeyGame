@@ -67,6 +67,13 @@ faucets, mock adapters, test credentials, and torture controls.
 5. At minute 60, require round eleven prepared with zero calls and an unstarted
    timer. Generate and checksum the rehearsal report.
 
+Completed 2026-08-01: deployment key
+`31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8` passed all five
+requirements. The checksummed report SHA-256 is
+`0da42b0f63bcedeb38e93eea2da2ca64c9753a8c9607743fcc4770606ce12ef2`.
+The preparation command now refuses a database containing any previous
+chain-31337 deployment or rehearsal run.
+
 ## 6. Mainnet deployment and read-only validation
 
 Mainnet needs a second explicit authorization and a dedicated reviewed commit

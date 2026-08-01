@@ -4,6 +4,24 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-01 one-hour launch rehearsal passed on isolated Anvil chain 31337.
+  Deployment key `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`
+  completed ten scheduled settlements from minutes 0 through 54 with two
+  distinct non-admin callers per round, an expected current-holder rejection
+  each round, exactly 82 mock USDG, keeper restart after round four, indexer
+  restart after round seven, lifetime rewards from round two, every reward and
+  conversion path, and zero reconciliation failures. Round 11 (`4673`) is
+  prepared with zero accepted contributions and an unstarted timer. Report
+  SHA-256 is `0da42b0f63bcedeb38e93eea2da2ca64c9753a8c9607743fcc4770606ce12ef2`.
+- Read-only comparison of all 11 current runtime artifacts against the existing
+  chain-46630 smoke deployment found seven matches and four mismatches:
+  `RoundManagerV4`, `LifetimePointsVault`, `RewardRouterV4`, and
+  `LastBellRoundV4`. Evidence SHA-256 is
+  `47413c3b7ac300564a1f58c876c5451946e2d26773e6be6b1d4e4ba430ed1573`.
+  The comparison submitted zero transactions and failed the release gate as
+  required. Mainnet qualification remains blocked; do not relabel the old
+  smoke as current or submit another testnet deployment without authorization.
+
 - 2026-08-01 qualification correction: the first launch-rehearsal attempt
   reproduced a one-unit lifetime-reward rounding insolvency in
   `LifetimePointsVault`. Commit `312dd5e` caps a beneficiary's calculated
@@ -204,6 +222,11 @@ Durable project context lives here. Update this file whenever information should
 
 ## Current State
 
+- The one-hour chain-31337 launch rehearsal passed with ten settlements, 82
+  mock USDG, both required service restarts, every reward/conversion path, and
+  exact reconciliation. Mainnet qualification is nevertheless blocked because
+  the current repaired contract bytecode does not match four contracts in the
+  historical testnet smoke deployment.
 - `docs/prd/16-stock-pot-lifetime-points.md` is authoritative. V4 replaces the
   fixed fee and Airtime economy with uncapped variable USDG contributions that
   atomically buy the selected mock Stock Token for the round basket.
@@ -419,6 +442,17 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-08-01: One-hour launch rehearsal passed under deployment key
+  `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`. Ten scheduled
+  rounds settled with two non-admin callers each and 82 mock USDG total;
+  keeper and indexer restart checkpoints recovered, every basket/point
+  reconciliation passed, and round 11 remained prepared and unstarted. Report
+  SHA-256: `0da42b0f63bcedeb38e93eea2da2ca64c9753a8c9607743fcc4770606ce12ef2`.
+- 2026-08-01: Read-only testnet comparison checked all 11 deployed v4
+  contracts and submitted zero transactions. Seven matched; manager, lifetime
+  vault, reward router, and active round mismatched current runtime bytecode.
+  The release gate failed closed. Evidence SHA-256:
+  `47413c3b7ac300564a1f58c876c5451946e2d26773e6be6b1d4e4ba430ed1573`.
 - 2026-07-31: Accepted isolated torture run
   `v4-torture-live-2026-07-31T03-44-39-339Z`. Ten 100,000-action Foundry
   shards passed; the live campaign produced 10,000 accepted contributions,
@@ -877,13 +911,13 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Complete the exact one-hour chain-31337 rehearsal: ten rounds at minutes
-  0-54, 82 mock USDG, two non-admin players per round, keeper/indexer restart
-  checkpoints, exact reconciliation, and round eleven prepared but unstarted.
-- After the rehearsal passes, generate checksummed rehearsal, testnet-bytecode,
-  qualification, and read-only launch-verification artifacts. Mainnet remains
-  compile-time locked and separately authorized; public promotion is a second
-  authorization.
+- Preserve the passed one-hour chain-31337 rehearsal report and its checksum.
+- Mainnet qualification is blocked because four current contract runtime
+  artifacts differ from the historical testnet deployment. A new matching-
+  bytecode mock-only two-round testnet smoke requires separate authorization.
+- Generate the final checksummed qualification package only after the testnet
+  bytecode gate passes. Mainnet read-only launch verification can be produced
+  only after a separately authorized mainnet deployment.
 
 - Preserve the checksummed internal-assurance archive and bind any later
   deployment authorization to its exact source commit and manifest hash.

@@ -347,9 +347,11 @@ export default async function StatusPage() {
           </p>
           <p>
             Testnet smoke:{" "}
-            {production?.release.gates.testnetSmokePassed
-              ? "passed"
-              : "pending"}
+            {production?.release.gates.testnetCurrentBytecodeMatches
+              ? "passed · current bytecode matches"
+              : production?.release.gates.testnetHistoricalSmokePassed
+                ? "historical only · current bytecode mismatch"
+                : "pending"}
             {" · "}External wallet UAT{" "}
             {production?.release.walletUat.status ?? "not performed"}
             {" · "}Browser compatibility{" "}

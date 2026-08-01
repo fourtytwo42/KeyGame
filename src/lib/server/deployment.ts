@@ -58,6 +58,10 @@ export type ServerDeployment = {
       "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
     browserWalletCompatibility?: "VERIFIED" | "UNVERIFIED";
     walletUatRequiredForCanary?: boolean;
+    testnetTwoRoundSmokePassed?: boolean;
+    testnetHistoricalSmokePassed?: boolean;
+    testnetCurrentBytecodeMatches?: boolean;
+    devnetLaunchRehearsalPassed?: boolean;
     mainnetBroadcastAuthorized?: boolean;
   };
   releaseEvidence?: {
