@@ -170,7 +170,9 @@ export function validateFinalTestnetSmokeEvidence(input: {
     manifest.contractVersion !== "last-bell-v4-stock-pot" ||
     manifest.sourceCommit !== input.expectedCommit
   ) {
-    throw new Error("Testnet manifest does not match the frozen mock-only candidate.");
+    throw new Error(
+      "Testnet manifest does not match the frozen mock-only candidate.",
+    );
   }
   if (
     bytecode.allMatch !== true ||
@@ -182,7 +184,9 @@ export function validateFinalTestnetSmokeEvidence(input: {
       (comparison) => record(comparison, "Bytecode comparison").match !== true,
     )
   ) {
-    throw new Error("Deployed testnet bytecode does not exactly match the candidate.");
+    throw new Error(
+      "Deployed testnet bytecode does not exactly match the candidate.",
+    );
   }
   if (
     reconciliation.ok !== true ||
@@ -197,7 +201,9 @@ export function validateFinalTestnetSmokeEvidence(input: {
     scope.unstartedSuccessorRounds !== 1 ||
     reconciliation.failedKeeperJobs !== "0"
   ) {
-    throw new Error("Testnet smoke scope or reconciliation does not satisfy the final gate.");
+    throw new Error(
+      "Testnet smoke scope or reconciliation does not satisfy the final gate.",
+    );
   }
   if (
     contributions.length !== 2 ||
@@ -206,7 +212,9 @@ export function validateFinalTestnetSmokeEvidence(input: {
     ) ||
     allocations.length !== 8
   ) {
-    throw new Error("Testnet smoke does not contain two players and four allocations per round.");
+    throw new Error(
+      "Testnet smoke does not contain two players and four allocations per round.",
+    );
   }
   const categories = new Set(
     claims.map((claim) => String(record(claim, "Reward claim").category)),

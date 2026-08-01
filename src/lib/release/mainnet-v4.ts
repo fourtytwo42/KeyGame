@@ -8,9 +8,10 @@ export type MainnetRpcPolicy = {
   automaticFailover?: boolean;
 };
 
-export function assertMainnetLanOnlyRpcPolicy(
-  rpc: MainnetRpcPolicy,
-): { primaryUrl: string; referenceUrl: string } {
+export function assertMainnetLanOnlyRpcPolicy(rpc: MainnetRpcPolicy): {
+  primaryUrl: string;
+  referenceUrl: string;
+} {
   if (!rpc.primary?.trim()) {
     throw new Error("The LAN primary RPC URL is required.");
   }
