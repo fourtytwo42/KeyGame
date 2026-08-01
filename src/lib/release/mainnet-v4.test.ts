@@ -21,11 +21,12 @@ const valid = {
   chainId: 4663,
   maximumDeployments: 1,
   canaryMaximumSettledRounds: 10,
-  canaryDurationHours: 24,
+  canaryDurationHours: 1,
   canaryUsdgBudget: 100,
   walletUatDisposition: "SKIPPED_BY_OPERATOR",
   browserWalletCompatibility: "UNVERIFIED",
   canaryWalletMode: "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER",
+  authorizedAt: "2026-07-31T00:00:00Z",
   expiresAt: "2026-08-01T00:00:00Z",
   mainnetBroadcastAuthorized: true,
   internalSecurityReviewSha256: "c".repeat(64),
@@ -61,7 +62,7 @@ describe("mainnet v4 release guards", () => {
       chainId: 4663,
       maximumDeployments: 1,
       canaryMaximumSettledRounds: 10,
-      canaryDurationHours: 24,
+      canaryDurationHours: 1,
       canaryUsdgBudget: 100,
       walletUatDisposition: "SKIPPED_BY_OPERATOR",
     });
@@ -77,6 +78,12 @@ describe("mainnet v4 release guards", () => {
         expected,
       ),
     ).toThrow(/ten-round/);
+    expect(() =>
+      validateMainnetReleaseAuthorization(
+        { ...valid, canaryDurationHours: 24 },
+        expected,
+      ),
+    ).toThrow(/one-hour/);
     expect(() =>
       validateMainnetReleaseAuthorization(
         { ...valid, walletUatDisposition: "PASSED" },
@@ -110,6 +117,18 @@ describe("mainnet v4 release guards", () => {
         expected,
       ),
     ).toThrow(/expired/);
+    expect(() =>
+      validateMainnetReleaseAuthorization(
+        { ...valid, expiresAt: "2026-07-31T01:59:59Z" },
+        expected,
+      ),
+    ).toThrow(/less than two hours/);
+    expect(() =>
+      validateMainnetReleaseAuthorization(
+        { ...valid, authorizedAt: "2026-07-31T00:00:01Z" },
+        expected,
+      ),
+    ).toThrow(/future-dated/);
     const incomplete: Record<string, unknown> = { ...valid };
     delete incomplete.internalSecurityReviewSha256;
     expect(() =>
@@ -123,6 +142,14 @@ describe("mainnet v4 release guards", () => {
   it("pins sender, keystore, dual RPC, protected scan, and compile lock", () => {
     const shell = readFileSync("scripts/deploy-mainnet-v4.sh", "utf8");
     const solidity = readFileSync("script/DeployMainnet.s.sol", "utf8");
+    const restartHelper = readFileSync(
+      "scripts/mainnet-canary-restart-service.sh",
+      "utf8",
+    );
+    const timer = readFileSync(
+      "ops/systemd/keygame-mainnet-canary.timer",
+      "utf8",
+    );
     expect(shell).toContain('--sender "$DEPLOYER_ADDRESS"');
     expect(shell).toContain('--keystore "$DEPLOYER_KEYSTORE"');
     expect(shell).toContain('--password-file "$DEPLOYER_PASSWORD_FILE"');
@@ -131,5 +158,10 @@ describe("mainnet v4 release guards", () => {
     expect(shell).toContain("ROBINHOOD_MAINNET_FALLBACK_RPC_URL");
     expect(shell).toContain("release:scan:mainnet");
     expect(solidity).toContain("MAINNET_BROADCAST_ENABLED = false");
+    expect(restartHelper).toContain('case "${1:-}" in');
+    expect(restartHelper).toContain('exec /usr/bin/systemctl restart "$unit"');
+    expect(restartHelper).not.toContain("sh -c");
+    expect(timer).toContain("OnUnitActiveSec=10s");
+    expect(timer).toContain("Persistent=false");
   });
 });

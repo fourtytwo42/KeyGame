@@ -38,8 +38,8 @@ The operator acknowledgement is recorded as `No legal review or independent
 audit`; it is not signed and is not represented as either form of approval.
 
 The unlisted mainnet canary uses server-side transactions from the deployer and
-one encrypted non-admin player. Its operational ceiling is ten settled rounds,
-24 hours, and 100 USDG of scripted contributions. This ceiling does not alter
+one encrypted non-admin player. Its operational ceiling is ten settled rounds
+over one hour and 100 USDG of scripted contributions. This ceiling does not alter
 the permissionless contract or impose a player contribution maximum.
 
 This document supersedes current-economy requirements in PRDs 10–15. Legacy

@@ -66,7 +66,8 @@ pnpm exec tsx scripts/verify-mainnet-authorization.ts > /tmp/keygame-mainnet-aut
 jq -e '.walletUatDisposition == "SKIPPED_BY_OPERATOR"
   and .browserWalletCompatibility == "UNVERIFIED"
   and .canaryWalletMode == "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER"
-  and .canaryDurationHours == 24
+  and (.authorizedAt | type == "string")
+  and .canaryDurationHours == 1
   and .canaryUsdgBudget == 100' /tmp/keygame-mainnet-authorization.json >/dev/null \
   || die "Mainnet authorization does not match the approved wallet waiver and canary scope."
 

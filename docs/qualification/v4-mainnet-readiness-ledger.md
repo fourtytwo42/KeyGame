@@ -20,7 +20,7 @@ Mainnet is not authorized.
 | Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
 | External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
 | Mainnet broadcast | Compile-time locked | Separate reviewed release commit and user authorization |
-| Unlisted mainnet canary | Awaiting authorization | Scripted deployer-plus-one runner, 24 hours, ten rounds, and 100 USDG operator budget |
+| Unlisted mainnet canary | Awaiting authorization | Scripted deployer-plus-one runner, one hour, ten rounds, and 100 USDG operator budget |
 
 ## Implemented release controls
 
@@ -39,7 +39,7 @@ Mainnet is not authorized.
   pools, bytecode, token decimals, safety observations, and at least four safe
   catalog markets.
 - Mainnet authorization binds the explicit wallet-UAT disposition, unverified
-  compatibility, deployer and non-admin canary player, 24-hour duration,
+  compatibility, deployer and non-admin canary player, one-hour duration,
   ten-round ceiling, and 100 USDG scripted budget.
 - The canary runner stores the signed transaction and hash before broadcast,
   clears the signed payload after confirmation, and reconciles receipts and

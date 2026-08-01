@@ -52,7 +52,7 @@ git merge-base --is-ancestor "$qualified_commit" "$source_commit" || {
 }
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|docs/*|docs/**/*|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/verify-mainnet-authorization.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/mainnet-canary.ts|scripts/generate-mainnet-canary-wallet.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/verify-mainnet-authorization.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/mainnet-canary.ts|scripts/mainnet-canary-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/generate-mainnet-canary-wallet.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
       exit 1
@@ -95,6 +95,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm test:integration
+pnpm test:migrations
 pnpm test:e2e
 NEXT_DIST_DIR=.next-protected \
   NEXT_PUBLIC_GAME_MODE=mainnet \

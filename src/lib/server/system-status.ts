@@ -241,13 +241,14 @@ export async function getSystemStatus() {
         state: string;
         settled_rounds: number;
         target_rounds: number;
+        duration_hours: number;
         spent_usdg: string;
         usdg_budget: string;
         started_at: Date;
         ends_at: Date;
         last_error: string | null;
       }>(
-        `SELECT id,state,settled_rounds,target_rounds,spent_usdg::text,
+        `SELECT id,state,settled_rounds,target_rounds,duration_hours,spent_usdg::text,
                 usdg_budget::text,started_at,ends_at,last_error
          FROM mainnet_canary_runs WHERE deployment_key=$1
          ORDER BY created_at DESC LIMIT 1`,
@@ -353,6 +354,7 @@ export async function getSystemStatus() {
           state: canary.rows[0].state,
           settledRounds: canary.rows[0].settled_rounds,
           targetRounds: canary.rows[0].target_rounds,
+          durationHours: canary.rows[0].duration_hours,
           spentUsdg: Number(canary.rows[0].spent_usdg) / 1e6,
           budgetUsdg: Number(canary.rows[0].usdg_budget) / 1e6,
           startedAt: canary.rows[0].started_at.toISOString(),

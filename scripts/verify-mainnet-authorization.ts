@@ -52,6 +52,7 @@ process.stdout.write(
       walletUatDisposition: authorization.walletUatDisposition,
       browserWalletCompatibility: authorization.browserWalletCompatibility,
       canaryWalletMode: authorization.canaryWalletMode,
+      authorizedAt: authorization.authorizedAt,
       expiresAt: authorization.expiresAt,
       internalSecurityReviewSha256: authorization.internalSecurityReviewSha256,
     },

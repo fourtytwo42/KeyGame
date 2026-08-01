@@ -48,26 +48,38 @@ that deliberately removes the Solidity compile-time broadcast lock.
 
 Copy `docs/operations/mainnet-authorization.template.json` outside the
 repository, replace every placeholder, and bind it to the exact release
-commit, manifest hash, deployer, canary player, and expiry. The repository copy
+commit, manifest hash, deployer, canary player, authorization time, and expiry.
+The authorization must remain valid for at least two hours. The repository copy
 is a schema example only and can never authorize deployment.
 
 1. Re-run canonical registry, chain, sync, pool, bytecode, role-custody, source, and
    balance preflights immediately before broadcast.
+   Run `mainnet-canary:budget` to record the live gas price, conservative
+   deployment/canary/conversion envelopes, 25% margin, 0.005 ETH reserve, and
+   ETH/USDG deficits for both scripted actors. Funding is a separately
+   authorized mainnet transaction.
 2. Deploy only the frozen internally reviewed commit and write the immutable manifest.
 3. Verify runtime bytecode, roles, contract relationships, seed custody, and
    source on the explorer.
 4. Configure one encrypted non-admin canary player outside the repository.
    The deployer and player must match the authorization and alternate calls.
-5. Run `mainnet-canary:start`, then invoke `mainnet-canary:run` from a systemd
-   timer. Keep discovery unlisted for 24 hours. The contract remains
+5. Install `scripts/mainnet-canary-restart-service.sh` as the root-owned,
+   non-writable `/usr/local/libexec/keygame-canary-restart`. Grant the service
+   account passwordless sudo for only that helper with arguments `keeper` and
+   `indexer`; never grant general `systemctl` or shell access.
+6. Install and enable `keygame-mainnet-canary.service` and its timer. Run
+   `mainnet-canary:start`; the timer invokes `mainnet-canary:run` every ten
+   seconds. Keep discovery unlisted for one hour. The contract remains
    permissionless.
-6. Require exactly ten settled rounds distributed through the window, at least
+7. Require exactly ten settled rounds at minutes 0, 6, 12, 18, 24, 30, 36,
+   42, 48, and 54, at least
    two callers per round, no more than 100 USDG of scripted contributions, all
    reward paths, protocol conversion, lifetime activation, rollover, and one
-   keeper plus one indexer restart.
-7. Reconcile every Stock Token, point, seed movement, and reward after every
+   keeper restart after round four plus one indexer restart after round seven.
+8. Reconcile every Stock Token, point, seed movement, and reward after every
    round. Any discrepancy stops promotion and invokes the incident procedure.
-8. Run `mainnet-canary:report` and announce publicly only after its checksummed
+9. At minute 60, require round eleven to be prepared with zero accepted calls
+   and an unstarted timer. Run `mainnet-canary:report` and announce publicly only after its checksummed
    report is clean. Browser-wallet compatibility remains unverified.
 
 ## Stop conditions

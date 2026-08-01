@@ -9,7 +9,7 @@ Durable project context lives here. Update this file whenever information should
   `externalWalletUatPassed=false`, record `SKIPPED_BY_OPERATOR`, and display
   browser compatibility as `UNVERIFIED`. Mainnet canary transactions use the
   privileged deployer plus one encrypted, non-admin player wallet. The canary
-  is limited operationally to ten settled rounds over 24 hours and 100 USDG;
+  is limited operationally to ten settled rounds over one hour and 100 USDG;
   this is not a contract or user contribution cap. Mainnet remains separately
   authorized and compile-time locked.
 
@@ -18,8 +18,8 @@ Durable project context lives here. Update this file whenever information should
   models require `SKIPPED_BY_OPERATOR`, preserve
   `externalWalletUatPassed=false`, and reject missing or conflicting legacy
   status. WalletConnect is hidden without a production Reown ID. A durable
-  PostgreSQL-backed canary runner enforces one deployment, ten rounds, 24
-  hours, and 100 USDG of operator-scripted contributions. Contract and
+  PostgreSQL-backed canary runner enforces one deployment, ten rounds, one
+  hour, and 100 USDG of operator-scripted contributions. Contract and
   mainnet deployment bytecode are unchanged and the compile-time broadcast
   lock remains false. Last verified 2026-07-31.
 - Canary player `0x12354Fb6272D0E1a2f9d3CB0e2B4936803F2Db23` was generated
@@ -27,12 +27,13 @@ Durable project context lives here. Update this file whenever information should
   `~/.config/keygame/mainnet-canary/`; the directory is mode 0700 and its
   keystore/password files are mode 0600. Never store or print its password or
   private key. Last verified 2026-07-31.
-- Wallet-waiver qualification passed: 73 Vitest tests, 61 Foundry tests plus
+- One-hour canary qualification passed: 75 Vitest tests, 61 Foundry tests plus
   invariant/fuzz runs, isolated integration, scripted-canary Anvil dry run,
   protected-mainnet build scan, live Robinhood mainnet fork, and deterministic
   Playwright against an isolated Anvil deployment (20 passed, two intentional
-  cross-viewport skips). `scripts/run-v4-e2e.sh` now prevents browser tests
-  from using or mutating the qualified shared devnet. Last verified 2026-07-31.
+  cross-viewport skips). The one-hour migration and systemd unit validation
+  also pass. `scripts/run-v4-e2e.sh` prevents browser tests from using or
+  mutating the qualified shared devnet. Last verified 2026-07-31.
 - The wallet-waiver release commit is pushed on
   `codex/v4-wallet-uat-waiver`. Clean mainnet preflight passed with AAPL, TSLA,
   SPY, and NVDA safe and AMZN excluded. The checksummed non-broadcast package
@@ -40,6 +41,17 @@ Durable project context lives here. Update this file whenever information should
   source-tree status is empty and its release status explicitly records the
   wallet waiver and unverified browser compatibility. Last verified
   2026-07-31.
+- 2026-07-31 mainnet canary duration decision: replace the 24-hour production
+  canary with ten rounds over one hour, scheduled every six minutes from minute
+  zero through minute 54. Keep the 100 USDG runner ceiling, restart the keeper
+  after round four and indexer after round seven, and require round eleven to
+  remain prepared and unstarted at minute 60. Contract bytecode is unchanged.
+- The read-only mainnet budget check uses the live chain gas price plus
+  conservative gas envelopes and a 25% margin. Planned canary spend is 39
+  USDG from the deployer and 43 USDG from the non-admin player. Both currently
+  have zero mainnet ETH and USDG, so funding and a separately bound mainnet
+  authorization remain blockers. No funding or broadcast was performed. Last
+  verified 2026-07-31.
 
 - Current user-authorized path: replace three-Safe initial custody with one
   encrypted deployer EOA holding manager admin, market admin, keeper, treasury,

@@ -55,11 +55,12 @@ export type MainnetReleaseAuthorization = {
   canaryPlayerAddress: string;
   maximumDeployments: 1;
   canaryMaximumSettledRounds: 10;
-  canaryDurationHours: 24;
+  canaryDurationHours: 1;
   canaryUsdgBudget: 100;
   walletUatDisposition: "SKIPPED_BY_OPERATOR";
   browserWalletCompatibility: "UNVERIFIED";
   canaryWalletMode: "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER";
+  authorizedAt: string;
   expiresAt: string;
   mainnetBroadcastAuthorized: true;
   internalSecurityReviewSha256: string;
@@ -79,6 +80,7 @@ const keys = new Set<keyof MainnetReleaseAuthorization>([
   "walletUatDisposition",
   "browserWalletCompatibility",
   "canaryWalletMode",
+  "authorizedAt",
   "expiresAt",
   "mainnetBroadcastAuthorized",
   "internalSecurityReviewSha256",
@@ -142,8 +144,8 @@ export function validateMainnetReleaseAuthorization(
   if (value.canaryMaximumSettledRounds !== 10) {
     throw new Error("Authorization must bind the ten-round canary scope.");
   }
-  if (value.canaryDurationHours !== 24) {
-    throw new Error("Authorization must bind the 24-hour canary duration.");
+  if (value.canaryDurationHours !== 1) {
+    throw new Error("Authorization must bind the one-hour canary duration.");
   }
   if (value.canaryUsdgBudget !== 100) {
     throw new Error("Authorization must bind the 100 USDG canary budget.");
@@ -164,12 +166,20 @@ export function validateMainnetReleaseAuthorization(
   if (value.mainnetBroadcastAuthorized !== true) {
     throw new Error("Authorization does not permit mainnet broadcast.");
   }
+  const now = expected.now ?? Date.now();
+  const authorizedAt = Date.parse(String(value.authorizedAt));
   const expiresAt = Date.parse(String(value.expiresAt));
+  if (!Number.isFinite(authorizedAt) || authorizedAt > now) {
+    throw new Error("Authorization start time is future-dated or malformed.");
+  }
   if (
     !Number.isFinite(expiresAt) ||
-    expiresAt <= (expected.now ?? Date.now())
+    expiresAt <= now ||
+    expiresAt < authorizedAt + 2 * 60 * 60 * 1_000
   ) {
-    throw new Error("Authorization is expired or malformed.");
+    throw new Error(
+      "Authorization is expired, malformed, or valid for less than two hours.",
+    );
   }
   for (const field of ["internalSecurityReviewSha256"] as const) {
     if (!/^[0-9a-f]{64}$/i.test(String(value[field]))) {

@@ -12,5 +12,6 @@ pnpm exec vitest run \
   src/lib/release/mainnet-v4.test.ts \
   src/lib/release/mainnet-canary.test.ts
 pnpm test:integration
+pnpm test:migrations
 grep -q 'MAINNET_BROADCAST_ENABLED = false' script/DeployMainnet.s.sol
 echo "Mainnet canary model and Anvil transaction-path dry run passed."

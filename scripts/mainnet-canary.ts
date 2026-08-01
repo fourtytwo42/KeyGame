@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
+import { execFile as execFileCallback } from "node:child_process";
+import { mkdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import {
   encodeFunctionData,
   getAddress,
@@ -20,6 +22,7 @@ import {
   MAINNET_CANARY_BUDGET_RAW,
   MAINNET_CANARY_DURATION_MS,
   MAINNET_CANARY_ROUNDS,
+  restartCheckpointsForSettledRounds,
   validateCanaryActors,
 } from "../src/lib/release/mainnet-canary";
 import {
@@ -42,6 +45,8 @@ import {
   walletClientFor,
   type DeploymentManifest,
 } from "../services/common";
+
+const execFile = promisify(execFileCallback);
 
 const erc20Abi = parseAbi([
   "function allowance(address,address) view returns (uint256)",
@@ -854,6 +859,172 @@ async function processSettledRewards(
   });
 }
 
+async function ensureServiceRestartCheckpoints(
+  run: RunRow,
+  settledRounds: number,
+  chainId: number,
+) {
+  for (const checkpoint of restartCheckpointsForSettledRounds(settledRounds)) {
+    const key = `service-restart:${checkpoint.kind}:after-${checkpoint.afterSettledRounds}`;
+    const existing = await pool.query<{ id: string; state: string }>(
+      `SELECT id::text,state FROM mainnet_canary_actions
+       WHERE run_id=$1 AND idempotency_key=$2`,
+      [run.id, key],
+    );
+    if (existing.rows[0]?.state === "confirmed") continue;
+
+    const helper = await realpath(required("KEYGAME_CANARY_RESTART_HELPER"));
+    const root = await realpath(process.cwd());
+    const relative = path.relative(root, helper);
+    if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
+      throw new Error(
+        "Canary restart helper must remain outside the repository.",
+      );
+    }
+    const helperStat = await stat(helper);
+    if (helperStat.uid !== 0 || (helperStat.mode & 0o022) !== 0) {
+      throw new Error(
+        "Canary restart helper must be root-owned and not group/world writable.",
+      );
+    }
+    const action =
+      existing.rows[0] ??
+      (
+        await pool.query<{ id: string; state: string }>(
+          `INSERT INTO mainnet_canary_actions(
+             run_id,idempotency_key,action_type,state,details)
+           VALUES($1,$2,'service-restart','pending',$3)
+           RETURNING id::text,state`,
+          [
+            run.id,
+            key,
+            JSON.stringify({
+              service: checkpoint.service,
+              afterSettledRounds: checkpoint.afterSettledRounds,
+            }),
+          ],
+        )
+      ).rows[0];
+    const restartedAt = new Date();
+    await execFile("sudo", ["-n", helper, checkpoint.kind], {
+      timeout: 30_000,
+    });
+    const deadline = Date.now() + 60_000;
+    let heartbeat: { status: string; observed_at: Date } | undefined;
+    while (Date.now() < deadline) {
+      heartbeat = (
+        await pool.query<{ status: string; observed_at: Date }>(
+          `SELECT status,observed_at FROM service_heartbeats
+           WHERE service=$1 AND chain_id=$2 AND observed_at>$3`,
+          [checkpoint.service, chainId, restartedAt],
+        )
+      ).rows[0];
+      if (heartbeat && heartbeat.status !== "error") break;
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+    if (!heartbeat || heartbeat.status === "error") {
+      await pool.query(
+        `UPDATE mainnet_canary_actions SET state='failed',last_error=$2,
+           updated_at=now() WHERE id=$1`,
+        [action.id, `${checkpoint.service} did not recover within 60 seconds`],
+      );
+      throw new Error(`${checkpoint.service} restart did not recover.`);
+    }
+    await pool.query(
+      `UPDATE mainnet_canary_actions SET state='confirmed',details=details||$2::jsonb,
+         updated_at=now() WHERE id=$1`,
+      [
+        action.id,
+        JSON.stringify({
+          recoveredAt: heartbeat.observed_at.toISOString(),
+          recoveredStatus: heartbeat.status,
+        }),
+      ],
+    );
+  }
+}
+
+async function assertFinalCanaryState(
+  run: RunRow,
+  ctx: Awaited<ReturnType<typeof context>>,
+) {
+  const contributions = await pool.query<{
+    round_id: string;
+    calls: string;
+    actors: string;
+  }>(
+    `SELECT round_id::text,count(*)::text AS calls,
+       count(DISTINCT lower(actor_address))::text AS actors
+     FROM mainnet_canary_actions
+     WHERE run_id=$1 AND action_type='contribution' AND state='confirmed'
+     GROUP BY round_id ORDER BY round_id`,
+    [run.id],
+  );
+  const twoWalletsPerRound =
+    contributions.rows.length === MAINNET_CANARY_ROUNDS &&
+    contributions.rows.every(
+      (row) => Number(row.calls) === 2 && Number(row.actors) === 2,
+    );
+  const failedAssertions = await pool.query<{ count: string }>(
+    `SELECT count(*)::text AS count FROM mainnet_canary_assertions
+     WHERE run_id=$1 AND NOT passed`,
+    [run.id],
+  );
+  const active = await ctx.client.readContract({
+    address: ctx.manifest.contracts.manager,
+    abi: roundManagerV4Abi,
+    functionName: "activeRound",
+  });
+  if (active === zeroAddress) throw new Error("Round eleven is not prepared.");
+  const [roundId, startedAt, acceptedClaims] = await Promise.all([
+    ctx.client.readContract({
+      address: active,
+      abi: lastBellV4Abi,
+      functionName: "roundId",
+    }),
+    ctx.client.readContract({
+      address: active,
+      abi: lastBellV4Abi,
+      functionName: "startedAt",
+    }),
+    ctx.client.readContract({
+      address: active,
+      abi: lastBellV4Abi,
+      functionName: "acceptedClaims",
+    }),
+  ]);
+  const roundElevenUnstarted =
+    roundId === BigInt(run.initial_round_id) + BigInt(MAINNET_CANARY_ROUNDS) &&
+    startedAt === 0n &&
+    acceptedClaims === 0n;
+  const passed =
+    twoWalletsPerRound &&
+    Number(failedAssertions.rows[0]?.count ?? 0) === 0 &&
+    roundElevenUnstarted;
+  const finalRoundId =
+    BigInt(run.initial_round_id) + BigInt(MAINNET_CANARY_ROUNDS - 1);
+  await pool.query(
+    `INSERT INTO mainnet_canary_assertions(run_id,round_id,assertion,passed,details)
+     VALUES($1,$2,'one-hour-final-state',$3,$4)
+     ON CONFLICT(run_id,round_id,assertion) DO UPDATE SET
+       passed=excluded.passed,details=excluded.details,checked_at=now()`,
+    [
+      run.id,
+      finalRoundId.toString(),
+      passed,
+      JSON.stringify({
+        contributionRounds: contributions.rows,
+        failedAssertions: Number(failedAssertions.rows[0]?.count ?? 0),
+        activeRound: roundId.toString(),
+        activeRoundStartedAt: startedAt.toString(),
+        activeRoundAcceptedClaims: acceptedClaims.toString(),
+      }),
+    ],
+  );
+  if (!passed)
+    throw new Error("Final one-hour canary state did not reconcile.");
+}
+
 async function processRunOnce() {
   const ctx = await context();
   const run = await currentRun(ctx.deploymentKey);
@@ -903,14 +1074,24 @@ async function processRunOnce() {
       `UPDATE mainnet_canary_runs SET settled_rounds=$2,spent_usdg=$3,updated_at=now() WHERE id=$1`,
       [run.id, settledRounds, spentRaw.toString()],
     );
+    await ensureServiceRestartCheckpoints(
+      run,
+      settledRounds,
+      ctx.manifest.chainId,
+    );
     assertCanaryScope({
       authorization: ctx.authorization,
       settledRounds,
       spentRaw,
       startedAtMs: run.started_at.getTime(),
+      nowMs:
+        settledRounds === MAINNET_CANARY_ROUNDS
+          ? run.ends_at.getTime()
+          : Date.now(),
     });
     if (settledRounds === MAINNET_CANARY_ROUNDS) {
       if (Date.now() >= run.ends_at.getTime()) {
+        await assertFinalCanaryState(run, ctx);
         await pool.query(
           "UPDATE mainnet_canary_runs SET state='completed',completed_at=now(),updated_at=now() WHERE id=$1",
           [run.id],
@@ -1018,7 +1199,7 @@ async function start() {
     Date.parse(ctx.authorization.expiresAt) <
     now + MAINNET_CANARY_DURATION_MS
   ) {
-    throw new Error("Authorization expires before the 24-hour canary ends.");
+    throw new Error("Authorization expires before the one-hour canary ends.");
   }
   const id = `${ctx.authorization.authorizationId}:${new Date(now).toISOString()}`;
   await pool.query(
@@ -1026,7 +1207,7 @@ async function start() {
        id,deployment_key,authorization_id,source_commit,manifest_hash,
        deployer_address,player_address,state,target_rounds,duration_hours,
        usdg_budget,initial_round_id,started_at,ends_at)
-     VALUES($1,$2,$3,$4,$5,$6,$7,'scheduled',10,24,$8,$9,$10,$11)`,
+     VALUES($1,$2,$3,$4,$5,$6,$7,'scheduled',10,1,$8,$9,$10,$11)`,
     [
       id,
       ctx.deploymentKey,

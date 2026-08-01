@@ -83,6 +83,7 @@ export default async function StatusPage() {
             state: string;
             settledRounds: number;
             targetRounds: number;
+            durationHours: number;
             spentUsdg: number;
             budgetUsdg: number;
             startedAt: string;
@@ -231,7 +232,7 @@ export default async function StatusPage() {
             <h2>Mainnet canary</h2>
             <p>
               {production?.canary
-                ? `${production.canary.settledRounds}/${production.canary.targetRounds} settled · $${production.canary.spentUsdg.toFixed(2)}/$${production.canary.budgetUsdg.toFixed(2)} scripted budget · ${production.canary.state}.`
+                ? `${production.canary.settledRounds}/${production.canary.targetRounds} settled · ${production.canary.durationHours}H window · $${production.canary.spentUsdg.toFixed(2)}/$${production.canary.budgetUsdg.toFixed(2)} scripted budget · ${production.canary.state}.`
                 : "No mainnet canary has been authorized or started."}
             </p>
           </div>

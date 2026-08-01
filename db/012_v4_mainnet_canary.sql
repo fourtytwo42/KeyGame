@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS mainnet_canary_runs (
     state IN ('scheduled','running','completed','stopped','failed')
   ),
   target_rounds integer NOT NULL CHECK (target_rounds = 10),
-  duration_hours integer NOT NULL CHECK (duration_hours = 24),
+  duration_hours integer NOT NULL CHECK (duration_hours = 1),
   usdg_budget numeric(78,0) NOT NULL CHECK (usdg_budget = 100000000),
   spent_usdg numeric(78,0) NOT NULL DEFAULT 0,
   settled_rounds integer NOT NULL DEFAULT 0,
