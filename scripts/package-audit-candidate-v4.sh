@@ -6,6 +6,7 @@ output_dir="$project_root/artifacts/internal-assurance-candidate-v4"
 cd "$project_root"
 
 torture_report_json="${V4_TORTURE_REPORT_JSON:-}"
+rehearsal_report_json="${V4_LAUNCH_REHEARSAL_REPORT_JSON:-}"
 release_upstream_ref="${RELEASE_UPSTREAM_REF:-}"
 release_baseline_commit="${RELEASE_BASELINE_COMMIT:-d26b06cf0963f19c9c5248935fc7c51077304a83}"
 if [[ -z "$release_upstream_ref" ]]; then
@@ -15,6 +16,10 @@ fi
 export RELEASE_UPSTREAM_REF="$release_upstream_ref"
 if [[ -z "$torture_report_json" ]]; then
   echo "V4_TORTURE_REPORT_JSON must identify the accepted commit-bound torture report." >&2
+  exit 1
+fi
+if [[ -z "$rehearsal_report_json" ]]; then
+  echo "V4_LAUNCH_REHEARSAL_REPORT_JSON must identify the completed one-hour devnet rehearsal." >&2
   exit 1
 fi
 torture_report_json="$(realpath "$torture_report_json")"
@@ -36,6 +41,29 @@ for report in "$torture_report_json" "$torture_report_md"; do
     sha256sum --check "$(basename "$report.sha256")"
   )
 done
+rehearsal_report_json="$(realpath "$rehearsal_report_json")"
+case "$rehearsal_report_json" in
+  "$project_root"/artifacts/v4-launch-rehearsal/*.json) ;;
+  *) echo "Launch rehearsal evidence must be under artifacts/v4-launch-rehearsal/." >&2; exit 1 ;;
+esac
+[[ -f "$rehearsal_report_json.sha256" ]] || { echo "Missing rehearsal checksum." >&2; exit 1; }
+(cd "$(dirname "$rehearsal_report_json")" && sha256sum --check "$(basename "$rehearsal_report_json.sha256")")
+jq -e '
+  .run.state == "completed" and
+  .run.target_rounds == 10 and
+  .run.duration_minutes == 60 and
+  (.run.settled_rounds | tonumber) == 10 and
+  (.run.spent_usdg | tonumber) == 82000000 and
+  ([.assertions[] | select(.passed != true)] | length) == 0
+' "$rehearsal_report_json" >/dev/null || {
+  echo "Launch rehearsal evidence does not satisfy the release gate." >&2
+  exit 1
+}
+rehearsal_commit="$(jq -r '.run.source_commit // empty' "$rehearsal_report_json")"
+[[ "$rehearsal_commit" =~ ^[0-9a-f]{40}$ ]] || {
+  echo "Launch rehearsal evidence has no valid source commit." >&2
+  exit 1
+}
 source_commit="$(git rev-parse HEAD)"
 git merge-base --is-ancestor "$release_baseline_commit" "$source_commit" || {
   echo "Release source does not descend from the accepted internal-assurance baseline." >&2
@@ -50,9 +78,13 @@ git merge-base --is-ancestor "$qualified_commit" "$source_commit" || {
   echo "Torture evidence is not an ancestor of the packaging commit." >&2
   exit 1
 }
+git merge-base --is-ancestor "$rehearsal_commit" "$source_commit" || {
+  echo "Launch rehearsal evidence is not an ancestor of the packaging commit." >&2
+  exit 1
+}
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/verify-mainnet-authorization.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/mainnet-canary.ts|scripts/mainnet-canary-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/generate-mainnet-canary-wallet.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/devnet-deploy.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
       exit 1
@@ -97,6 +129,7 @@ pnpm test
 pnpm test:integration
 pnpm test:migrations
 pnpm test:e2e
+pnpm v4-launch-rehearsal:dry-run
 NEXT_DIST_DIR=.next-protected \
   NEXT_PUBLIC_GAME_MODE=mainnet \
   KEYGAME_CHAIN_ID=4663 \
@@ -114,6 +147,9 @@ RUN_ROBINHOOD_MAINNET_FORK=true \
   >"$output_dir/evidence/mainnet-fork.txt"
 pnpm exec tsx scripts/preflight-mainnet-v4.ts \
   >"$output_dir/evidence/mainnet-preflight.json"
+TESTNET_V4_BYTECODE_EVIDENCE="$output_dir/evidence/testnet-current-bytecode.json" \
+  pnpm release:verify:testnet:v4-bytecode \
+  >"$output_dir/evidence/testnet-current-bytecode.stdout.json"
 
 # Storage layouts are not part of Foundry's default artifacts. Rebuild them
 # explicitly so `forge inspect storage-layout` is deterministic on a clean VM.
@@ -140,6 +176,8 @@ cp docs/operations/v4-mainnet-release-runbook.md \
   "$output_dir/evidence/mainnet-release-runbook.md"
 cp docs/operations/mainnet-authorization.template.json \
   "$output_dir/evidence/mainnet-authorization.template.json"
+cp docs/operations/mainnet-promotion-authorization.template.json \
+  "$output_dir/evidence/mainnet-promotion-authorization.template.json"
 cp docs/operations/privileged-roles-and-incidents.md \
   "$output_dir/evidence/privileged-roles-and-incidents.md"
 cp docs/qualification/v4-threat-model.md \
@@ -158,6 +196,8 @@ cp docs/prd/16-stock-pot-lifetime-points.md \
   "$output_dir/evidence/authoritative-prd.md"
 cp "$torture_report_json" "$output_dir/evidence/torture-report.json"
 cp "$torture_report_md" "$output_dir/evidence/torture-report.md"
+cp "$rehearsal_report_json" "$output_dir/evidence/devnet-launch-rehearsal.json"
+cp "$rehearsal_report_json.sha256" "$output_dir/evidence/devnet-launch-rehearsal.json.sha256"
 printf '%s\n' "$source_commit" >"$output_dir/source-commit.txt"
 printf '%s\n' "$qualified_commit" \
   >"$output_dir/torture-qualified-source-commit.txt"
@@ -178,6 +218,8 @@ printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
   "INTERNALLY REVIEWED - NO INDEPENDENT AUDIT" \
   "SINGLE DEPLOYER EOA - NO LEGAL REVIEW - NO INDEPENDENT AUDIT" \
   "EXTERNAL WALLET UAT SKIPPED - BROWSER WALLET COMPATIBILITY UNVERIFIED" \
+  "DEVNET ONE-HOUR REHEARSAL PASSED - TESTNET TWO-ROUND SMOKE PASSED" \
+  "MAINNET GAMEPLAY NOT PRETESTED - READ-ONLY VALIDATION ONLY" \
   "EXPLICIT MAINNET AUTHORIZATION REMAINS BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"
 (

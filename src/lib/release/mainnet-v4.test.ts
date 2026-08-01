@@ -9,7 +9,6 @@ const expected = {
   sourceCommit: "a".repeat(40),
   manifestSha256: "b".repeat(64),
   deployerAddress: "0x1111111111111111111111111111111111111111",
-  canaryPlayerAddress: "0x2222222222222222222222222222222222222222",
   now: Date.parse("2026-07-31T00:00:00Z"),
 };
 const valid = {
@@ -17,15 +16,12 @@ const valid = {
   sourceCommit: expected.sourceCommit,
   manifestSha256: expected.manifestSha256,
   deployerAddress: expected.deployerAddress,
-  canaryPlayerAddress: expected.canaryPlayerAddress,
   chainId: 4663,
   maximumDeployments: 1,
-  canaryMaximumSettledRounds: 10,
-  canaryDurationHours: 1,
-  canaryUsdgBudget: 100,
+  launchValidation: "READ_ONLY",
+  promotionRequiresSeparateAuthorization: true,
   walletUatDisposition: "SKIPPED_BY_OPERATOR",
   browserWalletCompatibility: "UNVERIFIED",
-  canaryWalletMode: "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER",
   authorizedAt: "2026-07-31T00:00:00Z",
   expiresAt: "2026-08-01T00:00:00Z",
   mainnetBroadcastAuthorized: true,
@@ -57,13 +53,12 @@ describe("mainnet v4 release guards", () => {
       }),
     ).toThrow(/conflicts/);
   });
-  it("accepts only the exact commit, manifest, deployer, and canary scope", () => {
+  it("accepts only the exact commit, manifest, deployer, and read-only scope", () => {
     expect(validateMainnetReleaseAuthorization(valid, expected)).toMatchObject({
       chainId: 4663,
       maximumDeployments: 1,
-      canaryMaximumSettledRounds: 10,
-      canaryDurationHours: 1,
-      canaryUsdgBudget: 100,
+      launchValidation: "READ_ONLY",
+      promotionRequiresSeparateAuthorization: true,
       walletUatDisposition: "SKIPPED_BY_OPERATOR",
     });
     expect(() =>
@@ -74,16 +69,16 @@ describe("mainnet v4 release guards", () => {
     ).toThrow(/commit mismatch/);
     expect(() =>
       validateMainnetReleaseAuthorization(
-        { ...valid, canaryMaximumSettledRounds: 11 },
+        { ...valid, launchValidation: "SCRIPTED_CANARY" },
         expected,
       ),
-    ).toThrow(/ten-round/);
+    ).toThrow(/read-only/);
     expect(() =>
       validateMainnetReleaseAuthorization(
-        { ...valid, canaryDurationHours: 24 },
+        { ...valid, promotionRequiresSeparateAuthorization: false },
         expected,
       ),
-    ).toThrow(/one-hour/);
+    ).toThrow(/promotion/);
     expect(() =>
       validateMainnetReleaseAuthorization(
         { ...valid, walletUatDisposition: "PASSED" },
@@ -98,16 +93,10 @@ describe("mainnet v4 release guards", () => {
     ).toThrow(/UNVERIFIED/);
     expect(() =>
       validateMainnetReleaseAuthorization(
-        { ...valid, canaryUsdgBudget: 101 },
+        { ...valid, canaryDurationHours: 1 },
         expected,
       ),
-    ).toThrow(/100 USDG/);
-    expect(() =>
-      validateMainnetReleaseAuthorization(
-        { ...valid, canaryPlayerAddress: expected.deployerAddress },
-        expected,
-      ),
-    ).toThrow(/canary player mismatch|must differ/);
+    ).toThrow(/Unknown/);
   });
 
   it("rejects expired, incomplete, and unknown-field authorizations", () => {
@@ -119,10 +108,10 @@ describe("mainnet v4 release guards", () => {
     ).toThrow(/expired/);
     expect(() =>
       validateMainnetReleaseAuthorization(
-        { ...valid, expiresAt: "2026-07-31T01:59:59Z" },
+        { ...valid, expiresAt: "2026-07-31T00:59:59Z" },
         expected,
       ),
-    ).toThrow(/less than two hours/);
+    ).toThrow(/less than one hour/);
     expect(() =>
       validateMainnetReleaseAuthorization(
         { ...valid, authorizedAt: "2026-07-31T00:00:01Z" },
@@ -142,25 +131,29 @@ describe("mainnet v4 release guards", () => {
   it("pins sender, keystore, dual RPC, protected scan, and compile lock", () => {
     const shell = readFileSync("scripts/deploy-mainnet-v4.sh", "utf8");
     const solidity = readFileSync("script/DeployMainnet.s.sol", "utf8");
-    const restartHelper = readFileSync(
-      "scripts/mainnet-canary-restart-service.sh",
+    const rehearsal = readFileSync("scripts/v4-launch-rehearsal.ts", "utf8");
+    const readOnly = readFileSync(
+      "scripts/verify-mainnet-read-only.ts",
       "utf8",
     );
     const timer = readFileSync(
-      "ops/systemd/keygame-mainnet-canary.timer",
+      "ops/systemd/keygame-v4-launch-rehearsal.timer",
       "utf8",
     );
     expect(shell).toContain('--sender "$DEPLOYER_ADDRESS"');
     expect(shell).toContain('--keystore "$DEPLOYER_KEYSTORE"');
     expect(shell).toContain('--password-file "$DEPLOYER_PASSWORD_FILE"');
-    expect(shell).toContain("KEYGAME_CANARY_KEYSTORE");
+    expect(shell).not.toContain("KEYGAME_CANARY_KEYSTORE");
     expect(shell).toContain("SKIPPED_BY_OPERATOR");
     expect(shell).toContain("ROBINHOOD_MAINNET_FALLBACK_RPC_URL");
     expect(shell).toContain("release:scan:mainnet");
     expect(solidity).toContain("MAINNET_BROADCAST_ENABLED = false");
-    expect(restartHelper).toContain('case "${1:-}" in');
-    expect(restartHelper).toContain('exec /usr/bin/systemctl restart "$unit"');
-    expect(restartHelper).not.toContain("sh -c");
+    expect(rehearsal).toContain("manifest.chainId !== 31_337");
+    expect(rehearsal).not.toContain("4663");
+    expect(readOnly).toContain('launchValidation: "READ_ONLY"');
+    expect(readOnly).not.toMatch(
+      /createWalletClient|sendTransaction|writeContract|signTransaction|privateKeyToAccount/,
+    );
     expect(timer).toContain("OnUnitActiveSec=10s");
     expect(timer).toContain("Persistent=false");
   });

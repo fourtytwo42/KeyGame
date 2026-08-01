@@ -29,8 +29,12 @@ operator retains the regulatory, economic, operational, and security risk.
 - External-wallet UAT is explicitly `SKIPPED_BY_OPERATOR`, not passed.
   Browser-wallet compatibility remains `UNVERIFIED` and must be displayed as
   such. WalletConnect is hidden when no production Reown project is configured.
-- Mainnet requires a separate commit-, manifest-, deployer-, and canary-bound
-  authorization. The compile-time lock remains closed until then.
-- The canary uses the privileged deployer plus one encrypted non-admin player
-  through server-side signed transactions; this does not validate extensions
-  or WalletConnect.
+- Mainnet requires a separate commit-, manifest-, and deployer-bound
+  authorization with `launchValidation: READ_ONLY`. The compile-time lock
+  remains closed until then. Legacy canary-scoped authorizations are invalid.
+- The one-hour launch rehearsal runs only on isolated chain 31337 with two
+  deterministic non-admin players. It does not validate browser extensions,
+  WalletConnect, or live mainnet gameplay.
+- Mainnet deployment validation is read-only. Public promotion requires a
+  second authorization bound to the deployed manifest and checksummed
+  verification report.

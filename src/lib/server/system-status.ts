@@ -223,7 +223,7 @@ export async function getSystemStatus() {
     process.env.OPERATIONS_POT_CRITICAL_USD || 5_000,
   );
   const currentPotUsd = currentRound?.potUsd ?? 0;
-  const [catalog, canary, poolSafety] = await Promise.all([
+  const [catalog, rehearsal, poolSafety] = await Promise.all([
     database
       .query<{
         catalog_version: string;
@@ -241,18 +241,18 @@ export async function getSystemStatus() {
         state: string;
         settled_rounds: number;
         target_rounds: number;
-        duration_hours: number;
+        duration_minutes: number;
         spent_usdg: string;
         usdg_budget: string;
         started_at: Date;
         ends_at: Date;
+        report_sha256: string | null;
         last_error: string | null;
       }>(
-        `SELECT id,state,settled_rounds,target_rounds,duration_hours,spent_usdg::text,
-                usdg_budget::text,started_at,ends_at,last_error
-         FROM mainnet_canary_runs WHERE deployment_key=$1
+        `SELECT id,state,settled_rounds,target_rounds,duration_minutes,spent_usdg::text,
+                usdg_budget::text,started_at,ends_at,report_sha256,last_error
+         FROM v4_launch_rehearsal_runs
          ORDER BY created_at DESC LIMIT 1`,
-        [deploymentKey],
       )
       .catch(() => ({ rows: [], rowCount: 0 })),
     database
@@ -348,21 +348,26 @@ export async function getSystemStatus() {
       details: service.details,
       observedAt: service.observed_at.toISOString(),
     })),
-    canary: canary.rows[0]
+    rehearsal: rehearsal.rows[0]
       ? {
-          id: canary.rows[0].id,
-          state: canary.rows[0].state,
-          settledRounds: canary.rows[0].settled_rounds,
-          targetRounds: canary.rows[0].target_rounds,
-          durationHours: canary.rows[0].duration_hours,
-          spentUsdg: Number(canary.rows[0].spent_usdg) / 1e6,
-          budgetUsdg: Number(canary.rows[0].usdg_budget) / 1e6,
-          startedAt: canary.rows[0].started_at.toISOString(),
-          endsAt: canary.rows[0].ends_at.toISOString(),
-          lastError: canary.rows[0].last_error,
+          id: rehearsal.rows[0].id,
+          state: rehearsal.rows[0].state,
+          chainId: 31_337,
+          settledRounds: rehearsal.rows[0].settled_rounds,
+          targetRounds: rehearsal.rows[0].target_rounds,
+          durationMinutes: rehearsal.rows[0].duration_minutes,
+          spentUsdg: Number(rehearsal.rows[0].spent_usdg) / 1e6,
+          budgetUsdg: Number(rehearsal.rows[0].usdg_budget) / 1e6,
+          startedAt: rehearsal.rows[0].started_at.toISOString(),
+          endsAt: rehearsal.rows[0].ends_at.toISOString(),
+          reportSha256: rehearsal.rows[0].report_sha256,
+          lastError: rehearsal.rows[0].last_error,
         }
       : null,
     release: {
+      mainnetGameplayPretested: false,
+      launchValidation: "READ_ONLY",
+      promotionRequiresSeparateAuthorization: true,
       gates: manifest.releaseGates ?? {},
       walletUat: {
         ...walletUat,

@@ -1,0 +1,10 @@
+{
+  "authorizationId": "REQUIRED_UNIQUE_IDENTIFIER",
+  "chainId": 4663,
+  "deploymentManifestSha256": "REQUIRED_64_HEX_SHA256",
+  "readOnlyVerificationSha256": "REQUIRED_64_HEX_SHA256",
+  "sourceCommit": "REQUIRED_40_HEX_COMMIT",
+  "publicPromotionAuthorized": true,
+  "authorizedAt": "REQUIRED_ISO_TIMESTAMP",
+  "expiresAt": "REQUIRED_FUTURE_ISO_TIMESTAMP"
+}

@@ -26,6 +26,8 @@ export type DeploymentManifest = {
   deploymentBlock: number;
   sourceCommit: string;
   mockOnly: boolean;
+  deployer?: Address;
+  players?: Address[];
   contractVersion?:
     | "last-bell-v4-stock-pot"
     | "closing-print-v3-airtime"

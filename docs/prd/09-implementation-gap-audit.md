@@ -30,7 +30,8 @@
 | Schema-v4 release controls | Implemented, locked | Mainnet/testnet manifests, preflights, packaging, and authorization guards |
 | Robinhood v4 testnet | Smoke passed | One mock-only deployment, two settled rounds, unstarted round three |
 | External-wallet UAT | Skipped | Pass remains false; browser compatibility is unverified |
-| Mainnet canary controller | Implemented, locked | Deployer plus one encrypted non-admin player, ten rounds in one hour, 100 USDG scripted budget |
+| Devnet launch rehearsal | Implemented | Chain 31337 only, two non-admin players, ten rounds in one real hour, 82 mock USDG, exact reconciliation |
+| Mainnet launch verification | Implemented, locked | Read-only bytecode, role, market, RPC, indexer, API, round-state, and custody checks; no gameplay transactions |
 | Robinhood v4 mainnet | Not deployed | Compile-time locked |
 
 ## Deliberate launch gates

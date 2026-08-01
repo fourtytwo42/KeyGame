@@ -9,7 +9,8 @@
 > Robinhood-mainnet Stock Token/USDG adapter, deployer-controlled 16-asset catalog,
 > dynamic safe four-stock roster, two-round mock-only testnet compatibility
 > gate, internal assurance, single-deployer custody, explicit skipped wallet
-> UAT with unverified compatibility, and an unlisted scripted mainnet canary.
+> UAT with unverified compatibility, an exact one-hour devnet launch rehearsal,
+> and read-only mainnet launch verification with separately authorized promotion.
 > The two-round v4 testnet smoke is complete. Mainnet is not authorized.
 
 > `D-020` (2026-07-29): Closing Print is the implemented product.
@@ -97,6 +98,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-025` | Replace v3 with uncapped variable Stock Token buys, recent-volume point multipliers, 30% winning-stock rewards, and a persistent 10% lifetime-points vault. | `IMPLEMENTED / DEVNET QUALIFIED` | PRD 16 is authoritative. Split is 50/30/10/5/5; DEX movement no longer scores. |
 | `D-026` | Promote v4 through direct production swaps, dynamic safe rosters, internal assurance, one authorized two-round mock testnet smoke, single-deployer initial custody, and an unlisted mainnet canary. | `TESTNET SMOKE PASSED / MAINNET LOCKED` | D-027 supersedes its wallet-UAT gate. |
 | `D-027` | Skip browser-wallet UAT for the initial release without marking it passed; run the canary through the deployer plus one encrypted non-admin player. | `IMPLEMENTED RELEASE POLICY` | Compatibility remains `UNVERIFIED`; testnet smoke passed and mainnet remains separately authorized. |
+| `D-028` | Replace scripted mainnet canary gameplay with a ten-round, one-hour chain-31337 rehearsal; mainnet receives read-only verification and separate promotion approval. | `IMPLEMENTED RELEASE POLICY` | No additional testnet spend or pre-promotion mainnet gameplay transactions. |
 | `D-017` | Bootstrap with Git, pnpm, pinned runtime metadata, and strict VM-local checks before feature branches expand. | `DECIDED` | GitHub Actions is disabled; see PRD 04 engineering bootstrap. |
 | `D-018` | Define the typed game-domain model and deterministic fixture matrix before stateful screen implementation. | `DECIDED` | Fixtures cover normal, late, rejected, degraded, settlement, cancellation, tie, and empty-round paths. |
 | `D-019` | Implement the full static screen slice before wallet or contract integration. | `DECIDED` | Home, Entry, Live, Rug Zone, Finalizing, Final, Replay, Receipt, Rules, Wallet/Session, Supported Assets, and Dead Air at mobile and desktop breakpoints. |

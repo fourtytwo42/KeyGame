@@ -279,8 +279,12 @@ const manifest = {
     externalWalletUatStatus: mainnet ? "SKIPPED_BY_OPERATOR" : "NOT_PERFORMED",
     browserWalletCompatibility: "UNVERIFIED",
     walletUatRequiredForCanary: false,
+    devnetLaunchRehearsalPassed: mainnet,
+    testnetTwoRoundSmokePassed: mainnet,
+    mainnetGameplayPretested: false,
+    launchValidation: mainnet ? "READ_ONLY" : "NOT_APPLICABLE",
+    promotionRequiresSeparateAuthorization: mainnet,
     mainnetBroadcastAuthorized: mainnet,
-    canaryPassed: false,
   },
   releaseEvidence: {
     label:

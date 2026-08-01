@@ -37,10 +37,11 @@ independently rotatable. Treasury acceptance affects only later-prepared rounds.
 The operator acknowledgement is recorded as `No legal review or independent
 audit`; it is not signed and is not represented as either form of approval.
 
-The unlisted mainnet canary uses server-side transactions from the deployer and
-one encrypted non-admin player. Its operational ceiling is ten settled rounds
-over one hour and 100 USDG of scripted contributions. This ceiling does not alter
-the permissionless contract or impose a player contribution maximum.
+The final launch rehearsal uses two deterministic non-admin wallets on an
+isolated chain-31337 deployment for ten rounds over one real hour. It spends 82
+mock USDG under a 100 mock-USDG runner ceiling. Mainnet receives read-only
+deployment verification only; no scripted gameplay precedes separately
+authorized public promotion.
 
 This document supersedes current-economy requirements in PRDs 10–15. Legacy
 contracts and parsers remain available for old receipts and replays.

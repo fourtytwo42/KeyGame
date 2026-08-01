@@ -1,12 +1,12 @@
 [Unit]
-Description=Run the Last Bell mainnet canary every ten seconds
+Description=Run the Last Bell devnet launch rehearsal every ten seconds
 
 [Timer]
 OnBootSec=10s
 OnUnitActiveSec=10s
 AccuracySec=1s
 Persistent=false
-Unit=keygame-mainnet-canary.service
+Unit=keygame-v4-launch-rehearsal.service
 
 [Install]
 WantedBy=timers.target

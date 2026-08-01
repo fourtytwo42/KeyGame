@@ -3,6 +3,8 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 rpc_url="${LOCAL_RPC_URL:-http://127.0.0.1:8545}"
+deployment_manifest="${DEVNET_DEPLOYMENT_MANIFEST:-$project_root/deployments/31337.json}"
+write_app_env="${DEVNET_WRITE_APP_ENV:-true}"
 deployment_block="$(( $(cast block-number --rpc-url "$rpc_url") + 1 ))"
 source_commit="$(git rev-parse HEAD)"
 deployer="0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -21,7 +23,9 @@ session_player="0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
 export PATH="$HOME/.foundry/bin:$PATH"
 export DEPLOYER_ADDRESS="$deployer"
 cd "$project_root"
-rm -f "$project_root/.devnet/round-rollover.json"
+if [[ "$deployment_manifest" == "$project_root/deployments/31337.json" ]]; then
+  rm -f "$project_root/.devnet/round-rollover.json"
+fi
 
 send_checked() {
   local receipt
@@ -71,7 +75,7 @@ send_checked "$token_address" "mint(address,uint256)" "$session_player" 10000000
 send_checked "${stock_addresses[0]}" "mint(address,uint256)" "$session_player" 1 \
   --rpc-url "$rpc_url" --unlocked --from "$deployer" --gas-limit 150000
 
-mkdir -p "$project_root/deployments" "$project_root/public/contracts"
+mkdir -p "$(dirname "$deployment_manifest")" "$project_root/public/contracts"
 jq -n \
   --argjson chainId 31337 \
   --argjson deploymentBlock "$deployment_block" \
@@ -120,23 +124,25 @@ jq -n \
     verifier: {type: "mock"},
     sessionPlayer: $sessionPlayer,
     players: $players
-  }' >"$project_root/deployments/31337.json"
+  }' >"$deployment_manifest"
 
 forge inspect contracts/LastBellRoundV4.sol:LastBellRoundV4 abi --json \
   >"$project_root/public/contracts/LastBellRound.abi.json"
 forge inspect contracts/mocks/MockUSDG.sol:MockUSDG abi --json \
   >"$project_root/public/contracts/MockUSDG.abi.json"
 
-printf '%s\n' \
-  "NEXT_PUBLIC_APP_URL=http://192.168.50.138:3000" \
-  "NEXT_PUBLIC_LOCAL_RPC_URL=http://192.168.50.138:8545" \
-  "NEXT_PUBLIC_GAME_MODE=devnet" \
-  "NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot" \
-  "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS=$round_address" \
-  "NEXT_PUBLIC_DEV_DOLLAR_ADDRESS=$token_address" \
-  "NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS=$payment_router_address" \
-  "NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL=https://rpc.testnet.chain.robinhood.com" \
-  >"$project_root/.env.local"
+if [[ "$write_app_env" == "true" ]]; then
+  printf '%s\n' \
+    "NEXT_PUBLIC_APP_URL=http://192.168.50.138:3000" \
+    "NEXT_PUBLIC_LOCAL_RPC_URL=http://192.168.50.138:8545" \
+    "NEXT_PUBLIC_GAME_MODE=devnet" \
+    "NEXT_PUBLIC_CONTRACT_VERSION=last-bell-v4-stock-pot" \
+    "NEXT_PUBLIC_LAST_BELL_ROUND_ADDRESS=$round_address" \
+    "NEXT_PUBLIC_DEV_DOLLAR_ADDRESS=$token_address" \
+    "NEXT_PUBLIC_PAYMENT_ROUTER_ADDRESS=$payment_router_address" \
+    "NEXT_PUBLIC_ROBINHOOD_TESTNET_RPC_URL=https://rpc.testnet.chain.robinhood.com" \
+    >"$project_root/.env.local"
+fi
 
 echo "LastBellRound: $round_address"
 echo "MockUSDG:      $token_address"
@@ -145,4 +151,4 @@ echo "SwapAdapter:   $swap_adapter_address"
 echo "RoundManager:  $manager_address"
 echo "LifetimeVault: $lifetime_vault_address"
 echo "RewardRouter:  $reward_router_address"
-echo "Deployment:    $project_root/deployments/31337.json"
+echo "Deployment:    $deployment_manifest"

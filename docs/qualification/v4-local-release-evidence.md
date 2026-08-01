@@ -52,6 +52,7 @@ the isolated harness. The final accepted run includes both fixes.
 The mock-only testnet smoke and single-deployer role verification passed. The
 unsigned acknowledgement `No legal review or independent audit` is recorded.
 External-wallet UAT is skipped, not passed, and browser compatibility remains
-unverified. Fresh mainnet market safety, incident ownership, funding, the
-dedicated compile-lock commit, and explicit mainnet broadcast authorization
-remain blocking.
+unverified. The exact one-hour chain-31337 launch rehearsal remains the next
+local gate. Fresh mainnet market safety, incident ownership, funding, the
+dedicated compile-lock commit, read-only deployment authorization, and later
+public-promotion authorization remain blocking.

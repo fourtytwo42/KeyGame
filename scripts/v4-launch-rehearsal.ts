@@ -5,7 +5,9 @@ import path from "node:path";
 import { promisify } from "node:util";
 import {
   encodeFunctionData,
+  createWalletClient,
   getAddress,
+  http,
   keccak256,
   maxUint256,
   parseAbi,
@@ -15,21 +17,17 @@ import {
   type Address,
   type Hex,
 } from "viem";
+import { foundry } from "viem/chains";
 import {
-  assertCanaryScope,
-  canaryRoundSchedule,
-  CANARY_CONTRIBUTIONS,
-  MAINNET_CANARY_BUDGET_RAW,
-  MAINNET_CANARY_DURATION_MS,
-  MAINNET_CANARY_ROUNDS,
+  assertRehearsalScope,
+  rehearsalRoundSchedule,
+  REHEARSAL_CONTRIBUTIONS,
+  DEVNET_REHEARSAL_BUDGET_RAW,
+  DEVNET_REHEARSAL_DURATION_MS,
+  DEVNET_REHEARSAL_ROUNDS,
   restartCheckpointsForSettledRounds,
-  validateCanaryActors,
-} from "../src/lib/release/mainnet-canary";
-import {
-  resolveWalletUatDisposition,
-  validateMainnetReleaseAuthorization,
-  type MainnetReleaseAuthorization,
-} from "../src/lib/release/mainnet-v4";
+  validateRehearsalActors,
+} from "../src/lib/release/launch-rehearsal";
 import {
   lastBellV4Abi,
   lifetimePointsVaultAbi,
@@ -42,7 +40,6 @@ import {
   loadManifest,
   pool,
   publicClientFor,
-  walletClientFor,
   type DeploymentManifest,
 } from "../services/common";
 
@@ -66,18 +63,25 @@ const adapterAdminAbi = parseAbi([
   "function swapStockForUsdg(address,uint256,uint256,uint64,address) returns (uint256)",
 ]);
 
-type WalletClient = Awaited<ReturnType<typeof walletClientFor>>;
+function unlockedWallet(address: Address, rpcUrl: string) {
+  return createWalletClient({
+    account: address,
+    chain: foundry,
+    transport: http(rpcUrl),
+  });
+}
+type WalletClient = ReturnType<typeof unlockedWallet>;
 type RunRow = {
   id: string;
   deployment_key: string;
-  authorization_id: string;
   source_commit: string;
   manifest_hash: string;
-  deployer_address: Address;
-  player_address: Address;
+  operator_address: Address;
+  player_a_address: Address;
+  player_b_address: Address;
   state: string;
   target_rounds: number;
-  duration_hours: number;
+  duration_minutes: number;
   usdg_budget: string;
   spent_usdg: string;
   settled_rounds: number;
@@ -106,77 +110,38 @@ function sha256(value: Buffer | string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-async function loadAuthorization(
-  manifest: DeploymentManifest,
-): Promise<MainnetReleaseAuthorization> {
-  const authorizationPath = await realpath(
-    required("MAINNET_RELEASE_AUTHORIZATION_FILE"),
-  );
-  const root = await realpath(process.cwd());
-  const relative = path.relative(root, authorizationPath);
-  if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
-    throw new Error(
-      "Mainnet authorization must remain outside the repository.",
-    );
-  }
+async function manifestHash() {
   const manifestPath = await realpath(required("KEYGAME_DEPLOYMENT_MANIFEST"));
-  const [authorizationText, manifestBytes] = await Promise.all([
-    readFile(authorizationPath, "utf8"),
-    readFile(manifestPath),
-  ]);
-  return validateMainnetReleaseAuthorization(JSON.parse(authorizationText), {
-    sourceCommit: manifest.sourceCommit,
-    manifestSha256: sha256(manifestBytes),
-    deployerAddress: required("DEPLOYER_ADDRESS"),
-    canaryPlayerAddress: required("KEYGAME_CANARY_ADDRESS"),
-  });
+  return sha256(await readFile(manifestPath));
 }
 
 async function context() {
   const manifest = await loadManifest();
   if (
-    manifest.chainId !== 4663 ||
-    manifest.mockOnly ||
+    manifest.chainId !== 31_337 ||
+    !manifest.mockOnly ||
     manifest.contractVersion !== "last-bell-v4-stock-pot" ||
     !manifest.contracts.swapAdapter ||
     !manifest.contracts.rewardRouter ||
     !manifest.contracts.lifetimePointsVault
   ) {
     throw new Error(
-      "The canary runner requires a value-bearing v4 chain-4663 manifest.",
+      "The launch rehearsal requires an isolated mock-only chain-31337 manifest.",
     );
   }
-  const walletUat = resolveWalletUatDisposition(manifest.releaseGates);
-  if (
-    walletUat.status !== "SKIPPED_BY_OPERATOR" ||
-    walletUat.passed ||
-    walletUat.browserWalletCompatibility !== "UNVERIFIED" ||
-    walletUat.requiredForCanary
-  ) {
-    throw new Error(
-      "Manifest does not contain the approved wallet-UAT waiver.",
-    );
-  }
-  const authorization = await loadAuthorization(manifest);
   const client = publicClientFor(manifest);
-  if ((await client.getChainId()) !== 4663) {
-    throw new Error("Canary RPC is not Robinhood mainnet chain 4663.");
+  if ((await client.getChainId()) !== 31_337) {
+    throw new Error("Launch rehearsal RPC must be chain 31337.");
   }
-  const [deployerWallet, playerWallet] = await Promise.all([
-    walletClientFor(manifest, "deployer"),
-    walletClientFor(manifest, "canary"),
-  ]);
-  if (!deployerWallet.account || !playerWallet.account) {
-    throw new Error("Canary wallet accounts are unavailable.");
-  }
-  const deployer = getAddress(deployerWallet.account.address);
-  const player = getAddress(playerWallet.account.address);
-  if (
-    deployer !== getAddress(required("DEPLOYER_ADDRESS")) ||
-    player !== getAddress(required("KEYGAME_CANARY_ADDRESS"))
-  ) {
-    throw new Error("Canary keystore addresses do not match configuration.");
-  }
+  const operator = getAddress(manifest.deployer!);
+  const players = manifest.players ?? [];
+  if (players.length < 2)
+    throw new Error("Rehearsal manifest needs two deterministic players.");
+  const playerA = getAddress(players[0]);
+  const playerB = getAddress(players[1]);
+  const operatorWallet = unlockedWallet(operator, manifest.rpc.primary);
+  const playerAWallet = unlockedWallet(playerA, manifest.rpc.primary);
+  const playerBWallet = unlockedWallet(playerB, manifest.rpc.primary);
   const [
     admin,
     pendingAdmin,
@@ -227,11 +192,14 @@ async function context() {
     pendingTreasury !== zeroAddress ||
     pendingMarketAdmin !== zeroAddress
   ) {
-    throw new Error("Pending role transfers must be empty before the canary.");
+    throw new Error(
+      "Pending role transfers must be empty before the rehearsal.",
+    );
   }
-  validateCanaryActors({
-    deployer,
-    player,
+  validateRehearsalActors({
+    operator,
+    playerA,
+    playerB,
     roles: [
       admin,
       keeper,
@@ -242,19 +210,21 @@ async function context() {
   });
   return {
     manifest,
-    authorization,
+    manifestHash: await manifestHash(),
     client,
-    deployerWallet,
-    playerWallet,
-    deployer,
-    player,
+    operatorWallet,
+    playerAWallet,
+    playerBWallet,
+    operator,
+    playerA,
+    playerB,
     deploymentKey: deploymentKeyFor(manifest),
   };
 }
 
 async function currentRun(deploymentKey: string) {
   const result = await pool.query<RunRow>(
-    `SELECT * FROM mainnet_canary_runs
+    `SELECT * FROM v4_launch_rehearsal_runs
      WHERE deployment_key=$1 ORDER BY created_at DESC LIMIT 1`,
     [deploymentKey],
   );
@@ -271,7 +241,7 @@ async function reconcileBroadcast(
     .catch(() => null);
   if (receipt) {
     await pool.query(
-      `UPDATE mainnet_canary_actions SET state=$2,receipt_block=$3,
+      `UPDATE v4_launch_rehearsal_actions SET state=$2,receipt_block=$3,
          signed_transaction=NULL,last_error=$4,updated_at=now() WHERE id=$1`,
       [
         action.id,
@@ -281,7 +251,7 @@ async function reconcileBroadcast(
       ],
     );
     if (receipt.status !== "success")
-      throw new Error("Canary transaction reverted.");
+      throw new Error("Rehearsal transaction reverted.");
     return true;
   }
   const pending = await client
@@ -296,7 +266,7 @@ async function reconcileBroadcast(
   const signer = getAddress(
     (
       await pool.query<{ actor_address: Address }>(
-        "SELECT actor_address FROM mainnet_canary_actions WHERE id=$1",
+        "SELECT actor_address FROM v4_launch_rehearsal_actions WHERE id=$1",
         [action.id],
       )
     ).rows[0].actor_address,
@@ -306,7 +276,7 @@ async function reconcileBroadcast(
     blockTag: "pending",
   });
   if (pendingNonce > Number(action.nonce)) {
-    throw new Error("Canary nonce advanced without a recoverable receipt.");
+    throw new Error("Rehearsal nonce advanced without a recoverable receipt.");
   }
   if (pendingNonce === Number(action.nonce)) {
     const rebroadcast = await client.sendRawTransaction({
@@ -339,7 +309,7 @@ async function sendAction(input: {
 }) {
   const found = await pool.query<ActionRow>(
     `SELECT id::text,state,transaction_hash,signed_transaction,nonce::text
-     FROM mainnet_canary_actions WHERE run_id=$1 AND idempotency_key=$2`,
+     FROM v4_launch_rehearsal_actions WHERE run_id=$1 AND idempotency_key=$2`,
     [input.run.id, input.key],
   );
   let action = found.rows[0];
@@ -350,11 +320,11 @@ async function sendAction(input: {
     return action.transaction_hash;
   }
   const account = input.wallet.account;
-  if (!account) throw new Error("Canary signer is unavailable.");
+  if (!account) throw new Error("Rehearsal signer is unavailable.");
   if (!action) {
     action = (
       await pool.query<ActionRow>(
-        `INSERT INTO mainnet_canary_actions(
+        `INSERT INTO v4_launch_rehearsal_actions(
            run_id,idempotency_key,action_type,actor_address,round_id,
            round_address,ticker_index,usdg_amount,state,details)
          VALUES($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)
@@ -392,7 +362,7 @@ async function sendAction(input: {
   const signed = await input.wallet.signTransaction(request);
   const hash = keccak256(signed);
   await pool.query(
-    `UPDATE mainnet_canary_actions SET state='broadcast',nonce=$2,
+    `UPDATE v4_launch_rehearsal_actions SET state='broadcast',nonce=$2,
        transaction_hash=$3,signed_transaction=$4,updated_at=now() WHERE id=$1`,
     [action.id, nonce, hash, signed],
   );
@@ -403,7 +373,7 @@ async function sendAction(input: {
     throw new Error("Broadcast hash differs from persisted hash.");
   const receipt = await input.client.waitForTransactionReceipt({ hash });
   await pool.query(
-    `UPDATE mainnet_canary_actions SET state=$2,receipt_block=$3,
+    `UPDATE v4_launch_rehearsal_actions SET state=$2,receipt_block=$3,
        signed_transaction=NULL,last_error=$4,updated_at=now() WHERE id=$1`,
     [
       action.id,
@@ -449,7 +419,7 @@ async function ensureApproval(
 async function contribute(input: {
   run: RunRow;
   ordinal: number;
-  actorLabel: "deployer" | "player";
+  actorLabel: "player-a" | "player-b";
   wallet: WalletClient;
   amountUsd: number;
   tickerIndex: number;
@@ -514,7 +484,7 @@ async function assertCurrentHolderRejected(input: {
 }) {
   const key = `round:${input.ordinal}:current-holder-rejection`;
   const prior = await pool.query(
-    "SELECT 1 FROM mainnet_canary_actions WHERE run_id=$1 AND idempotency_key=$2",
+    "SELECT 1 FROM v4_launch_rehearsal_actions WHERE run_id=$1 AND idempotency_key=$2",
     [input.run.id, key],
   );
   if (prior.rowCount) return;
@@ -555,7 +525,7 @@ async function assertCurrentHolderRejected(input: {
       "Current-holder self-call simulation unexpectedly succeeded.",
     );
   await pool.query(
-    `INSERT INTO mainnet_canary_actions(run_id,idempotency_key,action_type,
+    `INSERT INTO v4_launch_rehearsal_actions(run_id,idempotency_key,action_type,
        actor_address,round_address,state,details)
      VALUES($1,$2,'current-holder-rejection',$3,$4,'expected-revert',$5)`,
     [
@@ -603,7 +573,7 @@ async function reconcileSettledRound(run: RunRow, roundId: bigint) {
     );
   const twoPlayers = Number(contributions.rows[0]?.players ?? 0) === 2;
   await pool.query(
-    `INSERT INTO mainnet_canary_assertions(run_id,round_id,assertion,passed,details)
+    `INSERT INTO v4_launch_rehearsal_assertions(run_id,round_id,assertion,passed,details)
      VALUES($1,$2,'basket-and-player-reconciliation',$3,$4)
      ON CONFLICT(run_id,round_id,assertion) DO UPDATE SET
        passed=excluded.passed,details=excluded.details,checked_at=now()`,
@@ -628,7 +598,7 @@ async function claimPlayerRewards(input: {
   roundId: bigint;
   player: Address;
   wallet: WalletClient;
-  label: "deployer" | "player";
+  label: "player-a" | "player-b";
   manifest: DeploymentManifest;
   client: ReturnType<typeof publicClientFor>;
 }) {
@@ -727,7 +697,7 @@ async function convertProtocolBasket(input: {
   const stored = await pool.query<{
     details: { amounts?: string[]; tokens?: Address[] };
   }>(
-    `SELECT details FROM mainnet_canary_actions WHERE run_id=$1 AND idempotency_key=$2`,
+    `SELECT details FROM v4_launch_rehearsal_actions WHERE run_id=$1 AND idempotency_key=$2`,
     [input.run.id, key],
   );
   let amounts = stored.rows[0]?.details.amounts?.map(BigInt);
@@ -833,9 +803,9 @@ async function processSettledRewards(
     run,
     round,
     roundId,
-    player: ctx.deployer,
-    wallet: ctx.deployerWallet,
-    label: "deployer",
+    player: ctx.playerA,
+    wallet: ctx.playerAWallet,
+    label: "player-a",
     manifest: ctx.manifest,
     client: ctx.client,
   });
@@ -843,9 +813,9 @@ async function processSettledRewards(
     run,
     round,
     roundId,
-    player: ctx.player,
-    wallet: ctx.playerWallet,
-    label: "player",
+    player: ctx.playerB,
+    wallet: ctx.playerBWallet,
+    label: "player-b",
     manifest: ctx.manifest,
     client: ctx.client,
   });
@@ -853,7 +823,7 @@ async function processSettledRewards(
     run,
     round,
     roundId,
-    wallet: ctx.deployerWallet,
+    wallet: ctx.operatorWallet,
     manifest: ctx.manifest,
     client: ctx.client,
   });
@@ -867,31 +837,31 @@ async function ensureServiceRestartCheckpoints(
   for (const checkpoint of restartCheckpointsForSettledRounds(settledRounds)) {
     const key = `service-restart:${checkpoint.kind}:after-${checkpoint.afterSettledRounds}`;
     const existing = await pool.query<{ id: string; state: string }>(
-      `SELECT id::text,state FROM mainnet_canary_actions
+      `SELECT id::text,state FROM v4_launch_rehearsal_actions
        WHERE run_id=$1 AND idempotency_key=$2`,
       [run.id, key],
     );
     if (existing.rows[0]?.state === "confirmed") continue;
 
-    const helper = await realpath(required("KEYGAME_CANARY_RESTART_HELPER"));
+    const helper = await realpath(required("KEYGAME_REHEARSAL_RESTART_HELPER"));
     const root = await realpath(process.cwd());
     const relative = path.relative(root, helper);
     if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
       throw new Error(
-        "Canary restart helper must remain outside the repository.",
+        "Rehearsal restart helper must remain outside the repository.",
       );
     }
     const helperStat = await stat(helper);
     if (helperStat.uid !== 0 || (helperStat.mode & 0o022) !== 0) {
       throw new Error(
-        "Canary restart helper must be root-owned and not group/world writable.",
+        "Rehearsal restart helper must be root-owned and not group/world writable.",
       );
     }
     const action =
       existing.rows[0] ??
       (
         await pool.query<{ id: string; state: string }>(
-          `INSERT INTO mainnet_canary_actions(
+          `INSERT INTO v4_launch_rehearsal_actions(
              run_id,idempotency_key,action_type,state,details)
            VALUES($1,$2,'service-restart','pending',$3)
            RETURNING id::text,state`,
@@ -924,14 +894,14 @@ async function ensureServiceRestartCheckpoints(
     }
     if (!heartbeat || heartbeat.status === "error") {
       await pool.query(
-        `UPDATE mainnet_canary_actions SET state='failed',last_error=$2,
+        `UPDATE v4_launch_rehearsal_actions SET state='failed',last_error=$2,
            updated_at=now() WHERE id=$1`,
         [action.id, `${checkpoint.service} did not recover within 60 seconds`],
       );
       throw new Error(`${checkpoint.service} restart did not recover.`);
     }
     await pool.query(
-      `UPDATE mainnet_canary_actions SET state='confirmed',details=details||$2::jsonb,
+      `UPDATE v4_launch_rehearsal_actions SET state='confirmed',details=details||$2::jsonb,
          updated_at=now() WHERE id=$1`,
       [
         action.id,
@@ -944,7 +914,7 @@ async function ensureServiceRestartCheckpoints(
   }
 }
 
-async function assertFinalCanaryState(
+async function assertFinalRehearsalState(
   run: RunRow,
   ctx: Awaited<ReturnType<typeof context>>,
 ) {
@@ -955,18 +925,18 @@ async function assertFinalCanaryState(
   }>(
     `SELECT round_id::text,count(*)::text AS calls,
        count(DISTINCT lower(actor_address))::text AS actors
-     FROM mainnet_canary_actions
+     FROM v4_launch_rehearsal_actions
      WHERE run_id=$1 AND action_type='contribution' AND state='confirmed'
      GROUP BY round_id ORDER BY round_id`,
     [run.id],
   );
   const twoWalletsPerRound =
-    contributions.rows.length === MAINNET_CANARY_ROUNDS &&
+    contributions.rows.length === DEVNET_REHEARSAL_ROUNDS &&
     contributions.rows.every(
       (row) => Number(row.calls) === 2 && Number(row.actors) === 2,
     );
   const failedAssertions = await pool.query<{ count: string }>(
-    `SELECT count(*)::text AS count FROM mainnet_canary_assertions
+    `SELECT count(*)::text AS count FROM v4_launch_rehearsal_assertions
      WHERE run_id=$1 AND NOT passed`,
     [run.id],
   );
@@ -994,7 +964,8 @@ async function assertFinalCanaryState(
     }),
   ]);
   const roundElevenUnstarted =
-    roundId === BigInt(run.initial_round_id) + BigInt(MAINNET_CANARY_ROUNDS) &&
+    roundId ===
+      BigInt(run.initial_round_id) + BigInt(DEVNET_REHEARSAL_ROUNDS) &&
     startedAt === 0n &&
     acceptedClaims === 0n;
   const passed =
@@ -1002,9 +973,9 @@ async function assertFinalCanaryState(
     Number(failedAssertions.rows[0]?.count ?? 0) === 0 &&
     roundElevenUnstarted;
   const finalRoundId =
-    BigInt(run.initial_round_id) + BigInt(MAINNET_CANARY_ROUNDS - 1);
+    BigInt(run.initial_round_id) + BigInt(DEVNET_REHEARSAL_ROUNDS - 1);
   await pool.query(
-    `INSERT INTO mainnet_canary_assertions(run_id,round_id,assertion,passed,details)
+    `INSERT INTO v4_launch_rehearsal_assertions(run_id,round_id,assertion,passed,details)
      VALUES($1,$2,'one-hour-final-state',$3,$4)
      ON CONFLICT(run_id,round_id,assertion) DO UPDATE SET
        passed=excluded.passed,details=excluded.details,checked_at=now()`,
@@ -1022,30 +993,30 @@ async function assertFinalCanaryState(
     ],
   );
   if (!passed)
-    throw new Error("Final one-hour canary state did not reconcile.");
+    throw new Error("Final one-hour rehearsal state did not reconcile.");
 }
 
 async function processRunOnce() {
   const ctx = await context();
   const run = await currentRun(ctx.deploymentKey);
   if (!run || !["scheduled", "running"].includes(run.state)) {
-    throw new Error("No runnable mainnet canary exists.");
+    throw new Error("No runnable devnet launch rehearsal exists.");
   }
   const lock = await pool.connect();
   const acquired = await lock.query<{ acquired: boolean }>(
     "SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",
-    [`mainnet-canary:${run.id}`],
+    [`v4-launch-rehearsal:${run.id}`],
   );
   if (!acquired.rows[0]?.acquired)
-    throw new Error("Another canary runner owns the lock.");
+    throw new Error("Another rehearsal runner owns the lock.");
   try {
     await pool.query(
-      "UPDATE mainnet_canary_runs SET state='running',updated_at=now() WHERE id=$1",
+      "UPDATE v4_launch_rehearsal_runs SET state='running',updated_at=now() WHERE id=$1",
       [run.id],
     );
     const pending = await pool.query<ActionRow>(
       `SELECT id::text,state,transaction_hash,signed_transaction,nonce::text
-       FROM mainnet_canary_actions WHERE run_id=$1 AND state='broadcast' ORDER BY id`,
+       FROM v4_launch_rehearsal_actions WHERE run_id=$1 AND state='broadcast' ORDER BY id`,
       [run.id],
     );
     for (const action of pending.rows)
@@ -1064,14 +1035,14 @@ async function processRunOnce() {
     }
     const spent = await pool.query<{ spent: string }>(
       `SELECT coalesce(sum(usdg_amount),0)::text AS spent
-       FROM mainnet_canary_actions
+       FROM v4_launch_rehearsal_actions
        WHERE run_id=$1 AND action_type='contribution' AND state='confirmed'`,
       [run.id],
     );
     const settledRounds = settled.rows.length;
     const spentRaw = BigInt(spent.rows[0]?.spent ?? 0);
     await pool.query(
-      `UPDATE mainnet_canary_runs SET settled_rounds=$2,spent_usdg=$3,updated_at=now() WHERE id=$1`,
+      `UPDATE v4_launch_rehearsal_runs SET settled_rounds=$2,spent_usdg=$3,updated_at=now() WHERE id=$1`,
       [run.id, settledRounds, spentRaw.toString()],
     );
     await ensureServiceRestartCheckpoints(
@@ -1079,27 +1050,27 @@ async function processRunOnce() {
       settledRounds,
       ctx.manifest.chainId,
     );
-    assertCanaryScope({
-      authorization: ctx.authorization,
+    assertRehearsalScope({
+      chainId: ctx.manifest.chainId,
       settledRounds,
       spentRaw,
       startedAtMs: run.started_at.getTime(),
       nowMs:
-        settledRounds === MAINNET_CANARY_ROUNDS
+        settledRounds === DEVNET_REHEARSAL_ROUNDS
           ? run.ends_at.getTime()
           : Date.now(),
     });
-    if (settledRounds === MAINNET_CANARY_ROUNDS) {
+    if (settledRounds === DEVNET_REHEARSAL_ROUNDS) {
       if (Date.now() >= run.ends_at.getTime()) {
-        await assertFinalCanaryState(run, ctx);
+        await assertFinalRehearsalState(run, ctx);
         await pool.query(
-          "UPDATE mainnet_canary_runs SET state='completed',completed_at=now(),updated_at=now() WHERE id=$1",
+          "UPDATE v4_launch_rehearsal_runs SET state='completed',completed_at=now(),updated_at=now() WHERE id=$1",
           [run.id],
         );
       }
       return;
     }
-    const schedule = canaryRoundSchedule(run.started_at.getTime())[
+    const schedule = rehearsalRoundSchedule(run.started_at.getTime())[
       settledRounds
     ];
     if (Date.now() < schedule.plannedAtMs) return;
@@ -1120,12 +1091,12 @@ async function processRunOnce() {
       throw new Error(
         `Unexpected active round ${roundId}; expected ${expectedRoundId}.`,
       );
-    const pair = CANARY_CONTRIBUTIONS[settledRounds];
+    const pair = REHEARSAL_CONTRIBUTIONS[settledRounds];
     await contribute({
       run,
       ordinal: settledRounds + 1,
-      actorLabel: "deployer",
-      wallet: ctx.deployerWallet,
+      actorLabel: "player-a",
+      wallet: ctx.playerAWallet,
       amountUsd: pair.deployerUsd,
       tickerIndex: settledRounds % 4,
       round,
@@ -1136,7 +1107,7 @@ async function processRunOnce() {
     await assertCurrentHolderRejected({
       run,
       ordinal: settledRounds + 1,
-      wallet: ctx.deployerWallet,
+      wallet: ctx.playerAWallet,
       round,
       manifest: ctx.manifest,
       client: ctx.client,
@@ -1144,8 +1115,8 @@ async function processRunOnce() {
     await contribute({
       run,
       ordinal: settledRounds + 1,
-      actorLabel: "player",
-      wallet: ctx.playerWallet,
+      actorLabel: "player-b",
+      wallet: ctx.playerBWallet,
       amountUsd: pair.playerUsd,
       tickerIndex: (settledRounds + 1) % 4,
       round,
@@ -1156,7 +1127,7 @@ async function processRunOnce() {
   } finally {
     await lock
       .query("SELECT pg_advisory_unlock(hashtext($1))", [
-        `mainnet-canary:${run.id}`,
+        `v4-launch-rehearsal:${run.id}`,
       ])
       .catch(() => undefined);
     lock.release();
@@ -1166,7 +1137,7 @@ async function processRunOnce() {
 async function start() {
   const ctx = await context();
   if (await currentRun(ctx.deploymentKey))
-    throw new Error("A canary already exists for this deployment.");
+    throw new Error("A rehearsal already exists for this deployment.");
   const active = await ctx.client.readContract({
     address: ctx.manifest.contracts.manager,
     abi: roundManagerV4Abi,
@@ -1192,56 +1163,50 @@ async function start() {
     }),
   ]);
   if (startedAt !== 0n || acceptedClaims !== 0n) {
-    throw new Error("Canary must begin from an unstarted zero-call round.");
+    throw new Error("Rehearsal must begin from an unstarted zero-call round.");
   }
   const now = Date.now();
-  if (
-    Date.parse(ctx.authorization.expiresAt) <
-    now + MAINNET_CANARY_DURATION_MS
-  ) {
-    throw new Error("Authorization expires before the one-hour canary ends.");
-  }
-  const id = `${ctx.authorization.authorizationId}:${new Date(now).toISOString()}`;
+  const id = `devnet-rehearsal:${ctx.deploymentKey}:${new Date(now).toISOString()}`;
   await pool.query(
-    `INSERT INTO mainnet_canary_runs(
-       id,deployment_key,authorization_id,source_commit,manifest_hash,
-       deployer_address,player_address,state,target_rounds,duration_hours,
+    `INSERT INTO v4_launch_rehearsal_runs(
+       id,deployment_key,source_commit,manifest_hash,
+       operator_address,player_a_address,player_b_address,state,target_rounds,duration_minutes,
        usdg_budget,initial_round_id,started_at,ends_at)
-     VALUES($1,$2,$3,$4,$5,$6,$7,'scheduled',10,1,$8,$9,$10,$11)`,
+     VALUES($1,$2,$3,$4,$5,$6,$7,'scheduled',10,60,$8,$9,$10,$11)`,
     [
       id,
       ctx.deploymentKey,
-      ctx.authorization.authorizationId,
       ctx.manifest.sourceCommit,
-      ctx.authorization.manifestSha256,
-      ctx.deployer,
-      ctx.player,
-      MAINNET_CANARY_BUDGET_RAW.toString(),
+      ctx.manifestHash,
+      ctx.operator,
+      ctx.playerA,
+      ctx.playerB,
+      DEVNET_REHEARSAL_BUDGET_RAW.toString(),
       initialRoundId.toString(),
       new Date(now),
-      new Date(now + MAINNET_CANARY_DURATION_MS),
+      new Date(now + DEVNET_REHEARSAL_DURATION_MS),
     ],
   );
   process.stdout.write(
-    `${JSON.stringify({ id, initialRoundId: initialRoundId.toString(), endsAt: new Date(now + MAINNET_CANARY_DURATION_MS).toISOString() }, null, 2)}\n`,
+    `${JSON.stringify({ id, initialRoundId: initialRoundId.toString(), endsAt: new Date(now + DEVNET_REHEARSAL_DURATION_MS).toISOString() }, null, 2)}\n`,
   );
 }
 
 async function status() {
   const manifest = await loadManifest();
   const run = await currentRun(deploymentKeyFor(manifest));
-  if (!run) throw new Error("No mainnet canary has been recorded.");
+  if (!run) throw new Error("No devnet launch rehearsal has been recorded.");
   const actions = await pool.query<{
     state: string;
     action_type: string;
     count: string;
   }>(
-    `SELECT state,action_type,count(*)::text FROM mainnet_canary_actions
+    `SELECT state,action_type,count(*)::text FROM v4_launch_rehearsal_actions
      WHERE run_id=$1 GROUP BY state,action_type ORDER BY action_type,state`,
     [run.id],
   );
   const assertions = await pool.query<{ passed: boolean; count: string }>(
-    `SELECT passed,count(*)::text FROM mainnet_canary_assertions
+    `SELECT passed,count(*)::text FROM v4_launch_rehearsal_assertions
      WHERE run_id=$1 GROUP BY passed ORDER BY passed`,
     [run.id],
   );
@@ -1253,14 +1218,14 @@ async function status() {
 async function report() {
   const manifest = await loadManifest();
   const run = await currentRun(deploymentKeyFor(manifest));
-  if (!run) throw new Error("No mainnet canary has been recorded.");
+  if (!run) throw new Error("No devnet launch rehearsal has been recorded.");
   const [actions, assertions] = await Promise.all([
     pool.query(
-      "SELECT * FROM mainnet_canary_actions WHERE run_id=$1 ORDER BY id",
+      "SELECT * FROM v4_launch_rehearsal_actions WHERE run_id=$1 ORDER BY id",
       [run.id],
     ),
     pool.query(
-      "SELECT * FROM mainnet_canary_assertions WHERE run_id=$1 ORDER BY round_id,assertion",
+      "SELECT * FROM v4_launch_rehearsal_assertions WHERE run_id=$1 ORDER BY round_id,assertion",
       [run.id],
     ),
   ]);
@@ -1278,19 +1243,24 @@ async function report() {
     assertions: assertions.rows,
   };
   const output =
-    process.env.KEYGAME_MAINNET_CANARY_REPORT ??
+    process.env.KEYGAME_DEVNET_REHEARSAL_REPORT ??
     path.join(
       "artifacts",
-      "mainnet-canary",
+      "v4-launch-rehearsal",
       `${run.id.replaceAll(":", "-")}.json`,
     );
   await mkdir(path.dirname(output), { recursive: true });
   const json = `${JSON.stringify(evidence, null, 2)}\n`;
+  const digest = sha256(json);
   await writeFile(output, json, "utf8");
   await writeFile(
     `${output}.sha256`,
-    `${sha256(json)}  ${path.basename(output)}\n`,
+    `${digest}  ${path.basename(output)}\n`,
     "utf8",
+  );
+  await pool.query(
+    "UPDATE v4_launch_rehearsal_runs SET report_sha256=$2,updated_at=now() WHERE id=$1",
+    [run.id, digest],
   );
   process.stdout.write(json);
 }
@@ -1303,7 +1273,7 @@ try {
   else if (command === "report") await report();
   else
     throw new Error(
-      "Usage: mainnet-canary.ts <start|run|status|reconcile|report>",
+      "Usage: v4-launch-rehearsal.ts <start|run|status|reconcile|report>",
     );
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

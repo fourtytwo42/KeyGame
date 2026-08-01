@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$project_root"
+
+# The rehearsal controller is hard-locked to chain 31337. The integration
+# deployment proves the same approval, contribution, timer, settlement,
+# rollover, and reward ABIs without spending testnet or mainnet funds.
+pnpm exec vitest run \
+  src/lib/release/mainnet-v4.test.ts \
+  src/lib/release/launch-rehearsal.test.ts
+pnpm test:integration
+pnpm test:migrations
+grep -q 'MAINNET_BROADCAST_ENABLED = false' script/DeployMainnet.s.sol
+echo "Devnet launch rehearsal model and Anvil transaction-path dry run passed."

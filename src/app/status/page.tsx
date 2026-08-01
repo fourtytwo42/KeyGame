@@ -78,16 +78,18 @@ export default async function StatusPage() {
             status: string;
             observedAt: string;
           }>;
-          canary: {
+          rehearsal: {
             id: string;
             state: string;
+            chainId: number;
             settledRounds: number;
             targetRounds: number;
-            durationHours: number;
+            durationMinutes: number;
             spentUsdg: number;
             budgetUsdg: number;
             startedAt: string;
             endsAt: string;
+            reportSha256: string | null;
             lastError: string | null;
           } | null;
         })
@@ -225,18 +227,31 @@ export default async function StatusPage() {
         <article>
           <span
             className={`statusLamp ${
-              production?.canary?.state === "completed" ? "good" : "standby"
+              production?.rehearsal?.state === "completed" ? "good" : "standby"
             }`}
           />
           <div>
-            <h2>Mainnet canary</h2>
+            <h2>Devnet launch rehearsal</h2>
             <p>
-              {production?.canary
-                ? `${production.canary.settledRounds}/${production.canary.targetRounds} settled · ${production.canary.durationHours}H window · $${production.canary.spentUsdg.toFixed(2)}/$${production.canary.budgetUsdg.toFixed(2)} scripted budget · ${production.canary.state}.`
-                : "No mainnet canary has been authorized or started."}
+              {production?.rehearsal
+                ? `Chain ${production.rehearsal.chainId} · ${production.rehearsal.settledRounds}/${production.rehearsal.targetRounds} settled · ${production.rehearsal.durationMinutes} minute window · $${production.rehearsal.spentUsdg.toFixed(2)}/$${production.rehearsal.budgetUsdg.toFixed(2)} mock budget · ${production.rehearsal.state} · report ${production.rehearsal.reportSha256?.slice(0, 10) ?? "pending"}.`
+                : "The one-hour chain-31337 launch rehearsal has not completed."}
             </p>
           </div>
-          <strong>{production?.canary?.state.toUpperCase() ?? "LOCKED"}</strong>
+          <strong>
+            {production?.rehearsal?.state.toUpperCase() ?? "WAITING"}
+          </strong>
+        </article>
+        <article>
+          <span className="statusLamp standby" />
+          <div>
+            <h2>Mainnet launch validation</h2>
+            <p>
+              Read-only verification only. Mainnet gameplay is not pretested;
+              public promotion requires separate approval.
+            </p>
+          </div>
+          <strong>READ ONLY</strong>
         </article>
         {production?.services.map((service) => (
           <article key={service.name}>

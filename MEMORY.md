@@ -4,6 +4,28 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-07-31 no-canary policy supersedes every earlier mainnet-canary entry in
+  this file. Run the exact ten-round, one-real-hour rehearsal only on isolated
+  Anvil chain 31337. Mainnet launch validation is read-only, submits no
+  gameplay transaction, and public promotion requires separate authorization.
+  The legacy canary wallet, runner, tables, and evidence are archived and must
+  not be used by the current release path.
+- The no-canary implementation is in progress on
+  `codex/v4-wallet-uat-waiver`. It adds deployment-keyed
+  `v4_launch_rehearsal_*` tables, chain-31337-only runner and systemd units,
+  read-only mainnet verification, deployment and promotion authorization
+  separation, and removal of mainnet canary-player requirements. Contract and
+  accounting bytecode are unchanged; `MAINNET_BROADCAST_ENABLED` remains
+  false. Formatting, lint, TypeScript, 77 Vitest tests, four integration tests,
+  61 Foundry tests, rehearsal dry run, migrations, production build, and
+  protected-bundle scan pass. Last verified 2026-07-31.
+- Existing chain-46630 evidence remains valid without new transactions. The
+  live normalized runtime comparison matched all 11 deployed v4 contracts to
+  current artifacts. Read-only reconciliation reports two settled rounds,
+  two players in each round, exact eight-row 50/30/10/5/5 allocation
+  conservation, all reward categories, zero failed keeper jobs, and round
+  three unstarted. Last verified 2026-07-31.
+
 - 2026-07-31 wallet-UAT decision: the user explicitly skipped all external
   browser-wallet testing for the initial release. Keep
   `externalWalletUatPassed=false`, record `SKIPPED_BY_OPERATOR`, and display
@@ -81,9 +103,11 @@ Durable project context lives here. Update this file whenever information should
   timeouts. The v4 indexer is active; the keeper and obsolete soak controller
   are disabled after the authorized two-round ceiling. Last verified
   2026-07-31.
-- Current task: obtain separate mainnet authorization for the wallet-UAT-waived
-  candidate. Do not broadcast mainnet without authorization bound to the exact
-  commit, manifest, deployer, canary player, and canary scope.
+- Current task: commit and push the service-only no-canary candidate, run the
+  exact one-hour isolated devnet rehearsal, reconcile and package its evidence,
+  then prepare the still-locked read-only mainnet release. Do not broadcast
+  mainnet without authorization bound to the exact commit, manifest, deployer,
+  and `launchValidation: READ_ONLY` scope.
 - Torture-qualified contract/runtime commit
   `3f05a541f48b93135895ed93011e5217194c00fe` implements two-step
   manager/market-adapter administration, complete lifecycle authority events,
@@ -832,6 +856,14 @@ When sources conflict, use this order:
   and Closing Print spread.
 
 ## Open Follow-ups
+
+- Complete the exact one-hour chain-31337 rehearsal: ten rounds at minutes
+  0-54, 82 mock USDG, two non-admin players per round, keeper/indexer restart
+  checkpoints, exact reconciliation, and round eleven prepared but unstarted.
+- After the rehearsal passes, generate checksummed rehearsal, testnet-bytecode,
+  qualification, and read-only launch-verification artifacts. Mainnet remains
+  compile-time locked and separately authorized; public promotion is a second
+  authorization.
 
 - Preserve the checksummed internal-assurance archive and bind any later
   deployment authorization to its exact source commit and manifest hash.

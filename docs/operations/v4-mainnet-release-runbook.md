@@ -6,7 +6,8 @@ Status: fail-closed. This runbook does not authorize a broadcast.
 
 1. Work only from the authoritative KeyGame VM.
 2. Confirm the branch is clean and pushed. GitHub is source hosting only.
-3. Run `pnpm security:review`, complete the manual checklist, then run `pnpm release:package:audit`.
+3. Run `pnpm security:review`, complete the manual checklist, and complete the
+   chain-31337 launch rehearsal before running `pnpm release:package:audit`.
 4. Review the generated ABI, storage layout, bytecode hashes, mainnet-fork
    evidence, canonical-market preflight, torture baseline, and `SHA256SUMS`.
 5. Freeze the exact commit. Contract or accounting changes invalidate the
@@ -18,6 +19,10 @@ Complete. The mock-only deployment from commit `2b4fcfa` settled exactly two
 rounds with two players per round, exercised every reward class, reconciled all
 eight token allocations, and left round three unstarted. The keeper is stopped
 and this evidence must remain immutable.
+Run `release:verify:testnet:v4-bytecode` against the immutable runtime manifest.
+The smoke remains valid only when normalized deployed bytecode matches the
+current contract artifacts exactly. This check is read-only and must not submit
+another testnet transaction.
 
 ## 3. Internal assurance, acknowledgement, and role setup
 
@@ -41,54 +46,62 @@ that MetaMask, Rabby, Coinbase, Safe, WalletConnect, or EIP-6963 work.
 The protected bundle must still exclude built-in wallets, generated keys,
 faucets, mock adapters, test credentials, and torture controls.
 
-## 5. Mainnet release and canary
+## 5. One-hour devnet launch rehearsal
+
+1. Start the isolated Anvil service on `127.0.0.1:9546`, create the separate
+   `keygame_v4_rehearsal` database, and run `v4-launch-rehearsal:prepare`.
+2. Install the rehearsal keeper, indexer, runner, timer, and the narrowly scoped
+   root-owned restart helper. The runner must reject every chain except 31337.
+3. Run `v4-launch-rehearsal:start`. The timer invokes the controller every ten
+   seconds for one real hour without advancing chain time.
+4. Require ten rounds at minutes 0 through 54, two non-admin callers per round,
+   82 mock USDG spent, keeper restart after round four, indexer restart after
+   round seven, all reward paths, seed movement, conversion, and exact
+   reconciliation.
+5. At minute 60, require round eleven prepared with zero calls and an unstarted
+   timer. Generate and checksum the rehearsal report.
+
+## 6. Mainnet deployment and read-only validation
 
 Mainnet needs a second explicit authorization and a dedicated reviewed commit
 that deliberately removes the Solidity compile-time broadcast lock.
 
 Copy `docs/operations/mainnet-authorization.template.json` outside the
 repository, replace every placeholder, and bind it to the exact release
-commit, manifest hash, deployer, canary player, authorization time, and expiry.
-The authorization must remain valid for at least two hours. The repository copy
-is a schema example only and can never authorize deployment.
+commit, manifest hash, deployer, read-only validation policy, authorization
+time, and expiry. The authorization must remain valid for at least one hour.
+Legacy canary-scoped authorizations are invalid.
 
 1. Re-run canonical registry, chain, sync, pool, bytecode, role-custody, source, and
    balance preflights immediately before broadcast.
-   Run `mainnet-canary:budget` to record the live gas price, conservative
-   deployment/canary/conversion envelopes, 25% margin, 0.005 ETH reserve, and
-   ETH/USDG deficits for both scripted actors. Funding is a separately
-   authorized mainnet transaction.
+   Run `release:budget:mainnet` to record deployment gas, a 25% margin, the
+   keeper reserve, and the deployer ETH deficit. No player wallet or pre-launch
+   USDG is required.
 2. Deploy only the frozen internally reviewed commit and write the immutable manifest.
 3. Verify runtime bytecode, roles, contract relationships, seed custody, and
    source on the explorer.
-4. Configure one encrypted non-admin canary player outside the repository.
-   The deployer and player must match the authorization and alternate calls.
-5. Install `scripts/mainnet-canary-restart-service.sh` as the root-owned,
-   non-writable `/usr/local/libexec/keygame-canary-restart`. Grant the service
-   account passwordless sudo for only that helper with arguments `keeper` and
-   `indexer`; never grant general `systemctl` or shell access.
-6. Install and enable `keygame-mainnet-canary.service` and its timer. Run
-   `mainnet-canary:start`; the timer invokes `mainnet-canary:run` every ten
-   seconds. Keep discovery unlisted for one hour. The contract remains
-   permissionless.
-7. Require exactly ten settled rounds at minutes 0, 6, 12, 18, 24, 30, 36,
-   42, 48, and 54, at least
-   two callers per round, no more than 100 USDG of scripted contributions, all
-   reward paths, protocol conversion, lifetime activation, rollover, and one
-   keeper restart after round four plus one indexer restart after round seven.
-8. Reconcile every Stock Token, point, seed movement, and reward after every
-   round. Any discrepancy stops promotion and invokes the incident procedure.
-9. At minute 60, require round eleven to be prepared with zero accepted calls
-   and an unstarted timer. Run `mainnet-canary:report` and announce publicly only after its checksummed
-   report is clean. Browser-wallet compatibility remains unverified.
+4. Run `release:verify:mainnet:read-only`. It verifies bytecode, roles,
+   relationships, the unstarted zero-call round, safe markets, RPC agreement,
+   indexer catch-up, API consistency, and zero unexpected custody.
+5. The verifier must report `transactionsSubmitted: 0`. Do not approve, call,
+   swap, settle, claim, rebalance, or convert before promotion.
+6. Keep the application unlisted. Copy the promotion authorization template
+   outside the repository and bind approval to the immutable deployment
+   manifest and checksummed read-only report.
+7. Run `release:verify:mainnet:promotion` before listing the application.
+   Browser-wallet compatibility and mainnet gameplay remain explicitly
+   unverified; the first public users execute the first value-bearing paths.
 
 ## Stop conditions
 
 - Wrong chain, lagging RPC, exposed unlocked accounts, dirty or unpushed source.
 - Fewer than four safe approved direct markets.
 - Canonical registry, factory, pool, token, Safe, or bytecode mismatch.
-- Internal assurance, explicit wallet-UAT disposition, protected-build,
-  monitoring, or role-custody gate missing.
+- Internal assurance, devnet rehearsal, testnet bytecode match, explicit
+  wallet-UAT disposition, protected build, monitoring, or role-custody gate
+  missing.
+- Any attempt to use a legacy canary authorization or to transact during the
+  read-only mainnet validation stage.
 - Any accounting difference, duplicate lifecycle transition, unsafe execution,
   stuck reward, or unrecovered service fault.
 

@@ -85,6 +85,11 @@
     "externalWalletUatStatus": "SKIPPED_BY_OPERATOR",
     "browserWalletCompatibility": "UNVERIFIED",
     "walletUatRequiredForCanary": false,
+    "devnetLaunchRehearsalPassed": false,
+    "testnetTwoRoundSmokePassed": true,
+    "mainnetGameplayPretested": false,
+    "launchValidation": "READ_ONLY",
+    "promotionRequiresSeparateAuthorization": true,
     "mainnetBroadcastAuthorized": false
   },
   "releaseEvidence": {

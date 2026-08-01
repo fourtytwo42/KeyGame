@@ -19,8 +19,9 @@ Mainnet is not authorized.
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
 | Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
 | External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
-| Mainnet broadcast | Compile-time locked | Separate reviewed release commit and user authorization |
-| Unlisted mainnet canary | Awaiting authorization | Scripted deployer-plus-one runner, one hour, ten rounds, and 100 USDG operator budget |
+| One-hour devnet launch rehearsal | Awaiting execution | Chain 31337, ten rounds, two non-admin players, 82 mock USDG, keeper/indexer restart, exact reconciliation |
+| Mainnet broadcast | Compile-time locked | Separate reviewed release commit and deployment authorization |
+| Mainnet launch verification | Read-only policy selected | No gameplay transaction; public promotion requires separate authorization bound to the deployment and verification report |
 
 ## Implemented release controls
 
@@ -39,11 +40,14 @@ Mainnet is not authorized.
   pools, bytecode, token decimals, safety observations, and at least four safe
   catalog markets.
 - Mainnet authorization binds the explicit wallet-UAT disposition, unverified
-  compatibility, deployer and non-admin canary player, one-hour duration,
-  ten-round ceiling, and 100 USDG scripted budget.
-- The canary runner stores the signed transaction and hash before broadcast,
+  compatibility, deployer, exact commit and manifest, one deployment, and
+  read-only launch validation. Legacy canary-scoped authorization is rejected.
+- The devnet rehearsal runner stores the signed transaction and hash before broadcast,
   clears the signed payload after confirmation, and reconciles receipts and
   nonces after restart.
+- Mainnet read-only verification uses public clients only and checks deployed
+  bytecode, roles, relationships, safe markets, the unstarted initial round,
+  indexer/API agreement, and zero unexpected custody.
 - Production catalog changes are deployer-controlled initially and rejected while a round is
   live.
 - The production keeper delays preparation when fewer than four markets pass

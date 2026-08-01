@@ -52,14 +52,11 @@ export type MainnetReleaseAuthorization = {
   manifestSha256: string;
   chainId: 4663;
   deployerAddress: string;
-  canaryPlayerAddress: string;
   maximumDeployments: 1;
-  canaryMaximumSettledRounds: 10;
-  canaryDurationHours: 1;
-  canaryUsdgBudget: 100;
+  launchValidation: "READ_ONLY";
+  promotionRequiresSeparateAuthorization: true;
   walletUatDisposition: "SKIPPED_BY_OPERATOR";
   browserWalletCompatibility: "UNVERIFIED";
-  canaryWalletMode: "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER";
   authorizedAt: string;
   expiresAt: string;
   mainnetBroadcastAuthorized: true;
@@ -72,14 +69,11 @@ const keys = new Set<keyof MainnetReleaseAuthorization>([
   "manifestSha256",
   "chainId",
   "deployerAddress",
-  "canaryPlayerAddress",
   "maximumDeployments",
-  "canaryMaximumSettledRounds",
-  "canaryDurationHours",
-  "canaryUsdgBudget",
+  "launchValidation",
+  "promotionRequiresSeparateAuthorization",
   "walletUatDisposition",
   "browserWalletCompatibility",
-  "canaryWalletMode",
   "authorizedAt",
   "expiresAt",
   "mainnetBroadcastAuthorized",
@@ -92,7 +86,6 @@ export function validateMainnetReleaseAuthorization(
     sourceCommit: string;
     manifestSha256: string;
     deployerAddress: string;
-    canaryPlayerAddress: string;
     now?: number;
   },
 ): MainnetReleaseAuthorization {
@@ -126,29 +119,14 @@ export function validateMainnetReleaseAuthorization(
   ) {
     throw new Error("Authorization deployer mismatch.");
   }
-  if (
-    getAddress(String(value.canaryPlayerAddress)) !==
-    getAddress(expected.canaryPlayerAddress)
-  ) {
-    throw new Error("Authorization canary player mismatch.");
-  }
-  if (
-    getAddress(String(value.canaryPlayerAddress)) ===
-    getAddress(expected.deployerAddress)
-  ) {
-    throw new Error("Canary player must differ from the privileged deployer.");
-  }
   if (value.maximumDeployments !== 1) {
     throw new Error("Authorization must permit exactly one deployment.");
   }
-  if (value.canaryMaximumSettledRounds !== 10) {
-    throw new Error("Authorization must bind the ten-round canary scope.");
+  if (value.launchValidation !== "READ_ONLY") {
+    throw new Error("Authorization must require read-only launch validation.");
   }
-  if (value.canaryDurationHours !== 1) {
-    throw new Error("Authorization must bind the one-hour canary duration.");
-  }
-  if (value.canaryUsdgBudget !== 100) {
-    throw new Error("Authorization must bind the 100 USDG canary budget.");
+  if (value.promotionRequiresSeparateAuthorization !== true) {
+    throw new Error("Public promotion must require separate authorization.");
   }
   if (value.walletUatDisposition !== "SKIPPED_BY_OPERATOR") {
     throw new Error(
@@ -157,11 +135,6 @@ export function validateMainnetReleaseAuthorization(
   }
   if (value.browserWalletCompatibility !== "UNVERIFIED") {
     throw new Error("Browser wallet compatibility must remain UNVERIFIED.");
-  }
-  if (value.canaryWalletMode !== "DEPLOYER_PLUS_ONE_ENCRYPTED_PLAYER") {
-    throw new Error(
-      "Authorization must bind the deployer-plus-one canary wallet mode.",
-    );
   }
   if (value.mainnetBroadcastAuthorized !== true) {
     throw new Error("Authorization does not permit mainnet broadcast.");
@@ -175,10 +148,10 @@ export function validateMainnetReleaseAuthorization(
   if (
     !Number.isFinite(expiresAt) ||
     expiresAt <= now ||
-    expiresAt < authorizedAt + 2 * 60 * 60 * 1_000
+    expiresAt < authorizedAt + 60 * 60 * 1_000
   ) {
     throw new Error(
-      "Authorization is expired, malformed, or valid for less than two hours.",
+      "Authorization is expired, malformed, or valid for less than one hour.",
     );
   }
   for (const field of ["internalSecurityReviewSha256"] as const) {

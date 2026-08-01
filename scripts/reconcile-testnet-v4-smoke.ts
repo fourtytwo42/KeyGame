@@ -186,7 +186,7 @@ const report = {
   head: head.number.toString(),
   headHash: head.hash,
   rounds: settled,
-  contributionSummary: contributions.rows[0],
+  contributionSummaries: contributions.rows,
   allocations: allocations.rows,
   rewardClaims: claims.rows,
   lifetimeEpochs: epochs.rows,

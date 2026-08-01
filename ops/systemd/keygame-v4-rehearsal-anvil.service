@@ -1,0 +1,17 @@
+[Unit]
+Description=Last Bell isolated chain-31337 launch rehearsal
+After=network-online.target
+
+[Service]
+Type=simple
+User=hendo420
+Environment=PATH=/home/hendo420/.foundry/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/hendo420/.foundry/bin/anvil --host 127.0.0.1 --port 9546 --chain-id 31337 --block-time 1
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target
