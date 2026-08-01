@@ -460,6 +460,12 @@ When sources conflict, use this order:
   while degraded. Formatting, ESLint, TypeScript, 83 Vitest tests, four
   integration tests, protected-mainnet build/secret scan, and 20 Playwright
   checks passed.
+  The live testnet web, indexer, DEX adapter, and market collector now run from
+  the LAN-only worktree through systemd overrides. All four services were
+  active after restart. Live `:3001` verification reported chain 46630, round
+  3, `rpc.policy=LAN_ONLY`, `activeProvider=lan`,
+  `automaticFailover=false`, healthy LAN/reference agreement, and a successful
+  canonical snapshot. No contract call or chain transaction was submitted.
 
 - 2026-08-01: Final release-control commit `ea6df80` passed formatting, ESLint,
   TypeScript, 78 Vitest tests, 62 Foundry tests, 512-run fuzzing, the 8,192-call
