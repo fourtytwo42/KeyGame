@@ -32,10 +32,18 @@ describe("devnet launch rehearsal controls", () => {
   it("schedules keeper and indexer restart checkpoints once", () => {
     expect(restartCheckpointsForSettledRounds(3)).toEqual([]);
     expect(restartCheckpointsForSettledRounds(4)).toEqual([
-      { kind: "keeper", service: "v4-keeper", afterSettledRounds: 4 },
+      {
+        kind: "keeper",
+        service: "v4-devnet-keeper",
+        afterSettledRounds: 4,
+      },
     ]);
     expect(restartCheckpointsForSettledRounds(7)).toEqual([
-      { kind: "keeper", service: "v4-keeper", afterSettledRounds: 4 },
+      {
+        kind: "keeper",
+        service: "v4-devnet-keeper",
+        afterSettledRounds: 4,
+      },
       { kind: "indexer", service: "chain-indexer", afterSettledRounds: 7 },
     ]);
   });

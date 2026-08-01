@@ -7,7 +7,7 @@ export type RehearsalContributionPair = {
 
 export type RehearsalRestartCheckpoint = {
   kind: "keeper" | "indexer";
-  service: "v4-keeper" | "chain-indexer";
+  service: "v4-devnet-keeper" | "chain-indexer";
   afterSettledRounds: 4 | 7;
 };
 
@@ -67,7 +67,7 @@ export function restartCheckpointsForSettledRounds(
   if (settledRounds >= 4) {
     checkpoints.push({
       kind: "keeper",
-      service: "v4-keeper",
+      service: "v4-devnet-keeper",
       afterSettledRounds: 4,
     });
   }
