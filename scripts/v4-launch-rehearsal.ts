@@ -142,56 +142,35 @@ async function context() {
   const operatorWallet = unlockedWallet(operator, manifest.rpc.primary);
   const playerAWallet = unlockedWallet(playerA, manifest.rpc.primary);
   const playerBWallet = unlockedWallet(playerB, manifest.rpc.primary);
-  const [
-    admin,
-    pendingAdmin,
-    keeper,
-    treasury,
-    pendingTreasury,
-    marketAdmin,
-    pendingMarketAdmin,
-  ] = await Promise.all([
-    client.readContract({
-      address: manifest.contracts.manager,
-      abi: managerRoleAbi,
-      functionName: "admin",
-    }),
-    client.readContract({
-      address: manifest.contracts.manager,
-      abi: managerRoleAbi,
-      functionName: "pendingAdmin",
-    }),
-    client.readContract({
-      address: manifest.contracts.manager,
-      abi: managerRoleAbi,
-      functionName: "keeper",
-    }),
-    client.readContract({
-      address: manifest.contracts.manager,
-      abi: managerRoleAbi,
-      functionName: "treasury",
-    }),
-    client.readContract({
-      address: manifest.contracts.manager,
-      abi: managerRoleAbi,
-      functionName: "pendingTreasury",
-    }),
-    client.readContract({
-      address: manifest.contracts.swapAdapter,
-      abi: adapterAdminAbi,
-      functionName: "admin",
-    }),
-    client.readContract({
-      address: manifest.contracts.swapAdapter,
-      abi: adapterAdminAbi,
-      functionName: "pendingAdmin",
-    }),
-  ]);
-  if (
-    pendingAdmin !== zeroAddress ||
-    pendingTreasury !== zeroAddress ||
-    pendingMarketAdmin !== zeroAddress
-  ) {
+  const [admin, pendingAdmin, keeper, treasury, pendingTreasury] =
+    await Promise.all([
+      client.readContract({
+        address: manifest.contracts.manager,
+        abi: managerRoleAbi,
+        functionName: "admin",
+      }),
+      client.readContract({
+        address: manifest.contracts.manager,
+        abi: managerRoleAbi,
+        functionName: "pendingAdmin",
+      }),
+      client.readContract({
+        address: manifest.contracts.manager,
+        abi: managerRoleAbi,
+        functionName: "keeper",
+      }),
+      client.readContract({
+        address: manifest.contracts.manager,
+        abi: managerRoleAbi,
+        functionName: "treasury",
+      }),
+      client.readContract({
+        address: manifest.contracts.manager,
+        abi: managerRoleAbi,
+        functionName: "pendingTreasury",
+      }),
+    ]);
+  if (pendingAdmin !== zeroAddress || pendingTreasury !== zeroAddress) {
     throw new Error(
       "Pending role transfers must be empty before the rehearsal.",
     );
@@ -200,13 +179,7 @@ async function context() {
     operator,
     playerA,
     playerB,
-    roles: [
-      admin,
-      keeper,
-      treasury,
-      marketAdmin,
-      manifest.roles?.conversionOperator,
-    ],
+    roles: [admin, keeper, treasury],
   });
   return {
     manifest,
