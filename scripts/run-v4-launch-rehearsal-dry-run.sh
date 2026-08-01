@@ -7,7 +7,7 @@ cd "$project_root"
 # The rehearsal controller is hard-locked to chain 31337. The integration
 # deployment proves the same approval, contribution, timer, settlement,
 # rollover, and reward ABIs without spending testnet or mainnet funds.
-pnpm exec vitest run \
+NODE_ENV=test pnpm exec vitest run \
   src/lib/release/mainnet-v4.test.ts \
   src/lib/release/launch-rehearsal.test.ts
 pnpm test:integration
