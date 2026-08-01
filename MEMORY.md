@@ -442,6 +442,14 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-08-01: Final release-control commit `ea6df80` passed formatting, ESLint,
+  TypeScript, 78 Vitest tests, 62 Foundry tests, 512-run fuzzing, the 8,192-call
+  invariant suite, four integration tests, both migration suites, protected
+  mainnet build/secret scans, the live Robinhood mainnet fork, and 20
+  desktop/mobile Playwright tests with two intentional cross-viewport skips.
+  Pinned internal analysis and mutation controls passed with zero unresolved
+  critical/high findings. The clean-database rehearsal guard also rejected the
+  preserved rehearsal database before any deployment transaction.
 - 2026-08-01: One-hour launch rehearsal passed under deployment key
   `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`. Ten scheduled
   rounds settled with two non-admin callers each and 82 mock USDG total;
