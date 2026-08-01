@@ -107,6 +107,33 @@ function required(name: string) {
   return value;
 }
 
+async function configuredRestartHelper() {
+  const helper = await realpath(required("KEYGAME_REHEARSAL_RESTART_HELPER"));
+  const root = await realpath(process.cwd());
+  const relative = path.relative(root, helper);
+  if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
+    throw new Error(
+      "Rehearsal restart helper must remain outside the repository.",
+    );
+  }
+  const helperStat = await stat(helper);
+  if (helperStat.uid !== 0 || (helperStat.mode & 0o022) !== 0) {
+    throw new Error(
+      "Rehearsal restart helper must be root-owned and not group/world writable.",
+    );
+  }
+  return helper;
+}
+
+async function assertRestartAuthority() {
+  const helper = await configuredRestartHelper();
+  for (const service of ["keeper", "indexer"] as const) {
+    await execFile("sudo", ["-n", "-l", helper, service], {
+      timeout: 10_000,
+    });
+  }
+}
+
 function sha256(value: Buffer | string) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -823,20 +850,7 @@ async function ensureServiceRestartCheckpoints(
     );
     if (existing.rows[0]?.state === "confirmed") continue;
 
-    const helper = await realpath(required("KEYGAME_REHEARSAL_RESTART_HELPER"));
-    const root = await realpath(process.cwd());
-    const relative = path.relative(root, helper);
-    if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
-      throw new Error(
-        "Rehearsal restart helper must remain outside the repository.",
-      );
-    }
-    const helperStat = await stat(helper);
-    if (helperStat.uid !== 0 || (helperStat.mode & 0o022) !== 0) {
-      throw new Error(
-        "Rehearsal restart helper must be root-owned and not group/world writable.",
-      );
-    }
+    const helper = await configuredRestartHelper();
     const action =
       existing.rows[0] ??
       (
@@ -1116,6 +1130,7 @@ async function processRunOnce() {
 
 async function start() {
   const ctx = await context();
+  await assertRestartAuthority();
   if (await currentRun(ctx.deploymentKey))
     throw new Error("A rehearsal already exists for this deployment.");
   const active = await ctx.client.readContract({
