@@ -26,7 +26,13 @@ export type ServerDeployment = {
     swapAdapter?: Address;
     activeRound?: Address;
   };
-  rpc: { primary: string; fallback?: string };
+  rpc: {
+    primary: string;
+    fallback?: string;
+    policy?: "LAN_ONLY";
+    referenceUse?: "HEALTH_CHECK_ONLY";
+    automaticFailover?: false;
+  };
   verifier?: {
     type:
       | "mock"

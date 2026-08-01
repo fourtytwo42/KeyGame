@@ -5,7 +5,6 @@ import { Pool, type PoolClient } from "pg";
 import {
   createPublicClient,
   createWalletClient,
-  fallback,
   http,
   type Address,
   type Chain,
@@ -42,7 +41,13 @@ export type DeploymentManifest = {
     swapAdapter?: Address;
     activeRound?: Address;
   };
-  rpc: { primary: string; fallback?: string };
+  rpc: {
+    primary: string;
+    fallback?: string;
+    policy?: "LAN_ONLY";
+    referenceUse?: "HEALTH_CHECK_ONLY";
+    automaticFailover?: false;
+  };
   verifier?: {
     type:
       | "mock"
@@ -116,13 +121,9 @@ export function publicClientFor(manifest: DeploymentManifest) {
     manifest.chainId === 46630 && existsSync(forcedFailureMarker)
       ? "http://127.0.0.1:1"
       : manifest.rpc.primary;
-  const transports = [http(primary, { timeout: 3_000 })];
-  if (manifest.rpc.fallback) {
-    transports.push(http(manifest.rpc.fallback, { timeout: 4_000 }));
-  }
   return createPublicClient({
     chain: chainFor(manifest.chainId),
-    transport: fallback(transports),
+    transport: http(primary, { timeout: 3_000 }),
   });
 }
 
@@ -145,12 +146,7 @@ export async function walletClientFor(
   return createWalletClient({
     account,
     chain: chainFor(manifest.chainId),
-    transport: fallback([
-      http(manifest.rpc.primary, { timeout: 3_000 }),
-      ...(manifest.rpc.fallback
-        ? [http(manifest.rpc.fallback, { timeout: 4_000 })]
-        : []),
-    ]),
+    transport: http(manifest.rpc.primary, { timeout: 3_000 }),
   });
 }
 

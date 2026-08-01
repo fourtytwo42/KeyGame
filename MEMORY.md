@@ -4,6 +4,15 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-01 RPC policy: Robinhood LAN nodes are the only active application,
+  service, wallet, transaction, and DEX RPC transports. Alchemy may be queried
+  only as an observational block-height/canonical-health reference. Never
+  automatically fail over to Alchemy. If a LAN node is unavailable or more
+  than five blocks behind the reference, mark the frontend `CONNECTION
+  DEGRADED`, pause frontend value actions/browser broadcast, and keep using no
+  alternative RPC.
+  Changing active RPC providers requires a new explicit user instruction.
+
 - 2026-08-01 one-hour launch rehearsal passed on isolated Anvil chain 31337.
   Deployment key `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`
   completed ten scheduled settlements from minutes 0 through 54 with two
@@ -442,6 +451,15 @@ When sources conflict, use this order:
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
 
 ## Verification Ledger
+
+- 2026-08-01: LAN-only RPC enforcement removed every Viem fallback transport
+  from application clients, role wallets, keeper/indexer services, DEX
+  observations, and testnet soak tooling. The browser relay now sends requests
+  only to LAN, uses the secondary endpoint only for health observation, marks
+  lag over five blocks as degraded, and rejects browser transaction broadcast
+  while degraded. Formatting, ESLint, TypeScript, 83 Vitest tests, four
+  integration tests, protected-mainnet build/secret scan, and 20 Playwright
+  checks passed.
 
 - 2026-08-01: Final release-control commit `ea6df80` passed formatting, ESLint,
   TypeScript, 78 Vitest tests, 62 Foundry tests, 512-run fuzzing, the 8,192-call
@@ -957,6 +975,9 @@ When sources conflict, use this order:
 
 - Read `AGENTS.md` and `MEMORY.md` before making future changes in this workspace.
 - Update `MEMORY.md` after durable discoveries, decisions, fixes, verification results, blocked work, and handoffs.
+- Never route KeyGame reads, writes, wallet traffic, keeper/indexer work, DEX
+  observations, or broadcasts through Alchemy unless the user explicitly
+  authorizes switching. Alchemy is health-reference-only by default.
 - Never store secrets, tokens, passwords, private keys, or sensitive personal data in `MEMORY.md`.
 - Keep the verified Soon contract separate from the linked but unverified Fast contract; do not merge their logic without new evidence.
 - Use the exact fixed-point Solidity formulas and rounding order from the research document for any fidelity implementation.

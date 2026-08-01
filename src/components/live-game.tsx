@@ -467,7 +467,7 @@ export function LiveGame({
             <span>ROUND {state.roundId ?? roundConfig.roundId}</span>
             <strong>{formatUsd(state.potUsd)} POT</strong>
             <span className={`signalState signal-${state.freshness}`}>
-              {state.freshness === "live" ? "LIVE DATA" : state.freshness}
+              {state.freshness === "live" ? "LIVE DATA" : "CONNECTION DEGRADED"}
             </span>
           </div>
 
@@ -716,7 +716,7 @@ function EntryDesk({
         disabled={status === "submitted" || state.freshness !== "live"}
       >
         {state.freshness !== "live"
-          ? "WAITING FOR FRESH DEX DATA"
+          ? "CONNECTION DEGRADED · ACTIONS PAUSED"
           : status === "submitted"
             ? "TUNING THE LINE…"
             : v4Economy

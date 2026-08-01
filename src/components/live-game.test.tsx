@@ -72,6 +72,14 @@ describe("LiveGame", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("labels a delayed LAN signal as connection degraded and pauses actions", () => {
+    render(<LiveGame initialScenario="stale-data" />);
+    expect(screen.getByText("CONNECTION DEGRADED")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
+    ).toBeDisabled();
+  });
+
   it("keeps receipt and replay actions out of the final transmission", () => {
     render(<LiveGame initialScenario="settled" />);
     expect(

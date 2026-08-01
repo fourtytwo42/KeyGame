@@ -29,7 +29,10 @@
   },
   "rpc": {
     "primary": "http://192.168.50.173:8547",
-    "fallback": "SERVER_ONLY_REQUIRED"
+    "fallback": "SERVER_ONLY_REQUIRED",
+    "policy": "LAN_ONLY",
+    "referenceUse": "HEALTH_CHECK_ONLY",
+    "automaticFailover": false
   },
   "market": {
     "type": "direct-uniswap-v3-stock-swap",

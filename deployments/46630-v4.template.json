@@ -9,7 +9,10 @@
   "deploymentBlock": null,
   "rpc": {
     "primaryEnv": "ROBINHOOD_TESTNET_RPC_URL",
-    "fallbackEnv": "ROBINHOOD_TESTNET_FALLBACK_RPC_URL"
+    "fallbackEnv": "ROBINHOOD_TESTNET_FALLBACK_RPC_URL",
+    "policy": "LAN_ONLY",
+    "referenceUse": "HEALTH_CHECK_ONLY",
+    "automaticFailover": false
   },
   "roles": {
     "roleCustodyMode": "single-deployer-eoa",

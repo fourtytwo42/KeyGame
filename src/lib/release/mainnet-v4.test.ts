@@ -167,4 +167,22 @@ describe("mainnet v4 release guards", () => {
     expect(timer).toContain("OnUnitActiveSec=10s");
     expect(timer).toContain("Persistent=false");
   });
+
+  it("keeps Alchemy observational and never auto-fails over application traffic", () => {
+    const runtimeFiles = [
+      "src/lib/server/rpc-client.ts",
+      "src/lib/server/role-wallet.ts",
+      "services/common.ts",
+      "services/dex-observation.ts",
+      "scripts/testnet-soak.ts",
+    ];
+    for (const file of runtimeFiles) {
+      const source = readFileSync(file, "utf8");
+      expect(source).not.toContain("transport: fallback(");
+    }
+    const relay = readFileSync("src/app/api/rpc/[network]/route.ts", "utf8");
+    expect(relay).toContain("endpoints.primary");
+    expect(relay).toContain("No automatic fallback is enabled");
+    expect(relay).not.toContain("rpcFetch(endpoints.fallback");
+  });
 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  assessLanRpcHealth,
   isRobinhoodNetwork,
   readRpcEndpoints,
   type RobinhoodNetwork,
@@ -9,7 +10,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_BODY_BYTES = 256 * 1024;
-const MAX_HEAD_LAG = 5n;
 const HEALTH_TTL_MS = 10_000;
 const REQUEST_TIMEOUT_MS = 8_000;
 
@@ -41,7 +41,8 @@ const allowedMethods = new Set([
 
 type Health = {
   checkedAt: number;
-  usePrimary: boolean;
+  status: "healthy" | "degraded";
+  reason?: string;
 };
 
 const healthByNetwork = new Map<RobinhoodNetwork, Health>();
@@ -60,50 +61,23 @@ const rpcFetch = async (endpoint: string, body: string, timeoutMs: number) => {
   return response;
 };
 
-const blockNumber = async (endpoint: string) => {
-  const response = await rpcFetch(
-    endpoint,
-    JSON.stringify({
-      jsonrpc: "2.0",
-      id: "last-bell-health",
-      method: "eth_blockNumber",
-      params: [],
-    }),
-    2_500,
-  );
-  const payload = (await response.json()) as { result?: string };
-  if (!payload.result) throw new Error("RPC upstream omitted block number.");
-  return BigInt(payload.result);
-};
-
-const shouldUsePrimary = async (
+const observeLanHealth = async (
   network: RobinhoodNetwork,
   primary: string,
   fallback: string,
 ) => {
   const cached = healthByNetwork.get(network);
   if (cached && Date.now() - cached.checkedAt < HEALTH_TTL_MS) {
-    return cached.usePrimary;
+    return cached;
   }
-
-  let usePrimary = false;
-  try {
-    const [primaryHead, fallbackHead] = await Promise.all([
-      blockNumber(primary),
-      blockNumber(fallback),
-    ]);
-    usePrimary = primaryHead + MAX_HEAD_LAG >= fallbackHead;
-  } catch {
-    try {
-      await blockNumber(primary);
-      usePrimary = true;
-    } catch {
-      usePrimary = false;
-    }
-  }
-
-  healthByNetwork.set(network, { checkedAt: Date.now(), usePrimary });
-  return usePrimary;
+  const observed = await assessLanRpcHealth({ primary, fallback });
+  const health = {
+    checkedAt: Date.now(),
+    status: observed.status,
+    reason: observed.reason,
+  };
+  healthByNetwork.set(network, health);
+  return health;
 };
 
 const methodsFrom = (payload: unknown): string[] => {
@@ -146,8 +120,9 @@ export async function POST(
     );
   }
 
+  let methods: string[];
   try {
-    const methods = methodsFrom(JSON.parse(body));
+    methods = methodsFrom(JSON.parse(body));
     if (methods.some((method) => !allowedMethods.has(method))) {
       return NextResponse.json(
         { error: "RPC method is not allowed." },
@@ -165,42 +140,60 @@ export async function POST(
   }
 
   const endpoints = readRpcEndpoints(network);
-  const primaryHealthy = await shouldUsePrimary(
+  const health = await observeLanHealth(
     network,
     endpoints.primary,
     endpoints.fallback,
   );
-  const ordered = primaryHealthy
-    ? [
-        { endpoint: endpoints.primary, provider: "lan" },
-        { endpoint: endpoints.fallback, provider: "fallback" },
-      ]
-    : [
-        { endpoint: endpoints.fallback, provider: "fallback" },
-        { endpoint: endpoints.primary, provider: "lan" },
-      ];
-
-  for (const { endpoint, provider } of ordered) {
-    try {
-      const response = await rpcFetch(endpoint, body, REQUEST_TIMEOUT_MS);
-      return new NextResponse(await response.arrayBuffer(), {
-        status: response.status,
-        headers: {
-          "content-type": "application/json",
-          "x-last-bell-rpc-network": network,
-          "x-last-bell-rpc-provider": provider,
+  if (
+    health.status === "degraded" &&
+    methods.includes("eth_sendRawTransaction")
+  ) {
+    return NextResponse.json(
+      {
+        jsonrpc: "2.0",
+        id: null,
+        error: {
+          code: -32001,
+          message: "LAN RPC connection degraded. Transaction broadcast paused.",
         },
-      });
-    } catch {
-      continue;
-    }
+      },
+      { status: 503 },
+    );
+  }
+
+  try {
+    const response = await rpcFetch(
+      endpoints.primary,
+      body,
+      REQUEST_TIMEOUT_MS,
+    );
+    return new NextResponse(await response.arrayBuffer(), {
+      status: response.status,
+      headers: {
+        "content-type": "application/json",
+        "x-last-bell-rpc-network": network,
+        "x-last-bell-rpc-provider": "lan",
+        "x-last-bell-rpc-status": health.status,
+        ...(health.reason
+          ? { "x-last-bell-rpc-degraded-reason": health.reason }
+          : {}),
+      },
+    });
+  } catch {
+    // The configured secondary endpoint is health-reference only. Never retry
+    // the user's read, write, or signed transaction through it.
   }
 
   return NextResponse.json(
     {
       jsonrpc: "2.0",
       id: null,
-      error: { code: -32000, message: "All Robinhood RPC providers failed." },
+      error: {
+        code: -32000,
+        message:
+          "LAN RPC connection degraded. No automatic fallback is enabled.",
+      },
     },
     { status: 502 },
   );

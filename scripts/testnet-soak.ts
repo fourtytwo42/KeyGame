@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import { Wallet } from "ethers";
 import {
   createWalletClient,
-  fallback,
   getAddress,
   hexToString,
   http,
@@ -55,12 +54,7 @@ async function soakAccount(label: "A" | "B") {
     wallet: createWalletClient({
       account,
       chain: chainFor(manifest.chainId),
-      transport: fallback([
-        http(manifest.rpc.primary, { timeout: 3_000 }),
-        ...(manifest.rpc.fallback
-          ? [http(manifest.rpc.fallback, { timeout: 4_000 })]
-          : []),
-      ]),
+      transport: http(manifest.rpc.primary, { timeout: 3_000 }),
     }),
   };
 }

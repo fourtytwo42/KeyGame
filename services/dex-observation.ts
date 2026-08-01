@@ -1,6 +1,5 @@
 import {
   createPublicClient,
-  fallback,
   formatUnits,
   http,
   parseAbi,
@@ -61,15 +60,9 @@ export type DexObservationResult = {
 export function mainnetDexClient() {
   const primary =
     process.env.ROBINHOOD_MAINNET_RPC_URL ?? "http://192.168.50.173:8547";
-  const backup =
-    process.env.ROBINHOOD_MAINNET_FALLBACK_RPC_URL ??
-    "https://rpc.mainnet.chain.robinhood.com";
   return createPublicClient({
     chain: robinhoodChainMainnet,
-    transport: fallback([
-      http(primary, { timeout: 3_000 }),
-      http(backup, { timeout: 4_000 }),
-    ]),
+    transport: http(primary, { timeout: 3_000 }),
   });
 }
 

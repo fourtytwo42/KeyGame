@@ -332,6 +332,21 @@ No optimistic holder transition is allowed. Optimistic button depression is allo
 
 ## Performance and reliability
 
+### LAN-only Robinhood RPC policy
+
+- The LAN testnet and mainnet nodes are the only active RPC transports for the
+  frontend relay, server reads, wallets, keeper, indexer, market collector,
+  DEX observations, and transaction broadcast.
+- A configured Alchemy endpoint is observational only. It may supply block
+  height and canonical-chain health comparisons, but never serves an
+  application request or signed transaction automatically.
+- When the LAN endpoint is unavailable or more than five blocks behind the
+  observational reference, the application displays `CONNECTION DEGRADED`,
+  pauses frontend value-bearing actions and browser broadcast, and does not
+  switch providers.
+- Activating a non-LAN provider requires an explicit operator decision and a
+  reviewed configuration change. Runtime failure alone cannot activate it.
+
 | ID | Requirement |
 |---|---|
 | `TECH-PERF-001` | Mobile largest-contentful paint target is under 2.5 seconds at the 75th percentile on a representative 4G profile. |

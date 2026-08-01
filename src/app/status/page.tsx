@@ -22,10 +22,17 @@ export default async function StatusPage() {
     system && "chainId" in system
       ? (system as Awaited<ReturnType<typeof getSystemStatus>> & {
           chainId: number;
-          block: number;
+          block: number | null;
           sourceCommit: string;
           manifestHash: string;
-          indexer: { lag: number };
+          indexer: { lag: number | null };
+          rpc: {
+            policy: "LAN_ONLY";
+            activeProvider: "lan";
+            connectionStatus: "healthy" | "degraded";
+            headLag: number | null;
+            automaticFailover: false;
+          };
           market: {
             assets: number;
             completeStreams: number;
@@ -170,16 +177,28 @@ export default async function StatusPage() {
           <strong>{snapshot ? "ONLINE" : "OFFLINE"}</strong>
         </article>
         <article>
-          <span className={`statusLamp ${production ? "good" : "standby"}`} />
+          <span
+            className={`statusLamp ${
+              production?.rpc.connectionStatus === "healthy"
+                ? "good"
+                : "standby"
+            }`}
+          />
           <div>
             <h2>Robinhood testnet</h2>
             <p>
               {production
-                ? `Chain ${production.chainId} · block ${production.block} · indexer lag ${production.indexer.lag}.`
+                ? `Chain ${production.chainId} · block ${production.block ?? "unavailable"} · indexer lag ${production.indexer.lag ?? "unknown"} · LAN-only RPC · reference lag ${production.rpc.headLag ?? "unknown"}.`
                 : "Chain 46630 configured. Deployment requires a funded key."}
             </p>
           </div>
-          <strong>{production ? "ONLINE" : "STANDBY"}</strong>
+          <strong>
+            {production
+              ? production.rpc.connectionStatus === "healthy"
+                ? "ONLINE"
+                : "CONNECTION DEGRADED"
+              : "STANDBY"}
+          </strong>
         </article>
         <article>
           <span

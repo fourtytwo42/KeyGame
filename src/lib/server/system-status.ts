@@ -201,7 +201,7 @@ export async function getSystemStatus() {
     primary,
     fallback,
   ] = await Promise.all([
-    client.getBlockNumber(),
+    client.getBlockNumber().catch(() => null),
     databaseHealth(),
     database.query<{
       service: string;
@@ -322,22 +322,43 @@ export async function getSystemStatus() {
       : currentPotUsd >= warningPotUsd
         ? "warning"
         : "normal";
+  const primaryHead =
+    primary.ok && "block" in primary ? primary.block : undefined;
+  const referenceHead =
+    fallback.ok && "block" in fallback ? fallback.block : undefined;
+  const lanHeadLag =
+    primaryHead !== undefined && referenceHead !== undefined
+      ? Math.max(0, referenceHead - primaryHead)
+      : null;
+  const lanConnectionStatus =
+    !primary.ok || (lanHeadLag !== null && lanHeadLag > 5)
+      ? "degraded"
+      : "healthy";
   return {
     ok: true,
     mode,
     chainId: manifest.chainId,
-    block: Number(block),
+    block: block === null ? null : Number(block),
     sourceCommit: manifest.sourceCommit,
     manifestHash,
     deploymentBlock: manifest.deploymentBlock,
     deploymentKey,
     contracts: manifest.contracts,
     mockOnly: manifest.mockOnly,
-    rpc: { primary, fallback },
+    rpc: {
+      policy: "LAN_ONLY",
+      activeProvider: "lan",
+      connectionStatus: lanConnectionStatus,
+      headLag: lanHeadLag,
+      primary,
+      reference: fallback,
+      fallback,
+      automaticFailover: false,
+    },
     database: db,
     indexer: {
       indexedBlock,
-      lag: Number(block) - indexedBlock,
+      lag: block === null ? null : Number(block) - indexedBlock,
       updatedAt: checkpoint.rows[0]?.updated_at?.toISOString(),
     },
     market: {

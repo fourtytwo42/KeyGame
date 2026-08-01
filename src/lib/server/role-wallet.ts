@@ -1,6 +1,6 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
-import { createWalletClient, fallback, http } from "viem";
+import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { Wallet } from "ethers";
 import type { ServerDeployment } from "./deployment";
@@ -29,11 +29,6 @@ export async function loadRoleWallet(
     account,
     chain:
       manifest.chainId === 4663 ? robinhoodChainMainnet : robinhoodChainTestnet,
-    transport: fallback([
-      http(manifest.rpc.primary, { timeout: 3_000 }),
-      ...(manifest.rpc.fallback
-        ? [http(manifest.rpc.fallback, { timeout: 4_000 })]
-        : []),
-    ]),
+    transport: http(manifest.rpc.primary, { timeout: 3_000 }),
   });
 }

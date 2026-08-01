@@ -26,6 +26,12 @@ Mainnet is not authorized or currently qualified.
 
 ## Implemented release controls
 
+- Runtime RPC policy is `LAN_ONLY`. The configured Alchemy endpoint is
+  `HEALTH_CHECK_ONLY`; it can be probed for block height/canonical agreement
+  but never receives automatic application traffic or signed transactions.
+  LAN outage or head lag marks connection degraded and pauses browser
+  broadcasts.
+
 - `LifetimePointsVault` caps a calculated reward to the vault's actual token
   custody and emits `LifetimeRewardRoundedToBalance`. The deterministic
   seven-round regression reproduces the prior one-unit fixed-point rounding

@@ -2,6 +2,16 @@
 
 Status: fail-closed. This runbook does not authorize a broadcast.
 
+## RPC operating rule
+
+Use the Robinhood LAN RPC as the sole active provider. The Alchemy endpoint is
+health-reference-only and may be checked for block height or canonical
+agreement. Do not route reads, writes, keeper/indexer work, DEX observations,
+or broadcasts through Alchemy automatically. If LAN is offline or more than
+five blocks behind, mark the application connection degraded and pause
+frontend actions/browser broadcast. Switching providers requires a separate explicit operator
+instruction.
+
 ## 1. Build the internally reviewed candidate
 
 1. Work only from the authoritative KeyGame VM.

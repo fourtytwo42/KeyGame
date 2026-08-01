@@ -112,7 +112,7 @@ Required gates:
 | `RISK-004` | Session authorization permits excess spend or arbitrary transfer. | Critical | Round/function/token/amount scoping, expiry, revocation, contract enforcement. | Stage 1+ |
 | `RISK-005` | Rapid actions receive zero control time or inconsistent faction payouts. | High | Timer/scoring simulation, precision decision, deterministic tie rules, replay parity. | Stage 1 exit |
 | `RISK-006` | Bots and Sybil wallets dominate final claims. | High | Honest disclosure, no self-extension, per-wallet block limit, economics testing, bot telemetry, avoid false fairness claim. | Stage 2+ |
-| `RISK-007` | RPC, indexer, or sequencer delay shows the wrong holder. | High | Canonical-event authority, no optimistic crown, lag indicator, direct-read fallback, replay. | Stage 1+ |
+| `RISK-007` | RPC, indexer, or sequencer delay shows the wrong holder. | High | Canonical-event authority, no optimistic crown, LAN/reference lag indicator, connection-degraded state, paused frontend transactions, and no automatic provider failover. | Stage 1+ |
 | `RISK-008` | First-come sequencing still advantages colocated or automated actors. | High | Publish ordering model, measure latency, limit claims where appropriate, retain faction pool. | Stage 2+ |
 | `RISK-009` | Stock Token unavailable, inactive, halted, or restricted. | Critical | Canonical allowlist, active-status checks, new-entry pause, guaranteed withdrawal path. | Stage 3 |
 | `RISK-010` | Stale feed or sequencer outage accepts an invalid entry value. | High | Feed freshness, sequencer health check, fail closed for new entry. | Stage 3 |

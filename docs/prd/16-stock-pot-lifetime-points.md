@@ -125,6 +125,13 @@ Leaderboard status never changes financial rewards.
 
 ## Safety and release gates
 
+Robinhood RPC operation is LAN-only. Alchemy is retained only as an
+observational health reference for block height and canonical agreement. A LAN
+outage or lag greater than five blocks displays `CONNECTION DEGRADED` and
+pauses frontend actions and browser broadcast; it never triggers automatic
+failover. Switching active
+providers requires an explicit operator instruction.
+
 Slippage and quote expiry protect execution but are not spending caps.
 Production swaps accept only manifest-whitelisted canonical assets, verified
 router/pool bytecode, and at most 1% deviation from a ten-minute TWAP. Devnet

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { screenRoster, screenStockPotRoster } from "@/lib/game/market-screen";
 import { buildRoundProjection } from "@/lib/game/projections";
 import { loadScreeningAssets } from "@/lib/server/market-store";
+import { loadServerDeployment } from "@/lib/server/deployment";
 import {
   isDevnetRuntime,
   isV4DevnetRuntime,
@@ -13,6 +14,7 @@ import {
   getV4DevnetSnapshot,
 } from "@/lib/web3/v4-devnet-runtime";
 import { getLiveSnapshot } from "@/lib/web3/live-snapshot";
+import { assessLanRpcHealth, readRpcEndpoints } from "@/lib/web3/rpc-routing";
 
 export const dynamic = "force-dynamic";
 
@@ -44,13 +46,29 @@ export async function GET() {
     }
     const v4 = isV4Runtime();
     const state = v4 ? await getV4DevnetSnapshot() : await getLiveSnapshot();
+    const deployment = await loadServerDeployment();
+    const configuredEndpoints = readRpcEndpoints(mode);
+    const rpcHealth = await assessLanRpcHealth({
+      primary: deployment.rpc.primary,
+      fallback: deployment.rpc.fallback ?? configuredEndpoints.fallback,
+    });
     const assets = await loadScreeningAssets().catch(() => []);
     const byTicker = new Map(assets.map((asset) => [asset.ticker, asset]));
     const roster = v4 ? screenStockPotRoster(assets) : screenRoster(assets);
     state.marketExplanation = roster.reason;
     if (v4) {
-      state.freshness = roster.delayed ? "delayed" : "live";
-      return NextResponse.json({ ok: true, chainId: state.chainId, state });
+      state.freshness =
+        roster.delayed || rpcHealth.status === "degraded" ? "delayed" : "live";
+      if (rpcHealth.status === "degraded") {
+        state.marketExplanation =
+          "LAN RPC connection degraded. Actions are paused; no automatic Alchemy fallback is enabled.";
+      }
+      return NextResponse.json({
+        ok: true,
+        chainId: state.chainId,
+        state,
+        rpc: { policy: "LAN_ONLY", ...rpcHealth },
+      });
     }
     const now = Math.floor(Date.now() / 1_000);
     let newestObservation = 0;
@@ -103,8 +121,18 @@ export async function GET() {
       state.marketExplanation =
         "The latest onchain observation is stale. Calls are paused before payment.";
     }
+    if (rpcHealth.status === "degraded") {
+      state.freshness = "delayed";
+      state.marketExplanation =
+        "LAN RPC connection degraded. Actions are paused; no automatic Alchemy fallback is enabled.";
+    }
     state.projection = buildRoundProjection(state);
-    return NextResponse.json({ ok: true, chainId: state.chainId, state });
+    return NextResponse.json({
+      ok: true,
+      chainId: state.chainId,
+      state,
+      rpc: { policy: "LAN_ONLY", ...rpcHealth },
+    });
   } catch (error) {
     return NextResponse.json(
       {

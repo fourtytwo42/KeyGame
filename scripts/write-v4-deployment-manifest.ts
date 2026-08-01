@@ -257,6 +257,9 @@ const manifest = {
       ? "http://192.168.50.173:8547"
       : "http://192.168.50.117:8547",
     fallback: "SERVER_ONLY_CONFIGURED",
+    policy: "LAN_ONLY",
+    referenceUse: "HEALTH_CHECK_ONLY",
+    automaticFailover: false,
   },
   market: {
     type: mainnet ? "direct-uniswap-v3-stock-swap" : "mock-stock-swap-adapter",
