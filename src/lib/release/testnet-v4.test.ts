@@ -211,4 +211,58 @@ describe("testnet v4 release guards", () => {
       }),
     ).toThrow(/scope/);
   });
+
+  it("accepts an unchanged deployed contract set from an earlier smoke commit", () => {
+    const deployedCommit = "e".repeat(40);
+    const manifestSha256 = "f".repeat(64);
+    const result = validateFinalTestnetSmokeEvidence({
+      expectedCommit: commit,
+      manifest: {
+        chainId: 46630,
+        mockOnly: true,
+        contractVersion: "last-bell-v4-stock-pot",
+        sourceCommit: deployedCommit,
+      },
+      bytecode: {
+        allMatch: true,
+        candidateSourceCommit: commit,
+        deployedSourceCommit: deployedCommit,
+        manifestSha256,
+        additionalTransactionsSubmitted: 0,
+        comparisons: Array.from({ length: 9 }, (_, index) => ({
+          name: `Contract${index}`,
+          match: true,
+        })),
+      },
+      reconciliation: {
+        ok: true,
+        chainId: 46630,
+        sourceCommit: deployedCommit,
+        manifestHash: manifestSha256,
+        authorizationScope: { maxDeployments: 1, maxSettledRounds: 2 },
+        scope: {
+          totalRounds: 3,
+          settledRounds: 2,
+          cancelledRounds: 0,
+          unstartedSuccessorRounds: 1,
+        },
+        failedKeeperJobs: "0",
+        contributionSummaries: [
+          { round: "1", players: "2" },
+          { round: "2", players: "2" },
+        ],
+        allocations: Array.from({ length: 8 }, (_, index) => ({ index })),
+        rewardClaims: [
+          { category: "LAST_BELL" },
+          { category: "WINNING_STOCK" },
+          { category: "LIFETIME" },
+        ],
+      },
+    });
+    expect(result).toMatchObject({
+      sourceCommit: commit,
+      testnetSourceCommit: deployedCommit,
+      currentBytecodeMatches: true,
+    });
+  });
 });

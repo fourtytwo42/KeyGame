@@ -163,21 +163,26 @@ export function validateFinalTestnetSmokeEvidence(input: {
   const comparisons = Array.isArray(bytecode.comparisons)
     ? bytecode.comparisons
     : [];
+  const deployedSourceCommit = String(bytecode.deployedSourceCommit ?? "");
+  if (!/^[0-9a-f]{40}$/.test(deployedSourceCommit)) {
+    throw new Error(
+      "Testnet bytecode evidence lacks a deployed source commit.",
+    );
+  }
 
   if (
     manifest.chainId !== 46630 ||
     manifest.mockOnly !== true ||
     manifest.contractVersion !== "last-bell-v4-stock-pot" ||
-    manifest.sourceCommit !== input.expectedCommit
+    manifest.sourceCommit !== deployedSourceCommit
   ) {
     throw new Error(
-      "Testnet manifest does not match the frozen mock-only candidate.",
+      "Testnet manifest does not match the frozen mock-only deployment.",
     );
   }
   if (
     bytecode.allMatch !== true ||
     bytecode.candidateSourceCommit !== input.expectedCommit ||
-    bytecode.deployedSourceCommit !== input.expectedCommit ||
     bytecode.additionalTransactionsSubmitted !== 0 ||
     comparisons.length < 9 ||
     comparisons.some(
@@ -191,7 +196,7 @@ export function validateFinalTestnetSmokeEvidence(input: {
   if (
     reconciliation.ok !== true ||
     reconciliation.chainId !== 46630 ||
-    reconciliation.sourceCommit !== input.expectedCommit ||
+    reconciliation.sourceCommit !== deployedSourceCommit ||
     reconciliation.manifestHash !== bytecode.manifestSha256 ||
     authorization.maxDeployments !== 1 ||
     authorization.maxSettledRounds !== 2 ||
@@ -226,6 +231,7 @@ export function validateFinalTestnetSmokeEvidence(input: {
   }
   return {
     sourceCommit: input.expectedCommit,
+    testnetSourceCommit: deployedSourceCommit,
     manifestSha256: String(bytecode.manifestSha256),
     settledRounds: 2,
     unstartedSuccessorRounds: 1,
