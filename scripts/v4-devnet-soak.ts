@@ -203,11 +203,23 @@ async function transaction(
     [runId, actionId, key, signer, nonce],
   );
   const hash = await send();
-  await pool.query(
-    `UPDATE soak_transactions SET transaction_hash=$3,state='broadcast',
-       updated_at=now() WHERE run_id=$1 AND idempotency_key=$2`,
-    [runId, key, hash],
+  const persistedBroadcast = await pool.query(
+    `INSERT INTO soak_transactions(
+       run_id,action_id,idempotency_key,signer_address,transaction_hash,nonce,state)
+     VALUES($1,$2,$3,$4,$5,$6,'broadcast')
+     ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
+       action_id=excluded.action_id,
+       signer_address=excluded.signer_address,
+       transaction_hash=excluded.transaction_hash,
+       nonce=excluded.nonce,
+       state='broadcast',
+       updated_at=now()
+     RETURNING id`,
+    [runId, actionId, key, signer, hash, nonce],
   );
+  if (persistedBroadcast.rowCount !== 1) {
+    throw new Error(`${key} broadcast hash was not durably persisted`);
+  }
   const receipt = await client.waitForTransactionReceipt({
     hash,
     timeout: 300_000,
