@@ -4,6 +4,27 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-01 final-path implementation: branch
+  `codex/v4-final-mainnet-path` makes current-bytecode testnet evidence a hard
+  prerequisite for the final mainnet package. The validator requires the exact
+  frozen commit, mock-only chain 46630 manifest, matching runtime bytecode,
+  exactly two settled rounds with two players each, eight token allocations,
+  all reward categories, zero failed keeper jobs, and one unstarted successor.
+  The historical smoke still fails this gate, and no chain transaction was
+  sent. A new one-deployment/two-round testnet authorization remains the next
+  authority.
+- The same change makes mainnet preflight and read-only verification reject any
+  manifest or live status that is not `LAN_ONLY`, `HEALTH_CHECK_ONLY` for the
+  reference endpoint, and `automaticFailover=false`. Alchemy remains
+  observational only and never receives application or signed transaction
+  traffic.
+- Clean VM verification passed 85 Vitest tests, 62 Foundry tests including
+  fuzz/invariants, four isolated integration tests, the protected mainnet
+  build, 20 applicable Playwright desktop/mobile checks, internal security
+  review with no unresolved critical/high findings, a live LAN mainnet fork,
+  and the live mainnet preflight. The 2026-08-01 preflight found all five pinned
+  markets currently safe; eligibility remains revalidated and may change.
+
 - 2026-08-01 RPC policy: Robinhood LAN nodes are the only active application,
   service, wallet, transaction, and DEX RPC transports. Alchemy may be queried
   only as an observational block-height/canonical-health reference. Never

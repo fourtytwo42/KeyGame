@@ -14,7 +14,7 @@ Mainnet is not authorized or currently qualified.
 | Direct production adapter | Implemented | `RobinhoodStockSwapAdapter.sol` |
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
-| Full release regression | Passed locally | 54 Foundry tests, 64 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
+| Full release regression | Passed locally | 62 Foundry tests, 85 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
 | Two-round Robinhood testnet smoke | Historical only / current gate blocked | Commit `2b4fcfa`, deployment block `95718412`, exactly two settlements, two players per round, all reward categories, exact eight-row allocation reconciliation, and unstarted round three. Current bytecode differs after `312dd5e`; no new testnet transaction is authorized. |
 | Internal security review | Passed internally | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun; no independent audit |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
@@ -82,12 +82,12 @@ Mainnet is not authorized or currently qualified.
 
 ## Current live market evidence
 
-The 2026-07-31 mainnet preflight found AAPL, TSLA, SPY, and NVDA safe under the
-prototype 10-minute TWAP, depth, history, and 1% execution checks. AMZN remained
-in the approved catalog but was excluded from roster selection because its
-simulated $1,000 buy exceeded the 1% impact limit. Market safety is revalidated
-immediately before every production round; this result is evidence, not a
-permanent approval.
+The 2026-08-01 LAN mainnet preflight found AAPL, TSLA, AMZN, SPY, and NVDA safe
+under the prototype 10-minute TWAP, depth, history, and 1% execution checks.
+AMZN recovered above the depth floor and below the impact limit at this check;
+it must be excluded again whenever either condition fails. Market safety is
+revalidated immediately before every production round, so this result is
+evidence rather than permanent approval.
 
 ## Candidate-change rule
 
