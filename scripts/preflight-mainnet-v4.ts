@@ -22,14 +22,32 @@ import {
 type RobinhoodAsset = {
   tokenSymbol: string;
   status: string;
+  currentMultiplier: string;
+  pendingMultiplier?: string;
+  pendingMultiplierEffectiveTime?: string;
   deployments: Array<{ chainId: number; contractAddress: string }>;
+};
+type RobinhoodQuote = {
+  tokenSymbol: string;
+  isTradingHalt: boolean;
+  generatedAt: string;
 };
 
 const rpc =
   process.env.ROBINHOOD_MAINNET_RPC_URL ?? "http://192.168.50.173:8547";
+const referenceRpc = process.env.ROBINHOOD_MAINNET_FALLBACK_RPC_URL;
+if (!referenceRpc) {
+  throw new Error(
+    "ROBINHOOD_MAINNET_FALLBACK_RPC_URL is required for reference health only.",
+  );
+}
 const client = createPublicClient({
   chain: robinhoodChainMainnet,
   transport: http(rpc, { timeout: 5_000 }),
+});
+const referenceClient = createPublicClient({
+  chain: robinhoodChainMainnet,
+  transport: http(referenceRpc, { timeout: 5_000 }),
 });
 const factoryAbi = parseAbi([
   "function getPool(address,address,uint24) view returns (address)",
@@ -58,31 +76,77 @@ const syncingRequest = fetch(rpc, {
   async (response) =>
     (await response.json()) as { result?: boolean | Record<string, string> },
 );
-const [chainId, syncing, head, templateText, assetsResponse] =
-  await Promise.all([
-    client.getChainId(),
-    syncingRequest,
-    client.getBlock(),
-    readFile("deployments/4663.template.json", "utf8"),
-    fetch(
-      process.env.ROBINHOOD_STOCK_TOKEN_API_URL
-        ? `${process.env.ROBINHOOD_STOCK_TOKEN_API_URL}/assets`
-        : "https://api.robinhood.com/rhj/assets",
-      {
-        cache: "no-store",
-        signal: AbortSignal.timeout(8_000),
-        headers: { "user-agent": "KeyGame-MainnetPreflight/1.0" },
-      },
-    ),
-  ]);
+const referenceSyncingRequest = fetch(referenceRpc, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "eth_syncing",
+    params: [],
+  }),
+  signal: AbortSignal.timeout(5_000),
+}).then(
+  async (response) =>
+    (await response.json()) as { result?: boolean | Record<string, string> },
+);
+const [
+  chainId,
+  syncing,
+  head,
+  referenceChainId,
+  referenceSyncing,
+  referenceHead,
+  templateText,
+  assetsResponse,
+] = await Promise.all([
+  client.getChainId(),
+  syncingRequest,
+  client.getBlock(),
+  referenceClient.getChainId(),
+  referenceSyncingRequest,
+  referenceClient.getBlock(),
+  readFile("deployments/4663.template.json", "utf8"),
+  fetch(
+    process.env.ROBINHOOD_STOCK_TOKEN_API_URL
+      ? `${process.env.ROBINHOOD_STOCK_TOKEN_API_URL}/assets`
+      : "https://api.robinhood.com/rhj/assets",
+    {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+      headers: { "user-agent": "KeyGame-MainnetPreflight/1.0" },
+    },
+  ),
+]);
 if (chainId !== ROBINHOOD_MAINNET_CHAIN_ID || syncing.result !== false) {
   throw new Error("Robinhood mainnet RPC is not synchronized chain 4663.");
+}
+if (
+  referenceChainId !== ROBINHOOD_MAINNET_CHAIN_ID ||
+  referenceSyncing.result !== false
+) {
+  throw new Error("The reference-health RPC is not synchronized chain 4663.");
+}
+const referenceLag = Number(referenceHead.number - head.number);
+if (referenceLag > 5) {
+  throw new Error(
+    "CONNECTION DEGRADED: LAN RPC is over five blocks behind reference.",
+  );
+}
+const commonBlockNumber =
+  head.number < referenceHead.number ? head.number : referenceHead.number;
+const [primaryCommonBlock, referenceCommonBlock] = await Promise.all([
+  client.getBlock({ blockNumber: commonBlockNumber }),
+  referenceClient.getBlock({ blockNumber: commonBlockNumber }),
+]);
+if (primaryCommonBlock.hash !== referenceCommonBlock.hash) {
+  throw new Error("LAN and reference RPCs disagree on the canonical block.");
 }
 const template = JSON.parse(templateText) as {
   releaseGates?: Record<string, unknown>;
   rpc: MainnetRpcPolicy;
 };
-assertMainnetLanOnlyRpcPolicy(template.rpc);
+assertMainnetLanOnlyRpcPolicy({ ...template.rpc, fallback: referenceRpc });
 const walletUat = resolveWalletUatDisposition(template.releaseGates);
 if (
   walletUat.status !== "SKIPPED_BY_OPERATOR" ||
@@ -133,9 +197,64 @@ for (const market of pinnedDexMarkets) {
     !canonical ||
     normalized(canonical) !== normalized(market.stockToken)
   ) {
-    throw new Error(
-      `${market.symbol} canonical registry mismatch or inactive.`,
-    );
+    markets.push({
+      symbol: market.symbol,
+      stockToken: market.stockToken,
+      pool: market.pool,
+      feeTier: market.feeTier,
+      eligible: false,
+      exclusionReasons: ["canonical registry mismatch or inactive"],
+    });
+    continue;
+  }
+  const quoteResponse = await fetch(
+    `${process.env.ROBINHOOD_STOCK_TOKEN_API_URL ?? "https://api.robinhood.com/rhj"}/prices/${encodeURIComponent(market.symbol)}`,
+    {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+      headers: { "user-agent": "KeyGame-MainnetPreflight/1.0" },
+    },
+  );
+  if (!quoteResponse.ok) {
+    markets.push({
+      symbol: market.symbol,
+      stockToken: market.stockToken,
+      pool: market.pool,
+      feeTier: market.feeTier,
+      eligible: false,
+      exclusionReasons: [`halt metadata returned ${quoteResponse.status}`],
+    });
+    continue;
+  }
+  const quote = ((await quoteResponse.json()) as { quotes: RobinhoodQuote[] })
+    .quotes[0];
+  const quoteGeneratedAt = Date.parse(quote?.generatedAt ?? "");
+  const currentMultiplier = Number(official.currentMultiplier);
+  const pendingEffectiveAt = official.pendingMultiplierEffectiveTime
+    ? Date.parse(official.pendingMultiplierEffectiveTime)
+    : undefined;
+  if (
+    !quote ||
+    quote.isTradingHalt ||
+    !Number.isFinite(quoteGeneratedAt) ||
+    Date.now() - quoteGeneratedAt > 60_000 ||
+    !Number.isFinite(currentMultiplier) ||
+    currentMultiplier <= 0 ||
+    (pendingEffectiveAt !== undefined &&
+      Number.isFinite(pendingEffectiveAt) &&
+      pendingEffectiveAt <= Date.now())
+  ) {
+    markets.push({
+      symbol: market.symbol,
+      stockToken: market.stockToken,
+      pool: market.pool,
+      feeTier: market.feeTier,
+      eligible: false,
+      exclusionReasons: [
+        "halted or stale/unreconciled corporate-action metadata",
+      ],
+    });
+    continue;
   }
   const [pool, stockDecimals, tokens, stockCode, poolCode, observation] =
     await Promise.all([
@@ -176,7 +295,15 @@ for (const market of pinnedDexMarkets) {
     !tokens.map(normalized).includes(normalized(ROBINHOOD_USDG)) ||
     !tokens.map(normalized).includes(normalized(market.stockToken))
   ) {
-    throw new Error(`${market.symbol} failed canonical pool identity checks.`);
+    markets.push({
+      symbol: market.symbol,
+      stockToken: market.stockToken,
+      pool: market.pool,
+      feeTier: market.feeTier,
+      eligible: false,
+      exclusionReasons: ["failed canonical pool identity checks"],
+    });
+    continue;
   }
   markets.push({
     symbol: market.symbol,
@@ -193,6 +320,12 @@ for (const market of pinnedDexMarkets) {
     spotTwapDeviationBps: observation.spotTwapDeviationBps,
     eligible: observation.safe,
     exclusionReasons: observation.reasons,
+    halted: false,
+    metadataGeneratedAt: quote.generatedAt,
+    currentMultiplier: official.currentMultiplier,
+    pendingMultiplier: official.pendingMultiplier ?? null,
+    pendingMultiplierEffectiveTime:
+      official.pendingMultiplierEffectiveTime ?? null,
   });
 }
 const safeSymbols = markets
@@ -253,6 +386,13 @@ const evidence = {
   chainId,
   head: head.number.toString(),
   headHash: head.hash,
+  referenceHead: referenceHead.number.toString(),
+  referenceLag,
+  commonBlockHash: primaryCommonBlock.hash,
+  rpcPolicy: "LAN_ONLY",
+  activeProvider: "lan",
+  referenceUse: "HEALTH_CHECK_ONLY",
+  automaticFailover: false,
   sourceCommit,
   upstreamRef,
   upstreamCommit,

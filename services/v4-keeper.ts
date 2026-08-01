@@ -24,6 +24,7 @@ import {
   publicClientFor,
   walletClientFor,
 } from "./common";
+import { assertMainnetPromotionAllowsKeeper } from "./mainnet-promotion-guard";
 
 const manifest = await loadManifest();
 if (
@@ -39,6 +40,10 @@ if (
 ) {
   throw new Error("V4 keeper mock policy does not match the chain.");
 }
+await assertMainnetPromotionAllowsKeeper({
+  chainId: manifest.chainId,
+  sourceCommit: manifest.sourceCommit,
+});
 
 const deploymentKey = deploymentKeyFor(manifest);
 const client = publicClientFor(manifest);

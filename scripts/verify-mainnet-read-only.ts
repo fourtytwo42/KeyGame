@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   createPublicClient,
   getAddress,
+  hexToString,
   http,
   keccak256,
   parseAbi,
@@ -16,6 +17,11 @@ import {
   roundManagerV4Abi,
 } from "../src/lib/web3/last-bell-abi";
 import { assertMainnetLanOnlyRpcPolicy } from "../src/lib/release/mainnet-v4";
+import { pinnedDexMarkets } from "../src/lib/game/dex-config";
+import {
+  mainnetDexClient,
+  readDexObservation,
+} from "../services/dex-observation";
 
 const managerAbi = [
   ...roundManagerV4Abi,
@@ -58,6 +64,20 @@ function sha256(value: Buffer | string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+for (const signingVariable of [
+  "DEPLOYER_KEYSTORE",
+  "DEPLOYER_PASSWORD_FILE",
+  "KEEPER_KEYSTORE",
+  "KEEPER_PASSWORD_FILE",
+  "PRIVATE_KEY",
+]) {
+  if (process.env[signingVariable]?.trim()) {
+    throw new Error(
+      `Read-only launch verification refuses signing configuration: ${signingVariable}.`,
+    );
+  }
+}
+
 const manifestPath = path.resolve(required("KEYGAME_DEPLOYMENT_MANIFEST"));
 const manifestBytes = await readFile(manifestPath);
 const manifest = JSON.parse(manifestBytes.toString("utf8")) as {
@@ -80,6 +100,7 @@ const manifest = JSON.parse(manifestBytes.toString("utf8")) as {
       symbol: string;
       stockToken: Address;
       pool: Address;
+      feeTier: number;
     }>;
   };
 };
@@ -292,6 +313,122 @@ const [roundId, startedAt, acceptedClaims] = await Promise.all([
 if (startedAt !== 0n || acceptedClaims !== 0n)
   throw new Error("Initial round is not in zero-call entry state.");
 
+const roster = await Promise.all(
+  [0n, 1n, 2n, 3n].map(async (index) => {
+    const config = await primary.readContract({
+      address: activeRound,
+      abi: lastBellV4Abi,
+      functionName: "tickerConfigs",
+      args: [index],
+    });
+    return {
+      symbol: hexToString(config[0], { size: 32 }).replace(/\0+$/g, ""),
+      stockToken: getAddress(config[2]),
+    };
+  }),
+);
+const dexClient = mainnetDexClient();
+const apiBase =
+  process.env.ROBINHOOD_STOCK_TOKEN_API_URL ?? "https://api.robinhood.com/rhj";
+const assetResponse = await fetch(`${apiBase}/assets`, {
+  cache: "no-store",
+  signal: AbortSignal.timeout(8_000),
+  headers: { "user-agent": "KeyGame-ReadOnlyLaunch/1.0" },
+});
+if (!assetResponse.ok)
+  throw new Error("Robinhood canonical asset metadata is unavailable.");
+const officialAssets = new Map(
+  (
+    (await assetResponse.json()) as {
+      assets: Array<{
+        tokenSymbol: string;
+        status: string;
+        currentMultiplier: string;
+        pendingMultiplierEffectiveTime?: string;
+        deployments: Array<{ chainId: number; contractAddress: Address }>;
+      }>;
+    }
+  ).assets.map((asset) => [asset.tokenSymbol, asset]),
+);
+const marketSafety = await Promise.all(
+  roster.map(async (item) => {
+    const pinned = pinnedDexMarkets.find(
+      (market) =>
+        market.symbol === item.symbol &&
+        getAddress(market.stockToken) === item.stockToken,
+    );
+    const configured = manifest.market.approvedCatalog.find(
+      (market) =>
+        market.symbol === item.symbol &&
+        getAddress(market.stockToken) === item.stockToken,
+    );
+    if (
+      !pinned ||
+      !configured ||
+      getAddress(pinned.pool) !== getAddress(configured.pool) ||
+      pinned.feeTier !== configured.feeTier
+    ) {
+      throw new Error(`${item.symbol} is not an approved canonical market.`);
+    }
+    const official = officialAssets.get(item.symbol);
+    const canonical = official?.deployments.find(
+      (deployment) => deployment.chainId === 4663,
+    )?.contractAddress;
+    const pendingEffectiveAt = official?.pendingMultiplierEffectiveTime
+      ? Date.parse(official.pendingMultiplierEffectiveTime)
+      : undefined;
+    const quoteResponse = await fetch(
+      `${apiBase}/prices/${encodeURIComponent(item.symbol)}`,
+      {
+        cache: "no-store",
+        signal: AbortSignal.timeout(8_000),
+        headers: { "user-agent": "KeyGame-ReadOnlyLaunch/1.0" },
+      },
+    );
+    const quote = quoteResponse.ok
+      ? (
+          (await quoteResponse.json()) as {
+            quotes: Array<{ isTradingHalt: boolean; generatedAt: string }>;
+          }
+        ).quotes[0]
+      : undefined;
+    if (
+      official?.status !== "ASSET_STATUS_ACTIVE" ||
+      !canonical ||
+      getAddress(canonical) !== item.stockToken ||
+      !Number.isFinite(Number(official.currentMultiplier)) ||
+      Number(official.currentMultiplier) <= 0 ||
+      (pendingEffectiveAt !== undefined &&
+        Number.isFinite(pendingEffectiveAt) &&
+        pendingEffectiveAt <= Date.now()) ||
+      !quote ||
+      quote.isTradingHalt
+    ) {
+      throw new Error(`${item.symbol} is inactive, halted, or unreconciled.`);
+    }
+    const observation = await readDexObservation(pinned, dexClient);
+    if (!observation.safe) {
+      throw new Error(
+        `${item.symbol} failed read-only market safety: ${observation.reasons.join(", ")}.`,
+      );
+    }
+    return {
+      symbol: item.symbol,
+      stockToken: item.stockToken,
+      pool: configured.pool,
+      feeTier: configured.feeTier,
+      sourceBlockNumber: observation.sourceBlockNumber.toString(),
+      sourceBlockHash: observation.sourceBlockHash,
+      metadataGeneratedAt: quote.generatedAt,
+      usdgDepth: observation.usdgDepth,
+      buyImpactBps: observation.buyImpactBps,
+      sellImpactBps: observation.sellImpactBps,
+      spotTwapDeviationBps: observation.spotTwapDeviationBps,
+      safe: true,
+    };
+  }),
+);
+
 const custodyAddresses = [
   manager,
   paymentRouter,
@@ -401,6 +538,7 @@ const evidence = {
     startedAt: "0",
     acceptedClaims: "0",
   },
+  marketSafety,
   custody,
   application: {
     url: appUrl,

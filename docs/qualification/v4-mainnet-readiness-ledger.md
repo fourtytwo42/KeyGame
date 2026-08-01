@@ -1,10 +1,8 @@
 # Last Bell v4 mainnet-readiness ledger
 
-Status: devnet-requalified candidate. The historical mock-only Robinhood
-testnet deployment and two-round smoke remain reconciled, but no longer match
-the current runtime bytecode after the lifetime-vault rounding repair. Browser
-wallet testing is intentionally skipped and compatibility remains unverified.
-Mainnet is not authorized or currently qualified.
+Status: current-bytecode testnet smoke passed. Browser-wallet testing is
+intentionally skipped and compatibility remains unverified. Mainnet release
+planning and qualification may proceed, but deployment is not authorized.
 
 ## Gate ledger
 
@@ -15,13 +13,13 @@ Mainnet is not authorized or currently qualified.
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
 | Full release regression | Passed locally | 62 Foundry tests, 85 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
-| Two-round Robinhood testnet smoke | Historical only / current gate blocked | Commit `2b4fcfa`, deployment block `95718412`, exactly two settlements, two players per round, all reward categories, exact eight-row allocation reconciliation, and unstarted round three. Current bytecode differs after `312dd5e`; no new testnet transaction is authorized. |
+| Two-round Robinhood testnet smoke | Passed | Commit `5955b3b8f47c6294bd7549215d0099741474ab23`, deployment block `95922891`, exactly two settlements, two players and four calls per round, every reward category, exact eight-row 50/30/10/5/5 reconciliation, explorer-verified bytecode, and round six prepared/unstarted. |
 | Internal security review | Passed internally | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun; no independent audit |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
 | Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
 | External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
 | One-hour devnet launch rehearsal | Passed | Deployment key `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`: ten settlements at minutes 0-54, two non-admin callers per round, 82 mock USDG, keeper restart after round four, indexer restart after round seven, exact reconciliation, and round eleven prepared/unstarted. Report SHA-256 `0da42b0f63bcedeb38e93eea2da2ca64c9753a8c9607743fcc4770606ce12ef2`. |
-| Mainnet broadcast | Compile-time locked | Separate reviewed release commit and deployment authorization |
+| Mainnet broadcast | Runtime authorization locked | Dedicated compile-time release path plus nonce-bound plan, matching one-shot authorization, encrypted deployer keystore, and live preflight |
 | Mainnet launch verification | Read-only policy selected | No gameplay transaction; public promotion requires separate authorization bound to the deployment and verification report |
 
 ## Implemented release controls
@@ -52,8 +50,15 @@ Mainnet is not authorized or currently qualified.
   pools, bytecode, token decimals, safety observations, and at least four safe
   catalog markets.
 - Mainnet authorization binds the explicit wallet-UAT disposition, unverified
-  compatibility, deployer, exact commit and manifest, one deployment, and
-  read-only launch validation. Legacy canary-scoped authorization is rejected.
+  compatibility, deployer, exact commit and nonce-bound planned manifest, one
+  deployment run, unused state, and read-only launch validation. Legacy or
+  consumed authorizations are rejected.
+- Mainnet planning simulates the complete deployment on a pinned LAN-backed
+  fork and records the deployer nonce, predicted CREATE addresses, runtime
+  hashes, exact transaction count, gas used, constructors, and initial roster.
+- The production keeper is promotion-gated. On chain 4663 it refuses to load
+  signing access unless the deployment manifest, zero-transaction read-only
+  report, and separate promotion authorization all match.
 - The devnet rehearsal runner stores the signed transaction and hash before broadcast,
   clears the signed payload after confirmation, and reconciles receipts and
   nonces after restart.

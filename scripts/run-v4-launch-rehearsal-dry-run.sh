@@ -12,5 +12,7 @@ pnpm exec vitest run \
   src/lib/release/launch-rehearsal.test.ts
 pnpm test:integration
 pnpm test:migrations
-grep -q 'MAINNET_BROADCAST_ENABLED = false' script/DeployMainnet.s.sol
+grep -q 'MAINNET_BROADCAST_ENABLED = true' script/DeployMainnet.s.sol
+grep -q 'verify-mainnet-planned-deployment.ts' scripts/deploy-mainnet-v4.sh
+grep -q 'MAINNET_RELEASE_AUTHORIZATION_FILE.consumed' scripts/deploy-mainnet-v4.sh
 echo "Devnet launch rehearsal model and Anvil transaction-path dry run passed."

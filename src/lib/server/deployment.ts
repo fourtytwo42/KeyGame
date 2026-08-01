@@ -69,6 +69,10 @@ export type ServerDeployment = {
     testnetCurrentBytecodeMatches?: boolean;
     devnetLaunchRehearsalPassed?: boolean;
     mainnetBroadcastAuthorized?: boolean;
+    mainnetDeploymentCompleted?: boolean;
+    mainnetAuthorizationState?: "NOT_AUTHORIZED" | "CONSUMED";
+    launchValidationStatus?: "NOT_DEPLOYED" | "PENDING" | "PASSED";
+    promotionStatus?: "LOCKED" | "AUTHORIZED";
   };
   releaseEvidence?: {
     label?: string;

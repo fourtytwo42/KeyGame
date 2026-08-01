@@ -10,11 +10,22 @@ rehearsal_report_json="${V4_LAUNCH_REHEARSAL_REPORT_JSON:-}"
 testnet_smoke_report="${TESTNET_V4_SMOKE_REPORT:-}"
 testnet_deployment_manifest="${TESTNET_V4_DEPLOYMENT_MANIFEST:-}"
 release_upstream_ref="${RELEASE_UPSTREAM_REF:-}"
+planned_mainnet_manifest="${KEYGAME_MAINNET_PLANNED_MANIFEST:-}"
 release_baseline_commit="${RELEASE_BASELINE_COMMIT:-6198c73944a021aa24d86c03c59c8e7ee8abcea5}"
 if [[ -z "$release_upstream_ref" ]]; then
   echo "RELEASE_UPSTREAM_REF must identify the pushed release commit." >&2
   exit 1
 fi
+[[ -n "$planned_mainnet_manifest" && -f "$planned_mainnet_manifest" ]] || {
+  echo "The nonce-bound planned mainnet deployment manifest is required." >&2
+  exit 1
+}
+[[ -f "$planned_mainnet_manifest.sha256" ]] || {
+  echo "The planned mainnet manifest checksum is required." >&2
+  exit 1
+}
+(cd "$(dirname "$planned_mainnet_manifest")" && \
+  sha256sum --check "$(basename "$planned_mainnet_manifest.sha256")")
 export RELEASE_UPSTREAM_REF="$release_upstream_ref"
 if [[ -z "$torture_report_json" ]]; then
   echo "V4_TORTURE_REPORT_JSON must identify the accepted commit-bound torture report." >&2
@@ -98,7 +109,7 @@ git merge-base --is-ancestor "$rehearsal_commit" "$source_commit" || {
 }
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/devnet-deploy.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/validate-final-mainnet-candidate.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/release/testnet-v4.ts|src/lib/release/testnet-v4.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|services/v4-keeper.ts|services/mainnet-promotion-guard.ts|services/mainnet-promotion-guard.test.ts|script/DeployMainnet.s.sol|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/devnet-deploy.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-mainnet-release-plan.sh|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/validate-final-mainnet-candidate.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-deployment-plan.ts|scripts/verify-mainnet-planned-deployment.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-mainnet-planned-manifest.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-deployment-plan.ts|src/lib/release/mainnet-deployment-plan.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/release/testnet-v4.ts|src/lib/release/testnet-v4.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     ops/systemd/keygame-v4-rehearsal-web.service|scripts/install-v4-launch-rehearsal-services.sh) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
@@ -107,10 +118,20 @@ while IFS= read -r changed_file; do
   esac
 done < <(git diff --name-only "$release_baseline_commit".."$source_commit")
 
-if [[ -n "$(git diff --name-only "$release_baseline_commit".."$source_commit" -- contracts script/DeployMainnet.s.sol)" ]]; then
-  echo "Contract or mainnet deployment bytecode changed after the accepted release baseline." >&2
+if [[ -n "$(git diff --name-only "$release_baseline_commit".."$source_commit" -- contracts)" ]]; then
+  echo "Contract bytecode changed after the accepted release baseline." >&2
   exit 1
 fi
+baseline_deploy_script="$(mktemp)"
+normalized_deploy_script="$(mktemp)"
+trap 'rm -f "$baseline_deploy_script" "$normalized_deploy_script"' EXIT
+git show "$release_baseline_commit:script/DeployMainnet.s.sol" >"$baseline_deploy_script"
+sed 's/MAINNET_BROADCAST_ENABLED = true/MAINNET_BROADCAST_ENABLED = false/' \
+  script/DeployMainnet.s.sol >"$normalized_deploy_script"
+cmp -s "$baseline_deploy_script" "$normalized_deploy_script" || {
+  echo "DeployMainnet changed beyond the reviewed compile-time lock." >&2
+  exit 1
+}
 jq -e --arg commit "$qualified_commit" '
   .sourceCommit == $commit and
   .contractCampaign.state == "passed" and
@@ -188,6 +209,8 @@ for contract in \
 done
 
 cp deployments/4663.template.json "$output_dir/mainnet-manifest.template.json"
+cp "$planned_mainnet_manifest" "$output_dir/planned-mainnet-deployment.json"
+cp "$planned_mainnet_manifest.sha256" "$output_dir/planned-mainnet-deployment.json.sha256"
 cp deployments/46630-v4.template.json "$output_dir/testnet-manifest.template.json"
 cp "$testnet_deployment_manifest" \
   "$output_dir/evidence/testnet-deployment-manifest.json"
@@ -249,6 +272,7 @@ printf '%s\n' "NO TESTNET OR MAINNET BROADCAST" \
   "EXTERNAL WALLET UAT SKIPPED - BROWSER WALLET COMPATIBILITY UNVERIFIED" \
   "DEVNET ONE-HOUR REHEARSAL PASSED - CURRENT-BYTECODE TESTNET SMOKE PASSED" \
   "CURRENT TESTNET BYTECODE MATCHED - FINAL MAINNET CANDIDATE" \
+  "NONCE-BOUND DEPLOYMENT PLAN INCLUDED - ONE-SHOT AUTHORIZATION REQUIRED" \
   "MAINNET GAMEPLAY NOT PRETESTED - READ-ONLY VALIDATION ONLY" \
   "EXPLICIT MAINNET AUTHORIZATION REMAINS BLOCKING" \
   >"$output_dir/RELEASE-STATUS.txt"

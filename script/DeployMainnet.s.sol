@@ -11,7 +11,7 @@ import { ScriptBase } from "./ScriptBase.sol";
 /// @notice Complete v4 mainnet deployment path with a compile-time release
 /// lock. A dedicated reviewed release commit must change the constant.
 contract DeployMainnetV4 is ScriptBase {
-    bool private constant MAINNET_BROADCAST_ENABLED = false;
+    bool private constant MAINNET_BROADCAST_ENABLED = true;
     address private constant FACTORY = 0x1f7d7550B1b028f7571E69A784071F0205FD2EfA;
     address private constant USDG = 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168;
 

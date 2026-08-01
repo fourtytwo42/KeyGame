@@ -19,6 +19,9 @@ const authorizationPath = required("MAINNET_RELEASE_AUTHORIZATION_FILE");
 if (!isAbsolute(authorizationPath)) {
   throw new Error("MAINNET_RELEASE_AUTHORIZATION_FILE must be absolute.");
 }
+if (authorizationPath.endsWith(".consumed")) {
+  throw new Error("Consumed mainnet authorizations cannot be reused.");
+}
 const resolvedAuthorization = await realpath(authorizationPath);
 const insideProject = relative(projectRoot, resolvedAuthorization);
 if (!insideProject.startsWith("..") && !isAbsolute(insideProject)) {
@@ -43,7 +46,7 @@ process.stdout.write(
       manifestSha256,
       chainId: authorization.chainId,
       deployerAddress,
-      maximumDeployments: authorization.maximumDeployments,
+      maximumDeploymentRuns: authorization.maximumDeploymentRuns,
       launchValidation: authorization.launchValidation,
       promotionRequiresSeparateAuthorization:
         authorization.promotionRequiresSeparateAuthorization,
@@ -51,6 +54,7 @@ process.stdout.write(
       browserWalletCompatibility: authorization.browserWalletCompatibility,
       authorizedAt: authorization.authorizedAt,
       expiresAt: authorization.expiresAt,
+      authorizationState: authorization.authorizationState,
       internalSecurityReviewSha256: authorization.internalSecurityReviewSha256,
     },
     null,

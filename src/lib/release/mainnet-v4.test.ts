@@ -18,7 +18,7 @@ const valid = {
   manifestSha256: expected.manifestSha256,
   deployerAddress: expected.deployerAddress,
   chainId: 4663,
-  maximumDeployments: 1,
+  maximumDeploymentRuns: 1,
   launchValidation: "READ_ONLY",
   promotionRequiresSeparateAuthorization: true,
   walletUatDisposition: "SKIPPED_BY_OPERATOR",
@@ -26,6 +26,7 @@ const valid = {
   authorizedAt: "2026-07-31T00:00:00Z",
   expiresAt: "2026-08-01T00:00:00Z",
   mainnetBroadcastAuthorized: true,
+  authorizationState: "UNUSED",
   internalSecurityReviewSha256: "c".repeat(64),
 };
 
@@ -99,7 +100,7 @@ describe("mainnet v4 release guards", () => {
   it("accepts only the exact commit, manifest, deployer, and read-only scope", () => {
     expect(validateMainnetReleaseAuthorization(valid, expected)).toMatchObject({
       chainId: 4663,
-      maximumDeployments: 1,
+      maximumDeploymentRuns: 1,
       launchValidation: "READ_ONLY",
       promotionRequiresSeparateAuthorization: true,
       walletUatDisposition: "SKIPPED_BY_OPERATOR",
@@ -140,6 +141,12 @@ describe("mainnet v4 release guards", () => {
         expected,
       ),
     ).toThrow(/Unknown/);
+    expect(() =>
+      validateMainnetReleaseAuthorization(
+        { ...valid, authorizationState: "CONSUMED" },
+        expected,
+      ),
+    ).toThrow(/consumed/);
   });
 
   it("rejects expired, incomplete, and unknown-field authorizations", () => {
@@ -183,6 +190,7 @@ describe("mainnet v4 release guards", () => {
       "scripts/verify-mainnet-read-only.ts",
       "utf8",
     );
+    const keeper = readFileSync("services/v4-keeper.ts", "utf8");
     const timer = readFileSync(
       "ops/systemd/keygame-v4-launch-rehearsal.timer",
       "utf8",
@@ -194,7 +202,10 @@ describe("mainnet v4 release guards", () => {
     expect(shell).toContain("SKIPPED_BY_OPERATOR");
     expect(shell).toContain("ROBINHOOD_MAINNET_FALLBACK_RPC_URL");
     expect(shell).toContain("release:scan:mainnet");
-    expect(solidity).toContain("MAINNET_BROADCAST_ENABLED = false");
+    expect(solidity).toContain("MAINNET_BROADCAST_ENABLED = true");
+    expect(shell).toContain("verify-mainnet-planned-deployment.ts");
+    expect(shell).toContain("verify-mainnet-deployment-plan.ts");
+    expect(shell).toContain("$MAINNET_RELEASE_AUTHORIZATION_FILE.consumed");
     expect(rehearsal).toContain("manifest.chainId !== 31_337");
     expect(rehearsal).not.toContain("4663");
     expect(rehearsalPrepare).toContain(
@@ -207,6 +218,7 @@ describe("mainnet v4 release guards", () => {
     expect(readOnly).not.toMatch(
       /createWalletClient|sendTransaction|writeContract|signTransaction|privateKeyToAccount/,
     );
+    expect(keeper).toContain("assertMainnetPromotionAllowsKeeper");
     expect(timer).toContain("OnUnitActiveSec=10s");
     expect(timer).toContain("Persistent=false");
   });

@@ -26,25 +26,14 @@ instruction.
 
 ## 2. Two-round testnet smoke
 
-Historical evidence only. The mock-only deployment from commit `2b4fcfa` settled exactly two
-rounds with two players per round, exercised every reward class, reconciled all
-eight token allocations, and left round three unstarted. The keeper is stopped
-and this evidence must remain immutable.
-Run `release:verify:testnet:v4-bytecode` against the immutable runtime manifest.
-The smoke remains valid only when normalized deployed bytecode matches the
-current contract artifacts exactly. The current candidate changed runtime
-bytecode in `312dd5e` to repair lifetime-reward rounding, so the historical
-smoke cannot satisfy the current release gate. Stop mainnet qualification at
-this mismatch unless a matching-bytecode smoke is separately authorized; do
-not silently submit another testnet transaction.
-
-After separate authorization, deploy once from the exact frozen commit and run
-exactly two rounds. Reconcile with `release:reconcile:testnet:v4`, compare
-runtime bytecode with `release:verify:testnet:v4-bytecode`, and provide both
-checksummed files plus the immutable deployment manifest to the final packager.
-It rejects any commit/hash mismatch, fewer than two players per round, anything
-other than eight token allocations, a missing reward category, a failed keeper
-job, or a third round that is absent or started.
+Completed 2026-08-01 from commit
+`5955b3b8f47c6294bd7549215d0099741474ab23`. The mock-only deployment at block
+`95922891` settled exactly two rounds with two players and four calls per round,
+exercised every reward class, reconciled all eight token allocations, and left
+round six prepared with zero calls and an unstarted timer. All eleven contracts
+are explorer verified and direct LAN reads match the current runtime bytecode.
+The one-shot authorization is consumed and cannot be reused. No further
+testnet transaction is required while contract bytecode remains unchanged.
 
 ## 3. Internal assurance, acknowledgement, and role setup
 
@@ -95,13 +84,21 @@ chain-31337 deployment or rehearsal run.
 
 ## 6. Mainnet deployment and read-only validation
 
-Mainnet needs a second explicit authorization and a dedicated reviewed commit
-that deliberately removes the Solidity compile-time broadcast lock.
+The dedicated release commit opens only the Solidity compile-time path. It
+cannot deploy without the nonce-bound plan, matching one-shot authorization,
+external encrypted keystore, runtime broadcast flag, and every live preflight.
+
+Before authorization, run `release:plan:mainnet`. It forks the LAN mainnet node
+at a pinned block, preserves the deployer's current nonce, simulates the full
+deployment without a key, and writes expected addresses, runtime hashes,
+transaction count, gas used, constructor configuration, and initial roster to
+an immutable external planned manifest.
 
 Copy `docs/operations/mainnet-authorization.template.json` outside the
 repository, replace every placeholder, and bind it to the exact release
-commit, manifest hash, deployer, read-only validation policy, authorization
-time, and expiry. The authorization must remain valid for at least one hour.
+commit, planned-manifest hash, deployer, one deployment run, read-only
+validation policy, unused state, authorization time, and expiry. The
+authorization must remain valid for at least one hour.
 Legacy canary-scoped authorizations are invalid.
 
 1. Re-run canonical registry, chain, sync, pool, bytecode, role-custody, source, and
@@ -109,7 +106,9 @@ Legacy canary-scoped authorizations are invalid.
    Run `release:budget:mainnet` to record deployment gas, a 25% margin, the
    keeper reserve, and the deployer ETH deficit. No player wallet or pre-launch
    USDG is required.
-2. Deploy only the frozen internally reviewed commit and write the immutable manifest.
+2. Deploy only the frozen internally reviewed commit. The wrapper consumes the
+   authorization before broadcasting, writes the immutable deployment
+   manifest, and requires every address and runtime hash to match the plan.
 3. Verify runtime bytecode, roles, contract relationships, seed custody, and
    source on the explorer.
 4. Run `release:verify:mainnet:read-only`. It verifies bytecode, roles,
@@ -122,6 +121,8 @@ Legacy canary-scoped authorizations are invalid.
    outside the repository and bind approval to the immutable deployment
    manifest and checksummed read-only report.
 7. Run `release:verify:mainnet:promotion` before listing the application.
+   The mainnet keeper additionally refuses to load its signing wallet until
+   that promotion authorization and zero-transaction read-only report match.
    Browser-wallet compatibility and mainnet gameplay remain explicitly
    unverified; the first public users execute the first value-bearing paths.
 

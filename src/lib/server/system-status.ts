@@ -492,6 +492,20 @@ export async function getSystemStatus() {
         manifest.releaseEvidence?.protectedBuildSha256 ??
         process.env.PROTECTED_BUILD_SHA256 ??
         "not-recorded",
+      plannedManifestSha256:
+        process.env.KEYGAME_MAINNET_PLANNED_MANIFEST_SHA256 ?? null,
+      finalManifestSha256: manifest.chainId === 4663 ? manifestHash : null,
+      authorizationState:
+        manifest.releaseGates?.mainnetAuthorizationState ?? "NOT_AUTHORIZED",
+      readOnlyVerification: {
+        status: manifest.releaseGates?.launchValidationStatus ?? "NOT_DEPLOYED",
+        reportSha256:
+          process.env.KEYGAME_MAINNET_READ_ONLY_REPORT_SHA256 ?? null,
+      },
+      promotionState: manifest.releaseGates?.promotionStatus ?? "LOCKED",
+      unlisted:
+        manifest.chainId === 4663 &&
+        manifest.releaseGates?.promotionStatus !== "AUTHORIZED",
       mainnetBroadcastLocked:
         manifest.chainId !== 4663 ||
         manifest.releaseGates?.mainnetBroadcastAuthorized !== true,

@@ -4,7 +4,7 @@
   "manifestSha256": "REQUIRED_64_HEX_SHA256",
   "chainId": 4663,
   "deployerAddress": "REQUIRED_DEPLOYER_ADDRESS",
-  "maximumDeployments": 1,
+  "maximumDeploymentRuns": 1,
   "launchValidation": "READ_ONLY",
   "promotionRequiresSeparateAuthorization": true,
   "walletUatDisposition": "SKIPPED_BY_OPERATOR",
@@ -12,5 +12,6 @@
   "authorizedAt": "REQUIRED_ISO_TIMESTAMP",
   "expiresAt": "REQUIRED_ISO_TIMESTAMP_AT_LEAST_ONE_HOUR_LATER",
   "mainnetBroadcastAuthorized": true,
+  "authorizationState": "UNUSED",
   "internalSecurityReviewSha256": "REQUIRED_64_HEX_SHA256"
 }

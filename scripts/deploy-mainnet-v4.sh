@@ -9,6 +9,7 @@ required=(
   ROBINHOOD_MAINNET_RPC_URL ROBINHOOD_MAINNET_FALLBACK_RPC_URL
   DEPLOYER_ADDRESS DEPLOYER_KEYSTORE DEPLOYER_PASSWORD_FILE
   RELEASE_UPSTREAM_REF MAINNET_RELEASE_AUTHORIZATION_FILE
+  KEYGAME_MAINNET_PLANNED_MANIFEST
   INITIAL_ROUND_ID INITIAL_STOCK_0 INITIAL_STOCK_1 INITIAL_STOCK_2 INITIAL_STOCK_3
   INITIAL_SYMBOL_0 INITIAL_SYMBOL_1 INITIAL_SYMBOL_2 INITIAL_SYMBOL_3
   ROBINHOOD_VERIFIER_TYPE ROBINHOOD_VERIFIER_URL
@@ -23,9 +24,11 @@ for legacy_role in KEEPER_ADDRESS FAUCET_ADDRESS TREASURY_ADDRESS \
 done
 [[ "$DEPLOYER_KEYSTORE" = /* && -f "$DEPLOYER_KEYSTORE" ]] || die "DEPLOYER_KEYSTORE must be an existing absolute path."
 [[ "$DEPLOYER_PASSWORD_FILE" = /* && -f "$DEPLOYER_PASSWORD_FILE" ]] || die "DEPLOYER_PASSWORD_FILE must be an existing absolute path."
-case "$DEPLOYER_KEYSTORE:$DEPLOYER_PASSWORD_FILE:$MAINNET_RELEASE_AUTHORIZATION_FILE" in
+case "$DEPLOYER_KEYSTORE:$DEPLOYER_PASSWORD_FILE:$MAINNET_RELEASE_AUTHORIZATION_FILE:$KEYGAME_MAINNET_PLANNED_MANIFEST" in
   *"$project_root"*) die "Keys, passwords, and authorization must remain outside the repository." ;;
 esac
+[[ -f "$KEYGAME_MAINNET_PLANNED_MANIFEST" ]] || die "The immutable planned deployment manifest is missing."
+[[ ! -e "$MAINNET_RELEASE_AUTHORIZATION_FILE.consumed" ]] || die "This authorization has already been consumed."
 
 commit="$(git rev-parse HEAD)"
 [[ -z "$(git status --porcelain)" ]] || die "Refusing dirty or untracked source."
@@ -55,18 +58,20 @@ fallback_hash="$(cast block "$common_head" --field hash --rpc-url "$ROBINHOOD_MA
 [[ "$primary_hash" == "$fallback_hash" ]] || die "RPC providers disagree on the canonical common block."
 
 export SOURCE_COMMIT="$commit"
-export MAINNET_MANIFEST_PATH="$project_root/deployments/4663.template.json"
+export MAINNET_MANIFEST_PATH="$KEYGAME_MAINNET_PLANNED_MANIFEST"
+pnpm exec tsx scripts/verify-mainnet-planned-deployment.ts > /tmp/keygame-mainnet-plan.json
 pnpm exec tsx scripts/verify-mainnet-authorization.ts > /tmp/keygame-mainnet-authorization.json
 jq -e '.walletUatDisposition == "SKIPPED_BY_OPERATOR"
   and .browserWalletCompatibility == "UNVERIFIED"
   and .launchValidation == "READ_ONLY"
   and .promotionRequiresSeparateAuthorization == true
   and (.authorizedAt | type == "string")
-  and .maximumDeployments == 1' /tmp/keygame-mainnet-authorization.json >/dev/null \
+  and .maximumDeploymentRuns == 1
+  and .authorizationState == "UNUSED"' /tmp/keygame-mainnet-authorization.json >/dev/null \
   || die "Mainnet authorization does not match the approved wallet waiver and read-only launch scope."
 
 preflight_file="$(mktemp)"
-trap 'rm -f "$preflight_file" /tmp/keygame-mainnet-authorization.json' EXIT
+trap 'rm -f "$preflight_file" /tmp/keygame-mainnet-authorization.json /tmp/keygame-mainnet-plan.json' EXIT
 pnpm exec tsx scripts/preflight-mainnet-v4.ts >"$preflight_file"
 for index in 0 1 2 3; do
   variable="INITIAL_SYMBOL_${index}"
@@ -80,17 +85,24 @@ forge test
 RUN_ROBINHOOD_MAINNET_FORK=true ROBINHOOD_MAINNET_FORK_RPC_URL="$ROBINHOOD_MAINNET_RPC_URL" forge test --match-contract RobinhoodMainnetForkTest
 
 [[ "${KEYGAME_MAINNET_V4_BROADCAST:-}" == "true" ]] || die "Mainnet broadcast remains locked."
-# DeployMainnetV4 has a second compile-time false lock. Only a dedicated reviewed
-# release commit may deliberately change it.
+# The compile-time release path is open only in this dedicated reviewed commit.
+# The nonce-bound plan and one-shot external authorization remain mandatory.
+consumed_authorization="$MAINNET_RELEASE_AUTHORIZATION_FILE.consumed"
+mv -- "$MAINNET_RELEASE_AUTHORIZATION_FILE" "$consumed_authorization"
+chmod 400 "$consumed_authorization"
+sha256sum "$consumed_authorization" > "$consumed_authorization.sha256"
+sync "$consumed_authorization" "$consumed_authorization.sha256"
 forge script script/DeployMainnet.s.sol:DeployMainnetV4 \
   --rpc-url "$ROBINHOOD_MAINNET_RPC_URL" \
   --sender "$DEPLOYER_ADDRESS" \
   --keystore "$DEPLOYER_KEYSTORE" \
   --password-file "$DEPLOYER_PASSWORD_FILE" \
-  --broadcast
+  --broadcast --slow
 
 KEYGAME_WRITE_MANIFEST_CHAIN_ID=4663 pnpm exec tsx scripts/write-v4-deployment-manifest.ts
 mkdir -p artifacts/deployment-verification
+KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/4663.json" \
+  pnpm exec tsx scripts/verify-mainnet-deployment-plan.ts
 KEYGAME_DEPLOYMENT_MANIFEST="$project_root/deployments/4663.json" \
 KEYGAME_ROLE_CUSTODY_EVIDENCE="$project_root/artifacts/deployment-verification/4663-role-custody.json" \
   pnpm release:verify-role-custody

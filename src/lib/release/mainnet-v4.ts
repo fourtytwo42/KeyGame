@@ -85,7 +85,7 @@ export type MainnetReleaseAuthorization = {
   manifestSha256: string;
   chainId: 4663;
   deployerAddress: string;
-  maximumDeployments: 1;
+  maximumDeploymentRuns: 1;
   launchValidation: "READ_ONLY";
   promotionRequiresSeparateAuthorization: true;
   walletUatDisposition: "SKIPPED_BY_OPERATOR";
@@ -93,7 +93,22 @@ export type MainnetReleaseAuthorization = {
   authorizedAt: string;
   expiresAt: string;
   mainnetBroadcastAuthorized: true;
+  authorizationState: "UNUSED";
   internalSecurityReviewSha256: string;
+};
+
+export type MainnetLaunchAuthorization = MainnetReleaseAuthorization;
+
+export type ReadOnlyLaunchReport = {
+  label: string;
+  generatedAt: string;
+  sourceCommit: string;
+  manifestSha256: string;
+  chainId: 4663;
+  launchValidation: "READ_ONLY";
+  transactionsSubmitted: 0;
+  browserWalletCompatibility: "UNVERIFIED";
+  promotionRequiresSeparateAuthorization: true;
 };
 
 const keys = new Set<keyof MainnetReleaseAuthorization>([
@@ -102,7 +117,7 @@ const keys = new Set<keyof MainnetReleaseAuthorization>([
   "manifestSha256",
   "chainId",
   "deployerAddress",
-  "maximumDeployments",
+  "maximumDeploymentRuns",
   "launchValidation",
   "promotionRequiresSeparateAuthorization",
   "walletUatDisposition",
@@ -110,6 +125,7 @@ const keys = new Set<keyof MainnetReleaseAuthorization>([
   "authorizedAt",
   "expiresAt",
   "mainnetBroadcastAuthorized",
+  "authorizationState",
   "internalSecurityReviewSha256",
 ]);
 
@@ -152,7 +168,7 @@ export function validateMainnetReleaseAuthorization(
   ) {
     throw new Error("Authorization deployer mismatch.");
   }
-  if (value.maximumDeployments !== 1) {
+  if (value.maximumDeploymentRuns !== 1) {
     throw new Error("Authorization must permit exactly one deployment.");
   }
   if (value.launchValidation !== "READ_ONLY") {
@@ -171,6 +187,9 @@ export function validateMainnetReleaseAuthorization(
   }
   if (value.mainnetBroadcastAuthorized !== true) {
     throw new Error("Authorization does not permit mainnet broadcast.");
+  }
+  if (value.authorizationState !== "UNUSED") {
+    throw new Error("Authorization has already been consumed or is malformed.");
   }
   const now = expected.now ?? Date.now();
   const authorizedAt = Date.parse(String(value.authorizedAt));

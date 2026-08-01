@@ -78,6 +78,15 @@ export default async function StatusPage() {
               configured: boolean;
             };
             protectedBuildSha256: string;
+            plannedManifestSha256: string | null;
+            finalManifestSha256: string | null;
+            authorizationState: string;
+            readOnlyVerification: {
+              status: string;
+              reportSha256: string | null;
+            };
+            promotionState: string;
+            unlisted: boolean;
             mainnetBroadcastLocked: boolean;
           };
           services: Array<{
@@ -185,7 +194,11 @@ export default async function StatusPage() {
             }`}
           />
           <div>
-            <h2>Robinhood testnet</h2>
+            <h2>
+              {production?.chainId === 4663
+                ? "Robinhood mainnet"
+                : "Robinhood testnet"}
+            </h2>
             <p>
               {production
                 ? `Chain ${production.chainId} · block ${production.block ?? "unavailable"} · indexer lag ${production.indexer.lag ?? "unknown"} · LAN-only RPC · reference lag ${production.rpc.headLag ?? "unknown"}.`
@@ -266,8 +279,9 @@ export default async function StatusPage() {
           <div>
             <h2>Mainnet launch validation</h2>
             <p>
-              Read-only verification only. Mainnet gameplay is not pretested;
-              public promotion requires separate approval.
+              {production?.chainId === 4663
+                ? `MAINNET / ${production.release.unlisted ? "UNLISTED" : "PROMOTED"} / read-only ${production.release.readOnlyVerification.status.toLowerCase()} / promotion ${production.release.promotionState.toLowerCase()}.`
+                : "Read-only verification only. Mainnet gameplay is not pretested; public promotion requires separate approval."}
             </p>
           </div>
           <strong>READ ONLY</strong>
@@ -314,6 +328,19 @@ export default async function StatusPage() {
           <p>Latest verified block: {snapshot?.blockNumber ?? "unavailable"}</p>
           <p>Deployment commit: {production?.sourceCommit ?? "unavailable"}</p>
           <p>Manifest hash: {production?.manifestHash ?? "unavailable"}</p>
+          <p>
+            Planned manifest:{" "}
+            {production?.release.plannedManifestSha256 ?? "pending"}
+            {" / "}Final manifest:{" "}
+            {production?.release.finalManifestSha256 ?? "pending"}
+          </p>
+          <p>
+            Launch authorization:{" "}
+            {production?.release.authorizationState ?? "not authorized"}
+            {" / "}Read-only verification{" "}
+            {production?.release.readOnlyVerification.status ?? "not deployed"}
+            {" / "}Promotion {production?.release.promotionState ?? "locked"}
+          </p>
           <p>
             Protected build:{" "}
             {production?.release.protectedBuildSha256 ?? "not recorded"}

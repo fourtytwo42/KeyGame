@@ -19,14 +19,22 @@ campaign, and the one-hour launch rehearsal. The non-broadcast Robinhood testnet
 `artifacts/last-bell-v4-testnet-ready.tgz`. Testnet remains a mock-asset
 environment. The operator authorized one mock-only testnet deployment and
 exactly two settled network-compatibility rounds after requalification.
-The historical mock-only two-round testnet smoke completed and reconciled, but
-its deployed runtime predates the lifetime-vault rounding repair in `312dd5e`.
-It is preserved as historical network evidence and does not qualify the current
-bytecode without a separately authorized replacement smoke. Current internal
-devnet assurance is complete.
+The current-bytecode mock-only testnet deployment from commit
+`5955b3b8f47c6294bd7549215d0099741474ab23` completed exactly two settlements,
+reconciled every allocation and reward path, and left the successor round
+prepared and unstarted. All deployed runtime bytecode matches the candidate.
+Current internal devnet and testnet assurance is complete.
 External-wallet UAT is intentionally skipped, remains unpassed, and browser
 compatibility is labeled unverified. Fresh production market checks and an
 explicit mainnet authorization remain separate gates.
+
+The mainnet release candidate uses a nonce-bound planned deployment generated
+from a pinned LAN-backed fork simulation. Authorization binds the exact source,
+plan hash, deployer, predicted addresses, runtime hashes, transaction count,
+constructor configuration, and read-only launch policy. Deployment consumes
+the authorization before broadcasting. Keeper signing remains disabled until
+a separately authorized public promotion matches the immutable deployment and
+zero-transaction read-only verification report.
 
 The production-readiness implementation adds a non-upgradeable,
 Robinhood-mainnet-only direct Uniswap V3 adapter, a deployer-controlled catalog
