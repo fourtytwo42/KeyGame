@@ -15,6 +15,11 @@ export const DEVNET_REHEARSAL_CHAIN_ID = 31_337;
 export const DEVNET_REHEARSAL_ROUNDS = 10;
 export const DEVNET_REHEARSAL_DURATION_MS = 60 * 60 * 1_000;
 export const DEVNET_REHEARSAL_BUDGET_RAW = parseUnits("100", 6);
+
+export function rehearsalGasLimit(estimatedGas: bigint) {
+  if (estimatedGas <= 0n) throw new Error("Estimated gas must be positive.");
+  return (estimatedGas * 125n + 99n) / 100n;
+}
 export const REHEARSAL_CONTRIBUTIONS: readonly RehearsalContributionPair[] = [
   { deployerUsd: 1, playerUsd: 2 },
   { deployerUsd: 2, playerUsd: 5 },

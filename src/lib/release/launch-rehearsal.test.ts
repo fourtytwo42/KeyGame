@@ -6,6 +6,7 @@ import {
   DEVNET_REHEARSAL_DURATION_MS,
   plannedRehearsalSpendRaw,
   plannedRehearsalSpendByActorRaw,
+  rehearsalGasLimit,
   restartCheckpointsForSettledRounds,
   validateRehearsalActors,
 } from "./launch-rehearsal";
@@ -14,6 +15,11 @@ const playerA = "0x2222222222222222222222222222222222222222";
 const playerB = "0x3333333333333333333333333333333333333333";
 
 describe("devnet launch rehearsal controls", () => {
+  it("adds a conservative gas limit margin", () => {
+    expect(rehearsalGasLimit(481_887n)).toBe(602_359n);
+    expect(() => rehearsalGasLimit(0n)).toThrow(/positive/);
+  });
+
   it("distributes ten rounds from minute zero through minute 54", () => {
     const start = Date.parse("2026-07-31T00:00:00Z");
     const schedule = rehearsalRoundSchedule(start);

@@ -25,6 +25,7 @@ import {
   DEVNET_REHEARSAL_BUDGET_RAW,
   DEVNET_REHEARSAL_DURATION_MS,
   DEVNET_REHEARSAL_ROUNDS,
+  rehearsalGasLimit,
   restartCheckpointsForSettledRounds,
   validateRehearsalActors,
 } from "../src/lib/release/launch-rehearsal";
@@ -326,10 +327,16 @@ async function sendAction(input: {
     address: account.address,
     blockTag: "pending",
   });
+  const estimatedGas = await input.client.estimateGas({
+    account,
+    to: input.address,
+    data,
+  });
   const request = await input.wallet.prepareTransactionRequest({
     account,
     to: input.address,
     data,
+    gas: rehearsalGasLimit(estimatedGas),
     nonce,
   });
   const signed = await input.wallet.signTransaction(request);
