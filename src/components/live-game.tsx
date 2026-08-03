@@ -305,16 +305,20 @@ export function LiveGame({
     }
     window.setTimeout(() => {
       setState((current) => {
-        const result = claimBell(current, {
-          address: demoAddresses.player,
-          displayName: "you.local",
-          ticker,
-          band: tickerById(ticker).currentBand,
-          multiplierBps: tickerById(ticker).multiplierBps,
-          verifiedPrice: tickerById(ticker).currentPrice,
-          reportTimestamp: Math.floor(Date.now() / 1000),
-          producerPass: true,
-        });
+        const result = claimBell(
+          current,
+          {
+            address: demoAddresses.player,
+            displayName: "you.local",
+            ticker,
+            band: tickerById(ticker).currentBand,
+            multiplierBps: tickerById(ticker).multiplierBps,
+            verifiedPrice: tickerById(ticker).currentPrice,
+            reportTimestamp: Math.floor(Date.now() / 1000),
+            producerPass: true,
+          },
+          amountUsd,
+        );
         setActionStatus(result.event.accepted ? "accepted" : "rejected");
         setAnnouncement(
           result.event.accepted
@@ -357,16 +361,20 @@ export function LiveGame({
     }
     setState(
       (current) =>
-        claimBell(current, {
-          address: demoAddresses.player,
-          displayName: "you.local",
-          ticker: effectiveTicker,
-          band: tickerById(effectiveTicker).currentBand,
-          multiplierBps: tickerById(effectiveTicker).multiplierBps,
-          verifiedPrice: tickerById(effectiveTicker).currentPrice,
-          reportTimestamp: Math.floor(Date.now() / 1000),
-          producerPass: true,
-        }).state,
+        claimBell(
+          current,
+          {
+            address: demoAddresses.player,
+            displayName: "you.local",
+            ticker: effectiveTicker,
+            band: tickerById(effectiveTicker).currentBand,
+            multiplierBps: tickerById(effectiveTicker).multiplierBps,
+            verifiedPrice: tickerById(effectiveTicker).currentPrice,
+            reportTimestamp: Math.floor(Date.now() / 1000),
+            producerPass: true,
+          },
+          amountUsd,
+        ).state,
     );
     setGuestSession({
       player: demoAddresses.player,

@@ -9,6 +9,11 @@ Durable project context lives here. Update this file whenever information should
   retained; the television show's logo, characters, and trade dress are not
   copied. Historical Solidity names, ABI identifiers, file paths, and
   `last-bell-v4-stock-pot` remain unchanged for compatibility.
+- Current gameplay copy and simulator fixtures use the v4 variable-contribution
+  economy everywhere: players choose any amount with a $1 minimum and no
+  maximum, the first accepted contribution starts the timer, and rejected
+  actions describe the selected contribution rather than a fixed $1 fee.
+  Archived v1-v3 PRDs and replay adapters retain their historical economics.
 - 2026-08-01 final-path implementation: branch
   `codex/v4-final-mainnet-path` makes current-bytecode testnet evidence a hard
   prerequisite for the final mainnet package. The validator requires the exact
@@ -477,6 +482,13 @@ When sources conflict, use this order:
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
 
 ## Verification Ledger
+
+- 2026-08-03 Saved by the Bell/variable-amount presentation: clean branch
+  `codex/saved-by-the-bell-branding` passed lint, TypeScript, 90 Vitest tests,
+  and the Next.js production build after converting the simulator fixtures and
+  actions to variable v4 contributions. Devnet port 3000 and testnet/demo port
+  3001 were rebuilt locally on the VM; final browser verification remains the
+  handoff step before this entry is marked fully complete.
 
 - 2026-08-03: Renamed all shared runtime branding, wallet connector metadata,
   profiles, receipts, social metadata, operations labels, and authoritative PRD

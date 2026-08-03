@@ -77,17 +77,18 @@ const makeClaim = (
   atSeconds: number,
   timeAfterSeconds: number,
   intervalSeconds: number,
+  usdgAmount: number,
 ): ClaimEvent => ({
   id: `claim-${sequence}`,
   sequence,
   atSeconds,
   claimant: { ...claimant, claimNumber: sequence },
   previousTicker: sequence === 38 ? "TSLA" : "NVDA",
-  feeUsd: 1,
+  feeUsd: usdgAmount,
   phase: timeAfterSeconds <= 10 ? "rug" : "live",
-  contractVersion: "closing-print-v3-airtime",
+  contractVersion: "last-bell-v4-stock-pot",
   accepted: true,
-  potAfterUsd: 51 + sequence,
+  potAfterUsd: 50 + usdgAmount,
   timeAfterSeconds,
   verifiedPrice: claimant.verifiedPrice,
   reportTimestamp: claimant.reportTimestamp,
@@ -95,20 +96,23 @@ const makeClaim = (
   multiplierBps: claimant.multiplierBps,
   intervalSeconds,
   weightedPoints: (intervalSeconds * claimant.multiplierBps) / 10_000,
+  usdgAmount,
+  pointsAwarded: (usdgAmount * claimant.multiplierBps) / 10_000,
+  stockReceived: usdgAmount / claimant.verifiedPrice,
   producerPass: claimant.producerPass,
 });
 
 const claims: ClaimEvent[] = [
-  makeClaim(35, { ...holder, displayName: "green.candle" }, 136, 18, 8),
-  makeClaim(36, { ...rival, displayName: "cookinwithgas" }, 144, 12, 3),
-  makeClaim(37, rival, 147, 9, 4),
-  makeClaim(38, holder, 151, 5, 0),
+  makeClaim(35, { ...holder, displayName: "green.candle" }, 136, 18, 8, 10),
+  makeClaim(36, { ...rival, displayName: "cookinwithgas" }, 144, 12, 3, 2),
+  makeClaim(37, rival, 147, 9, 4, 5),
+  makeClaim(38, holder, 151, 5, 0, 10),
 ];
 
 const baseState: RoundState = {
   phase: "live",
-  marketMode: "DEX",
-  broadcastLabel: "HEAT CHECK",
+  marketMode: "FLAT",
+  broadcastLabel: "VOLUME CHECK",
   producerPassRequired: false,
   timeLeftSeconds: 21,
   elapsedSeconds: 128,
@@ -119,7 +123,7 @@ const baseState: RoundState = {
   claims,
   freshness: "live",
   updatedAt: "2026-07-28T20:46:03.000Z",
-  contractVersion: "closing-print-v3-airtime",
+  contractVersion: "last-bell-v4-stock-pot",
 };
 
 const stateFor = (
@@ -168,7 +172,7 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
     id: "entry",
     label: "Entry desk",
     description:
-      "Pick the first ticker you want to put on air. Its $1 call starts the timer.",
+      "Pick a stock and choose any contribution amount. The first accepted contribution starts the timer.",
     state: stateFor("entry", {
       timeLeftSeconds: 45,
       elapsedSeconds: 0,
@@ -187,7 +191,8 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
   live: {
     id: "live",
     label: "Live transmission",
-    description: "Each accepted $1 print steals the bell and adds two seconds.",
+    description:
+      "Each accepted contribution buys the selected Stock Token, steals the bell, and adds two seconds.",
     state: baseState,
   },
   "green-switch": {
@@ -266,7 +271,8 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
   "stale-data": {
     id: "stale-data",
     label: "Stale report",
-    description: "A stale report is rejected before the $1 fee can move.",
+    description:
+      "An unsafe or unavailable quote is rejected before the selected contribution can move.",
     state: stateFor("live", { freshness: "delayed" }),
   },
   "special-round": {

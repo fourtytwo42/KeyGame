@@ -27,19 +27,22 @@ export function tick(state: RoundState, seconds = 1): RoundState {
         ? "rug"
         : "live";
 
-  const tickerScores = state.holder
-    ? state.tickerScores.map((score) =>
-        score.ticker === state.holder?.ticker
-          ? {
-              ...score,
-              rawSeconds: score.rawSeconds + applied,
-              weightedScore:
-                score.weightedScore +
-                (applied * state.holder.multiplierBps) / 10_000,
-            }
-          : score,
-      )
-    : state.tickerScores;
+  const tickerScores =
+    state.contractVersion === "last-bell-v4-stock-pot"
+      ? state.tickerScores
+      : state.holder
+        ? state.tickerScores.map((score) =>
+            score.ticker === state.holder?.ticker
+              ? {
+                  ...score,
+                  rawSeconds: score.rawSeconds + applied,
+                  weightedScore:
+                    score.weightedScore +
+                    (applied * state.holder.multiplierBps) / 10_000,
+                }
+              : score,
+          )
+        : state.tickerScores;
 
   return {
     ...state,
@@ -55,6 +58,7 @@ export function tick(state: RoundState, seconds = 1): RoundState {
 export function claimBell(
   state: RoundState,
   claimant: Omit<BellHolder, "claimNumber">,
+  usdgAmount = 10,
 ): ClaimResult {
   const sequence = state.claims.length + 1;
   const nextHolder: BellHolder = { ...claimant, claimNumber: sequence };
@@ -78,9 +82,9 @@ export function claimBell(
     claimant: nextHolder,
     previousHolder: state.holder?.address,
     previousTicker: state.holder?.ticker,
-    feeUsd: rejectedReason ? 0 : roundConfig.claimPriceUsd,
+    feeUsd: rejectedReason ? 0 : usdgAmount,
     phase: state.phase === "rug" ? "rug" : "live",
-    contractVersion: "closing-print-v3-airtime",
+    contractVersion: state.contractVersion,
     accepted: !rejectedReason,
     reason: rejectedReason,
     potAfterUsd: state.potUsd,
@@ -89,6 +93,11 @@ export function claimBell(
     reportTimestamp: claimant.reportTimestamp,
     marketBand: claimant.band,
     multiplierBps: claimant.multiplierBps,
+    usdgAmount: rejectedReason ? 0 : usdgAmount,
+    pointsAwarded: rejectedReason
+      ? 0
+      : (usdgAmount * claimant.multiplierBps) / 10_000,
+    stockReceived: rejectedReason ? 0 : usdgAmount / claimant.verifiedPrice,
     producerPass: claimant.producerPass,
   };
 
@@ -111,7 +120,7 @@ export function claimBell(
     : state.timeLeftSeconds;
   const event: ClaimEvent = {
     ...baseEvent,
-    potAfterUsd: state.potUsd + roundConfig.claimPriceUsd,
+    potAfterUsd: state.potUsd + usdgAmount,
     timeAfterSeconds: extended,
   };
 
@@ -129,6 +138,15 @@ export function claimBell(
               lastAcquisitionAt: state.elapsedSeconds,
               currentBand: claimant.band,
               multiplierBps: claimant.multiplierBps,
+              weightedScore:
+                state.contractVersion === "last-bell-v4-stock-pot"
+                  ? score.weightedScore +
+                    (usdgAmount * claimant.multiplierBps) / 10_000
+                  : score.weightedScore,
+              recentVolumeUsd:
+                state.contractVersion === "last-bell-v4-stock-pot"
+                  ? (score.recentVolumeUsd ?? 0) + usdgAmount
+                  : score.recentVolumeUsd,
             }
           : score,
       ),

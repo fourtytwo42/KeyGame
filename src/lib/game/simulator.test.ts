@@ -25,9 +25,7 @@ describe("Closing Print simulator", () => {
     const result = claimBell(scenarios.rug.state, claimant);
     expect(result.event.accepted).toBe(true);
     expect(result.state.timeLeftSeconds).toBe(7);
-    expect(result.state.potUsd).toBe(
-      scenarios.rug.state.potUsd + roundConfig.claimPriceUsd,
-    );
+    expect(result.state.potUsd).toBe(scenarios.rug.state.potUsd + 10);
   });
 
   it("allows a different ticker on every accepted claim", () => {
@@ -36,7 +34,7 @@ describe("Closing Print simulator", () => {
     expect(result.state.timeLeftSeconds).toBe(23);
   });
 
-  it("locks the interval multiplier into weighted score", () => {
+  it("awards variable contribution points before the timer advances", () => {
     const claimed = claimBell(scenarios.entry.state, {
       ...claimant,
       ticker: "NVDA",
@@ -45,8 +43,9 @@ describe("Closing Print simulator", () => {
     });
     const advanced = tick(claimed.state, 4);
     const nvda = advanced.tickerScores.find((score) => score.ticker === "NVDA");
-    expect(nvda?.rawSeconds).toBe(4);
-    expect(nvda?.weightedScore).toBe(5);
+    expect(claimed.event.usdgAmount).toBe(10);
+    expect(claimed.event.pointsAwarded).toBe(12.5);
+    expect(nvda?.weightedScore).toBe(12.5);
   });
 
   it("rejects self claims and unavailable reports before charging", () => {

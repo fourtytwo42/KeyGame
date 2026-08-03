@@ -19,30 +19,28 @@ describe("LiveGame", () => {
     vi.useRealTimers();
   });
 
-  it("renders the literal market-reactive game state first", () => {
+  it("renders the variable-amount stock-pot game state first", () => {
     render(<LiveGame initialScenario="live" />);
     expect(screen.getByText("$89 POT")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
+      screen.getByRole("button", { name: /APE \$10 ON NVDA/i }),
     ).toBeEnabled();
-    expect(screen.getAllByText(/CLOSING PRINT CROWN/i)).toHaveLength(3);
+    expect(screen.getAllByText(/WINNING STOCK · 30%/i)).toHaveLength(3);
   });
 
   it("turns the starter ticker into the first paid claim", () => {
     render(<LiveGame initialScenario="entry" />);
     expect(
-      screen.getByText(/first \$1 call starts the 45-second broadcast clock/i),
+      screen.getByText(/Your buy starts the 45-second clock/i),
     ).toBeInTheDocument();
     expect(screen.getByText("00:45")).toBeInTheDocument();
     expect(
-      screen.getByText(/WAITING · FIRST \$1 STARTS IT/i),
+      screen.getByText(/WAITING · FIRST CONTRIBUTION STARTS IT/i),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /AAPL.*FLAT/i }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "ENTER WITH AAPL · $1" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /AAPL.*1\.00×/i }));
+    fireEvent.click(screen.getByRole("button", { name: "APE $10 ON AAPL" }));
     expect(
-      screen.getByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
+      screen.getByRole("button", { name: /APE \$10 ON NVDA/i }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$100").length).toBeGreaterThan(0);
     expect(screen.getAllByText("you.local").length).toBeGreaterThan(0);
@@ -51,9 +49,7 @@ describe("LiveGame", () => {
   it("shows submitted state before accepting a simulated ticker switch", () => {
     vi.useFakeTimers();
     render(<LiveGame initialScenario="live" />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /PUT AAPL ON AIR · \$1/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /APE \$10 ON AAPL/i }));
     expect(
       screen.getAllByRole("button", { name: /CALLING…/i })[0],
     ).toBeDisabled();
@@ -68,7 +64,7 @@ describe("LiveGame", () => {
       screen.getByRole("heading", { name: "Dead air" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
+      screen.queryByRole("button", { name: /APE \$10 ON NVDA/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -76,7 +72,7 @@ describe("LiveGame", () => {
     render(<LiveGame initialScenario="stale-data" />);
     expect(screen.getByText("CONNECTION DEGRADED")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /PUT NVDA ON AIR · \$1/i }),
+      screen.getByRole("button", { name: /APE \$10 ON NVDA/i }),
     ).toBeDisabled();
   });
 
