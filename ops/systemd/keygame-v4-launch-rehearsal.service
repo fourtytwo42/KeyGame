@@ -1,5 +1,5 @@
 [Unit]
-Description=Last Bell chain-31337 one-hour launch rehearsal runner
+Description=Saved by the Bell chain-31337 one-hour launch rehearsal runner
 After=network-online.target postgresql.service keygame-v4-rehearsal-indexer.service keygame-v4-rehearsal-keeper.service
 Wants=network-online.target
 

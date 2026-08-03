@@ -28,15 +28,20 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ),
   title: {
-    default: "Last Bell · Channel 4663",
-    template: "%s · Last Bell",
+    default: "Saved by the Bell · Channel 4663",
+    template: "%s · Saved by the Bell",
   },
   description:
     "Pick a bag. Pay $1 to take the bell. Hold it when the clock hits zero to win half the pot.",
-  applicationName: "Last Bell",
-  keywords: ["onchain game", "Robinhood Chain", "Last Bell", "ticker game"],
+  applicationName: "Saved by the Bell",
+  keywords: [
+    "onchain game",
+    "Robinhood Chain",
+    "Saved by the Bell",
+    "ticker game",
+  ],
   openGraph: {
-    title: "Last Bell · Channel 4663",
+    title: "Saved by the Bell · Channel 4663",
     description: "The last caller holding the bell wins the broadcast.",
     type: "website",
   },

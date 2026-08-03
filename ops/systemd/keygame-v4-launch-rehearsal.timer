@@ -1,5 +1,5 @@
 [Unit]
-Description=Run the Last Bell devnet launch rehearsal every ten seconds
+Description=Run the Saved by the Bell devnet launch rehearsal every ten seconds
 
 [Timer]
 OnBootSec=10s

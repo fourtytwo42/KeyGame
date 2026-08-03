@@ -11,7 +11,7 @@ import { getDevnetSnapshot } from "@/lib/web3/devnet";
 
 export const metadata: Metadata = {
   title: "Final Holder Receipt",
-  description: "The canonical receipt for Last Bell Round 4663.",
+  description: "The canonical receipt for Saved by the Bell Round 4663.",
 };
 export const dynamic = "force-dynamic";
 

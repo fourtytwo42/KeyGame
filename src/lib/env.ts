@@ -3,7 +3,7 @@ import type { Address } from "viem";
 type GameMode = "simulator" | "devnet" | "testnet" | "mainnet";
 
 const literalError = (name: string, reason: string): never => {
-  throw new Error(`LAST BELL CONFIGURATION ERROR: ${name} ${reason}`);
+  throw new Error(`SAVED BY THE BELL CONFIGURATION ERROR: ${name} ${reason}`);
 };
 
 const optionalUrl = (name: string, value?: string) => {

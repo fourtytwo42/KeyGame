@@ -11,7 +11,11 @@ export function StationShell({ children }: { children: ReactNode }) {
         Skip to broadcast
       </a>
       <header className="stationHeader">
-        <Link className="stationIdentity" href="/" aria-label="Last Bell home">
+        <Link
+          className="stationIdentity"
+          href="/"
+          aria-label="Saved by the Bell home"
+        >
           <Image
             src="/brand/last-bell-mascot.png"
             alt=""
@@ -21,7 +25,10 @@ export function StationShell({ children }: { children: ReactNode }) {
           />
           <span>
             <small>CHANNEL 4663</small>
-            <strong>LAST BELL</strong>
+            <strong className="stationTitle">
+              <span>SAVED</span>
+              <em>BY THE BELL</em>
+            </strong>
           </span>
         </Link>
         <div className="onAirBug">
@@ -39,7 +46,7 @@ export function StationShell({ children }: { children: ReactNode }) {
       <main id="main-content">{children}</main>
       <footer className="stationFooter">
         <p>
-          Last Bell is experimental software.{" "}
+          Saved by the Bell is experimental software.{" "}
           {mode === "mainnet"
             ? "Stock Token markets are identified onchain."
             : `${mode === "testnet" ? "Testnet" : "Devnet"} tokens have no monetary value. Stock Token references are synthetic unless explicitly marked otherwise.`}

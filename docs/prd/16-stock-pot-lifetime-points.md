@@ -94,7 +94,7 @@ ticker contribution, then the lower roster index.
 
 Every accounted Stock Token balance is split independently:
 
-- 50% Last Bell: final accepted caller.
+- 50% Saved by the Bell: final accepted caller.
 - 30% Winning Stock: contributors to the highest-point stock, proportional to
   their multiplied points in that stock.
 - 10% Lifetime Points: holders of points active before this settlement.
@@ -123,7 +123,7 @@ standings. The game board shows 30-second volume, multiplier, ticker points,
 player points, points to lead, token quantity in the pot, and estimated USD
 value.
 
-The earnings center separates Last Bell, Winning Stock, Lifetime Points, and
+The earnings center separates Saved by the Bell, Winning Stock, Lifetime Points, and
 refunds. It shows claimable, claimed, total earned, active/pending points,
 eligible supply, share percentage, per-ticker points, and the exact
 numerator/denominator calculation for every ledger item.

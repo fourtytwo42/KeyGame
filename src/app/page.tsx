@@ -14,8 +14,11 @@ export default async function HomePage({
 
   return (
     <div className="gameHomePage">
-      <section className="homeStudio" aria-label="Current Last Bell game">
-        <h1 className="srOnly">Current Last Bell round</h1>
+      <section
+        className="homeStudio"
+        aria-label="Current Saved by the Bell game"
+      >
+        <h1 className="srOnly">Current Saved by the Bell round</h1>
         <LiveGame initialScenario={scenario.id} />
       </section>
       <HistoricalRuns />

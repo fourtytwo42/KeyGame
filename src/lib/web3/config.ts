@@ -19,7 +19,7 @@ const walletConnectProjectId = publicEnvironment.walletConnectProjectId;
 const connectors = [
   injected({ shimDisconnect: true }),
   metaMask(),
-  coinbaseWallet({ appName: "Last Bell" }),
+  coinbaseWallet({ appName: "Saved by the Bell" }),
   safe(),
 ];
 
@@ -31,7 +31,7 @@ if (walletConnectProjectId) {
       projectId: walletConnectProjectId,
       showQrModal: true,
       metadata: {
-        name: "Last Bell",
+        name: "Saved by the Bell",
         description: "The last caller holding the bell wins the broadcast.",
         url: publicEnvironment.appUrl,
         icons: [new URL("/brand/icon-192.png", publicEnvironment.appUrl).href],

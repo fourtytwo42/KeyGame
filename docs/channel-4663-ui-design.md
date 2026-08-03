@@ -5,7 +5,7 @@
 > market bands, multipliers, and `THE CLOSING PRINT` in
 > [PRD 10](./prd/10-closing-print-market-reactive.md).
 
-Status: Selected visual and frontend direction for `Last Bell: Ticker Royale` on 2026-07-28.
+Status: Selected visual and frontend direction for `Saved by the Bell: Ticker Royale` on 2026-07-28.
 
 ## Decision
 
@@ -13,9 +13,9 @@ The interface will use an intentionally uncommon design language called **Channe
 
 > A late-night regional public-access market game show, transmitted through a teletext scoreboard and operated with municipal broadcast hardware.
 
-`4663` is Robinhood Chain's chain ID. In the interface it becomes the fictional television channel carrying every Last Bell round.
+`4663` is Robinhood Chain's chain ID. In the interface it becomes the fictional television channel carrying every Saved by the Bell round.
 
-The product remains `Last Bell`. Channel 4663 is its visual world, not a replacement product name.
+The product is `Saved by the Bell`. Channel 4663 is its visual world, not a replacement product name.
 
 ## Directions deliberately rejected
 
@@ -107,7 +107,7 @@ The composition should feel assembled by a local station engineer, not generated
 The top strip always shows:
 
 - `CH 4663`
-- `LAST BELL`
+- `SAVED BY THE BELL`
 - `LIVE`, `RUG ZONE`, or `FINAL`
 - Round number
 

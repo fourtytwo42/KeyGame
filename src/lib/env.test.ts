@@ -29,7 +29,7 @@ describe("environment validation", () => {
   it("fails with a literal message for an invalid mode", () => {
     expect(() =>
       readPublicEnvironment({ NEXT_PUBLIC_GAME_MODE: "mainframe" }),
-    ).toThrow(/LAST BELL CONFIGURATION ERROR: NEXT_PUBLIC_GAME_MODE/);
+    ).toThrow(/SAVED BY THE BELL CONFIGURATION ERROR: NEXT_PUBLIC_GAME_MODE/);
   });
 
   it("rejects malformed contract addresses", () => {

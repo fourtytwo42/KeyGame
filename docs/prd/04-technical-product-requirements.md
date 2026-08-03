@@ -29,7 +29,7 @@ flowchart LR
     N --> W["Wallet or smart account"]
     N --> I["Round indexer and read API"]
     N --> R["Robinhood Chain RPC"]
-    W --> C["Last Bell contracts"]
+    W --> C["Saved by the Bell contracts"]
     C --> A["Canonical asset registry and feeds"]
     C --> E["Onchain events"]
     E --> I
@@ -39,7 +39,7 @@ flowchart LR
 
 Authority order:
 
-1. Last Bell contract state and canonical events.
+1. Saved by the Bell contract state and canonical events.
 2. Confirmed RPC reads.
 3. Indexed projection.
 4. Browser cache.
@@ -157,7 +157,7 @@ Responsibilities:
 - Record round addresses and identifiers.
 - Carry an explicitly accounted next-round seed.
 
-### Last Bell round
+### Saved by the Bell round
 
 Responsibilities:
 

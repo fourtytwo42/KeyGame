@@ -1,6 +1,6 @@
-# Last Bell
+# Saved by the Bell
 
-Last Bell is a short, mobile-first onchain game for Robinhood Chain. Players
+Saved by the Bell is a short, mobile-first onchain game for Robinhood Chain. Players
 pick a Stock Token ticker on every call, pay $1 to put it on air and take the bell,
 and try to hold it when the countdown reaches zero.
 
@@ -162,7 +162,7 @@ behind. Never place provider credentials in a `NEXT_PUBLIC_` variable.
 - [Comprehensive user stories](docs/prd/08-user-stories.md)
 - [Delivery plan](docs/prd/07-delivery-plan.md)
 - [Screen gallery](docs/design/screens/README.md)
-- [Last Bell product concept](docs/last-bell-product-concept.md)
+- [Saved by the Bell product concept](docs/last-bell-product-concept.md)
 - [FoMo3D game-logic research](docs/fomo3d-game-logic-research.md)
 
 ## Security boundary

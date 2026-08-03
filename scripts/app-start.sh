@@ -24,7 +24,7 @@ pnpm db:migrate >/dev/null
 pnpm build >/dev/null
 
 if [[ -f "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-  echo "Last Bell is already running with PID $(cat "$pid_file")."
+  echo "Saved by the Bell is already running with PID $(cat "$pid_file")."
 else
   nohup setsid node node_modules/next/dist/bin/next start --hostname 0.0.0.0 \
     >"$log_file" 2>&1 &
@@ -44,11 +44,11 @@ if pnpm exec wait-on --timeout 30000 http://127.0.0.1:3000/api/status; then
       >"$indexer_log_file" 2>&1 &
     echo "$!" >"$indexer_pid_file"
   fi
-  echo "Last Bell is listening on 0.0.0.0:3000."
+  echo "Saved by the Bell is listening on 0.0.0.0:3000."
   echo "Automatic round keeper is running with PID $(cat "$keeper_pid_file")."
   echo "Canonical devnet indexer is running with PID $(cat "$indexer_pid_file")."
   exit 0
 fi
 
-echo "Last Bell did not become ready. See $log_file." >&2
+echo "Saved by the Bell did not become ready. See $log_file." >&2
 exit 1

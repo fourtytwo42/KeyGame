@@ -4,6 +4,11 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- User-facing branding is now `Saved by the Bell` across devnet, testnet, and
+  protected/mainnet builds. Original mascot and Channel 4663 visual system are
+  retained; the television show's logo, characters, and trade dress are not
+  copied. Historical Solidity names, ABI identifiers, file paths, and
+  `last-bell-v4-stock-pot` remain unchanged for compatibility.
 - 2026-08-01 final-path implementation: branch
   `codex/v4-final-mainnet-path` makes current-bytecode testnet evidence a hard
   prerequisite for the final mainnet package. The validator requires the exact
@@ -473,6 +478,11 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-08-03: Renamed all shared runtime branding, wallet connector metadata,
+  profiles, receipts, social metadata, operations labels, and authoritative PRD
+  decisions to `Saved by the Bell`. Local lint, TypeScript, 90 Vitest tests, and
+  the production Next.js build passed. The mainnet source/manifest hash must be
+  regenerated because branding changes the release commit, not contract bytecode.
 - 2026-08-01: LAN-only RPC enforcement removed every Viem fallback transport
   from application clients, role wallets, keeper/indexer services, DEX
   observations, and testnet soak tooling. The browser relay now sends requests

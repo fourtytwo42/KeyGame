@@ -1,4 +1,4 @@
-# Last Bell Implementation Gap Audit
+# Saved by the Bell Implementation Gap Audit
 
 > `D-026` update: PRD 16 is authoritative. V4 uses uncapped Stock Token pot
 > contributions and persistent lifetime points. The 100-round economic gate is

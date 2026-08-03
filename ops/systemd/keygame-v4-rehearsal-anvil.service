@@ -1,5 +1,5 @@
 [Unit]
-Description=Last Bell isolated chain-31337 launch rehearsal
+Description=Saved by the Bell isolated chain-31337 launch rehearsal
 After=network-online.target
 
 [Service]

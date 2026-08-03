@@ -9,7 +9,7 @@ Robinhood Chain testnet points; value-bearing stages remain gated.
 
 ## Product summary
 
-`Last Bell: Ticker Royale` is a short, mobile-first onchain game in which players choose a ticker faction and compete to hold a public bell when a visible countdown reaches zero.
+`Saved by the Bell: Ticker Royale` is a short, mobile-first onchain game in which players choose a ticker faction and compete to hold a public bell when a visible countdown reaches zero.
 
 The headline rule is:
 
@@ -21,7 +21,7 @@ The faction with the most cumulative control time splits a separate 30% bonus. T
 
 Most DeFi interfaces require too much context before a user can act, while many onchain games hide simple economic behavior behind token emissions, large rule sets, or casino presentation.
 
-Last Bell must create:
+Saved by the Bell must create:
 
 - A win condition understood in five seconds.
 - A round short enough for a meme trader's attention window.
@@ -92,7 +92,7 @@ Needs transparent round scheduling, supported-asset controls, incident visibilit
 
 | ID | Exclusion |
 |---|---|
-| `PRD-OUT-001` | A native Last Bell token. |
+| `PRD-OUT-001` | A native Saved by the Bell token. |
 | `PRD-OUT-002` | ICO, bonding curve, key sale, or key-holder dividend system. |
 | `PRD-OUT-003` | Affiliate commissions or monetary referral tree. |
 | `PRD-OUT-004` | Random airdrop or block-derived lottery. |

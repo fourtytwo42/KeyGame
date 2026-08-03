@@ -14,7 +14,7 @@ defaults; production economics and Stock Token entry remain unapproved.
 
 ## Rule authority
 
-This document defines Last Bell behavior. The historical FoMo3D formulas, keys, masks, teams, airdrop, affiliate logic, and settlement quirks do not apply unless explicitly restated here.
+This document defines Saved by the Bell behavior. The historical FoMo3D formulas, keys, masks, teams, airdrop, affiliate logic, and settlement quirks do not apply unless explicitly restated here.
 
 ## Player-facing rules
 

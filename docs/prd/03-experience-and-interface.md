@@ -144,7 +144,7 @@ utility treatment.
 
 ### Complete mobile screen set
 
-![Last Bell twelve-screen mobile contact sheet](../design/screens/screen-contact-sheet.png)
+![Saved by the Bell twelve-screen mobile contact sheet](../design/screens/screen-contact-sheet.png)
 
 ### `UX-001`: Home / Next Broadcast
 
@@ -263,7 +263,7 @@ The visual source of truth is `docs/channel-4663-ui-design.md`.
 | `UX-041` | Use Big Shoulders Stencil for broadcast display, Atkinson Hyperlegible Next for interface copy, and Azeret Mono for numeric state. |
 | `UX-042` | Use broadcast bands and clipped fields rather than a generic card dashboard. |
 | `UX-043` | Do not introduce glass, blur, glow, gradients, casino chrome, dark-green fintech, cyberpunk terminal, or shadcn-style card composition. |
-| `UX-044` | Channel 4663 is the fictional carrier; `Last Bell` remains the product name. |
+| `UX-044` | Channel 4663 is the fictional carrier; `Saved by the Bell` is the product name. |
 | `UX-045` | Ticker mascots use awkward flat three-color vector art and do not reproduce corporate logos. |
 | `UX-046` | Motion occurs only on meaningful state changes. |
 | `UX-047` | Rug Zone uses Late Feed blue and short Hot Mic interruption bars rather than a flashing red takeover. |
@@ -298,7 +298,7 @@ The visual source of truth is `docs/channel-4663-ui-design.md`.
 
 Every receipt includes:
 
-- Last Bell and Channel 4663 identity.
+- Saved by the Bell and Channel 4663 identity.
 - Round number and network.
 - Exact result.
 - Player display name or shortened address.

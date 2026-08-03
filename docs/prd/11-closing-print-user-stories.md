@@ -37,7 +37,7 @@ and 180-second hard stop before paying.
 
 ### `CP-DISC-005` Land directly in the game
 
-As a visitor, `/` opens the one active Last Bell game without making me pass
+As a visitor, `/` opens the one active Saved by the Bell game without making me pass
 through a marketing page or choose a game mode.
 
 ## Entry and allowance

@@ -3,6 +3,8 @@ const reserved = new Set([
   "administrator",
   "lastbell",
   "last_bell",
+  "savedbythebell",
+  "saved_by_the_bell",
   "moderator",
   "official",
   "robinhood",

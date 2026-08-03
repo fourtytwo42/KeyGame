@@ -14,10 +14,12 @@ export async function generateMetadata({
   const { identity } = await params;
   const profile = await getProfile(identity).catch(() => null);
   return {
-    title: profile ? `${profile.displayName} · Last Bell` : "Caller not found",
+    title: profile
+      ? `${profile.displayName} · Saved by the Bell`
+      : "Caller not found",
     description: profile
-      ? `${profile.stats.calls} calls and ${profile.stats.finalBells} final bells on Last Bell.`
-      : "Last Bell caller profile.",
+      ? `${profile.stats.calls} calls and ${profile.stats.finalBells} final bells on Saved by the Bell.`
+      : "Saved by the Bell caller profile.",
   };
 }
 

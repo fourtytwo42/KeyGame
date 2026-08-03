@@ -29,4 +29,4 @@ stop_managed_process() {
 stop_managed_process "$indexer_pid_file"
 stop_managed_process "$keeper_pid_file"
 stop_managed_process "$pid_file"
-echo "Last Bell stopped."
+echo "Saved by the Bell stopped."

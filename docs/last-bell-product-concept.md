@@ -1,4 +1,4 @@
-# Last Bell: Ticker Royale
+# Saved by the Bell: Ticker Royale
 
 > Superseded product concept: permanent ticker factions were replaced by
 > ticker-per-claim Closing Print gameplay. See
@@ -8,7 +8,7 @@ Status: Product concept proposed on 2026-07-28. No implementation or economic de
 
 Selected frontend and visual direction: [Channel 4663 UI Design](channel-4663-ui-design.md).
 
-Implementation-facing requirements: [Last Bell PRD Suite](prd/README.md).
+Implementation-facing requirements: [Saved by the Bell PRD Suite](prd/README.md).
 
 ## One-sentence pitch
 
@@ -28,7 +28,7 @@ Every important control should pair meme language with plain language. The main 
 
 ## What the game is
 
-`Last Bell` is the product. `Ticker Royale` is its primary game mode.
+`Saved by the Bell` is the product. `Ticker Royale` is its primary game mode.
 
 It preserves the best parts of FoMo3D:
 

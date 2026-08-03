@@ -26,7 +26,7 @@ export default async function Image({
     >
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <b style={{ fontSize: 28 }}>CHANNEL 4663 · RECEIPT</b>
-        <b style={{ fontSize: 28 }}>LAST BELL</b>
+        <b style={{ fontSize: 28 }}>SAVED BY THE BELL</b>
       </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         <span style={{ fontSize: 118, fontWeight: 900 }}>ROUND {roundId}</span>

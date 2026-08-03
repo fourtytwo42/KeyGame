@@ -1,5 +1,5 @@
 [Unit]
-Description=Last Bell isolated v4 rehearsal keeper
+Description=Saved by the Bell isolated v4 rehearsal keeper
 After=network-online.target postgresql.service
 Wants=network-online.target
 

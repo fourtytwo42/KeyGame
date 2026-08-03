@@ -28,7 +28,9 @@ export function requireSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   const expected = expectedOrigin(request);
   if (origin && origin !== expected) {
-    throw new Error("Request origin does not match this Last Bell station.");
+    throw new Error(
+      "Request origin does not match this Saved by the Bell station.",
+    );
   }
   return expected;
 }
@@ -76,7 +78,7 @@ export async function createSiweChallenge(input: {
   const message = `${domain} wants you to sign in with your Ethereum account:
 ${address}
 
-Tune your wallet to Last Bell. This does not authorize a transaction or token spend.
+Tune your wallet to Saved by the Bell. This does not authorize a transaction or token spend.
 
 URI: ${origin}
 Version: 1

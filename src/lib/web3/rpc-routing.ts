@@ -30,7 +30,9 @@ const url = (name: string, value: string) => {
   try {
     return new URL(value).toString();
   } catch {
-    throw new Error(`LAST BELL RPC CONFIGURATION ERROR: ${name} is invalid.`);
+    throw new Error(
+      `SAVED BY THE BELL RPC CONFIGURATION ERROR: ${name} is invalid.`,
+    );
   }
 };
 

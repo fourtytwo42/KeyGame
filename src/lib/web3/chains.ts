@@ -4,7 +4,7 @@ import { publicEnvironment } from "@/lib/env";
 
 export const localDevnet = defineChain({
   ...anvil,
-  name: "Last Bell Local Devnet",
+  name: "Saved by the Bell Local Devnet",
   nativeCurrency: { name: "Dev Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
     default: { http: [publicEnvironment.localRpcUrl] },

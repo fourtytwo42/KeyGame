@@ -11,7 +11,7 @@ approve an open or gated production behavior.
 
 ## Purpose
 
-This document translates the Last Bell product, game, experience, technical,
+This document translates the Saved by the Bell product, game, experience, technical,
 risk, and measurement requirements into testable stories. It covers the full
 journey from an anonymous spectator opening a shared receipt through entry,
 live play, settlement, claims, replay, support, and operations.

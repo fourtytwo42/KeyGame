@@ -1,4 +1,8 @@
-# Last Bell PRD Suite
+# Saved by the Bell PRD Suite
+
+> `D-026` (2026-08-03): The user-facing product name is `Saved by the Bell`.
+> Historical contract names, ABI identifiers, file paths, and the
+> `last-bell-v4-stock-pot` version string remain unchanged for compatibility.
 
 > `D-025` (2026-07-30): PRD 16 is the authoritative v4 economy.
 > [16-stock-pot-lifetime-points.md](./16-stock-pot-lifetime-points.md)
@@ -36,14 +40,14 @@ Status: v4 is qualified on Anvil and has a production-readiness implementation.
 Value-bearing deployment remains blocked by the ledger in
 `docs/qualification/v4-mainnet-readiness-ledger.md`.
 
-This directory turns the historical FoMo3D research, Last Bell product concept, Channel 4663 visual direction, and Robinhood Chain constraints into implementation-facing requirements.
+This directory turns the historical FoMo3D research, Saved by the Bell product concept, Channel 4663 visual direction, and Robinhood Chain constraints into implementation-facing requirements.
 
 The suite deliberately separates selected decisions from proposals and launch gates. A requirement marked `PROPOSED`, `OPEN`, or `GATE` must not be silently treated as approved production behavior.
 
 The complete mobile and desktop concept set is embedded in
 [03 Experience and Interface](03-experience-and-interface.md#visual-screen-specifications).
 
-![Last Bell visual screen set](../design/screens/screen-contact-sheet.png)
+![Saved by the Bell visual screen set](../design/screens/screen-contact-sheet.png)
 
 ## Document map
 
@@ -78,7 +82,7 @@ The complete mobile and desktop concept set is embedded in
 
 | ID | Decision | Status | Notes |
 |---|---|---|---|
-| `D-001` | Product is `Last Bell`; primary mode is `Ticker Royale`. | `DECIDED` | Channel 4663 is the visual world, not the product name. |
+| `D-001` | Product is `Saved by the Bell`; primary mode is `Ticker Royale`. | `DECIDED` | Renamed from Last Bell on 2026-08-03; Channel 4663 remains the visual world. |
 | `D-002` | Target Robinhood Chain, chain ID `4663`. | `DECIDED` | External chain facts were last verified 2026-07-28. |
 | `D-003` | Main action copy is `SEND IT FOR THE BELL · $1`; `ape` remains supporting meme vocabulary. | `SELECTED FOR PROTOTYPE` | Stage 0 and Stage 1 use a test unit mirroring one USD; actual USDG is later gated scope. |
 | `D-004` | Final holder receives 50%; control-winning faction receives 30%; 15% seeds the next round; 5% funds operations. | `SELECTED FOR PROTOTYPE` | Use for fixtures and simulation; production still requires economic validation and approval. |
@@ -112,12 +116,12 @@ Use these sources in this order:
 
 1. Current application and contract files once implementation exists.
 2. This PRD suite.
-3. [Last Bell Product Concept](../last-bell-product-concept.md).
+3. [Saved by the Bell Product Concept](../last-bell-product-concept.md).
 4. [Channel 4663 UI Design](../channel-4663-ui-design.md).
 5. [FoMo3D Game Logic Research](../fomo3d-game-logic-research.md).
 6. `MEMORY.md`.
 
-The original FoMo3D research is authoritative only for historical behavior. It is not the specification for Last Bell.
+The original FoMo3D research is authoritative only for historical behavior. It is not the specification for Saved by the Bell.
 
 ## Current release scope
 

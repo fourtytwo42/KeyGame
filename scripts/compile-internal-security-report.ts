@@ -171,7 +171,7 @@ const reportJson = `${JSON.stringify(report, null, 2)}\n`;
 await writeFile(path.join(output, "internal-security-report.json"), reportJson);
 await writeFile(
   path.join(output, "internal-security-report.md"),
-  `# Last Bell v4 Internal Security Review\n\n**${report.label}**\n\n- Source commit: \`${sourceCommit}\`\n- Findings: ${findings.length}\n- Unresolved critical/high: ${unresolved.length}\n- Passed: ${report.passed}\n\n## Residual risks\n\n${report.residualRisks.map((risk) => `- ${risk}`).join("\n")}\n`,
+  `# Saved by the Bell v4 Internal Security Review\n\n**${report.label}**\n\n- Source commit: \`${sourceCommit}\`\n- Findings: ${findings.length}\n- Unresolved critical/high: ${unresolved.length}\n- Passed: ${report.passed}\n\n## Residual risks\n\n${report.residualRisks.map((risk) => `- ${risk}`).join("\n")}\n`,
 );
 process.stdout.write(reportJson);
 if (!report.passed) process.exitCode = 1;

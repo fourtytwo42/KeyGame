@@ -35,7 +35,7 @@ describe("profile validation", () => {
     expect(() =>
       validateProfile({
         handle: "normalcaller",
-        displayName: "Last Bell Official",
+        displayName: "SavedByTheBell Official",
       }),
     ).toThrow(/cannot be used/);
   });

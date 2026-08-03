@@ -30,6 +30,10 @@ test("the main page opens directly into the game and archive", async ({
   page,
 }) => {
   await page.goto("/");
+  await expect(page).toHaveTitle(/Saved by the Bell/);
+  await expect(
+    page.getByRole("link", { name: "Saved by the Bell home" }),
+  ).toBeVisible();
   await expect(page.getByText(/ANVIL · CHAIN 31337/)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Historical runs" }),

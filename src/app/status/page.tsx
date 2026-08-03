@@ -417,9 +417,9 @@ export default async function StatusPage() {
         <div>
           <h2>Honest failure behavior</h2>
           <p>
-            If canonical state is delayed or unavailable, Last Bell disables the
-            action and shows Dead Air. A submitted claim is never presented as
-            the holder until it is accepted.
+            If canonical state is delayed or unavailable, Saved by the Bell
+            disables the action and shows Dead Air. A submitted claim is never
+            presented as the holder until it is accepted.
           </p>
         </div>
       </section>
