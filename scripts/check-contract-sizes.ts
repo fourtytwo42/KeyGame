@@ -53,7 +53,7 @@ const compilerConfigSha256 = createHash("sha256")
   )
   .digest("hex");
 
-run("forge", ["build", "--force"]);
+run("forge", ["build", "--force", "--quiet"]);
 const contracts = DEPLOYABLE_CONTRACTS.map((contract) => {
   const bytecode = run("forge", [
     "inspect",
