@@ -4,6 +4,12 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-03 mascot refresh: commits `405516b` and `52c3ec9` replace the sad
+  bell illustration with a confident broadcast-host mascot holding a red mic,
+  pointing upward, and wearing a crooked grin. Current UI references use
+  `public/brand/saved-bell-mascot.png`; PWA/wallet icons use the `-v2` assets.
+  The legacy image remains only as an archived asset. Desktop and mobile
+  lockups are live on ports 3000 and 3001 with no horizontal overflow.
 - 2026-08-03 contract-size correction: the 24,723-byte manager came from the
   stale live-VM `optimizer_runs=10000` build, not the qualified release build.
   The authoritative release profile remains Solidity 0.8.30, optimizer 200,
@@ -507,6 +513,15 @@ When sources conflict, use this order:
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
 
 ## Verification Ledger
+
+- 2026-08-03 Saved by the Bell mascot refresh: ImageGen edited the existing
+  mascot into a confident, mischievous broadcast host while preserving the
+  yellow/red/plum illustration system. Chroma-key removal produced a validated
+  transparent PNG plus 192px and 512px icons. ESLint, TypeScript, 95 Vitest
+  tests, and the production Next.js build passed. Devnet and testnet/demo were
+  rebuilt from commits `405516b` and `52c3ec9`; direct live HTML checks confirm
+  `saved-bell-mascot.png` on both ports. Browser checks confirmed the new asset,
+  full mobile lockup bounds within 390px, and no horizontal overflow.
 
 - 2026-08-03 deterministic release-size qualification: commits `7ca760e` and
   `b679d95` added the pinned Foundry `release` profile, selected-deployable
