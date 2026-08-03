@@ -4,7 +4,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createPublicClient, getAddress, http, type Address } from "viem";
 import { robinhoodChainMainnet } from "../src/lib/web3/chains";
-import { validatePlannedMainnetDeployment } from "../src/lib/release/mainnet-deployment-plan";
+import {
+  assertBuildProvenanceMatchesSizeReport,
+  validatePlannedMainnetDeployment,
+} from "../src/lib/release/mainnet-deployment-plan";
+import { validateContractSizeReport } from "../src/lib/release/contract-size";
 
 function required(name: string) {
   const value = process.env[name]?.trim();
@@ -32,6 +36,28 @@ const currentNonce = await client.getTransactionCount({
 const plan = validatePlannedMainnetDeployment(
   JSON.parse(planBytes.toString("utf8")),
   { sourceCommit, deployerAddress, deploymentNonce: BigInt(currentNonce) },
+);
+const contractSizeEvidencePath = path.resolve(
+  required("KEYGAME_CONTRACT_SIZE_EVIDENCE"),
+);
+const contractSizeEvidenceBytes = await readFile(contractSizeEvidencePath);
+const contractSizeReport = validateContractSizeReport(
+  JSON.parse(contractSizeEvidenceBytes.toString("utf8")),
+  {
+    sourceCommit,
+    compilerConfigSha256: plan.buildProvenance.compilerConfigSha256,
+  },
+);
+const contractSizeEvidenceSha256 = createHash("sha256")
+  .update(contractSizeEvidenceBytes)
+  .digest("hex");
+if (contractSizeEvidenceSha256 !== plan.buildProvenance.sizeReportSha256) {
+  throw new Error("Contract-size evidence differs from the planned manifest.");
+}
+assertBuildProvenanceMatchesSizeReport(
+  plan.buildProvenance,
+  contractSizeReport,
+  contractSizeEvidenceSha256,
 );
 for (const address of Object.values(plan.expectedAddresses) as Address[]) {
   const code = await client.getCode({ address });
@@ -65,6 +91,12 @@ process.stdout.write(
       manifestSha256,
       expectedAddresses: plan.expectedAddresses,
       expectedTransactionCount: plan.expectedTransactionCount,
+      contractSizeEvidenceSha256,
+      managerRuntimeBytes:
+        plan.buildProvenance.contracts.RoundManagerV4.runtimeBytes,
+      managerEip170MarginBytes:
+        plan.buildProvenance.eip170RuntimeLimitBytes -
+        plan.buildProvenance.contracts.RoundManagerV4.runtimeBytes,
       rpcPolicy: "LAN_ONLY",
       activeProvider: "lan",
       automaticFailover: false,

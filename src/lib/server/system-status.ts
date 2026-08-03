@@ -432,6 +432,22 @@ export async function getSystemStatus() {
       launchValidation: "READ_ONLY",
       promotionRequiresSeparateAuthorization: true,
       gates: manifest.releaseGates ?? {},
+      contractSize: {
+        passed: manifest.releaseGates?.contractSizePassed === true,
+        reportSha256:
+          manifest.releaseEvidence?.contractSizeReportSha256 ?? null,
+        managerRuntimeBytes:
+          manifest.buildProvenance?.contracts.RoundManagerV4?.runtimeBytes ??
+          null,
+        managerEip170MarginBytes:
+          manifest.buildProvenance?.contracts.RoundManagerV4?.runtimeBytes !==
+          undefined
+            ? manifest.buildProvenance.eip170RuntimeLimitBytes -
+              manifest.buildProvenance.contracts.RoundManagerV4.runtimeBytes
+            : null,
+        policyVersion:
+          manifest.buildProvenance?.contractSizePolicyVersion ?? null,
+      },
       walletUat: {
         ...walletUat,
         evidenceSha256:

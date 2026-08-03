@@ -21,11 +21,14 @@ accounts=(
 session_player="0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
 
 export PATH="$HOME/.foundry/bin:$PATH"
+export FOUNDRY_PROFILE=release
 export DEPLOYER_ADDRESS="$deployer"
 cd "$project_root"
 if [[ "$deployment_manifest" == "$project_root/deployments/31337.json" ]]; then
   rm -f "$project_root/.devnet/round-rollover.json"
 fi
+
+pnpm contracts:check-sizes
 
 send_checked() {
   local receipt

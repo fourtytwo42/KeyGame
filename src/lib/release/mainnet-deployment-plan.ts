@@ -1,6 +1,17 @@
 import { getAddress, getContractAddress, type Address } from "viem";
+import type {
+  ContractSizeReport,
+  ContractSizeTier,
+  ReleaseCompilerConfiguration,
+} from "./contract-size";
+import {
+  CONTRACT_SIZE_POLICY_VERSION,
+  EIP170_RUNTIME_LIMIT_BYTES,
+  PRODUCTION_RUNTIME_BUDGET_BYTES,
+  RELEASE_FOUNDRY_PROFILE,
+} from "./contract-size";
 
-export const MAINNET_PLAN_SCHEMA_VERSION = 1 as const;
+export const MAINNET_PLAN_SCHEMA_VERSION = 2 as const;
 
 export type MainnetPlannedAddresses = {
   swapAdapter: Address;
@@ -33,6 +44,25 @@ export type PlannedMainnetDeploymentManifest = {
     keyof MainnetPlannedAddresses,
     `0x${string}`
   >;
+  expectedRuntimeCodeSizes: Record<keyof MainnetPlannedAddresses, number>;
+  buildProvenance: {
+    profile: typeof RELEASE_FOUNDRY_PROFILE;
+    foundryVersion: string;
+    compiler: ReleaseCompilerConfiguration;
+    compilerConfigSha256: string;
+    contractSizePolicyVersion: typeof CONTRACT_SIZE_POLICY_VERSION;
+    eip170RuntimeLimitBytes: typeof EIP170_RUNTIME_LIMIT_BYTES;
+    productionRuntimeBudgetBytes: typeof PRODUCTION_RUNTIME_BUDGET_BYTES;
+    sizeReportSha256: string;
+    contracts: Record<
+      string,
+      {
+        tier: ContractSizeTier;
+        runtimeBytes: number;
+        runtimeCodeHash: `0x${string}`;
+      }
+    >;
+  };
   constructorConfiguration: {
     factory: Address;
     usdg: Address;
@@ -65,6 +95,48 @@ export type PlannedMainnetDeploymentManifest = {
     promotionRequiresSeparateAuthorization: true;
   };
 };
+
+export function buildProvenanceFromSizeReport(
+  report: ContractSizeReport,
+  sizeReportSha256: string,
+): PlannedMainnetDeploymentManifest["buildProvenance"] {
+  if (!/^[0-9a-f]{64}$/i.test(sizeReportSha256)) {
+    throw new Error("Contract-size report SHA-256 is malformed.");
+  }
+  return {
+    profile: report.profile,
+    foundryVersion: report.foundryVersion,
+    compiler: report.compiler,
+    compilerConfigSha256: report.compilerConfigSha256,
+    contractSizePolicyVersion: report.policyVersion,
+    eip170RuntimeLimitBytes: report.limits.eip170RuntimeBytes,
+    productionRuntimeBudgetBytes: report.limits.productionRuntimeBudgetBytes,
+    sizeReportSha256,
+    contracts: Object.fromEntries(
+      report.contracts.map((contract) => [
+        contract.contractName,
+        {
+          tier: contract.tier,
+          runtimeBytes: contract.runtimeBytes,
+          runtimeCodeHash: contract.runtimeCodeHash,
+        },
+      ]),
+    ),
+  };
+}
+
+export function assertBuildProvenanceMatchesSizeReport(
+  build: PlannedMainnetDeploymentManifest["buildProvenance"],
+  report: ContractSizeReport,
+  sizeReportSha256: string,
+) {
+  const expected = buildProvenanceFromSizeReport(report, sizeReportSha256);
+  if (JSON.stringify(build) !== JSON.stringify(expected)) {
+    throw new Error(
+      "Planned build provenance differs from contract-size evidence.",
+    );
+  }
+}
 
 export function deriveMainnetPlannedAddresses(
   deployer: Address,
@@ -120,6 +192,21 @@ export function validatePlannedMainnetDeployment(
   ) {
     throw new Error("Planned deployment schema or chain is invalid.");
   }
+  const build = value.buildProvenance;
+  if (
+    build?.profile !== RELEASE_FOUNDRY_PROFILE ||
+    build.contractSizePolicyVersion !== CONTRACT_SIZE_POLICY_VERSION ||
+    build.eip170RuntimeLimitBytes !== EIP170_RUNTIME_LIMIT_BYTES ||
+    build.productionRuntimeBudgetBytes !== PRODUCTION_RUNTIME_BUDGET_BYTES ||
+    build.compiler?.solcVersion !== "0.8.30" ||
+    build.compiler.optimizerEnabled !== true ||
+    build.compiler.optimizerRuns !== 200 ||
+    build.compiler.viaIR !== true ||
+    !/^[0-9a-f]{64}$/i.test(build.compilerConfigSha256) ||
+    !/^[0-9a-f]{64}$/i.test(build.sizeReportSha256)
+  ) {
+    throw new Error("Planned deployment build provenance is invalid.");
+  }
   if (!/^[0-9a-f]{40}$/i.test(value.sourceCommit)) {
     throw new Error("Planned deployment source commit is malformed.");
   }
@@ -170,6 +257,36 @@ export function validatePlannedMainnetDeployment(
       value.expectedRuntimeCodeHashes[name as keyof MainnetPlannedAddresses];
     if (!/^0x[0-9a-f]{64}$/i.test(codeHash)) {
       throw new Error(`Planned ${name} runtime hash is malformed.`);
+    }
+  }
+  const runtimeContractByAddress = {
+    swapAdapter: "RobinhoodStockSwapAdapter",
+    manager: "RoundManagerV4",
+    paymentRouter: "PaymentRouter",
+    lifetimePointsVault: "LifetimePointsVault",
+    rewardRouter: "RewardRouterV4",
+    activeRound: "LastBellRoundV4",
+  } as const;
+  for (const [addressName, contractName] of Object.entries(
+    runtimeContractByAddress,
+  )) {
+    const contract = build.contracts?.[contractName];
+    const expectedHash =
+      value.expectedRuntimeCodeHashes[
+        addressName as keyof MainnetPlannedAddresses
+      ];
+    if (
+      !contract ||
+      contract.tier !== "production" ||
+      contract.runtimeBytes > PRODUCTION_RUNTIME_BUDGET_BYTES ||
+      value.expectedRuntimeCodeSizes[
+        addressName as keyof MainnetPlannedAddresses
+      ] !== contract.runtimeBytes ||
+      !/^0x[0-9a-f]{64}$/i.test(expectedHash)
+    ) {
+      throw new Error(
+        `Planned ${contractName} runtime size does not match build provenance.`,
+      );
     }
   }
   if (value.expectedTransactionCount !== derived.expectedTransactionCount) {

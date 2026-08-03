@@ -33,6 +33,8 @@ const deployment = JSON.parse(deploymentBytes.toString("utf8")) as {
   contracts: Record<string, Address>;
   roles: Record<string, Address | null>;
   runtimeCodeHashes: Record<string, `0x${string}`>;
+  runtimeCodeSizes: Record<string, number>;
+  buildProvenance: unknown;
   releaseGates?: Record<string, unknown>;
 };
 if (
@@ -58,6 +60,18 @@ for (const [name, expectedAddress] of Object.entries(plan.expectedAddresses)) {
   ) {
     throw new Error(`Final ${name} runtime bytecode does not match the plan.`);
   }
+  if (
+    deployment.runtimeCodeSizes[name] !==
+    plan.expectedRuntimeCodeSizes[name as keyof MainnetPlannedAddresses]
+  ) {
+    throw new Error(`Final ${name} runtime size does not match the plan.`);
+  }
+}
+if (
+  JSON.stringify(deployment.buildProvenance) !==
+  JSON.stringify(plan.buildProvenance)
+) {
+  throw new Error("Final build provenance does not match the plan.");
 }
 for (const role of [
   "managerAdmin",
@@ -75,6 +89,7 @@ for (const role of [
 }
 if (
   deployment.releaseGates?.mainnetBroadcastAuthorized !== false ||
+  deployment.releaseGates?.contractSizePassed !== true ||
   deployment.releaseGates?.mainnetAuthorizationState !== "CONSUMED" ||
   deployment.releaseGates?.launchValidationStatus !== "PENDING" ||
   deployment.releaseGates?.promotionStatus !== "LOCKED"

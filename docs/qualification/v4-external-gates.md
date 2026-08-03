@@ -5,6 +5,10 @@
 - Run pinned static analyzers, Foundry fuzz/invariants, negative controls,
   mainnet-fork tests, the complete torture campaign, integration tests, and the
   protected-build scan.
+- Build every deployable artifact with the pinned Foundry `release` profile and
+  require `contracts:check-sizes` to pass the 23,000-byte production budget and
+  24,576-byte EIP-170 absolute limit. The planned manifest must bind the report
+  hash, compiler configuration hash, runtime sizes, and runtime hashes.
 - Resolve every critical/high finding or record a test-linked suppression.
 - Publish checksummed evidence labeled
   `INTERNALLY REVIEWED · NO INDEPENDENT AUDIT`.
@@ -24,10 +28,10 @@ operator retains the regulatory, economic, operational, and security risk.
 
 ## Wallet and network gates
 
-- The historical mock-only testnet deployment and exactly two settled rounds
-  remain reconciled, but do not match the current bytecode after the lifetime
-  reward rounding repair. A replacement deployment and exactly two rounds
-  require a new commit-bound authorization before the final package can freeze.
+- The current-bytecode mock-only testnet deployment and exactly two settled
+  rounds remain reconciled. Constructor configuration changes, including the
+  five-minute opening timer, still require a separately authorized replacement
+  testnet deployment before that configuration can qualify for mainnet.
 - External-wallet UAT is explicitly `SKIPPED_BY_OPERATOR`, not passed.
   Browser-wallet compatibility remains `UNVERIFIED` and must be displayed as
   such. WalletConnect is hidden when no production Reown project is configured.

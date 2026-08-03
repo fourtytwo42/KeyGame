@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 
@@ -59,6 +61,8 @@ fallback_hash="$(cast block "$common_head" --field hash --rpc-url "$ROBINHOOD_MA
 
 export SOURCE_COMMIT="$commit"
 export MAINNET_MANIFEST_PATH="$KEYGAME_MAINNET_PLANNED_MANIFEST"
+pnpm contracts:check-sizes
+export KEYGAME_CONTRACT_SIZE_EVIDENCE="${KEYGAME_CONTRACT_SIZE_EVIDENCE:-$project_root/artifacts/contract-size/release-contract-sizes.json}"
 pnpm exec tsx scripts/verify-mainnet-planned-deployment.ts > /tmp/keygame-mainnet-plan.json
 pnpm exec tsx scripts/verify-mainnet-authorization.ts > /tmp/keygame-mainnet-authorization.json
 jq -e '.walletUatDisposition == "SKIPPED_BY_OPERATOR"

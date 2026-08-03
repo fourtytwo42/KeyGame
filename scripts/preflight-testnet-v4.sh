@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 
@@ -75,6 +77,7 @@ reserve="${KEYGAME_TESTNET_ETH_RESERVE_WEI:-1000000000000000}"
 
 pnpm release:scan:mainnet
 forge fmt --check
+pnpm contracts:check-sizes
 forge build
 forge test
 pnpm format:check

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runtime_dir="$(mktemp -d /tmp/keygame-v4-integration.XXXXXX)"
 rpc_port="${V4_INTEGRATION_RPC_PORT:-9655}"

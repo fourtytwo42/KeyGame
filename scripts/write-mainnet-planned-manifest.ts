@@ -12,11 +12,13 @@ import {
   type Address,
 } from "viem";
 import {
+  buildProvenanceFromSizeReport,
   deriveMainnetPlannedAddresses,
   validatePlannedMainnetDeployment,
   type MainnetPlannedAddresses,
   type PlannedMainnetDeploymentManifest,
 } from "../src/lib/release/mainnet-deployment-plan";
+import { validateContractSizeReport } from "../src/lib/release/contract-size";
 import { robinhoodChainMainnet } from "../src/lib/web3/chains";
 import { lastBellV4Abi } from "../src/lib/web3/last-bell-abi";
 
@@ -51,6 +53,18 @@ const initialRoundId = required("INITIAL_ROUND_ID");
 const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
+const contractSizeEvidencePath = path.resolve(
+  required("KEYGAME_CONTRACT_SIZE_EVIDENCE"),
+);
+const contractSizeEvidenceBytes = await readFile(contractSizeEvidencePath);
+const contractSizeReport = validateContractSizeReport(
+  JSON.parse(contractSizeEvidenceBytes.toString("utf8")),
+  { sourceCommit },
+);
+const buildProvenance = buildProvenanceFromSizeReport(
+  contractSizeReport,
+  sha256(contractSizeEvidenceBytes),
+);
 const broadcastPath = path.resolve(
   process.env.KEYGAME_MAINNET_SIMULATION_BROADCAST ??
     path.join("broadcast", "DeployMainnet.s.sol", "4663", "run-latest.json"),
@@ -134,17 +148,26 @@ const simulatedDeploymentGas = broadcast.receipts.reduce((total, receipt) => {
     throw new Error("Simulation receipt is missing gasUsed.");
   return total + BigInt(receipt.gasUsed);
 }, 0n);
-const expectedRuntimeCodeHashes = Object.fromEntries(
+const simulatedRuntimeCode = Object.fromEntries(
   await Promise.all(
     Object.entries(addresses).map(async ([name, address]) => {
       const code = await client.getCode({ address });
       if (!code || code === "0x") {
         throw new Error(`${name} has no simulated runtime bytecode.`);
       }
-      return [name, keccak256(code)];
+      return [name, { hash: keccak256(code), size: (code.length - 2) / 2 }];
     }),
   ),
+) as Record<
+  keyof MainnetPlannedAddresses,
+  { hash: `0x${string}`; size: number }
+>;
+const expectedRuntimeCodeHashes = Object.fromEntries(
+  Object.entries(simulatedRuntimeCode).map(([name, code]) => [name, code.hash]),
 ) as PlannedMainnetDeploymentManifest["expectedRuntimeCodeHashes"];
+const expectedRuntimeCodeSizes = Object.fromEntries(
+  Object.entries(simulatedRuntimeCode).map(([name, code]) => [name, code.size]),
+) as PlannedMainnetDeploymentManifest["expectedRuntimeCodeSizes"];
 
 const template = JSON.parse(
   await readFile("deployments/4663.template.json", "utf8"),
@@ -194,7 +217,7 @@ const initialRoster = await Promise.all(
 );
 
 const plan: PlannedMainnetDeploymentManifest = {
-  planSchemaVersion: 1,
+  planSchemaVersion: 2,
   deploymentSchemaVersion: 4,
   environment: "robinhood-mainnet",
   chainId: 4663,
@@ -212,6 +235,8 @@ const plan: PlannedMainnetDeploymentManifest = {
   simulatedDeploymentGas: simulatedDeploymentGas.toString(),
   expectedAddresses: addresses,
   expectedRuntimeCodeHashes,
+  expectedRuntimeCodeSizes,
+  buildProvenance,
   constructorConfiguration: {
     factory: getAddress(template.market.factory),
     usdg: getAddress(template.market.quoteToken),

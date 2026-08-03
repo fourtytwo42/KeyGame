@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 
@@ -37,6 +39,8 @@ primary_common_hash="$(cast block "$common_head" --field hash --rpc-url "$ROBINH
 reference_common_hash="$(cast block "$common_head" --field hash --rpc-url "$ROBINHOOD_MAINNET_FALLBACK_RPC_URL")"
 [[ "$primary_common_hash" == "$reference_common_hash" ]] || die "LAN and reference RPCs disagree on the canonical block."
 deployment_nonce="$(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$ROBINHOOD_MAINNET_RPC_URL")"
+pnpm contracts:check-sizes
+export KEYGAME_CONTRACT_SIZE_EVIDENCE="${KEYGAME_CONTRACT_SIZE_EVIDENCE:-$project_root/artifacts/contract-size/release-contract-sizes.json}"
 
 simulation_port="${KEYGAME_MAINNET_SIMULATION_PORT:-9653}"
 simulation_rpc="http://127.0.0.1:${simulation_port}"

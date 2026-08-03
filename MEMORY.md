@@ -4,6 +4,13 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-03 contract-size correction: the 24,723-byte manager came from the
+  stale live-VM `optimizer_runs=10000` build, not the qualified release build.
+  The authoritative release profile remains Solidity 0.8.30, optimizer 200,
+  and via IR; it produces a 22,451-byte `RoundManagerV4` with 2,125 bytes of
+  EIP-170 headroom. Release work must use the explicit `release` profile,
+  enforce a 23,000-byte production budget, bind size/compiler provenance into
+  manifests, and run standard Anvil without a code-size override.
 - 2026-08-03 timing change: authoritative v4 rounds start at five minutes
   (`300s`) on the first accepted contribution, retain `+2s` later-call
   extensions and the final `10s` Rug Zone, and use a ten-minute (`600s`) hard

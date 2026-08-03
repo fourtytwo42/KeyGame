@@ -18,6 +18,8 @@ import {
   lastBellV4Abi,
   stockSwapAdapterAbi,
 } from "../src/lib/web3/last-bell-abi";
+import { validateContractSizeReport } from "../src/lib/release/contract-size";
+import { buildProvenanceFromSizeReport } from "../src/lib/release/mainnet-deployment-plan";
 
 type Broadcast = {
   transactions: Array<{
@@ -142,14 +144,20 @@ const addresses = {
   swapAdapter,
   activeRound,
 };
-const runtimeCodeHashes = Object.fromEntries(
+const runtimeCode = Object.fromEntries(
   await Promise.all(
     Object.entries(addresses).map(async ([name, address]) => {
       const code = await client.getCode({ address });
       if (!code || code === "0x") throw new Error(`${name} has no bytecode.`);
-      return [name, keccak256(code)];
+      return [name, { hash: keccak256(code), size: (code.length - 2) / 2 }];
     }),
   ),
+) as Record<string, { hash: `0x${string}`; size: number }>;
+const runtimeCodeHashes = Object.fromEntries(
+  Object.entries(runtimeCode).map(([name, code]) => [name, code.hash]),
+);
+const runtimeCodeSizes = Object.fromEntries(
+  Object.entries(runtimeCode).map(([name, code]) => [name, code.size]),
 );
 const abiHashes = Object.fromEntries(
   [
@@ -181,6 +189,22 @@ if (!Number.isFinite(deploymentBlock)) {
 const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
+const contractSizeEvidencePath = path.resolve(
+  process.env.KEYGAME_CONTRACT_SIZE_EVIDENCE ??
+    path.join("artifacts", "contract-size", "release-contract-sizes.json"),
+);
+const contractSizeEvidenceBytes = await readFile(contractSizeEvidencePath);
+const contractSizeReport = validateContractSizeReport(
+  JSON.parse(contractSizeEvidenceBytes.toString("utf8")),
+  { sourceCommit },
+);
+const contractSizeReportSha256 = createHash("sha256")
+  .update(contractSizeEvidenceBytes)
+  .digest("hex");
+const buildProvenance = buildProvenanceFromSizeReport(
+  contractSizeReport,
+  contractSizeReportSha256,
+);
 const approvedCatalog = mainnet
   ? await (async () => {
       const count = Number(
@@ -267,12 +291,15 @@ const manifest = {
     approvedCatalog,
   },
   runtimeCodeHashes,
+  runtimeCodeSizes,
+  buildProvenance,
   abiHashes,
   broadcastTransactions: broadcast.receipts.map(
     (receipt) => receipt.transactionHash,
   ),
   sourceVerification: "pending-separate-verifier-step",
   releaseGates: {
+    contractSizePassed: true,
     testnetSmokePassed: mainnet,
     internalSecurityReviewPassed:
       process.env.INTERNAL_SECURITY_REVIEW_PASSED === "true",
@@ -303,6 +330,7 @@ const manifest = {
     operatorRiskAcknowledgement: "No legal review or independent audit",
     operatorRiskAcknowledgedAt: "2026-07-31",
     protectedBuildSha256: process.env.PROTECTED_BUILD_SHA256 ?? null,
+    contractSizeReportSha256,
     externalWalletUatEvidenceSha256: null,
     externalWalletUatDispositionRecordedAt: "2026-07-31",
   },

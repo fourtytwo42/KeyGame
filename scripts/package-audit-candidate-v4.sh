@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="$project_root/artifacts/internal-assurance-candidate-v4"
 cd "$project_root"
@@ -109,7 +111,7 @@ git merge-base --is-ancestor "$rehearsal_commit" "$source_commit" || {
 }
 while IFS= read -r changed_file; do
   case "$changed_file" in
-    MEMORY.md|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|services/v4-keeper.ts|services/mainnet-promotion-guard.ts|services/mainnet-promotion-guard.test.ts|script/DeployMainnet.s.sol|scripts/package-audit-candidate-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/deploy-mainnet-v4.sh|scripts/devnet-deploy.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-mainnet-release-plan.sh|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/validate-final-mainnet-candidate.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-deployment-plan.ts|scripts/verify-mainnet-planned-deployment.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-mainnet-planned-manifest.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-deployment-plan.ts|src/lib/release/mainnet-deployment-plan.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/release/testnet-v4.ts|src/lib/release/testnet-v4.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
+    MEMORY.md|foundry.toml|package.json|deployments/4663.template.json|deployments/46630-v4.template.json|db/012_v4_mainnet_canary.sql|db/013_one_hour_mainnet_canary.sql|db/014_v4_launch_rehearsal.sql|docs/*|docs/**/*|ops/systemd/keygame-mainnet-canary.service|ops/systemd/keygame-mainnet-canary.timer|ops/systemd/keygame-v4-launch-rehearsal.service|ops/systemd/keygame-v4-launch-rehearsal.timer|ops/systemd/keygame-v4-rehearsal-anvil.service|ops/systemd/keygame-v4-rehearsal-keeper.service|ops/systemd/keygame-v4-rehearsal-indexer.service|services/common.ts|services/v4-keeper.ts|services/mainnet-promotion-guard.ts|services/mainnet-promotion-guard.test.ts|script/DeployMainnet.s.sol|scripts/check-contract-sizes.ts|scripts/package-audit-candidate-v4.sh|scripts/package-testnet-v4.sh|scripts/preflight-mainnet-v4.ts|scripts/preflight-testnet-v4.sh|scripts/deploy-mainnet-v4.sh|scripts/deploy-testnet-v4.sh|scripts/devnet-deploy.sh|scripts/devnet-next-round.sh|scripts/devnet-start.sh|scripts/run-v4-integration.sh|scripts/generate-mainnet-canary-wallet.ts|scripts/mainnet-canary-restart-service.sh|scripts/mainnet-canary.ts|scripts/prepare-mainnet-release-plan.sh|scripts/prepare-v4-launch-rehearsal.sh|scripts/reconcile-testnet-v4-smoke.ts|scripts/validate-final-mainnet-candidate.ts|scripts/verify-mainnet-authorization.ts|scripts/verify-mainnet-deployment-plan.ts|scripts/verify-mainnet-planned-deployment.ts|scripts/verify-mainnet-promotion-authorization.ts|scripts/verify-mainnet-read-only.ts|scripts/verify-testnet-v4-bytecode.ts|scripts/write-mainnet-planned-manifest.ts|scripts/write-v4-deployment-manifest.ts|scripts/scan-mainnet-protected-build.sh|scripts/v4-launch-rehearsal.ts|scripts/v4-launch-rehearsal-restart-service.sh|scripts/test-mainnet-canary-migration.sh|scripts/test-launch-rehearsal-migration.sh|scripts/estimate-mainnet-release-budget.ts|scripts/run-mainnet-canary-dry-run.sh|scripts/run-v4-launch-rehearsal-dry-run.sh|scripts/run-v4-e2e.sh|src/app/status/page.tsx|src/components/wallet-panel.tsx|src/lib/env.ts|src/lib/env.test.ts|src/lib/release/contract-size.ts|src/lib/release/contract-size.test.ts|src/lib/release/mainnet-canary.ts|src/lib/release/mainnet-canary.test.ts|src/lib/release/mainnet-deployment-plan.ts|src/lib/release/mainnet-deployment-plan.test.ts|src/lib/release/mainnet-v4.ts|src/lib/release/mainnet-v4.test.ts|src/lib/release/mainnet-promotion.ts|src/lib/release/mainnet-promotion.test.ts|src/lib/release/launch-rehearsal.ts|src/lib/release/launch-rehearsal.test.ts|src/lib/release/testnet-v4.ts|src/lib/release/testnet-v4.test.ts|src/lib/server/deployment.ts|src/lib/server/system-status.ts|src/lib/web3/config.ts|src/lib/web3/last-bell-abi.ts|test/contracts/RobinhoodMainnetFork.t.sol) ;;
     ops/systemd/keygame-v4-rehearsal-web.service|scripts/install-v4-launch-rehearsal-services.sh) ;;
     *)
       echo "Runtime or contract source changed after torture qualification: $changed_file" >&2
@@ -155,6 +157,7 @@ rm -rf "$output_dir"
 mkdir -p "$output_dir/abi" "$output_dir/storage" "$output_dir/evidence"
 
 forge fmt --check
+pnpm contracts:check-sizes
 forge build
 forge test
 pnpm security:review
@@ -183,6 +186,10 @@ RUN_ROBINHOOD_MAINNET_FORK=true \
   >"$output_dir/evidence/mainnet-fork.txt"
 pnpm exec tsx scripts/preflight-mainnet-v4.ts \
   >"$output_dir/evidence/mainnet-preflight.json"
+cp artifacts/contract-size/release-contract-sizes.json "$output_dir/evidence/"
+cp artifacts/contract-size/release-contract-sizes.md "$output_dir/evidence/"
+cp artifacts/contract-size/SHA256SUMS \
+  "$output_dir/evidence/contract-size-SHA256SUMS"
 TESTNET_V4_BYTECODE_EVIDENCE="$output_dir/evidence/testnet-current-bytecode.json" \
   pnpm release:verify:testnet:v4-bytecode \
   >"$output_dir/evidence/testnet-current-bytecode.stdout.json"

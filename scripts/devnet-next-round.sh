@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 deployment_file="$project_root/deployments/31337.json"
 rpc_url="${LOCAL_RPC_URL:-http://127.0.0.1:8545}"

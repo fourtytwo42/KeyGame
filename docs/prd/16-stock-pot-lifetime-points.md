@@ -28,6 +28,15 @@ External-wallet UAT is intentionally skipped, remains unpassed, and browser
 compatibility is labeled unverified. Fresh production market checks and an
 explicit mainnet authorization remain separate gates.
 
+All deployment-capable paths use the pinned Foundry `release` profile: Solidity
+0.8.30, optimizer enabled at 200 runs, and IR compilation. A selected-contract
+size gate excludes local Foundry script contracts, enforces the 24,576-byte
+EIP-170 limit and a stricter 23,000-byte production budget, and binds the
+compiler configuration, runtime sizes, and runtime hashes into release
+evidence. `RoundManagerV4` is 22,451 bytes under this profile. Devnet uses
+standard Anvil contract-size enforcement so build-profile drift fails before
+testnet or mainnet packaging.
+
 The mainnet release candidate uses a nonce-bound planned deployment generated
 from a pinned LAN-backed fork simulation. Authorization binds the exact source,
 plan hash, deployer, predicted addresses, runtime hashes, transaction count,

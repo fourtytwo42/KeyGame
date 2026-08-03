@@ -1,16 +1,52 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertBuildProvenanceMatchesSizeReport,
+  buildProvenanceFromSizeReport,
   deriveMainnetPlannedAddresses,
   validatePlannedMainnetDeployment,
 } from "./mainnet-deployment-plan";
+import {
+  DEPLOYABLE_CONTRACTS,
+  EIP170_RUNTIME_LIMIT_BYTES,
+  evaluateContractSize,
+  PRODUCTION_RUNTIME_BUDGET_BYTES,
+  type ContractSizeReport,
+} from "./contract-size";
 
 const deployer = "0x1111111111111111111111111111111111111111" as const;
 const derived = deriveMainnetPlannedAddresses(deployer, 7n, 5);
 const runtimeHashes = Object.fromEntries(
   Object.keys(derived.addresses).map((name) => [name, `0x${"a".repeat(64)}`]),
 );
+const sizeReport: ContractSizeReport = {
+  policyVersion: "contract-size-v1",
+  profile: "release",
+  sourceCommit: "b".repeat(40),
+  generatedAt: "2026-08-03T00:00:00Z",
+  foundryVersion: "forge 1.7.1",
+  compiler: {
+    solcVersion: "0.8.30",
+    optimizerEnabled: true,
+    optimizerRuns: 200,
+    viaIR: true,
+  },
+  compilerConfigSha256: "d".repeat(64),
+  limits: {
+    eip170RuntimeBytes: EIP170_RUNTIME_LIMIT_BYTES,
+    productionRuntimeBudgetBytes: PRODUCTION_RUNTIME_BUDGET_BYTES,
+  },
+  contracts: DEPLOYABLE_CONTRACTS.map((contract) =>
+    evaluateContractSize({
+      contractName: contract.name,
+      tier: contract.tier,
+      runtimeBytes: contract.name === "RoundManagerV4" ? 22_451 : 10_000,
+      runtimeCodeHash: `0x${"a".repeat(64)}`,
+    }),
+  ),
+  passed: true,
+};
 const plan = {
-  planSchemaVersion: 1,
+  planSchemaVersion: 2,
   deploymentSchemaVersion: 4,
   environment: "robinhood-mainnet",
   chainId: 4663,
@@ -28,6 +64,15 @@ const plan = {
   simulatedDeploymentGas: "12000000",
   expectedAddresses: derived.addresses,
   expectedRuntimeCodeHashes: runtimeHashes,
+  expectedRuntimeCodeSizes: {
+    swapAdapter: 10_000,
+    manager: 22_451,
+    paymentRouter: 10_000,
+    lifetimePointsVault: 10_000,
+    rewardRouter: 10_000,
+    activeRound: 10_000,
+  },
+  buildProvenance: buildProvenanceFromSizeReport(sizeReport, "e".repeat(64)),
   constructorConfiguration: {
     factory: "0x2222222222222222222222222222222222222222",
     usdg: "0x3333333333333333333333333333333333333333",
@@ -98,5 +143,54 @@ describe("planned mainnet deployment", () => {
         },
       }),
     ).toThrow(/qualification/);
+    expect(() =>
+      validatePlannedMainnetDeployment({
+        ...plan,
+        buildProvenance: {
+          ...plan.buildProvenance,
+          compiler: { ...plan.buildProvenance.compiler, optimizerRuns: 10_000 },
+        },
+      }),
+    ).toThrow(/build provenance/);
+    expect(() =>
+      validatePlannedMainnetDeployment({
+        ...plan,
+        buildProvenance: {
+          ...plan.buildProvenance,
+          contracts: {
+            ...plan.buildProvenance.contracts,
+            RoundManagerV4: {
+              ...plan.buildProvenance.contracts.RoundManagerV4,
+              runtimeCodeHash: `0x${"f".repeat(64)}`,
+            },
+          },
+        },
+      }),
+    ).not.toThrow();
+    expect(() =>
+      assertBuildProvenanceMatchesSizeReport(
+        {
+          ...plan.buildProvenance,
+          contracts: {
+            ...plan.buildProvenance.contracts,
+            RoundManagerV4: {
+              ...plan.buildProvenance.contracts.RoundManagerV4,
+              runtimeCodeHash: `0x${"f".repeat(64)}`,
+            },
+          },
+        },
+        sizeReport,
+        "e".repeat(64),
+      ),
+    ).toThrow(/differs/);
+    expect(() =>
+      validatePlannedMainnetDeployment({
+        ...plan,
+        expectedRuntimeCodeSizes: {
+          ...plan.expectedRuntimeCodeSizes,
+          manager: 22_452,
+        },
+      }),
+    ).toThrow(/runtime size/);
   });
 });

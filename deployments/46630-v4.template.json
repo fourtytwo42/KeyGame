@@ -40,6 +40,7 @@
   },
   "broadcastAuthorized": false,
   "releaseGates": {
+    "contractSizePassed": false,
     "operatorRiskAcknowledged": true,
     "roleCustodyVerified": false,
     "testnetSmokeAuthorized": false,
@@ -57,7 +58,8 @@
   "releaseEvidence": {
     "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
     "operatorRiskAcknowledgement": "No legal review or independent audit",
-    "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME"
+    "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME",
+    "contractSizeReportSha256": null
   },
   "verifier": {
     "type": "mock-stock-swap-adapter",

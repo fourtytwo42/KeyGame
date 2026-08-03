@@ -49,6 +49,13 @@ export default async function StatusPage() {
           };
           release: {
             gates: Record<string, boolean | string>;
+            contractSize: {
+              passed: boolean;
+              reportSha256: string | null;
+              managerRuntimeBytes: number | null;
+              managerEip170MarginBytes: number | null;
+              policyVersion: string | null;
+            };
             walletUat: {
               status: "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
               passed: boolean;
@@ -147,6 +154,27 @@ export default async function StatusPage() {
             </p>
           </div>
           <strong>ONLINE</strong>
+        </article>
+        <article>
+          <span
+            className={`statusLamp ${
+              production?.release.contractSize.passed ? "good" : "standby"
+            }`}
+          />
+          <div>
+            <h2>Contract size</h2>
+            <p>
+              {production?.release.contractSize.managerRuntimeBytes !== null &&
+              production?.release.contractSize.managerRuntimeBytes !== undefined
+                ? `Manager ${production.release.contractSize.managerRuntimeBytes.toLocaleString("en-US")} bytes · ${production.release.contractSize.managerEip170MarginBytes?.toLocaleString("en-US") ?? "unknown"} bytes below EIP-170 · ${production.release.contractSize.policyVersion ?? "policy unavailable"}.`
+                : "Release-profile contract-size evidence is unavailable."}
+            </p>
+          </div>
+          <strong>
+            {production?.release.contractSize.passed
+              ? "CONTRACT SIZE PASSED"
+              : "WAITING"}
+          </strong>
         </article>
         <article>
           <span
@@ -347,6 +375,17 @@ export default async function StatusPage() {
           <p>
             Protected build:{" "}
             {production?.release.protectedBuildSha256 ?? "not recorded"}
+          </p>
+          <p>
+            Contract size:{" "}
+            {production?.release.contractSize.passed ? "passed" : "pending"}
+            {" · manager "}
+            {production?.release.contractSize.managerRuntimeBytes ?? "unknown"}
+            {" bytes · EIP-170 margin "}
+            {production?.release.contractSize.managerEip170MarginBytes ??
+              "unknown"}
+            {" bytes · report "}
+            {production?.release.contractSize.reportSha256 ?? "not recorded"}
           </p>
           <p>
             Assurance: {production?.release.assurance.label ?? "not recorded"}

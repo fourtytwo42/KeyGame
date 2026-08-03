@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Address } from "viem";
 import { deploymentKeyFor } from "@/lib/deployment-key";
+import type { PlannedMainnetDeploymentManifest } from "@/lib/release/mainnet-deployment-plan";
 
 export type ServerDeployment = {
   schemaVersion: number;
@@ -59,6 +60,7 @@ export type ServerDeployment = {
     keeper?: Address;
   };
   releaseGates?: Record<string, boolean | string> & {
+    contractSizePassed?: boolean;
     externalWalletUatPassed?: boolean;
     externalWalletUatStatus?:
       "PASSED" | "SKIPPED_BY_OPERATOR" | "NOT_PERFORMED";
@@ -81,9 +83,11 @@ export type ServerDeployment = {
     operatorRiskAcknowledgement?: string | null;
     operatorRiskAcknowledgedAt?: string | null;
     protectedBuildSha256?: string | null;
+    contractSizeReportSha256?: string | null;
     externalWalletUatEvidenceSha256?: string | null;
     externalWalletUatDispositionRecordedAt?: string | null;
   };
+  buildProvenance?: PlannedMainnetDeploymentManifest["buildProvenance"];
 };
 
 export async function loadServerDeployment(): Promise<ServerDeployment> {

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 tool_root="${KEYGAME_SECURITY_TOOL_ROOT:-$HOME/.local/share/keygame-security}"
@@ -39,6 +41,7 @@ INTERNAL_SECURITY_OUTPUT="$output" pnpm exec tsx scripts/verify-security-tool-ve
   >"$output/tool-version-verification.json"
 
 cp security/suppressions.json "$output/suppressions.json"
+pnpm contracts:check-sizes
 forge build
 slither . --filter-paths 'contracts/(mocks|LastBellRound.sol|RoundManager.sol|DexTwapMarketDataVerifier.sol|TestnetAttestedMarketDataVerifier.sol)' --json "$output/slither.json" || test -s "$output/slither.json"
 aderyn . -x 'contracts/mocks,contracts/LastBellRound.sol,contracts/RoundManager.sol,contracts/DexTwapMarketDataVerifier.sol,contracts/TestnetAttestedMarketDataVerifier.sol' -o "$output/aderyn.md"

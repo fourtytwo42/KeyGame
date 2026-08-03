@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export FOUNDRY_PROFILE=release
+
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 commit="$(git rev-parse HEAD)"
@@ -22,6 +24,7 @@ archive="$artifact_root/last-bell-v4-testnet-ready-$short.tgz"
 rm -rf "$output_dir"
 mkdir -p "$output_dir/abi" "$output_dir/storage" "$output_dir/evidence"
 
+pnpm contracts:check-sizes
 forge build
 forge test
 pnpm release:scan:mainnet
@@ -48,6 +51,10 @@ done
 }
 
 cp deployments/46630-v4.template.json "$output_dir/deployment-manifest.template.json"
+cp artifacts/contract-size/release-contract-sizes.json "$output_dir/evidence/"
+cp artifacts/contract-size/release-contract-sizes.md "$output_dir/evidence/"
+cp artifacts/contract-size/SHA256SUMS \
+  "$output_dir/evidence/contract-size-SHA256SUMS"
 cp docs/operations/v4-mainnet-release-runbook.md \
   "$output_dir/testnet-smoke-runbook.md"
 evidence_dir="${KEYGAME_RELEASE_EVIDENCE_DIR:-/home/hendo420/releases/evidence/$commit}"

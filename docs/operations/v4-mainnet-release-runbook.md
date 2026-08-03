@@ -16,12 +16,16 @@ instruction.
 
 1. Work only from the authoritative KeyGame VM.
 2. Confirm the branch is clean and pushed. GitHub is source hosting only.
-3. Run `pnpm security:review`, complete the manual checklist and chain-31337
+3. Run `pnpm contracts:check-sizes`. Require the release profile, a passing
+   report for every deployable contract, and `RoundManagerV4` at or below
+   23,000 bytes. Archive the JSON, Markdown, and checksums.
+4. Run `pnpm security:review`, complete the manual checklist and chain-31337
    launch rehearsal, then obtain the current-bytecode testnet smoke evidence
    before running `pnpm release:package:audit`.
-4. Review the generated ABI, storage layout, bytecode hashes, mainnet-fork
+5. Review the generated ABI, storage layout, bytecode hashes, compiler and
+   contract-size provenance, mainnet-fork
    evidence, canonical-market preflight, torture baseline, and `SHA256SUMS`.
-5. Freeze the exact commit. Contract or accounting changes invalidate the
+6. Freeze the exact commit. Contract or accounting changes invalidate the
    candidate until the torture campaign and release gates are rerun.
 
 ## 2. Two-round testnet smoke
@@ -91,8 +95,9 @@ external encrypted keystore, runtime broadcast flag, and every live preflight.
 Before authorization, run `release:plan:mainnet`. It forks the LAN mainnet node
 at a pinned block, preserves the deployer's current nonce, simulates the full
 deployment without a key, and writes expected addresses, runtime hashes,
-transaction count, gas used, constructor configuration, and initial roster to
-an immutable external planned manifest.
+runtime sizes, compiler-profile hash, contract-size report hash, transaction
+count, gas used, constructor configuration, and initial roster to an immutable
+external planned manifest.
 
 Copy `docs/operations/mainnet-authorization.template.json` outside the
 repository, replace every placeholder, and bind it to the exact release
