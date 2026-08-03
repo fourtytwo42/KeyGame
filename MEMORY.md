@@ -487,8 +487,10 @@ When sources conflict, use this order:
   `codex/saved-by-the-bell-branding` passed lint, TypeScript, 90 Vitest tests,
   and the Next.js production build after converting the simulator fixtures and
   actions to variable v4 contributions. Devnet port 3000 and testnet/demo port
-  3001 were rebuilt locally on the VM; final browser verification remains the
-  handoff step before this entry is marked fully complete.
+  3001 were rebuilt locally on the VM. Browser verification confirmed the new
+  brand, amount composer, `$1 minimum · no maximum` rule, `$10` default action,
+  no fixed-$1 instruction, and no horizontal page overflow on both home
+  surfaces; `/rules` also explains variable amounts and the 50/30/10/5/5 split.
 
 - 2026-08-03: Renamed all shared runtime branding, wallet connector metadata,
   profiles, receipts, social metadata, operations labels, and authoritative PRD
