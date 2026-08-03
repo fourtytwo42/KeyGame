@@ -808,7 +808,7 @@ function LiveArena({
         <span className="callerLabel">CALLER HOLDING THE BELL</span>
         <div className="callerVisual">
           <Image
-            src="/brand/last-bell-mascot.png"
+            src="/brand/saved-bell-mascot.png"
             alt="An anxious bell tied to a market bag"
             width={210}
             height={210}
@@ -1226,7 +1226,7 @@ function FinalTransmission({
     <div className="finalTransmission">
       <span className="phaseBug">FINAL TRANSMISSION</span>
       <Image
-        src="/brand/last-bell-mascot.png"
+        src="/brand/saved-bell-mascot.png"
         alt=""
         width={190}
         height={190}

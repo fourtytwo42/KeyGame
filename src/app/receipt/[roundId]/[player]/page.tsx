@@ -75,7 +75,7 @@ export default async function ReceiptPage({
         </div>
         <div className="receiptHero">
           <Image
-            src="/brand/last-bell-mascot.png"
+            src="/brand/saved-bell-mascot.png"
             alt=""
             width={210}
             height={210}

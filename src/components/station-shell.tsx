@@ -17,7 +17,7 @@ export function StationShell({ children }: { children: ReactNode }) {
           aria-label="Saved by the Bell home"
         >
           <Image
-            src="/brand/last-bell-mascot.png"
+            src="/brand/saved-bell-mascot.png"
             alt=""
             width={62}
             height={62}

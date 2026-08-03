@@ -140,9 +140,11 @@ p {
 }
 
 .stationIdentity img {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
+  filter: drop-shadow(3px 3px 0 rgb(241 64 45 / 65%));
+  transform: rotate(-2deg);
 }
 
 .eyebrow,
@@ -3361,8 +3363,8 @@ main {
   }
 
   .stationIdentity img {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
   }
 
   .stationTitle {

@@ -34,7 +34,9 @@ if (walletConnectProjectId) {
         name: "Saved by the Bell",
         description: "The last caller holding the bell wins the broadcast.",
         url: publicEnvironment.appUrl,
-        icons: [new URL("/brand/icon-192.png", publicEnvironment.appUrl).href],
+        icons: [
+          new URL("/brand/icon-192-v2.png", publicEnvironment.appUrl).href,
+        ],
       },
     }),
   );
