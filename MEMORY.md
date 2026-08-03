@@ -488,7 +488,10 @@ When sources conflict, use this order:
 - Comprehension rule: `Pick a stock. Pay $1 to put it on air and steal the bell. Market momentum boosts its airtime. Hold the bell at zero to win 50%.`
 - Selected visual direction: `Channel 4663`, a fictional late-night public-access market game show named for Robinhood Chain ID 4663. Use broadcast identifiers, teletext-density score strips, a studio-switch action, transmission receipts, square/clipped color slabs, awkward three-color mascots, and the `Dead Channel` palette. Avoid dark-green fintech, neon cyberpunk, glassmorphism, neo-brutalism, casino/gacha polish, generic shadcn dashboards, gradients, glows, card stacks, and corporate ticker branding.
 - Selected frontend direction: Next.js 16.2.x App Router with strict TypeScript, React Server Components by default, narrowly scoped Client Components for the live arena, CSS Modules plus global tokens, `next/font`, native CSS/Web Animations, and `viem`. Do not use Tailwind, shadcn/ui, a dashboard template, or Framer Motion as the default implementation.
-- Approved prototype constants: four ticker slots, one-USD-equivalent test action, 45-second initial deadline, two-second normal extension, 180-second hard end, final-ten-second Rug Zone, +/-5 basis-point bands, 1.25/1.0/0.75 multipliers, and 50/30/15/5 settlement. These remain configurable between rounds and immutable during a round.
+- Legacy prototype constants were a 45-second initial deadline and 180-second
+  hard end. Current v4 uses a 300-second initial deadline and 600-second hard
+  end; historical deployments and replay adapters retain their deployed
+  values. The final-ten-second Rug Zone and two-second normal extension remain.
 - Approved engineering bootstrap: Git, pnpm, pinned compatible active-LTS Node metadata, strict TypeScript, ESLint, Prettier, typed environment validation, Vitest plus React Testing Library, Playwright, axe-core, and screenshot regression. Run all gates locally on the project VM; do not use GitHub Actions.
 - Approved implementation order: shared typed domain model and ten deterministic fixture scenarios before stateful screen logic; then the complete static Home through Dead Air screen slice across mobile, desktop, keyboard, and reduced-motion states.
 - Players may change ticker on every accepted claim; same-holder claims revert. Ticker-score ties use the most recent accepted acquisition, then the lower configured ticker index.
@@ -496,6 +499,19 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-08-03 five-minute devnet deployment: commit `bf41b0b` changed current
+  v4 source and deployment configuration to 300/600/10 seconds. Commit
+  `c15ab96` added Anvil's dev-only code-size-limit override after a clean reset
+  exposed the 24,723-byte manager exceeding Anvil's default 24,576-byte limit;
+  this override is not used for testnet or mainnet. A clean chain-31337
+  redeployment succeeded. Direct contract reads returned `300`, `600`, and
+  `10`; the live snapshot returned entry state with 300 seconds remaining,
+  zero contributions, and an unstarted timer. In-app browser verification at
+  `:3000` showed `05:00`, the first-contribution start rule, the updated Rules
+  page (`START 5m`, `HARD STOP 10m`), and no horizontal overflow. The VM
+  Foundry suite passed 61 tests including fuzz and invariant runs; local lint,
+  TypeScript, 90 Vitest tests, and production build passed. Existing testnet
+  contracts remain 45/180 and were not modified.
 - 2026-08-03 Channel-brand removal and header refinement: lint, TypeScript, 90
   Vitest tests, and the production build passed on
   `codex/saved-by-the-bell-branding`. Devnet `:3000` and testnet/demo `:3001`
