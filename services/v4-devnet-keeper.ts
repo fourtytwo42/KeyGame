@@ -138,10 +138,10 @@ async function scheduleLifecycle() {
     roundId: nextId.toString(),
     settings: {
       roundId: nextId.toString(),
-      startDuration: "45",
+      startDuration: "300",
       extensionDuration: "2",
       rugDuration: "10",
-      hardCapDuration: "180",
+      hardCapDuration: "600",
       heatTarget: "4000000000",
       producerPassRequired: false,
     },

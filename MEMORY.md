@@ -4,6 +4,13 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-03 timing change: authoritative v4 rounds start at five minutes
+  (`300s`) on the first accepted contribution, retain `+2s` later-call
+  extensions and the final `10s` Rug Zone, and use a ten-minute (`600s`) hard
+  stop. This changes round constructor configuration and invalidates the
+  current planned-mainnet manifest/authorization scope. Existing testnet rounds
+  remain configured at 45/180 until a separately authorized redeployment;
+  never make the frontend claim otherwise when reading those live contracts.
 - 2026-08-03 brand refinement: remove `Channel 4663` from all current
   user-facing branding, metadata, receipts, profile/receipt social cards,
   not-found copy, and Status copy. The header now uses a cohesive

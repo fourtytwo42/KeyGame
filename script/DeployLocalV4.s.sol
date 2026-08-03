@@ -43,10 +43,10 @@ contract DeployLocalV4 is ScriptBase {
 
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 4663,
-            startDuration: 45,
+            startDuration: 300,
             extensionDuration: 2,
             rugDuration: 10,
-            hardCapDuration: 180,
+            hardCapDuration: 600,
             heatTarget: 4_000e6,
             producerPassRequired: false
         });

@@ -392,13 +392,13 @@ export async function getV4DevnetSnapshot(
       "Calls heat a stock for the next players. Points pick the winning stock; DEX prices do not affect scoring.",
     producerPassRequired: passRequired,
     timeLeftSeconds:
-      Number(startedAt) === 0 ? 45 : Math.max(0, deadlineNumber - now),
+      Number(startedAt) === 0 ? 300 : Math.max(0, deadlineNumber - now),
     elapsedSeconds: Number(startedAt)
       ? Math.max(0, now - Number(startedAt))
       : 0,
     hardTimeLeftSeconds: Number(hardEnd)
       ? Math.max(0, hardEndNumber - now)
-      : 180,
+      : 600,
     potUsd: basket.reduce((sum, value) => sum + stock(value), 0),
     holder:
       holderAddress === zeroAddress

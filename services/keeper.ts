@@ -178,10 +178,10 @@ async function prepareIfNeeded() {
   const settings = {
     roundId: latest + 1n,
     claimPrice: 1_000_000n,
-    startDuration: 45,
+    startDuration: 300,
     extensionDuration: 2,
     rugDuration: 10,
-    hardCapDuration: 180,
+    hardCapDuration: 600,
     maxReportAge: 15,
     marketThresholdBps: 5,
     greenMultiplierBps: 12_500,

@@ -529,10 +529,10 @@ async function prepareAndActivate(
   await managerCall(runId, actionId, `prepare:${nextId}`, "prepareRound", [
     {
       roundId: nextId,
-      startDuration: 45n,
+      startDuration: 300n,
       extensionDuration: 2n,
       rugDuration: 10n,
-      hardCapDuration: 180n,
+      hardCapDuration: 600n,
       heatTarget: 4_000_000_000n,
       producerPassRequired: false,
     },

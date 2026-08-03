@@ -31,9 +31,9 @@ describe("LiveGame", () => {
   it("turns the starter ticker into the first paid claim", () => {
     render(<LiveGame initialScenario="entry" />);
     expect(
-      screen.getByText(/Your buy starts the 45-second clock/i),
+      screen.getByText(/Your buy starts the five-minute clock/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("00:45")).toBeInTheDocument();
+    expect(screen.getByText("05:00")).toBeInTheDocument();
     expect(
       screen.getByText(/WAITING · FIRST CONTRIBUTION STARTS IT/i),
     ).toBeInTheDocument();

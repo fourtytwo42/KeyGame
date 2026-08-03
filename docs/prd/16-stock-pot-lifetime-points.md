@@ -73,6 +73,9 @@ contracts and parsers remain available for old receipts and replays.
 > followers. Hold the bell at zero to win half the Stock Token basket.
 
 The minimum contribution is 1 USDG. There is no contract or interface maximum.
+The first accepted contribution starts a five-minute countdown. Later accepted
+calls add two seconds outside the final ten-second Rug Zone, and the round has a
+ten-minute hard stop.
 Every accepted call atomically swaps USDG into the selected roster Stock Token,
 accounts the received quantity, awards points, and changes the holder. Any
 failed allowance, quote, deadline, minimum-output, execution-safety, or swap

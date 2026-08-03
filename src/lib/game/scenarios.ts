@@ -174,9 +174,9 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
     description:
       "Pick a stock and choose any contribution amount. The first accepted contribution starts the timer.",
     state: stateFor("entry", {
-      timeLeftSeconds: 45,
+      timeLeftSeconds: 300,
       elapsedSeconds: 0,
-      hardTimeLeftSeconds: 180,
+      hardTimeLeftSeconds: 600,
       potUsd: 50,
       holder: null,
       claims: [],

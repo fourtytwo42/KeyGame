@@ -654,16 +654,16 @@ function EntryDesk({
         </h1>
         <p>
           {v4Economy
-            ? "Your buy starts the 45-second clock. The Stock Tokens go into this round's pot."
-            : "Your first $1 call starts the 45-second broadcast clock."}
+            ? "Your buy starts the five-minute clock. The Stock Tokens go into this round's pot."
+            : "Your first call starts the five-minute broadcast clock."}
         </p>
         {state.marketExplanation ? <p>{state.marketExplanation}</p> : null}
       </div>
       <div
         className="entryClock"
-        aria-label="Broadcast clock ready at 45 seconds"
+        aria-label="Broadcast clock ready at five minutes"
       >
-        <strong>00:45</strong>
+        <strong>05:00</strong>
         <span>BROADCAST CLOCK</span>
         <small>
           {v4Economy

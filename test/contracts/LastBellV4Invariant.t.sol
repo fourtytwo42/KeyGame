@@ -199,10 +199,10 @@ contract LastBellV4InvariantHandler {
         deployed = manager.prepareRound(
             LastBellRoundV4.RoundSettings({
                 roundId: id,
-                startDuration: 45,
+                startDuration: 300,
                 extensionDuration: 2,
                 rugDuration: 10,
-                hardCapDuration: 180,
+                hardCapDuration: 600,
                 heatTarget: 4_000e6,
                 producerPassRequired: false
             }),

@@ -43,10 +43,9 @@ export default function RulesPage() {
         <div>
           <h2>Later plays add two seconds</h2>
           <p>
-            Your first successful play starts the clock at 45 seconds. Later
+            Your first successful play starts the clock at 5 minutes. Later
             successful plays usually add {roundConfig.extensionSeconds} seconds
-            to it. The round can never last longer than{" "}
-            {roundConfig.hardCapSeconds} seconds. When only{" "}
+            to it. The round can never last longer than 10 minutes. When only{" "}
             {roundConfig.rugZoneSeconds} seconds remain, the Rug Zone begins.
             You can still take the bell, but the clock will not gain more time.
           </p>
@@ -101,10 +100,10 @@ export default function RulesPage() {
         </div>
       </section>
       <div className="constantTape">
-        <span>START 45s</span>
+        <span>START 5m</span>
         <span>ADD 2s</span>
         <span>RUG ZONE 10s</span>
-        <span>HARD STOP 180s</span>
+        <span>HARD STOP 10m</span>
         <span>$1 MIN · NO MAX</span>
       </div>
       <div className="disclosureBlock">

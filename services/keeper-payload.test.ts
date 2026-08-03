@@ -6,7 +6,7 @@ describe("keeper round settings persistence", () => {
     const persisted = persistRoundSettings({
       roundId: 9_007_199_254_740_993n,
       claimPrice: 1_000_000n,
-      startDuration: 45,
+      startDuration: 300,
       producerPassRequired: false,
     });
 
@@ -14,7 +14,7 @@ describe("keeper round settings persistence", () => {
     expect(hydrateRoundSettings(persisted)).toEqual({
       roundId: 9_007_199_254_740_993n,
       claimPrice: 1_000_000n,
-      startDuration: 45,
+      startDuration: 300,
       producerPassRequired: false,
     });
   });

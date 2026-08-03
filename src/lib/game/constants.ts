@@ -75,10 +75,10 @@ export const tickerSlots: TickerSlot[] = [
 export const roundConfig: RoundConfig = {
   roundId: "4663",
   claimPriceUsd: 1,
-  startSeconds: 45,
+  startSeconds: 300,
   extensionSeconds: 2,
   rugZoneSeconds: 10,
-  hardCapSeconds: 180,
+  hardCapSeconds: 600,
   marketMode: "DEX",
   marketThresholdBps: 5,
   multipliersBps: { GREEN: 12_500, FLAT: 10_000, RED: 7_500 },

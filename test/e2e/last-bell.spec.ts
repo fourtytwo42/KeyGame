@@ -54,7 +54,7 @@ test("real devnet starter ticker is the first paid contribution", async ({
   });
   if (await entryAction.isVisible().catch(() => false)) {
     await expect(page.getByText("TIMER WAITS FOR YOU")).toBeVisible();
-    await expect(page.locator(".entryClock")).toContainText("00:45");
+    await expect(page.locator(".entryClock")).toContainText("05:00");
     await expect(page.locator(".entryClock")).toContainText(
       "WAITING · FIRST $1 STARTS IT",
     );

@@ -44,7 +44,7 @@ contract LastBellRoundV4Test is TestBase {
         _claim(ALICE, 0, 4_000e6);
         assertEq(round.tickerPoints(0), 4_000e6, "cold call is 1x");
         assertEq(round.currentMultiplierBps(0), 20_000, "heat capped");
-        assertEq(round.deadline(), block.timestamp + 45, "first call starts");
+        assertEq(round.deadline(), block.timestamp + 300, "first call starts");
 
         _claim(BOB, 0, 250_000e6);
         assertEq(
@@ -177,10 +177,10 @@ contract LastBellRoundV4Test is TestBase {
         }
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 2,
-            startDuration: 45,
+            startDuration: 300,
             extensionDuration: 2,
             rugDuration: 10,
-            hardCapDuration: 180,
+            hardCapDuration: 600,
             heatTarget: 4_000e6,
             producerPassRequired: false
         });
@@ -203,10 +203,10 @@ contract LastBellRoundV4Test is TestBase {
 
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 2,
-            startDuration: 45,
+            startDuration: 300,
             extensionDuration: 2,
             rugDuration: 10,
-            hardCapDuration: 180,
+            hardCapDuration: 600,
             heatTarget: 4_000e6,
             producerPassRequired: false
         });
@@ -229,10 +229,10 @@ contract LastBellRoundV4Test is TestBase {
         manager.finalizeActive();
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 2,
-            startDuration: 45,
+            startDuration: 300,
             extensionDuration: 2,
             rugDuration: 10,
-            hardCapDuration: 180,
+            hardCapDuration: 600,
             heatTarget: 4_000e6,
             producerPassRequired: false
         });
@@ -276,10 +276,10 @@ contract LastBellRoundV4Test is TestBase {
     function _prepare(uint256 id) internal returns (LastBellRoundV4 deployed) {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: id,
-            startDuration: 45,
+            startDuration: 300,
             extensionDuration: 2,
             rugDuration: 10,
-            hardCapDuration: 180,
+            hardCapDuration: 600,
             heatTarget: 4_000e6,
             producerPassRequired: false
         });

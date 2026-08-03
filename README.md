@@ -17,7 +17,7 @@ script, product requirements, research, and automated test suites.
 - Live round, lobby, finalizing, results, replay, receipt, rules, assets, and
   status screens
 - Variable uncapped contributions with a $1 minimum, a first-contribution-started
-  45-second round, later 2-second extensions, 10-second Rug Zone, and 180-second hard cap
+  five-minute round, later 2-second extensions, 10-second Rug Zone, and 10-minute hard cap
 - 50% final holder, 30% Winning Stock, 10% Lifetime Points, 5% next seed, and 5% protocol settlement
 - Automatic settlement, Final Transmission, 5% seed transfer,
   archive capture, and continuous next-round launch

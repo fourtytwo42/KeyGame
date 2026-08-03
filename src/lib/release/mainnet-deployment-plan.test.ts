@@ -37,10 +37,10 @@ const plan = {
     treasury: deployer,
     conversionOperator: deployer,
     initialRoundId: "1",
-    startDurationSeconds: 45,
+    startDurationSeconds: 300,
     extensionSeconds: 2,
     rugZoneSeconds: 10,
-    hardCapSeconds: 180,
+    hardCapSeconds: 600,
     heatTargetRawUsdg: "4000000000",
   },
   initialRoster: ["AAPL", "NVDA", "SPY", "TSLA"].map((symbol, index) => ({
