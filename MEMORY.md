@@ -489,6 +489,12 @@ When sources conflict, use this order:
 
 ## Verification Ledger
 
+- 2026-08-03 Channel-brand removal and header refinement: lint, TypeScript, 90
+  Vitest tests, and the production build passed on
+  `codex/saved-by-the-bell-branding`. Devnet `:3000` and testnet/demo `:3001`
+  were rebuilt on the VM. In-app browser verification confirmed the new
+  `SAVED [BY THE] BELL` header, no `CHANNEL 4663` branding in either current
+  page, titles reduced to `Saved by the Bell`, and no horizontal overflow.
 - 2026-08-03 Saved by the Bell/variable-amount presentation: clean branch
   `codex/saved-by-the-bell-branding` passed lint, TypeScript, 90 Vitest tests,
   and the Next.js production build after converting the simulator fixtures and
