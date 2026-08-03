@@ -84,7 +84,7 @@ The complete mobile and desktop concept set is embedded in
 |---|---|---|---|
 | `D-001` | Product is `Saved by the Bell`; primary mode is `Ticker Royale`. | `DECIDED` | Renamed from Last Bell on 2026-08-03; Channel 4663 remains the visual world. |
 | `D-002` | Target Robinhood Chain, chain ID `4663`. | `DECIDED` | External chain facts were last verified 2026-07-28. |
-| `D-003` | Main action copy is `SEND IT FOR THE BELL · $1`; `ape` remains supporting meme vocabulary. | `SELECTED FOR PROTOTYPE` | Stage 0 and Stage 1 use a test unit mirroring one USD; actual USDG is later gated scope. |
+| `D-003` | V4 uses an amount composer with a $1 minimum, no maximum, and `APE {AMOUNT} ON {TICKER}` as the main action. | `DECIDED` | Supersedes the fixed-$1 Stage 0 and Stage 1 action while retaining `ape` as supporting meme vocabulary. |
 | `D-004` | Final holder receives 50%; control-winning faction receives 30%; 15% seeds the next round; 5% funds operations. | `SELECTED FOR PROTOTYPE` | Use for fixtures and simulation; production still requires economic validation and approval. |
 | `D-005` | Four ticker factions per round. | `SELECTED FOR PROTOTYPE` | Use four synthetic factions in Stage 0 and Stage 1; later ticker rosters remain configurable. |
 | `D-006` | Stock Token principal is separate from the prize pot and the same token amount becomes withdrawable after settlement. | `PROPOSED` | Value can still change while locked. |
@@ -94,7 +94,7 @@ The complete mobile and desktop concept set is embedded in
 | `D-010` | Exclude a native token, ICO, affiliate tree, random airdrop, key curve, holder dividends, and unlimited overtime. | `DECIDED` | Historical FoMo3D mechanics remain research only. |
 | `D-011` | Actual Stock Token locking and value-bearing play require jurisdiction, eligibility, security, and product-counsel gates. | `GATE` | Frontend geo-blocking alone is not assumed sufficient. |
 | `D-012` | Clock and control-time precision require simulation before the payout model is production-final. | `OPEN` | Second-level EVM timestamps may produce zero-duration rapid holds. |
-| `D-013` | Approval UX uses a reusable $100 play-USDG allowance and requests refresh only below $10. | `DECIDED` | The player may reject, change, or revoke approval; account abstraction and gas sponsorship remain open. |
+| `D-013` | Approval UX requests a reusable high USDG allowance and asks again only when allowance is below the chosen contribution. | `DECIDED` | The player may reject, edit, or revoke the approval; there is no maximum contribution field. |
 | `D-014` | Begin with MVP-0 and Milestone 1: a static Channel 4663 shell against typed deterministic fixtures. | `DECIDED` | Wallet, contract, indexer, USDG, and Stock Token custody work are excluded from the initial scaffold. |
 | `D-015` | Use the current `GAME-CFG-*` timer and payout values as configurable simulation defaults. | `SELECTED FOR PROTOTYPE` | Prototype selection does not approve production economics. |
 | `D-016` | Keep same-faction theft, late entry, control-time precision, and faction tie-breaking configurable until simulation produces evidence. | `DECIDED` | Components consume typed configuration and cannot hard-code an unresolved outcome. |

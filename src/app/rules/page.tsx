@@ -19,10 +19,10 @@ export default function RulesPage() {
         <div>
           <h2>Pick one of four stocks</h2>
           <p>
-            Your first choice is also your first $1 play. You are not joining a
-            permanent team. The next time you take the bell, you can choose a
-            different stock. The timer does not start until this first $1 play
-            succeeds.
+            Your first choice is also your first contribution. You are not
+            joining a permanent team. The next time you take the bell, you can
+            choose a different stock. The timer does not start until this first
+            contribution succeeds.
           </p>
         </div>
       </section>

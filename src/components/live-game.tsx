@@ -288,9 +288,11 @@ export function LiveGame({
           .catch((error: unknown) => {
             setActionStatus("rejected");
             setAnnouncement(
-              `${
-                error instanceof Error ? error.message : "Claim rejected."
-              } The $1 game fee was not charged; network gas may have been spent.`,
+              `${error instanceof Error ? error.message : "Claim rejected."} ${
+                v4Economy
+                  ? "The selected contribution was not charged"
+                  : "The $1 game fee was not charged"
+              }; network gas may have been spent.`,
             );
           });
       } else if (devnetMode) {
@@ -370,9 +372,9 @@ export function LiveGame({
       player: demoAddresses.player,
       starterTicker: effectiveTicker,
       maximumUsd: sessionApproval.amountUsd,
-      spentUsd: 1,
-      remainingUsd: sessionApproval.amountUsd - 1,
-      availableActions: sessionApproval.amountUsd - 1,
+      spentUsd: amountUsd,
+      remainingUsd: Math.max(0, sessionApproval.amountUsd - amountUsd),
+      availableActions: Math.max(0, sessionApproval.amountUsd - amountUsd),
       allowanceUsd: sessionApproval.amountUsd,
       expiresAt: null,
       status: "active",
@@ -380,7 +382,9 @@ export function LiveGame({
       producerPass: true,
     });
     setActionStatus("accepted");
-    setAnnouncement(`${effectiveTicker} is on air. Bell stolen for $1.`);
+    setAnnouncement(
+      `${effectiveTicker} is on air. Bell stolen for ${formatUsd(amountUsd)}.`,
+    );
   };
 
   const tickerLeader = leadingTicker(state);
@@ -533,7 +537,11 @@ export function LiveGame({
           <div className="newsCrawl" aria-hidden="true">
             <div>
               <span>NO CHARTS WERE HARMED IN THIS BROADCAST</span>
-              <span>ONE DOLLAR CHANGES THE CALLER</span>
+              <span>
+                {v4Economy
+                  ? "ANY AMOUNT CHANGES THE CALLER"
+                  : "ONE DOLLAR CHANGES THE CALLER"}
+              </span>
               <span>RUG ZONE ADDS ZERO SECONDS</span>
               <span>RUG ZONE IS FCFS</span>
               <span>AUTOMATED WALLETS MAY BE FASTER</span>
@@ -649,7 +657,11 @@ function EntryDesk({
       >
         <strong>00:45</strong>
         <span>BROADCAST CLOCK</span>
-        <small>WAITING · FIRST $1 STARTS IT</small>
+        <small>
+          {v4Economy
+            ? "WAITING · FIRST CONTRIBUTION STARTS IT"
+            : "WAITING · FIRST $1 STARTS IT"}
+        </small>
       </div>
       <div className="factionGrid">
         {state.tickerScores.map((score, index) => {

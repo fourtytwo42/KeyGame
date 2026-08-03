@@ -1,11 +1,11 @@
 # Saved by the Bell
 
-Saved by the Bell is a short, mobile-first onchain game for Robinhood Chain. Players
-pick a Stock Token ticker on every call, pay $1 to put it on air and take the bell,
-and try to hold it when the countdown reaches zero.
+Saved by the Bell is a short, mobile-first onchain game for Robinhood Chain.
+Players pick a Stock Token ticker, choose any contribution amount with a $1
+minimum and no maximum, and take the bell. The final holder wins half of every
+Stock Token in the round pot.
 
-> Pick a stock. Pay $1 to put it on air and steal the bell. Market momentum
-> boosts its airtime. Hold the bell at zero to win 50%.
+> Pick a stock. Choose your amount. Take the bell. Hold it at zero to win 50%.
 
 This repository contains the responsive Next.js application, Solidity round
 contracts, deterministic Anvil devnet, wallet connection UI, testnet deployment
@@ -16,13 +16,13 @@ script, product requirements, research, and automated test suites.
 - Channel 4663 visual system across desktop and mobile
 - Live round, lobby, finalizing, results, replay, receipt, rules, assets, and
   status screens
-- Exact-price $1 bell claims, a first-claim-started 45-second round, later
-  2-second extensions, 10-second Rug zone, and 180-second hard cap
-- 50% caller, 30% Closing Print, 15% next round, and 5% treasury settlement
-- Automatic settlement, eight-second Final Transmission, 15% seed transfer,
+- Variable uncapped contributions with a $1 minimum, a first-contribution-started
+  45-second round, later 2-second extensions, 10-second Rug Zone, and 180-second hard cap
+- 50% final holder, 30% Winning Stock, 10% Lifetime Points, 5% next seed, and 5% protocol settlement
+- Automatic settlement, Final Transmission, 5% seed transfer,
   archive capture, and continuous next-round launch
 - One reusable USDG approval to a permanent payment router across rounds
-- GREEN 1.25×, FLAT 1×, and RED 0.75× signed-report scoring
+- Rolling 30-second stock heat with a pre-call multiplier capped at 2×
 - Pull-based claims, cancellation refunds, and deterministic ticker ties
 - Local Anvil integration driven by real contract state and transactions
 - Injected/EIP-6963, MetaMask, Coinbase Wallet, Safe, and WalletConnect
@@ -58,12 +58,12 @@ pnpm devnet:stop
 ```
 
 The devnet is disposable. Re-running `pnpm devnet:deploy` resets the chain and
-creates a fresh deterministic round with approved callers, mock Stock Tokens,
-and signed mock reports. `pnpm app:start` also launches the local round keeper.
-It finalizes expired rounds, archives the result, shows an eight-second
-intermission, transfers the 15% seed, and opens the next numbered round without
-rebuilding or restarting the application. The new round waits on its Entry
-Desk with no running timer until the first real $1 claim starts its clock.
+creates a fresh deterministic round with approved callers and mock Stock
+Tokens. `pnpm app:start` also launches the local round keeper. It finalizes
+expired rounds, archives the result, transfers the 5% seed, and opens the next
+numbered round without rebuilding or restarting the application. The new round
+waits on its Entry Desk with no running timer until the first successful
+contribution starts its clock.
 
 ## Verification
 

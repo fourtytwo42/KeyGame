@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s · Saved by the Bell",
   },
   description:
-    "Pick a bag. Pay $1 to take the bell. Hold it when the clock hits zero to win half the pot.",
+    "Pick a stock. Choose your amount. Take the bell and hold it at zero to win half the pot.",
   applicationName: "Saved by the Bell",
   keywords: [
     "onchain game",
