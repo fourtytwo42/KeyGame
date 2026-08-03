@@ -19,6 +19,7 @@ nohup anvil \
   --port 8545 \
   --chain-id 31337 \
   --auto-impersonate \
+  --disable-code-size-limit \
   >"$log_file" 2>&1 &
 echo "$!" >"$pid_file"
 
