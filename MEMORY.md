@@ -10,7 +10,9 @@ Durable project context lives here. Update this file whenever information should
   and via IR; it produces a 22,451-byte `RoundManagerV4` with 2,125 bytes of
   EIP-170 headroom. Release work must use the explicit `release` profile,
   enforce a 23,000-byte production budget, bind size/compiler provenance into
-  manifests, and run standard Anvil without a code-size override.
+  manifests, and run standard Anvil without a code-size override. Commits
+  `7ca760e` and `b679d95` implement and verify this correction; the live devnet
+  now uses standard Anvil and the release-profile runtime hashes are stable.
 - 2026-08-03 timing change: authoritative v4 rounds start at five minutes
   (`300s`) on the first accepted contribution, retain `+2s` later-call
   extensions and the final `10s` Rug Zone, and use a ten-minute (`600s`) hard
@@ -505,6 +507,24 @@ When sources conflict, use this order:
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
 
 ## Verification Ledger
+
+- 2026-08-03 deterministic release-size qualification: commits `7ca760e` and
+  `b679d95` added the pinned Foundry `release` profile, selected-deployable
+  contract-size enforcement, checksummed JSON/Markdown evidence, compiler and
+  runtime provenance in manifests, and removed Anvil's code-size override.
+  Two clean exact-commit builds produced identical size reports with SHA-256
+  `957c6cd4b19561d7326d68434a6b35861eed431b3fb1a10d9153a87ebc43526c`.
+  `RoundManagerV4` is 22,451 bytes, 549 bytes below the internal 23,000-byte
+  budget and 2,125 bytes below EIP-170. The exact VM checkout passed 62
+  Foundry tests, a 100,000-call internal invariant run, four standard-Anvil
+  integration tests, protected-mainnet build/scan, LAN-only mainnet-fork tests,
+  Semgrep and secret scans, negative mutation controls, and internal review
+  with zero unresolved critical/high findings. The live chain-31337 deployment
+  succeeded without a size override and direct reads confirmed 300/600/10
+  timer configuration. Browser checks at 1280x720 and 390x844 confirmed the
+  `05:00` entry clock and no horizontal overflow. No Solidity source or runtime
+  hash changed, so the million-action torture and replacement testnet smoke
+  were not repeated; no testnet or mainnet transaction was submitted.
 
 - 2026-08-03 five-minute devnet deployment: commit `bf41b0b` changed current
   v4 source and deployment configuration to 300/600/10 seconds. Commit
