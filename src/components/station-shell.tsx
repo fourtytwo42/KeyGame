@@ -23,13 +23,11 @@ export function StationShell({ children }: { children: ReactNode }) {
             height={62}
             priority
           />
-          <span>
-            <small>CHANNEL 4663</small>
-            <strong className="stationTitle">
-              <span>SAVED</span>
-              <em>BY THE BELL</em>
-            </strong>
-          </span>
+          <strong className="stationTitle">
+            <span className="stationTitleWord">SAVED</span>
+            <span className="stationTitleBridge">BY THE</span>
+            <span className="stationTitleWord">BELL</span>
+          </strong>
         </Link>
         <div className="onAirBug">
           <span className="onAirLamp" />

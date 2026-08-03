@@ -7,7 +7,7 @@ export default function NotFound() {
       <h1>Wrong frequency</h1>
       <p>This tape does not exist, or somebody labeled it after midnight.</p>
       <Link className="primaryAction linkAction" href="/">
-        RETURN TO CHANNEL 4663
+        RETURN TO THE GAME
       </Link>
     </div>
   );

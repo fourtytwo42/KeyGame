@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ),
   title: {
-    default: "Saved by the Bell · Channel 4663",
+    default: "Saved by the Bell",
     template: "%s · Saved by the Bell",
   },
   description:
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     "ticker game",
   ],
   openGraph: {
-    title: "Saved by the Bell · Channel 4663",
+    title: "Saved by the Bell",
     description: "The last caller holding the bell wins the broadcast.",
     type: "website",
   },

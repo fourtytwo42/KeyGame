@@ -69,7 +69,7 @@ export default async function ReceiptPage({
     <div className="receiptPage">
       <article className="receiptCard">
         <div className="receiptTop">
-          <span>CHANNEL 4663</span>
+          <span>SAVED BY THE BELL</span>
           <strong>ROUND {roundId}</strong>
           <span>FINAL TAPE</span>
         </div>

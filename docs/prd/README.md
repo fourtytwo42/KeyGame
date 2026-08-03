@@ -40,7 +40,7 @@ Status: v4 is qualified on Anvil and has a production-readiness implementation.
 Value-bearing deployment remains blocked by the ledger in
 `docs/qualification/v4-mainnet-readiness-ledger.md`.
 
-This directory turns the historical FoMo3D research, Saved by the Bell product concept, Channel 4663 visual direction, and Robinhood Chain constraints into implementation-facing requirements.
+This directory turns the historical FoMo3D research, the Saved by the Bell product concept and visual direction, and Robinhood Chain constraints into implementation-facing requirements.
 
 The suite deliberately separates selected decisions from proposals and launch gates. A requirement marked `PROPOSED`, `OPEN`, or `GATE` must not be silently treated as approved production behavior.
 
@@ -82,14 +82,14 @@ The complete mobile and desktop concept set is embedded in
 
 | ID | Decision | Status | Notes |
 |---|---|---|---|
-| `D-001` | Product is `Saved by the Bell`; primary mode is `Ticker Royale`. | `DECIDED` | Renamed from Last Bell on 2026-08-03; Channel 4663 remains the visual world. |
+| `D-001` | Product is `Saved by the Bell`; primary mode is the Stock Pot game. | `DECIDED` | There is no separate channel or station brand. |
 | `D-002` | Target Robinhood Chain, chain ID `4663`. | `DECIDED` | External chain facts were last verified 2026-07-28. |
 | `D-003` | V4 uses an amount composer with a $1 minimum, no maximum, and `APE {AMOUNT} ON {TICKER}` as the main action. | `DECIDED` | Supersedes the fixed-$1 Stage 0 and Stage 1 action while retaining `ape` as supporting meme vocabulary. |
 | `D-004` | Final holder receives 50%; control-winning faction receives 30%; 15% seeds the next round; 5% funds operations. | `SELECTED FOR PROTOTYPE` | Use for fixtures and simulation; production still requires economic validation and approval. |
 | `D-005` | Four ticker factions per round. | `SELECTED FOR PROTOTYPE` | Use four synthetic factions in Stage 0 and Stage 1; later ticker rosters remain configurable. |
 | `D-006` | Stock Token principal is separate from the prize pot and the same token amount becomes withdrawable after settlement. | `PROPOSED` | Value can still change while locked. |
 | `D-007` | Launch with testnet points before value-bearing play. | `DECIDED` | The first public MVP is Robinhood Chain testnet points with no player-funded prize or Stock Token custody. |
-| `D-008` | Use the Channel 4663 visual system and Dead Channel palette. | `DECIDED` | See `docs/channel-4663-ui-design.md`. |
+| `D-008` | Use the offbeat broadcast visual system and Dead Channel palette without presenting a channel number as a brand. | `DECIDED` | The original design document remains historical visual reference only. |
 | `D-009` | Use Next.js 16.2.x App Router, strict TypeScript, CSS Modules, `next/font`, and narrowly scoped Client Components. | `DECIDED` | No Tailwind, shadcn/ui, or dashboard template by default. |
 | `D-010` | Exclude a native token, ICO, affiliate tree, random airdrop, key curve, holder dividends, and unlimited overtime. | `DECIDED` | Historical FoMo3D mechanics remain research only. |
 | `D-011` | Actual Stock Token locking and value-bearing play require jurisdiction, eligibility, security, and product-counsel gates. | `GATE` | Frontend geo-blocking alone is not assumed sufficient. |

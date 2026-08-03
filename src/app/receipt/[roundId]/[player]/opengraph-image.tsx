@@ -25,7 +25,7 @@ export default async function Image({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <b style={{ fontSize: 28 }}>CHANNEL 4663 · RECEIPT</b>
+        <b style={{ fontSize: 28 }}>SAVED BY THE BELL · RECEIPT</b>
         <b style={{ fontSize: 28 }}>SAVED BY THE BELL</b>
       </div>
       <div style={{ display: "flex", flexDirection: "column" }}>

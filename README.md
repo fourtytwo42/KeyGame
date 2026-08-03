@@ -13,7 +13,7 @@ script, product requirements, research, and automated test suites.
 
 ## What is implemented
 
-- Channel 4663 visual system across desktop and mobile
+- Saved by the Bell broadcast visual system across desktop and mobile
 - Live round, lobby, finalizing, results, replay, receipt, rules, assets, and
   status screens
 - Variable uncapped contributions with a $1 minimum, a first-contribution-started

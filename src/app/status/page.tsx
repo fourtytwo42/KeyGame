@@ -141,7 +141,10 @@ export default async function StatusPage() {
           <span className="statusLamp good" />
           <div>
             <h2>Web broadcast</h2>
-            <p>Next.js application serving current Channel 4663 assets.</p>
+            <p>
+              Next.js application serving the current Saved by the Bell
+              interface.
+            </p>
           </div>
           <strong>ONLINE</strong>
         </article>

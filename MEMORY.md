@@ -4,8 +4,14 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-03 brand refinement: remove `Channel 4663` from all current
+  user-facing branding, metadata, receipts, profile/receipt social cards,
+  not-found copy, and Status copy. The header now uses a cohesive
+  `SAVED [BY THE] BELL` lockup with `BY THE` in a hot-mic badge. Chain ID 4663
+  remains only where it is an operational network fact. Historical design
+  documents may retain their original filenames and archived terminology.
 - User-facing branding is now `Saved by the Bell` across devnet, testnet, and
-  protected/mainnet builds. Original mascot and Channel 4663 visual system are
+  protected/mainnet builds. Original mascot and offbeat broadcast system are
   retained; the television show's logo, characters, and trade dress are not
   copied. Historical Solidity names, ABI identifiers, file paths, and
   `last-bell-v4-stock-pot` remain unchanged for compatibility.

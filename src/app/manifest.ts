@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Saved by the Bell · Channel 4663",
+    name: "Saved by the Bell",
     short_name: "Saved Bell",
     description: "The last caller holding the bell wins the broadcast.",
     start_url: "/",
