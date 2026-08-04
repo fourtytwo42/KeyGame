@@ -250,6 +250,19 @@
   },
   {
     "type": "function",
+    "name": "accountedUsdg",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "cancel",
     "inputs": [
       {
@@ -529,6 +542,19 @@
   },
   {
     "type": "function",
+    "name": "holderUsdgPool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "initialized",
     "inputs": [],
     "outputs": [
@@ -593,6 +619,19 @@
   },
   {
     "type": "function",
+    "name": "lifetimeUsdgPool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lifetimeVault",
     "inputs": [],
     "outputs": [
@@ -614,6 +653,19 @@
         "internalType": "uint256"
       }
     ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "nextRoundUsdgPool",
+    "inputs": [],
     "outputs": [
       {
         "name": "",
@@ -694,6 +746,25 @@
         "name": "",
         "type": "uint8",
         "internalType": "uint8"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "playerResidualUsdg",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [
@@ -797,6 +868,19 @@
   },
   {
     "type": "function",
+    "name": "protocolUsdgPool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "recentVolume",
     "inputs": [
       {
@@ -824,7 +908,18 @@
         "internalType": "address"
       }
     ],
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "amounts",
+        "type": "uint256[4]",
+        "internalType": "uint256[4]"
+      },
+      {
+        "name": "usdgAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {
@@ -893,6 +988,19 @@
   },
   {
     "type": "function",
+    "name": "seedUsdg",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "settled",
     "inputs": [],
     "outputs": [
@@ -925,6 +1033,11 @@
         "name": "seeds",
         "type": "uint256[4]",
         "internalType": "uint256[4]"
+      },
+      {
+        "name": "usdgSeed",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -1032,6 +1145,32 @@
   },
   {
     "type": "function",
+    "name": "totalUsdgConsumed",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "totalUsdgDeposited",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "totalWinningPointsClaimed",
     "inputs": [],
     "outputs": [
@@ -1058,6 +1197,11 @@
         "name": "amounts",
         "type": "uint256[4]",
         "internalType": "uint256[4]"
+      },
+      {
+        "name": "usdgAmount",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "nonpayable"
@@ -1134,6 +1278,19 @@
   },
   {
     "type": "function",
+    "name": "winningStockUsdgPool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "winningTicker",
     "inputs": [],
     "outputs": [
@@ -1141,6 +1298,19 @@
         "name": "",
         "type": "uint8",
         "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "winningUsdgPaid",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -1168,10 +1338,16 @@
         "internalType": "bytes32"
       },
       {
-        "name": "amounts",
+        "name": "stockAmounts",
         "type": "uint256[4]",
         "indexed": false,
         "internalType": "uint256[4]"
+      },
+      {
+        "name": "usdgAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1212,6 +1388,18 @@
       },
       {
         "name": "usdgAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "usdgConsumed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "residualUsdg",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -1310,6 +1498,18 @@
       },
       {
         "name": "totalContributed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "totalUsdgConsumed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "accountedUsdg",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"

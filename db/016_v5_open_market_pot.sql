@@ -29,3 +29,12 @@ COMMENT ON COLUMN stock_pot_allocations.stock_token IS
 CREATE INDEX IF NOT EXISTS stock_pot_contributions_residual_idx
   ON stock_pot_contributions (deployment_key, round_id)
   WHERE residual_usdg > 0;
+
+ALTER TABLE soak_asset_reconciliations
+  DROP CONSTRAINT IF EXISTS soak_asset_reconciliations_ticker_index_check;
+ALTER TABLE soak_asset_reconciliations
+  ADD CONSTRAINT soak_asset_reconciliations_ticker_index_check
+  CHECK (ticker_index BETWEEN 0 AND 4);
+
+COMMENT ON COLUMN soak_asset_reconciliations.ticker_index IS
+  'V5 uses indexes 0-3 for Stock Tokens and index 4 for residual USDG.';
