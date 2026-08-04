@@ -39,6 +39,15 @@ Durable project context lives here. Update this file whenever information should
   contributions, 500 settlements, 50 cancellations, 2,750 five-asset rows,
   7,470 partial fills, zero discrepancies, and 11 restored faults. No testnet
   or mainnet transaction was sent.
+- 2026-08-04 release checkpoint: accepted source commit
+  `bd2ab8328525bf11cdce4bae25c1ed1dedc82512` was packaged locally on the VM as
+  `saved-bell-v5-testnet-ready-bd2ab8328525.tgz` with SHA-256
+  `019d70a19826ce37ac318514f9116199a7677c425a889762d3fa51a4bb611acd`.
+  A clean standard-Anvil deployment from that commit is live at
+  `http://192.168.50.138:3000`; direct API and in-app browser verification show
+  contract version `saved-bell-v5-market-pot`, entry phase, an unstarted 05:00
+  clock, zero pot, and healthy web/keeper/Anvil services. This is devnet only;
+  a new v5 testnet authorization is still required.
 
 - 2026-08-03 corrected the v4 Final Transmission reward label from the
   archived `CLAIM AIRTIME` terminology to `CLAIM WINNING STOCK`. This is a

@@ -14,6 +14,7 @@ remains skipped and compatibility unverified. No v5 broadcast is authorized.
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally for v5 | Live LAN-only tests exercised the production adapter without broadcasting; currently unsafe markets remain excluded at activation. |
 | Full release regression | Passed locally | 71 Foundry tests, 117 Vitest tests, four integration tests, 26 applicable desktop/mobile Playwright tests, lint, TypeScript, production/protected builds, contract sizes, static analysis, secret scan, and live LAN mainnet fork all pass. |
+| Testnet-ready package | Generated, not deployed | Commit `bd2ab8328525bf11cdce4bae25c1ed1dedc82512`; package `saved-bell-v5-testnet-ready-bd2ab8328525.tgz`; SHA-256 `019d70a19826ce37ac318514f9116199a7677c425a889762d3fa51a4bb611acd`. A documentation-only successor may supersede this package before authorization. |
 | Two-round Robinhood testnet smoke | Superseded | Historical v4 smoke passed, but its bytecode and four-asset accounting cannot qualify `saved-bell-v5-market-pot`. A new authorization is required after v5 local qualification. |
 | Internal security review | Passed internally for current v5 bytecode | Pinned local analyzers, manual checklist, mutation controls, fork tests, and one-million-action campaign; no unresolved critical/high finding and no independent audit. |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
