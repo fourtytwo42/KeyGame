@@ -59,6 +59,7 @@ describe("deployed v4 local devnet", () => {
     const quote = await quoteV4Devnet("AAPL", 5_000);
     expect(quote.usdgAmount).toBe(5_000);
     expect(quote.projectedPoints).toBe(5_000);
+    expect(quote.minimumStockOut).toBe("1");
 
     const result = await sendV4DevnetAction("enter", "AAPL", 5_000);
     expect(result.state.phase).toBe("live");

@@ -14,7 +14,6 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       ticker?: TickerId;
       amountUsd?: number;
-      slippageBps?: number;
     };
     if (!isV4Runtime()) {
       return NextResponse.json(
@@ -23,16 +22,8 @@ export async function POST(request: Request) {
       );
     }
     const quote = isV4DevnetRuntime()
-      ? await quoteV4Devnet(
-          body.ticker ?? "NVDA",
-          body.amountUsd ?? 1,
-          body.slippageBps ?? 10_000,
-        )
-      : await quoteV4Production(
-          body.ticker ?? "NVDA",
-          body.amountUsd ?? 1,
-          body.slippageBps ?? 10_000,
-        );
+      ? await quoteV4Devnet(body.ticker ?? "NVDA", body.amountUsd ?? 1)
+      : await quoteV4Production(body.ticker ?? "NVDA", body.amountUsd ?? 1);
     return NextResponse.json({ ok: true, quote });
   } catch (error) {
     return NextResponse.json(

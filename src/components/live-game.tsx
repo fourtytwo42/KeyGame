@@ -169,7 +169,6 @@ export function LiveGame({
         body: JSON.stringify({
           ticker: effectiveTicker,
           amountUsd,
-          slippageBps: 10_000,
         }),
         signal: controller.signal,
       })

@@ -34,7 +34,7 @@ All deployment-capable paths use the pinned Foundry `release` profile: Solidity
 size gate excludes local Foundry script contracts, enforces the 24,576-byte
 EIP-170 limit and a stricter 23,000-byte production budget, and binds the
 compiler configuration, runtime sizes, and runtime hashes into release
-evidence. V5 moves round creation into `RoundFactoryV5`; the manager is 8,972
+evidence. V5 moves round creation into `RoundFactoryV5`; the manager is 9,427
 bytes and the factory is 16,843 bytes under this profile. Devnet uses
 standard Anvil contract-size enforcement so build-profile drift fails before
 testnet or mainnet packaging.
@@ -67,11 +67,10 @@ the vault holds, the vault pays its complete balance and emits
 `LifetimeRewardRoundedToBalance` with both amounts. Claims remain solvent,
 points remain non-consuming, and the event preserves exact audit evidence.
 
-The final launch rehearsal passed with two deterministic non-admin wallets on an
-isolated chain-31337 deployment for ten rounds over one real hour. It spends 82
-mock USDG under a 100 mock-USDG runner ceiling, recovered cleanly from the
-required keeper and indexer restarts, reconciled every basket and point, and
-left round eleven prepared with no contribution or timer. Mainnet receives read-only
+The historical v4 launch rehearsal remains useful service evidence, but it does
+not qualify v5 accounting. V5 must complete its own clean isolated devnet
+campaign, five-asset reconciliation, and desktop/mobile acceptance before a
+replacement testnet smoke can be authorized. Mainnet receives read-only
 deployment verification only; no scripted gameplay precedes separately
 authorized public promotion.
 
@@ -140,9 +139,12 @@ catalog is capped at 16 tokens.
 ## Interface requirements
 
 The action surface includes `$1`, `$10`, `$100`, `$1,000`, and uncapped custom
-amounts. Before signing, it shows USDG input, live-Quoter estimated stock received, locked
-multiplier, projected points, minimum output, quote expiry, and projected
-standings. The game board shows 30-second volume, multiplier, ticker points,
+amounts. Before signing, it shows USDG input, live-Quoter estimated stock
+received, locked multiplier, projected points, and projected standings. After
+acceptance it shows USDG deposited, USDG consumed, residual USDG, actual Stock
+Token output, and points earned. The app submits a one-raw-unit minimum output;
+the ABI still permits stricter caller-selected protection. The game board shows
+30-second volume, multiplier, ticker points,
 player points, points to lead, token quantity in the pot, and estimated USD
 value.
 
@@ -187,13 +189,13 @@ recent trading activity, daily volume, then symbol. Fewer than four technically
 valid markets delays preparation.
 
 V5 must pass fresh Foundry unit/fuzz tests, a new million-action and
-10,000-transaction torture campaigns, the one-hour launch rehearsal,
+10,000-transaction torture campaign,
 changed-roster seed conversion, exact basket and point reconciliation, indexer
 reconstruction, service restarts, accessibility, protected-bundle scanning,
 and local production builds. Testnet broadcast requires separate authorization
 and is limited to one mock-only deployment and exactly two smoke-test rounds.
 The final package must prove that deployment matches the frozen bytecode, both
-rounds have two players and four token allocations, every reward category was
+rounds have two players and five asset allocations, every reward category was
 claimed, and round three is unstarted. Mainnet remains blocked on current
 canonical-market qualification, funding, the dedicated compile-lock commit,
 explicit deployment authorization, read-only verification, and separate

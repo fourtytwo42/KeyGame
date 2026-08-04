@@ -1,12 +1,12 @@
 # PRD 17: Comprehension, Depth, and Memeability
 
-Status: `AUTHORITATIVE V4 PRESENTATION`
+Status: `AUTHORITATIVE V5 PRESENTATION`
 
 Contract version: `saved-bell-v5-market-pot`
 
 ## Objective
 
-Make the v4 Stock Pot understandable in five seconds, expose the consequence of
+Make the v5 Stock Pot understandable in five seconds, expose the consequence of
 every contribution before submission, and build durable identity and history
 from canonical events. This presentation layer does not change contracts,
 economics, timers, contribution limits, approval behavior, or RPC policy.
@@ -33,7 +33,7 @@ economics, timers, contribution limits, approval behavior, or RPC policy.
 - Waiting, live, final-minute, Rug Zone, settling, cancelled, and settled states
   use distinct treatments. Rug Zone continues to disclose FCFS competition and
   automated-wallet speed.
-- Current v4 views contain no GREEN, RED, or DEX-price scoring language. Those
+- Current v5 views contain no GREEN, RED, or DEX-price scoring language. Those
   labels remain only in versioned legacy replay adapters.
 
 ## Canonical identity and broadcast moments

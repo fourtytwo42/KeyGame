@@ -86,4 +86,21 @@ contract LifetimePointsVaultRoundingTest is TestBase {
             "bob claim is solvent"
         );
     }
+
+    function test_RewardCatalogAllowsSixteenStocksPlusUsdg() public {
+        LifetimePointsVault catalogVault = new LifetimePointsVault(address(this));
+
+        // Slot zero represents USDG; the next sixteen slots are Stock Tokens.
+        for (uint256 i; i < 17; i++) {
+            catalogVault.registerRewardToken(address(uint160(0x1000 + i)));
+        }
+        assertEq(
+            catalogVault.rewardTokenCount(),
+            17,
+            "USDG plus sixteen stocks must fit"
+        );
+
+        vm.expectRevert(LifetimePointsVault.TooManyRewardTokens.selector);
+        catalogVault.registerRewardToken(address(0x2000));
+    }
 }

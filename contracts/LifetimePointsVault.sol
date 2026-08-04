@@ -7,7 +7,9 @@ import { IERC20 } from "./interfaces/IERC20.sol";
 /// @dev Points earned in round N activate only after N's reward distribution.
 contract LifetimePointsVault {
     uint256 public constant ACC_SCALE = 1e30;
-    uint8 public constant MAX_REWARD_TOKENS = 16;
+    // The approved catalog contains up to 16 Stock Tokens. V5 also settles
+    // residual USDG through this vault, so the reward-token bound is 16 + 1.
+    uint8 public constant MAX_REWARD_TOKENS = 17;
 
     address public immutable manager;
     uint256 public currentRoundId;

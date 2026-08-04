@@ -32,17 +32,9 @@ const quoterAbi = parseAbi([
 export async function quoteV4Production(
   ticker: TickerId,
   amountUsd: number,
-  slippageBps = 10_000,
 ): Promise<StockSwapQuote> {
   if (!Number.isFinite(amountUsd) || amountUsd < 1) {
     throw new Error("The minimum contribution is $1.");
-  }
-  if (
-    !Number.isInteger(slippageBps) ||
-    slippageBps < 0 ||
-    slippageBps > 10_000
-  ) {
-    throw new Error("Execution slippage must be between 0 and 100%.");
   }
   const { manifest } = await loadServerDeploymentWithKey();
   if (
@@ -171,10 +163,7 @@ export async function quoteV4Production(
     tickerIndex,
     usdgAmount: amountUsd,
     estimatedStockOut: stock(output),
-    minimumStockOut: (() => {
-      const protectedOutput = (output * BigInt(10_000 - slippageBps)) / 10_000n;
-      return (protectedOutput > 0n ? protectedOutput : 1n).toString();
-    })(),
+    minimumStockOut: "1",
     quoteBlock: Number(block.number),
     expiresAt: Number(block.timestamp) + 30,
     canonicalToken: metadata?.canonical_address ?? token,
