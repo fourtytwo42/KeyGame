@@ -601,7 +601,6 @@ main {
   text-align: right;
 }
 
-
 .quoteMath div {
   display: grid;
   gap: 0.15rem;
@@ -1968,7 +1967,6 @@ main {
   font-size: 1.55rem;
   letter-spacing: 0.05em;
 }
-
 
 .liveStage,
 .entryDesk,
