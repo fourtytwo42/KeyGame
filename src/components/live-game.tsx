@@ -1270,135 +1270,139 @@ function LiveArena({
   const clockLabel = state.phase === "rug" ? "RUG ZONE" : "BROADCAST CLOCK";
   return (
     <div className="liveStage">
-      <div className="phaseBug">
-        {(state.phasePresentation ?? phasePresentation(state)).label}
-      </div>
-      <div className="clockAssembly">
-        <span>{clockLabel}</span>
-        <strong aria-label={`${state.timeLeftSeconds} seconds remaining`}>
-          {formatClock(state.timeLeftSeconds)}
-        </strong>
-        <small>HARD STOP {state.hardTimeLeftSeconds}s</small>
-      </div>
-      {state.phase === "rug" ? (
-        <div className="rugDisclosure" role="note">
-          <strong>RUG ZONE IS FCFS</strong>
-          <span>AUTOMATED WALLETS MAY BE FASTER</span>
-          <span>LAST ACCEPTED CALL WINS 50%</span>
+      <div className="liveStatusDeck">
+        <div className="phaseBug">
+          {(state.phasePresentation ?? phasePresentation(state)).label}
         </div>
-      ) : null}
-      <div className="callerCard">
-        <span className="callerLabel">CALLER HOLDING THE BELL</span>
-        <div className="callerVisual">
-          <Image
-            src={mascotForState(state)}
-            alt="Saved by the Bell broadcast host"
-            width={210}
-            height={210}
-            priority
-          />
-          <div>
-            <span
-              className="tickerBadge large"
-              style={{ background: ticker?.color }}
-            >
-              {state.holder?.ticker ?? "—"}
-            </span>
-            <strong>
-              {state.holder?.profileHandle ? (
-                <Link href={`/profile/${state.holder.profileHandle}`}>
-                  {state.holder.displayName}
-                </Link>
-              ) : (
-                (state.holder?.displayName ?? "Nobody has called")
-              )}
-            </strong>
-            <small>
-              {v4Economy
-                ? `CALL #${state.holder?.claimNumber ?? 0} · ${formatUsd(currentCall?.usdgAmount ?? 0)} · ${(currentCall?.pointsAwarded ?? 0).toLocaleString()} PTS`
-                : `CLAIM #${state.holder?.claimNumber ?? 0} · ${state.holder?.band ?? "FLAT"} · ${((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×`}
-            </small>
-            {v4Economy && currentCall ? (
-              <span className="earningRate">
-                {currentCall.claimant.ticker} ·{" "}
-                {(currentCall.multiplierBps / 10_000).toFixed(2)}× LOCKED ·{" "}
-                {(currentCall.pointsAwarded ?? 0).toLocaleString()} PTS WON
+        <div className="clockAssembly">
+          <span>{clockLabel}</span>
+          <strong aria-label={`${state.timeLeftSeconds} seconds remaining`}>
+            {formatClock(state.timeLeftSeconds)}
+          </strong>
+          <small>HARD STOP {state.hardTimeLeftSeconds}s</small>
+        </div>
+        {state.phase === "rug" ? (
+          <div className="rugDisclosure" role="note">
+            <strong>RUG ZONE IS FCFS</strong>
+            <span>AUTOMATED WALLETS MAY BE FASTER</span>
+            <span>LAST ACCEPTED CALL WINS 50%</span>
+          </div>
+        ) : null}
+        <div className="callerCard">
+          <span className="callerLabel">CALLER HOLDING THE BELL</span>
+          <div className="callerVisual">
+            <Image
+              src={mascotForState(state)}
+              alt="Saved by the Bell broadcast host"
+              width={210}
+              height={210}
+              priority
+            />
+            <div>
+              <span
+                className="tickerBadge large"
+                style={{ background: ticker?.color }}
+              >
+                {state.holder?.ticker ?? "—"}
               </span>
-            ) : state.projection?.currentEarning || state.holder ? (
-              <span className="earningRate">
-                {state.projection?.currentEarning?.ticker ??
-                  state.holder?.ticker}{" "}
-                ·{" "}
-                {(
-                  state.projection?.currentEarning?.pointsPerSecond ??
-                  (state.holder?.multiplierBps ?? 10_000) / 10_000
-                ).toFixed(2)}{" "}
-                PTS/SEC
-              </span>
-            ) : null}
+              <strong>
+                {state.holder?.profileHandle ? (
+                  <Link href={`/profile/${state.holder.profileHandle}`}>
+                    {state.holder.displayName}
+                  </Link>
+                ) : (
+                  (state.holder?.displayName ?? "Nobody has called")
+                )}
+              </strong>
+              <small>
+                {v4Economy
+                  ? `CALL #${state.holder?.claimNumber ?? 0} · ${formatUsd(currentCall?.usdgAmount ?? 0)} · ${(currentCall?.pointsAwarded ?? 0).toLocaleString()} PTS`
+                  : `CLAIM #${state.holder?.claimNumber ?? 0} · ${state.holder?.band ?? "FLAT"} · ${((state.holder?.multiplierBps ?? 10_000) / 10_000).toFixed(2)}×`}
+              </small>
+              {v4Economy && currentCall ? (
+                <span className="earningRate">
+                  {currentCall.claimant.ticker} ·{" "}
+                  {(currentCall.multiplierBps / 10_000).toFixed(2)}× LOCKED ·{" "}
+                  {(currentCall.pointsAwarded ?? 0).toLocaleString()} PTS WON
+                </span>
+              ) : state.projection?.currentEarning || state.holder ? (
+                <span className="earningRate">
+                  {state.projection?.currentEarning?.ticker ??
+                    state.holder?.ticker}{" "}
+                  ·{" "}
+                  {(
+                    state.projection?.currentEarning?.pointsPerSecond ??
+                    (state.holder?.multiplierBps ?? 10_000) / 10_000
+                  ).toFixed(2)}{" "}
+                  PTS/SEC
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
-      <div className="miniFactionSwitch" aria-label="Producer status">
-        <span>PRODUCER PASS</span>
-        <strong>
-          {session?.producerPass ? "ACTUALLY HOLDS THE BAG" : "OPEN CALLER"}
-        </strong>
-        <small>
-          {v4Economy
-            ? "REUSABLE APPROVAL · CUSTOM AMOUNTS"
-            : `${formatUsd(session?.remainingUsd ?? 0)} APPROVED · ${session?.availableActions ?? 0} CALLS`}
-        </small>
-      </div>
-      {v4Economy ? (
-        <ActionComposer
-          state={state}
-          selected={selected}
-          onSelect={onSelect}
-          amountUsd={amountUsd}
-          onAmountChange={onAmountChange}
-          quote={quote}
-          quoteError={quoteError}
-          transactionStage={transactionStage}
-          approvalHash={approvalHash}
-          contributionHash={contributionHash}
-          actionLabel={`APE ${formatUsd(amountUsd)} ON ${selected}`}
-          onAction={() => takeBell(selected)}
-          disabled={!canAct || actionStatus === "submitted"}
-        />
-      ) : (
-        <div className="claimTickerGrid" aria-label="Put a stock on air">
-          {state.tickerScores.map((score) => {
-            const slot = tickerById(score.ticker);
-            return (
-              <button
-                className="primaryAction apeButton"
-                type="button"
-                key={score.ticker}
-                disabled={!canAct || actionStatus === "submitted"}
-                onClick={() => takeBell(score.ticker)}
-                style={{ "--faction": slot.color } as React.CSSProperties}
-              >
-                {actionStatus === "submitted"
-                  ? "CALLING…"
-                  : v4Economy
-                    ? `APE ${formatUsd(amountUsd)} ON ${score.ticker}`
-                    : `PUT ${score.ticker} ON AIR · $1`}
-                <small>
-                  {v4Economy
-                    ? `${(score.multiplierBps / 10_000).toFixed(2)}× · ${(score.recentVolumeUsd ?? 0).toLocaleString()} HEAT · ${score.weightedScore.toLocaleString()} PTS`
-                    : `${score.currentBand} · ${(score.multiplierBps / 10_000).toFixed(2)}× · ${score.weightedScore.toFixed(1)} POINTS`}
-                </small>
-              </button>
-            );
-          })}
+      <div className="liveActionDeck">
+        <div className="miniFactionSwitch" aria-label="Producer status">
+          <span>PRODUCER PASS</span>
+          <strong>
+            {session?.producerPass ? "ACTUALLY HOLDS THE BAG" : "OPEN CALLER"}
+          </strong>
+          <small>
+            {v4Economy
+              ? "REUSABLE APPROVAL · CUSTOM AMOUNTS"
+              : `${formatUsd(session?.remainingUsd ?? 0)} APPROVED · ${session?.availableActions ?? 0} CALLS`}
+          </small>
         </div>
-      )}
-      <p className="actionFinePrint">
-        {state.phase === "rug"
-          ? "A successful claim changes the holder but adds no time."
-          : "A successful claim changes the holder and adds 2 seconds."}
-      </p>
+        {v4Economy ? (
+          <ActionComposer
+            state={state}
+            selected={selected}
+            onSelect={onSelect}
+            amountUsd={amountUsd}
+            onAmountChange={onAmountChange}
+            quote={quote}
+            quoteError={quoteError}
+            transactionStage={transactionStage}
+            approvalHash={approvalHash}
+            contributionHash={contributionHash}
+            actionLabel={`APE ${formatUsd(amountUsd)} ON ${selected}`}
+            onAction={() => takeBell(selected)}
+            disabled={!canAct || actionStatus === "submitted"}
+          />
+        ) : (
+          <div className="claimTickerGrid" aria-label="Put a stock on air">
+            {state.tickerScores.map((score) => {
+              const slot = tickerById(score.ticker);
+              return (
+                <button
+                  className="primaryAction apeButton"
+                  type="button"
+                  key={score.ticker}
+                  disabled={!canAct || actionStatus === "submitted"}
+                  onClick={() => takeBell(score.ticker)}
+                  style={{ "--faction": slot.color } as React.CSSProperties}
+                >
+                  {actionStatus === "submitted"
+                    ? "CALLING…"
+                    : v4Economy
+                      ? `APE ${formatUsd(amountUsd)} ON ${score.ticker}`
+                      : `PUT ${score.ticker} ON AIR · $1`}
+                  <small>
+                    {v4Economy
+                      ? `${(score.multiplierBps / 10_000).toFixed(2)}× · ${(score.recentVolumeUsd ?? 0).toLocaleString()} HEAT · ${score.weightedScore.toLocaleString()} PTS`
+                      : `${score.currentBand} · ${(score.multiplierBps / 10_000).toFixed(2)}× · ${score.weightedScore.toFixed(1)} POINTS`}
+                  </small>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <p className="actionFinePrint">
+          {state.phase === "rug"
+            ? "A successful claim changes the holder but adds no time."
+            : "A successful claim changes the holder and adds 2 seconds."}
+        </p>
+      </div>
     </div>
   );
 }

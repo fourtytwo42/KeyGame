@@ -4,6 +4,25 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: The active-round studio now fits all value-bearing controls in a
+  normal 1280x720 viewport. `live-game.tsx` groups the clock/holder and action
+  areas into compact desktop decks, while the short-desktop CSS breakpoint
+  reduces scoreboard, clock, caller, ticker, quote, and action spacing without
+  changing mobile layout or game logic. Deployed-browser evidence at 1280x720:
+  broadcast arena bottom 708px, live stage bottom 689px, APE action bottom
+  650px, crawl bottom 703px, and no horizontal overflow. At 390x844 the mobile
+  action dock remains visible and there is no horizontal overflow.
+- 2026-08-04: The first observable run
+  `v5-observable-live-2026-08-04T04-54-06-920Z` was invalidated after the VM
+  disk filled and Anvil persisted a malformed transaction hash. It is marked
+  failed rather than repaired. Eighteen stopped Anvil temporary-state
+  directories (43 GB total) were permanently removed; the then-active state
+  was preserved long enough to diagnose the failure. PostgreSQL was restarted,
+  the chain was cleanly redeployed, and the replacement campaign is
+  `v5-observable-live-2026-08-04T05-21-32-651Z` in isolated schema
+  `keygame_observable_live2`. Initial evidence: one settlement, 20 accepted
+  contributions, healthy keeper/indexer, and zero failed actions or
+  discrepancies. Do not continue or qualify the invalidated run.
 - 2026-08-04: Added the observable v5 devnet simulation harness. Profile
   `v5-observable` uses 64 deterministic non-admin wallets, mock DEX fill/rate
   rotation, repeated atomic-revert cases, interleaved cancellations, rewards,
@@ -17,14 +36,10 @@ Durable project context lives here. Update this file whenever information should
   accepted contributions, zero discrepancies, zero failed assertions, and
   zero failed actions. The live app continues polling chain state every second,
   so gameplay is visible without refreshing.
-- 2026-08-04: The full observable campaign is running from executable commit
-  `abe0495` as `v5-observable-live-2026-08-04T04-54-06-920Z`. It targets 800
-  settlements and 80 cancellations over eight hours. Initial live verification
-  at five settlements showed 100 accepted contributions, 25 reconciled asset
-  rows, zero accounting/point discrepancies, and healthy keeper/indexer
-  heartbeats. In-app browser observation on the same unreloaded tab saw round
-  4670 settle and advance through rounds 4671 and 4672 while the header remained
-  `ON AIR`, proving the one-second page polling reflects simulation changes.
+- 2026-08-04: The original observable campaign from executable commit
+  `abe0495` proved live one-second page polling through multiple rounds before
+  its environmental disk-full failure. Its accounting evidence is diagnostic
+  only and is superseded by the clean replacement run above.
 - 2026-08-04: `saved-bell-v5-market-pot` is implemented and locally qualified
   in worktree `.codex-worktrees/v5-release` on branch
   `codex/saved-bell-v5-open-market`. Contributions accept verified partial
@@ -429,7 +444,9 @@ Durable project context lives here. Update this file whenever information should
   commands. Its systemd controller is `keygame-v5-observable-simulation`; the
   live page is `http://192.168.50.138:3000`. The Status page recognizes the
   `v5-observable` profile and exposes rounds, cancellations, accepted calls,
-  and reconciliation discrepancies.
+  and reconciliation discrepancies. The current clean run uses PostgreSQL
+  schema `keygame_observable_live2`; the original `keygame_observable` run is
+  failed evidence and must not be resumed.
 
 - V5 is the current implementation and qualification target. The round records
   full USDG deposited, exact adapter input consumed, residual USDG, Stock Token
@@ -1268,7 +1285,7 @@ When sources conflict, use this order:
 - Monitor the running eight-hour `v5-observable` campaign to completion and
   preserve its generated JSON/Markdown report and checksum. The exact VM
   checkout is `/home/hendo420/releases/keygame-v5-abe0495`; do not reset Anvil
-  or the `keygame_observable` schema while the controller is active.
+  or the `keygame_observable_live2` schema while the controller is active.
 - V5 requires a new one-deployment/two-round mock testnet authorization after
   local acceptance. No prior v4 authorization or smoke evidence can qualify
   v5, and no v5 testnet or mainnet broadcast is currently authorized.
