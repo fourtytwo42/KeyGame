@@ -17,6 +17,14 @@ Durable project context lives here. Update this file whenever information should
   accepted contributions, zero discrepancies, zero failed assertions, and
   zero failed actions. The live app continues polling chain state every second,
   so gameplay is visible without refreshing.
+- 2026-08-04: The full observable campaign is running from executable commit
+  `abe0495` as `v5-observable-live-2026-08-04T04-54-06-920Z`. It targets 800
+  settlements and 80 cancellations over eight hours. Initial live verification
+  at five settlements showed 100 accepted contributions, 25 reconciled asset
+  rows, zero accounting/point discrepancies, and healthy keeper/indexer
+  heartbeats. In-app browser observation on the same unreloaded tab saw round
+  4670 settle and advance through rounds 4671 and 4672 while the header remained
+  `ON AIR`, proving the one-second page polling reflects simulation changes.
 - 2026-08-04: `saved-bell-v5-market-pot` is implemented and locally qualified
   in worktree `.codex-worktrees/v5-release` on branch
   `codex/saved-bell-v5-open-market`. Contributions accept verified partial
@@ -1257,10 +1265,10 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Commit and push the observable-harness source, deploy that exact checkout to
-  the VM without resetting the current Anvil contracts, then start and monitor
-  the full eight-hour `v5-observable` campaign. Preserve its JSON/Markdown
-  report and checksum after completion.
+- Monitor the running eight-hour `v5-observable` campaign to completion and
+  preserve its generated JSON/Markdown report and checksum. The exact VM
+  checkout is `/home/hendo420/releases/keygame-v5-abe0495`; do not reset Anvil
+  or the `keygame_observable` schema while the controller is active.
 - V5 requires a new one-deployment/two-round mock testnet authorization after
   local acceptance. No prior v4 authorization or smoke evidence can qualify
   v5, and no v5 testnet or mainnet broadcast is currently authorized.
