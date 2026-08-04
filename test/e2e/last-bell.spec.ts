@@ -1,15 +1,23 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { encodeFunctionData, parseAbi, type Address } from "viem";
+import {
+  encodeFunctionData,
+  parseAbi,
+  stringToHex,
+  type Address,
+} from "viem";
 
 let cleanDevnetSnapshot: string;
 const devnetRpc = process.env.PLAYWRIGHT_RPC_URL || "http://127.0.0.1:8545";
 const devnetDeployment = JSON.parse(
   readFileSync("deployments/31337.json", "utf8"),
-) as { deployer: Address; swapAdapter: Address };
+) as { deployer: Address; swapAdapter: Address; roundManager: Address };
 const mockAdapterAdminAbi = parseAbi([
   "function setFillBps(uint16 nextFillBps)",
+]);
+const roundManagerAdminAbi = parseAbi([
+  "function cancelActive(bytes32 reason)",
 ]);
 
 async function rpc(
@@ -144,6 +152,95 @@ test("partial fills disclose consumed and residual USDG after acceptance", async
   await expect(page.getByText("POINTS EARNED", { exact: true })).toBeVisible();
   await expect(page.locator(".quoteMath")).toContainText("$2.50");
   await expect(page.locator(".quoteMath")).toContainText("$7.50");
+});
+
+test("settled partial-fill rewards remain visible and claimable", async ({
+  page,
+  request,
+}) => {
+  await rpc(request, "eth_sendTransaction", [
+    {
+      from: devnetDeployment.deployer,
+      to: devnetDeployment.swapAdapter,
+      data: encodeFunctionData({
+        abi: mockAdapterAdminAbi,
+        functionName: "setFillBps",
+        args: [2_500],
+      }),
+    },
+  ]);
+  await page.goto("/");
+  await page
+    .locator(".amountPresets button")
+    .filter({ hasText: /^\$10$/ })
+    .click();
+  await page.getByRole("button", { name: /APE \$10 ON NVDA/i }).click();
+  await expect(page.getByText("USDG APED", { exact: true })).toBeVisible();
+
+  const snapshotResponse = await request.get("/api/game/snapshot");
+  const snapshot = (await snapshotResponse.json()) as {
+    state: { deadline: number };
+  };
+  await rpc(request, "evm_setNextBlockTimestamp", [snapshot.state.deadline]);
+  await rpc(request, "evm_mine");
+  const finalize = await request.post("/api/devnet/action", {
+    data: { action: "finalize" },
+  });
+  expect(finalize.ok()).toBe(true);
+  await page.reload();
+
+  await expect(
+    page.getByRole("button", { name: /CLAIM HOLDER/i }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /CLAIM HOLDER/i }).click();
+  await expect(
+    page.getByRole("button", { name: /CLAIM WINNING STOCK/i }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /CLAIM WINNING STOCK/i }).click();
+  await expect(page.locator(".claimActions button")).toHaveCount(0);
+});
+
+test("cancelled partial fills expose the complete basket refund", async ({
+  page,
+  request,
+}) => {
+  await rpc(request, "eth_sendTransaction", [
+    {
+      from: devnetDeployment.deployer,
+      to: devnetDeployment.swapAdapter,
+      data: encodeFunctionData({
+        abi: mockAdapterAdminAbi,
+        functionName: "setFillBps",
+        args: [2_500],
+      }),
+    },
+  ]);
+  await page.goto("/");
+  await page
+    .locator(".amountPresets button")
+    .filter({ hasText: /^\$10$/ })
+    .click();
+  await page.getByRole("button", { name: /APE \$10 ON NVDA/i }).click();
+  await expect(page.getByText("USDG APED", { exact: true })).toBeVisible();
+  await rpc(request, "eth_sendTransaction", [
+    {
+      from: devnetDeployment.deployer,
+      to: devnetDeployment.roundManager,
+      data: encodeFunctionData({
+        abi: roundManagerAdminAbi,
+        functionName: "cancelActive",
+        args: [stringToHex("E2E_CANCEL", { size: 32 })],
+      }),
+    },
+  ]);
+  await page.reload();
+
+  const refund = page.getByRole("button", {
+    name: /CLAIM \$10(?:\.00)? REFUND/i,
+  });
+  await expect(refund).toBeVisible();
+  await refund.click();
+  await expect(refund).not.toBeVisible();
 });
 
 test("wallet panel exposes major connector paths and config state", async ({

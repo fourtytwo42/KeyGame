@@ -100,7 +100,18 @@ export function useWalletGame(
       return;
     }
     if (v4Economy) {
-      const [phase, spent, allowance, deadline] = await Promise.all([
+      const [
+        phase,
+        spent,
+        allowance,
+        deadline,
+        holder,
+        winner,
+        holderClaimed,
+        winningClaimed,
+        refundClaimed,
+        snapshot,
+      ] = await Promise.all([
         publicClient.readContract({
           address: activeRoundAddress,
           abi: lastBellV4Abi,
@@ -123,7 +134,66 @@ export function useWalletGame(
           abi: lastBellV4Abi,
           functionName: "deadline",
         }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "holder",
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "winningTicker",
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "holderRewardClaimed",
+          args: [address],
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "winningRewardClaimed",
+          args: [address],
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "refundClaimed",
+          args: [address],
+        }),
+        fetch("/api/game/snapshot", { cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) return undefined;
+            return (await response.json()) as {
+              state?: { potUsd?: number };
+            };
+          })
+          .catch(() => undefined),
       ]);
+      const winnerIndex = Number(winner) < 4 ? Number(winner) : 0;
+      const [playerWinningPoints, totalWinningPoints] = await Promise.all([
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "playerTickerPoints",
+          args: [address, winnerIndex],
+        }),
+        publicClient.readContract({
+          address: activeRoundAddress,
+          abi: lastBellV4Abi,
+          functionName: "tickerPoints",
+          args: [BigInt(winnerIndex)],
+        }),
+      ]);
+      const settled = Number(phase) === 4;
+      const cancelled = Number(phase) === 5;
+      const potUsd = snapshot?.state?.potUsd ?? Number(spent) / 1e6;
+      const winningShare =
+        totalWinningPoints === 0n
+          ? 0
+          : Number((playerWinningPoints * 1_000_000n) / totalWinningPoints) /
+            1_000_000;
       setSession({
         player: address,
         starterTicker: null,
@@ -141,7 +211,20 @@ export function useWalletGame(
         mode: "wallet",
         producerPass: false,
       });
-      setClaimable({ holderUsd: 0, airtimeUsd: 0, refundUsd: 0 });
+      setClaimable({
+        holderUsd:
+          settled &&
+          holder.toLowerCase() === address.toLowerCase() &&
+          !holderClaimed
+            ? potUsd * 0.5
+            : 0,
+        airtimeUsd:
+          settled && playerWinningPoints > 0n && !winningClaimed
+            ? potUsd * 0.3 * winningShare
+            : 0,
+        refundUsd:
+          cancelled && spent > 0n && !refundClaimed ? Number(spent) / 1e6 : 0,
+      });
       return;
     }
     const [

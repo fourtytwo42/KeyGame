@@ -1,12 +1,13 @@
-# Last Bell v4 threat model
+# Saved by the Bell v5 threat model
 
 Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT AUDIT.**
 
 ## Assets and invariants
 
 - Player USDG may leave a wallet only when a complete contribution succeeds.
-- Accounted Stock Token units must resolve exactly to Last Bell, Winning Stock,
-  Lifetime, seed, protocol, refund, or still-claimable custody.
+- Deposited USDG must equal consumed USDG plus residual USDG. Every accounted
+  Stock Token and residual USDG unit must resolve exactly to Last Bell, Winning
+  Stock, Lifetime, seed, protocol, refund, or still-claimable custody.
 - Rejected swaps cannot change holder, timer, points, heat, or reward state.
 - Lifetime points activate only after settlement, never on cancellation, never
   burn on claim, and never exceed accepted contribution points.
@@ -42,8 +43,9 @@ Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT A
   MEV extraction are accepted residual risks.
 - **Reentrancy or callback spoofing:** adapter lock, exact expected pool callback
   sender, hostile callback and token tests, checks before state acceptance.
-- **Dishonest adapter output:** round counts only exact authorized-adapter token
-  balance deltas; transaction atomicity rolls back USDG and game state.
+- **Dishonest adapter output:** round verifies reported input consumption and
+  output against exact authorized-adapter balance deltas; transaction atomicity
+  rolls back USDG and game state.
 - **Roster race:** manager-backed configuration guard blocks catalog changes
   during active rounds; keeper serializes preparation with advisory locks and
   idempotency keys.
@@ -53,8 +55,10 @@ Status: internal working threat model. **INTERNALLY REVIEWED · NO INDEPENDENT A
   deployment-scoped derived-state rebuild.
 - **Reward rounding or claim-order extraction:** deterministic splits,
   final-eligible-claimant remainder, per-token conservation and fuzz coverage.
-- **Seed/protocol conversion failure:** conversion occurs outside settlement;
-  failures preserve recoverable assets and cannot block player withdrawals.
+- **Seed/protocol conversion failure:** Stock-to-USDG adapter calls require exact
+  input consumption and revert on partial fills. Conversion remains outside
+  settlement, so failures preserve recoverable assets and cannot block player
+  withdrawals.
 - **Compromised deployer:** encrypted external keystore, exact role verification,
   between-round change boundaries, two-step future role transfers, and complete
   event trails. Initial single-key concentration remains an accepted residual risk.

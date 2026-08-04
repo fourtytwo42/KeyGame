@@ -4,8 +4,9 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- 2026-08-04: `saved-bell-v5-market-pot` is implemented in worktree
-  `.codex-worktrees/v4-mainnet-release`. Contributions accept verified partial
+- 2026-08-04: `saved-bell-v5-market-pot` is implemented and locally qualified
+  in worktree `.codex-worktrees/v5-release` on branch
+  `codex/saved-bell-v5-open-market`. Contributions accept verified partial
   fills, award points from full deposited USDG, and retain residual USDG as the
   fifth 50/30/10/5/5 reward asset. App quotes always use a one-raw-unit output
   minimum; direct callers retain ABI-level control. Pool impact/depth changes do
@@ -18,15 +19,26 @@ Durable project context lives here. Update this file whenever information should
   now 17, explicitly covering USDG plus the approved 16-stock catalog. The
   exact boundary regression passes. Because this changes bytecode, the earlier
   partial v5 campaigns were discarded and clean qualification restarted.
-- 2026-08-04 clean corrected-bytecode evidence so far: 1,000,000 deterministic
-  invariant actions passed; 70 Foundry tests passed; live LAN mainnet-fork
+- 2026-08-04 manual adapter review found a second v5 boundary: Uniswap range
+  exhaustion could partially fill Stock-to-USDG seed/protocol conversions even
+  though the plan requires operational conversions to be exact-fill. Player
+  USDG-to-Stock contributions still accept verified partial fills, while
+  `swapStockForUsdg` now reverts unless all requested Stock Token input is
+  consumed. A range-exhaustion regression covers the distinction, and all
+  earlier partial campaigns were discarded again.
+- 2026-08-04 clean corrected-bytecode evidence: 1,000,000 deterministic
+  invariant actions passed; 71 Foundry tests passed; live LAN mainnet-fork
   adapter tests passed; the contract-size gate passed (`RoundManagerV4` 9,427
   bytes); the internal security pipeline passed with no unresolved critical or
   high finding; 117 Vitest tests, lint, TypeScript, production build, secret
-  scan, and protected-build scan passed. The clean 10,000-contribution live
-  campaign is still running and must finish with 500 settlements, 50
-  cancellations, five-asset reconciliation, and recovered faults before v5 is
-  accepted. No testnet or mainnet transaction was sent.
+  scan, protected-build scan, four-test integration suite, and 26 applicable
+  desktop/mobile Playwright tests passed. Browser coverage includes a 25%
+  partial fill with exact consumed/residual disclosure, settlement claims, and
+  complete five-asset cancellation refunds. Clean torture run
+  `v4-torture-live-2026-08-04T03-12-52-173Z` completed 10,000 accepted
+  contributions, 500 settlements, 50 cancellations, 2,750 five-asset rows,
+  7,470 partial fills, zero discrepancies, and 11 restored faults. No testnet
+  or mainnet transaction was sent.
 
 - 2026-08-03 corrected the v4 Final Transmission reward label from the
   archived `CLAIM AIRTIME` terminology to `CLAIM WINNING STOCK`. This is a
@@ -393,11 +405,13 @@ Durable project context lives here. Update this file whenever information should
   only immediately before activation; an unsafe empty prepared round is
   discarded without charging a player.
 - Current clean qualification run:
-  `v4-torture-live-2026-08-04T02-55-40-152Z` in isolated VM source
+  `v4-torture-live-2026-08-04T03-12-52-173Z` in isolated VM source
   `/tmp/keygame-v5-full` at snapshot commit
-  `6b4cbf02611fec314e10ee78d12b264d11df6907`. Its exact million-action
-  campaign passed; the associated 10,000-contribution live campaign is still
-  running. This temporary snapshot hash is evidence only; final packaging must
+  `6f72e4f6f70e15aa6eed975931de86bd5c31f2b2`. Its exact million-action
+  campaign and associated 10,000-contribution live campaign passed with zero
+  discrepancies. The report JSON SHA-256 is
+  `b30176b298e19e38b305fbdf7ef2d4a2cddacbd38a2a1a64b81ac108cf3c5583`.
+  This temporary snapshot hash is evidence only; final packaging must
   bind the eventual reviewed repository commit and rerun commit-sensitive
   gates if its runtime hashes differ.
 - PRD 17 extends authoritative v4 presentation without changing contract
@@ -1207,12 +1221,8 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Finish and reconcile the clean v5 live campaign: exactly 10,000 accepted
-  contributions, 500 settlements, 50 cancellations, 2,750 five-asset rows,
-  at least one partial fill, zero discrepancies, and all faults restored.
-- Run clean v5 desktop/mobile browser UAT for full fill, partial fill, extreme
-  repricing, five-asset rewards/refunds/history, and rollover. Then package and
-  commit only the reviewed v5 source without absorbing unrelated dirty work.
+- Package and commit only the reviewed v5 source without absorbing unrelated
+  dirty work. The clean campaign and desktop/mobile Playwright UAT are green.
 - V5 requires a new one-deployment/two-round mock testnet authorization after
   local acceptance. No prior v4 authorization or smoke evidence can qualify
   v5, and no v5 testnet or mainnet broadcast is currently authorized.

@@ -1,6 +1,6 @@
 # Saved by the Bell v5 mainnet-readiness ledger
 
-Status: v5 contract and accounting implementation is in progress. The v4
+Status: v5 contract, accounting, and local qualification are complete. The v4
 testnet smoke, internal review, torture run, and planned mainnet deployment are
 superseded evidence because v5 runtime bytecode differs. Browser-wallet testing
 remains skipped and compatibility unverified. No v5 broadcast is authorized.
@@ -9,15 +9,15 @@ remains skipped and compatibility unverified. No v5 broadcast is authorized.
 
 | Gate | State | Evidence or next authority |
 |---|---|---|
-| Accepted Anvil baseline | In progress | Corrected v5 snapshot passed 1,000,000 state actions. Clean run `v4-torture-live-2026-08-04T02-55-40-152Z` must still finish 10,000 contributions, 500 settlements, 50 cancellations, and 2,750 five-asset reconciliation rows. |
+| Accepted Anvil baseline | Passed | Clean run `v4-torture-live-2026-08-04T03-12-52-173Z`: 1,000,000 state actions, 10,000 accepted contributions, 500 settlements, 50 cancellations, 2,750 five-asset rows, 7,470 partial fills, zero discrepancies, and all 11 injected faults restored. JSON SHA-256 `b30176b298e19e38b305fbdf7ef2d4a2cddacbd38a2a1a64b81ac108cf3c5583`. |
 | Direct production adapter | Implemented | `RobinhoodStockSwapAdapter.sol` |
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
 | Mainnet-fork adapter tests | Passed locally for v5 | Live LAN-only tests exercised the production adapter without broadcasting; currently unsafe markets remain excluded at activation. |
-| Full release regression | In progress | 70 Foundry tests, 117 Vitest tests, lint, TypeScript, production/protected builds, contract sizes, static analysis, secret scan, and live LAN mainnet fork pass. Clean v5 live campaign and browser UAT remain. |
+| Full release regression | Passed locally | 71 Foundry tests, 117 Vitest tests, four integration tests, 26 applicable desktop/mobile Playwright tests, lint, TypeScript, production/protected builds, contract sizes, static analysis, secret scan, and live LAN mainnet fork all pass. |
 | Two-round Robinhood testnet smoke | Superseded | Historical v4 smoke passed, but its bytecode and four-asset accounting cannot qualify `saved-bell-v5-market-pot`. A new authorization is required after v5 local qualification. |
 | Internal security review | Passed internally for current v5 bytecode | Pinned local analyzers, manual checklist, mutation controls, fork tests, and one-million-action campaign; no unresolved critical/high finding and no independent audit. |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
-| Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
+| Initial role custody | Verified in configuration | One encrypted deployer EOA for all roles; independent future two-step transfers. A matching v5 testnet deployment remains pending. |
 | External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
 | One-hour devnet launch rehearsal | Passed | Deployment key `31337:0x610178da211fef7d417bc0e6fed39f05609ad788:8`: ten settlements at minutes 0-54, two non-admin callers per round, 82 mock USDG, keeper restart after round four, indexer restart after round seven, exact reconciliation, and round eleven prepared/unstarted. Report SHA-256 `0da42b0f63bcedeb38e93eea2da2ca64c9753a8c9607743fcc4770606ce12ef2`. |
 | Mainnet broadcast | Invalidated and locked | Regenerate only after v5 testnet reconciliation; the v4 nonce-bound plan cannot authorize v5. |

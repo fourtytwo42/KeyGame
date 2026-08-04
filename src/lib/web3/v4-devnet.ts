@@ -514,7 +514,16 @@ export async function getV4DevnetSession(
   const address = player ?? d.sessionPlayer;
   const snapshot = await getV4DevnetSnapshot();
   const round = await activeRoundAddress(d);
-  const [spent, allowance] = await Promise.all([
+  const [
+    spent,
+    allowance,
+    phase,
+    holder,
+    winner,
+    holderClaimed,
+    winningClaimed,
+    refundClaimed,
+  ] = await Promise.all([
     client.readContract({
       address: round,
       abi: lastBellV4Abi,
@@ -527,7 +536,62 @@ export async function getV4DevnetSession(
       functionName: "allowance",
       args: [address, d.paymentRouter],
     }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "currentPhase",
+    }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "holder",
+    }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "winningTicker",
+    }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "holderRewardClaimed",
+      args: [address],
+    }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "winningRewardClaimed",
+      args: [address],
+    }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "refundClaimed",
+      args: [address],
+    }),
   ]);
+  const winnerIndex = Number(winner) < 4 ? Number(winner) : 0;
+  const [playerWinningPoints, totalWinningPoints] = await Promise.all([
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "playerTickerPoints",
+      args: [address, winnerIndex],
+    }),
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "tickerPoints",
+      args: [BigInt(winnerIndex)],
+    }),
+  ]);
+  const settled = Number(phase) === 4;
+  const cancelled = Number(phase) === 5;
+  const winningShare =
+    totalWinningPoints === 0n
+      ? 0
+      : Number((playerWinningPoints * 1_000_000n) / totalWinningPoints) /
+        1_000_000;
   return {
     session: {
       player: address,
@@ -552,7 +616,19 @@ export async function getV4DevnetSession(
       mode: "devnet-guest",
       producerPass: false,
     },
-    claimable: { holderUsd: 0, airtimeUsd: 0, refundUsd: 0 },
+    claimable: {
+      holderUsd:
+        settled &&
+        holder.toLowerCase() === address.toLowerCase() &&
+        !holderClaimed
+          ? snapshot.potUsd * 0.5
+          : 0,
+      airtimeUsd:
+        settled && playerWinningPoints > 0n && !winningClaimed
+          ? snapshot.potUsd * 0.3 * winningShare
+          : 0,
+      refundUsd: cancelled && spent > 0n && !refundClaimed ? usd(spent) : 0,
+    },
   };
 }
 

@@ -56,7 +56,8 @@ There is no hidden recovery key or custom bypass.
 
 - The protocol basket is claimable only after canonical settlement.
 - Conversion uses approved direct pools, a quote deadline, a positive output
-  floor, and exact balance deltas. It has no protocol-level price-impact or
+  floor, exact balance deltas, and complete Stock Token input consumption. A
+  partial operational sell reverts. It has no protocol-level price-impact or
   TWAP-deviation ceiling.
 - Conversion failure cannot block settlement or player withdrawals.
 

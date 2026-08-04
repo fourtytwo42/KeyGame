@@ -1,6 +1,6 @@
 # PRD 16: Stock Pot and Lifetime Points
 
-Status: `AUTHORITATIVE V5 / IMPLEMENTATION IN PROGRESS`
+Status: `AUTHORITATIVE V5 / LOCALLY QUALIFIED / TESTNET PENDING`
 
 Contract version: `saved-bell-v5-market-pot`
 
@@ -15,15 +15,18 @@ contract, accounting, timer, contribution, approval, or RPC behavior.
 
 The v5 contracts, sequential manager/factory, five-asset settlement, lifetime
 vault, reward router, deterministic partial-fill mock adapter, APIs, indexer,
-and product presentation are implemented. Focused Foundry and application
-tests pass. The clean v5 torture, live-devnet, browser, and replacement testnet
-qualification records remain required before this status becomes accepted.
+and product presentation are implemented and locally accepted. Clean run
+`v4-torture-live-2026-08-04T03-12-52-173Z` passed 1,000,000 state actions,
+10,000 accepted contributions, 500 settlements, 50 cancellations, 7,470
+partial fills, all 11 recovery faults, and exact five-asset reconciliation.
+The replacement testnet qualification remains pending and requires a new
+authorization.
 
 The prior v4 extended qualification and testnet smoke remain historical
-evidence only. V5 requires a new one-million-action model run, 10,000 live
-devnet contributions, 500 settlements, 50 cancellations, exact five-asset
-reconciliation, browser UAT, and a newly authorized mock-only two-round
-testnet smoke. The future package name is
+evidence only. V5 locally passed 71 Foundry tests, 117 Vitest tests, four
+integration tests, and 26 applicable desktop/mobile Playwright tests, including
+partial-fill settlement claims and cancellation refunds. It still requires a
+newly authorized mock-only two-round testnet smoke. The package name is
 `saved-bell-v5-testnet-ready-<commit>.tgz`.
 External-wallet UAT is intentionally skipped, remains unpassed, and browser
 compatibility is labeled unverified. Fresh production market checks and an
@@ -68,9 +71,9 @@ the vault holds, the vault pays its complete balance and emits
 points remain non-consuming, and the event preserves exact audit evidence.
 
 The historical v4 launch rehearsal remains useful service evidence, but it does
-not qualify v5 accounting. V5 must complete its own clean isolated devnet
-campaign, five-asset reconciliation, and desktop/mobile acceptance before a
-replacement testnet smoke can be authorized. Mainnet receives read-only
+not qualify v5 accounting. V5 completed its own clean isolated devnet campaign,
+five-asset reconciliation, and desktop/mobile acceptance. The next gate is a
+newly authorized replacement testnet smoke. Mainnet receives read-only
 deployment verification only; no scripted gameplay precedes separately
 authorized public promotion.
 
@@ -175,6 +178,11 @@ sets minimum output to one raw Stock Token unit and accepts any positive Stock
 Token output; wallets and direct callers retain the
 ABI-level ability to specify a stricter minimum output. Devnet and testnet use
 clearly labeled mock assets and a deterministic adapter.
+
+Partial input is permitted only for player USDG-to-Stock contributions.
+Stock-to-USDG seed rebalancing and protocol conversion are operational sells;
+the production adapter requires them to consume the complete requested Stock
+Token input or revert atomically.
 
 At activation, an eligible production roster market must also be active and non-halted, use
 canonical USDG and a direct pinned-factory pool, expose at least 30 minutes of
