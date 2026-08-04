@@ -1063,16 +1063,22 @@ function StockRaceBoard({
           return (
             <article
               className="stockRaceRow"
+              data-stock={score.ticker}
               data-selected={score.ticker === selected}
               data-leader={index === 0}
               key={score.ticker}
+              onClick={() => onSelect(score.ticker)}
+              title={`Select ${score.ticker}`}
             >
               <span className="raceRank">#{index + 1}</span>
               <button
                 type="button"
                 className="raceTickerButton"
                 aria-pressed={score.ticker === selected}
-                onClick={() => onSelect(score.ticker)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSelect(score.ticker);
+                }}
               >
                 {score.ticker}
               </button>

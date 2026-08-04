@@ -35,7 +35,7 @@ describe("LiveGame", () => {
   });
 
   it("turns the starter ticker into the first paid claim", () => {
-    render(<LiveGame initialScenario="entry" />);
+    const { container } = render(<LiveGame initialScenario="entry" />);
     expect(screen.getByText("BELL CLOCK")).toBeInTheDocument();
     expect(screen.getByText("05:00")).toBeInTheDocument();
     expect(screen.getByText(/WAITING FOR FIRST CALL/i)).toBeInTheDocument();
@@ -47,6 +47,10 @@ describe("LiveGame", () => {
     expect(screen.getAllByText("$100").length).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", { name: /APE \$10 ON AAPL/i }),
+    ).toBeInTheDocument();
+    fireEvent.click(container.querySelector('[data-stock="TSLA"]')!);
+    expect(
+      screen.getByRole("button", { name: /APE \$10 ON TSLA/i }),
     ).toBeInTheDocument();
   });
 

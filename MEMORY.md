@@ -4,6 +4,15 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: Bell Rush review follow-up makes every Stock Race row clickable;
+  the ticker button remains keyboard-accessible, and the Details disclosure
+  stops propagation so inspecting it does not change the selected stock. The
+  Hallway Feed is now a full 30px compact-desktop row with a lower accent and
+  ends at 711px inside the 1280x720 viewport. Deployed-browser verification
+  selected TSLA by clicking its row and confirmed opening AAPL Details left
+  TSLA selected. Focused Vitest (7 tests), lint, TypeScript, and VM production
+  build passed. The automated simulation remains stopped.
+
 - 2026-08-04: Bell Rush devnet presentation is implemented in
   `.codex-worktrees/v5-release` and deployed for operator review at
   `http://192.168.50.138:3000`. The current shared UI uses a single
