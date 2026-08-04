@@ -1,8 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { encodeFunctionData, parseAbi, type Address } from "viem";
 
 let cleanDevnetSnapshot: string;
 const devnetRpc = process.env.PLAYWRIGHT_RPC_URL || "http://127.0.0.1:8545";
+const devnetDeployment = JSON.parse(
+  readFileSync("deployments/31337.json", "utf8"),
+) as { deployer: Address; swapAdapter: Address };
+const mockAdapterAdminAbi = parseAbi([
+  "function setFillBps(uint16 nextFillBps)",
+]);
 
 async function rpc(
   request: APIRequestContext,
@@ -101,6 +109,41 @@ test("live studio exposes four tickers through one contribution composer", async
   }
   await expect(page.getByText(/30S HEAT/).first()).toBeAttached();
   await expect(page.getByText(/PTS/).first()).toBeAttached();
+});
+
+test("partial fills disclose consumed and residual USDG after acceptance", async ({
+  page,
+  request,
+}) => {
+  const hash = await rpc(request, "eth_sendTransaction", [
+    {
+      from: devnetDeployment.deployer,
+      to: devnetDeployment.swapAdapter,
+      data: encodeFunctionData({
+        abi: mockAdapterAdminAbi,
+        functionName: "setFillBps",
+        args: [2_500],
+      }),
+    },
+  ]);
+  expect(hash).toMatch(/^0x[0-9a-f]{64}$/i);
+
+  await page.goto("/");
+  await page
+    .locator(".amountPresets button")
+    .filter({ hasText: /^\$10$/ })
+    .click();
+  await page.getByRole("button", { name: /APE \$10 ON NVDA/i }).click();
+
+  await expect(page.getByText("USDG APED", { exact: true })).toBeVisible();
+  await expect(page.getByText("USDG SWAPPED", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("USDG LEFT IN POT", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("STOCK ADDED", { exact: true })).toBeVisible();
+  await expect(page.getByText("POINTS EARNED", { exact: true })).toBeVisible();
+  await expect(page.locator(".quoteMath")).toContainText("$2.50");
+  await expect(page.locator(".quoteMath")).toContainText("$7.50");
 });
 
 test("wallet panel exposes major connector paths and config state", async ({

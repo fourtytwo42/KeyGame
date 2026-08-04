@@ -41,7 +41,7 @@ export async function quoteV4Production(
     manifest.contractVersion !== "saved-bell-v5-market-pot" ||
     !manifest.contracts.swapAdapter
   ) {
-    throw new Error("The active deployment is not a v4 Stock Pot.");
+    throw new Error("The active deployment is not a v5 Open-Market Pot.");
   }
   const client = deploymentPublicClient(manifest);
   const active = await client.readContract({
@@ -217,7 +217,7 @@ export async function getV4ProductionRewards(player: Address) {
     !vault ||
     !rewardRouter
   ) {
-    throw new Error("The active deployment is not a v4 Stock Pot.");
+    throw new Error("The active deployment is not a v5 Open-Market Pot.");
   }
   const client = deploymentPublicClient(manifest);
   const stockCatalog = await database

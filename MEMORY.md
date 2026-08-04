@@ -4,20 +4,29 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- 2026-08-03: the operator chose uncapped market execution. The working tree
-  removes the production adapter's 1% TWAP-deviation ceiling, runtime depth
-  floor, impact-based roster exclusion, and the application's 1% default
-  minimum-output protection. App-generated calls now use a one-raw-unit output
-  floor while direct callers retain the ABI-level `minimumStockOut` control.
-  Pool repricing and inventory depletion are accepted behavior; canonical
-  identity, active status, history, nonzero active liquidity, deadline, and
-  exact balance-delta checks remain. This changes production contract bytecode,
-  invalidates the prior mainnet plan/testnet bytecode qualification, and
-  requires the complete contract requalification plus a replacement two-round
-  testnet smoke before any mainnet release. TypeScript, ESLint, targeted Vitest
-  (11 tests), and diff checks pass locally; Foundry verification remains pending
-  on the project VM because Windows has no `forge` and noninteractive SSH was
-  unavailable.
+- 2026-08-04: `saved-bell-v5-market-pot` is implemented in worktree
+  `.codex-worktrees/v4-mainnet-release`. Contributions accept verified partial
+  fills, award points from full deposited USDG, and retain residual USDG as the
+  fifth 50/30/10/5/5 reward asset. App quotes always use a one-raw-unit output
+  minimum; direct callers retain ABI-level control. Pool impact/depth changes do
+  not disable an active round, while the keeper enforces the $10,000 depth gate
+  immediately before activation and discards an unsafe empty prepared round.
+  Mainnet remains compile-time locked and v4 testnet/mainnet packages are
+  invalid for v5.
+- 2026-08-04 internal review found that the vault's historical 16-token bound
+  counted USDG, leaving room for only 15 Stock Tokens. `MAX_REWARD_TOKENS` is
+  now 17, explicitly covering USDG plus the approved 16-stock catalog. The
+  exact boundary regression passes. Because this changes bytecode, the earlier
+  partial v5 campaigns were discarded and clean qualification restarted.
+- 2026-08-04 clean corrected-bytecode evidence so far: 1,000,000 deterministic
+  invariant actions passed; 70 Foundry tests passed; live LAN mainnet-fork
+  adapter tests passed; the contract-size gate passed (`RoundManagerV4` 9,427
+  bytes); the internal security pipeline passed with no unresolved critical or
+  high finding; 117 Vitest tests, lint, TypeScript, production build, secret
+  scan, and protected-build scan passed. The clean 10,000-contribution live
+  campaign is still running and must finish with 500 settlements, 50
+  cancellations, five-asset reconciliation, and recovered faults before v5 is
+  accepted. No testnet or mainnet transaction was sent.
 
 - 2026-08-03 corrected the v4 Final Transmission reward label from the
   archived `CLAIM AIRTIME` terminology to `CLAIM WINNING STOCK`. This is a
@@ -373,6 +382,24 @@ Durable project context lives here. Update this file whenever information should
 
 ## Current State
 
+- V5 is the current implementation and qualification target. The round records
+  full USDG deposited, exact adapter input consumed, residual USDG, Stock Token
+  output, and full-deposit points. Settlement, cancellation, lifetime rewards,
+  seeds, protocol baskets, APIs, indexer state, and receipts treat residual
+  USDG as the fifth asset. Historical v4 and earlier parsers remain read-only.
+- The production adapter has no protocol price-impact or TWAP-deviation ceiling
+  during active play and can return a verified partial fill at the Uniswap range
+  boundary. A live roster is frozen. The $10,000 USDG depth requirement applies
+  only immediately before activation; an unsafe empty prepared round is
+  discarded without charging a player.
+- Current clean qualification run:
+  `v4-torture-live-2026-08-04T02-55-40-152Z` in isolated VM source
+  `/tmp/keygame-v5-full` at snapshot commit
+  `6b4cbf02611fec314e10ee78d12b264d11df6907`. Its exact million-action
+  campaign passed; the associated 10,000-contribution live campaign is still
+  running. This temporary snapshot hash is evidence only; final packaging must
+  bind the eventual reviewed repository commit and rerun commit-sensitive
+  gates if its runtime hashes differ.
 - PRD 17 extends authoritative v4 presentation without changing contract
   bytecode. Live and historical surfaces separate Stock Pot contributions,
   Winning Stock points, and Stock Token basket rewards from legacy airtime and
@@ -1180,6 +1207,15 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
+- Finish and reconcile the clean v5 live campaign: exactly 10,000 accepted
+  contributions, 500 settlements, 50 cancellations, 2,750 five-asset rows,
+  at least one partial fill, zero discrepancies, and all faults restored.
+- Run clean v5 desktop/mobile browser UAT for full fill, partial fill, extreme
+  repricing, five-asset rewards/refunds/history, and rollover. Then package and
+  commit only the reviewed v5 source without absorbing unrelated dirty work.
+- V5 requires a new one-deployment/two-round mock testnet authorization after
+  local acceptance. No prior v4 authorization or smoke evidence can qualify
+  v5, and no v5 testnet or mainnet broadcast is currently authorized.
 - Preserve the PRD 17 rollout backups under
   `/tmp/KeyGame*-before-prd17-*` until the next accepted release checkpoint.
   The presentation rollout is complete; remaining work is operational

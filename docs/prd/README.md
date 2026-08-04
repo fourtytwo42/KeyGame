@@ -1,19 +1,19 @@
 # Saved by the Bell PRD Suite
 
 > `D-026` (2026-08-03): The user-facing product name is `Saved by the Bell`.
-> Historical contract names, ABI identifiers, file paths, and the
-> `saved-bell-v5-market-pot` is authoritative. Historical
+> `saved-bell-v5-market-pot` is authoritative. Historical contract names, ABI
+> identifiers, and file paths remain unchanged where compatibility requires it.
 > `last-bell-v4-stock-pot` identifiers remain supported by replay adapters.
 
-> `D-025` (2026-07-30): PRD 16 is the authoritative v4 economy.
+> `D-030` (2026-08-03): PRD 16 is the authoritative v5 economy.
 > [16-stock-pot-lifetime-points.md](./16-stock-pot-lifetime-points.md)
 > supersedes v3 Airtime payouts and all fixed-$1 or DEX-momentum scoring
 > requirements. Older versions remain replay history.
 
-> `D-029` (2026-08-03): PRD 17 is the authoritative v4 presentation.
+> `D-029` (2026-08-03): PRD 17 is the authoritative v5 presentation.
 > It adds comprehension, contribution impact, canonical captains and
 > achievements, factual broadcast moments, richer earnings/history, and
-> onchain verification without changing v4 contracts or economics.
+> onchain verification without changing v5 contracts or economics.
 
 > `D-026` (2026-07-31): v4 production readiness uses a direct
 > Robinhood-mainnet Stock Token/USDG adapter, deployer-controlled 16-asset catalog,
@@ -43,7 +43,8 @@ Current implementation documents:
 - [PRD 16: Stock Pot and Lifetime Points](./16-stock-pot-lifetime-points.md)
 - [PRD 17: Comprehension, Depth, and Memeability](./17-comprehension-depth-memeability.md)
 
-Status: v4 is qualified on Anvil and has a production-readiness implementation.
+Status: v5 is implemented and undergoing clean Anvil qualification. All v4
+deployment evidence is superseded for bytecode/accounting qualification.
 Value-bearing deployment remains blocked by the ledger in
 `docs/qualification/v4-mainnet-readiness-ledger.md`.
 
@@ -72,8 +73,8 @@ The complete mobile and desktop concept set is embedded in
 | [12 Robinhood Testnet Production Readiness](12-robinhood-testnet-production-readiness.md) | Production-shaped testnet architecture, evidence, external blockers, and freeze gates | `TESTNET` |
 | [14 Product, Retention, and Mainnet Readiness](14-product-retention-mainnet-readiness.md) | Reward projections, SIWE profiles, featured raids, deployment-safe history, and audit-candidate gates | `RET`, `IDENT` |
 | [15 Audit Candidate and Airtime Pool](15-audit-candidate-airtime-pool.md) | Nonfinancial Crown, all-caller raw-time Airtime Pool, FCFS disclosure, Safes, soak, and freeze gates | `AUDIT`, `AIRTIME` |
-| [16 Stock Pot and Lifetime Points](16-stock-pot-lifetime-points.md) | Uncapped variable contributions, Stock Token basket custody, follower heat, winning-stock payouts, and recurring lifetime rewards | `V4`, `STOCKPOT`, `LIFETIME` |
-| [17 Comprehension, Depth, and Memeability](17-comprehension-depth-memeability.md) | Live hierarchy, contribution impact, captains, achievements, truthful headlines, richer earnings/history, and onchain verification | `V4UX`, `IDENT`, `TRUST` |
+| [16 Stock Pot and Lifetime Points](16-stock-pot-lifetime-points.md) | Uncapped partial-fill contributions, five-asset pot custody, follower heat, winning-stock payouts, and recurring lifetime rewards | `V5`, `STOCKPOT`, `LIFETIME` |
+| [17 Comprehension, Depth, and Memeability](17-comprehension-depth-memeability.md) | Live hierarchy, contribution impact, captains, achievements, truthful headlines, richer earnings/history, and onchain verification | `V5UX`, `IDENT`, `TRUST` |
 
 ## Status vocabulary
 

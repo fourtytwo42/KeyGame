@@ -55,9 +55,10 @@
 
 ## Acceptance boundary
 
-The repository now contains the production adapter, dynamic roster, durable v4
-keeper, canonical v4 indexer, schema-v4 deployment controls, and audit-package
-workflow. Testnet assets remain mocks with no value and the historical
-two-round smoke is complete, but it does not qualify the current bytecode. No
+The repository now contains the v5 partial-fill production adapter, dynamic
+roster, durable keeper, canonical five-asset indexer, schema-v5 deployment
+controls, and internal-assurance package workflow. Testnet assets remain mocks
+with no value and the historical two-round smoke is complete, but it does not
+qualify the current bytecode. No
 mainnet deployment, independent audit, legal approval,
 external-wallet compatibility, or canary success is claimed.

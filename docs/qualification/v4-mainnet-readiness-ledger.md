@@ -9,13 +9,13 @@ remains skipped and compatibility unverified. No v5 broadcast is authorized.
 
 | Gate | State | Evidence or next authority |
 |---|---|---|
-| Accepted Anvil baseline | Passed | Commit-bound run `v4-torture-live-2026-08-01T03-57-02-588Z`: 1,000,000 state actions, 10,000 contributions, 500 settlements, 50 cancellations, 2,200 exact reconciliation rows, and all scheduled recovery faults |
+| Accepted Anvil baseline | In progress | Corrected v5 snapshot passed 1,000,000 state actions. Clean run `v4-torture-live-2026-08-04T02-55-40-152Z` must still finish 10,000 contributions, 500 settlements, 50 cancellations, and 2,750 five-asset reconciliation rows. |
 | Direct production adapter | Implemented | `RobinhoodStockSwapAdapter.sol` |
 | Dynamic safe roster | Implemented | market collector, v4 screener, keeper, catalog evidence |
-| Mainnet-fork adapter tests | Passed locally | Five pinned pools; currently unsafe markets remain excluded at activation |
-| Full release regression | Passed locally | 62 Foundry tests, 85 Vitest tests, four isolated integration tests, 20 applicable Playwright tests, mainnet protected build, live mainnet fork, and live mainnet preflight |
+| Mainnet-fork adapter tests | Passed locally for v5 | Live LAN-only tests exercised the production adapter without broadcasting; currently unsafe markets remain excluded at activation. |
+| Full release regression | In progress | 70 Foundry tests, 117 Vitest tests, lint, TypeScript, production/protected builds, contract sizes, static analysis, secret scan, and live LAN mainnet fork pass. Clean v5 live campaign and browser UAT remain. |
 | Two-round Robinhood testnet smoke | Superseded | Historical v4 smoke passed, but its bytecode and four-asset accounting cannot qualify `saved-bell-v5-market-pot`. A new authorization is required after v5 local qualification. |
-| Internal security review | Passed internally | Pinned local analyzers, manual checklist, mutation controls, fork tests, and clean torture rerun; no independent audit |
+| Internal security review | Passed internally for current v5 bytecode | Pinned local analyzers, manual checklist, mutation controls, fork tests, and one-million-action campaign; no unresolved critical/high finding and no independent audit. |
 | Operator risk acknowledgement | Recorded | Unsigned acknowledgement: `No legal review or independent audit` |
 | Initial role custody | Verified on testnet | One encrypted deployer EOA for all roles; independent future two-step transfers |
 | External-wallet UAT | Skipped by operator | `externalWalletUatPassed=false`; browser compatibility remains `UNVERIFIED` and is not a canary gate |
@@ -91,8 +91,10 @@ remains skipped and compatibility unverified. No v5 broadcast is authorized.
 The 2026-08-03 LAN mainnet research found highly uneven public pool liquidity:
 NVDA was deepest, SPY and AAPL remained usable at the measured sizes, TSLA was
 thin for larger calls, and AMZN crossed a severe concentrated-liquidity cliff.
-V4 intentionally treats that repricing as market behavior. Depth, impact, and
-TWAP deviation are monitored and disclosed but no longer block contributions;
+V5 intentionally treats that repricing as market behavior and retains unspent
+USDG as a reward asset when a swap reaches its available range. Depth, impact,
+and TWAP deviation are monitored and disclosed but do not block contributions
+after activation;
 canonical identity, active status, history, and nonzero active liquidity remain
 required.
 

@@ -50,7 +50,7 @@ zero-transaction read-only verification report.
 The production-readiness implementation adds a non-upgradeable,
 Robinhood-mainnet-only direct Uniswap V3 adapter, a deployer-controlled catalog
 capped at 16 assets, dynamic four-market screening, deployment-keyed roster
-evidence, a durable v4 keeper, canonical reward indexing, schema-v4 manifests,
+evidence, a durable keeper, canonical reward indexing, schema-v5 manifests,
 and fail-closed testnet/mainnet release scripts. This is implementation
 evidence, not deployment or approval.
 

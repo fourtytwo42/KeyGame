@@ -264,7 +264,11 @@ contract RobinhoodStockSwapAdapter is IStockSwapAdapter {
         uint64 deadline,
         address recipient
     ) external returns (uint256 amountInConsumed, uint256 amountOut) {
-        return _swap(stock, stock, usdg, amountIn, minimumOut, deadline, recipient);
+        (amountInConsumed, amountOut) =
+            _swap(stock, stock, usdg, amountIn, minimumOut, deadline, recipient);
+        // Stock sells are operational seed/protocol conversions, never player
+        // contributions. A range-boundary partial conversion must roll back.
+        if (amountInConsumed != amountIn) revert TransferFailed();
     }
 
     function uniswapV3SwapCallback(

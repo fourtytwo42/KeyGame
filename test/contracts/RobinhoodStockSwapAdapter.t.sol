@@ -204,6 +204,21 @@ contract RobinhoodStockSwapAdapterTest is TestBase {
         assertEq(usdg.balanceOf(address(this)), 75e6, "unspent input retained");
     }
 
+    function test_PriceRangeExhaustionRevertsOperationalSell() public {
+        stock.mint(address(this), 100e18);
+        stock.approve(address(adapter), type(uint256).max);
+        pool.setInputBps(2_500);
+
+        vm.expectRevert(RobinhoodStockSwapAdapter.TransferFailed.selector);
+        adapter.swapStockForUsdg(
+            address(stock),
+            100e18,
+            1,
+            uint64(block.timestamp + 30),
+            address(this)
+        );
+    }
+
     function test_ExpiredExecutionIsAtomic() public {
         usdg.mint(address(this), 100e6);
         usdg.approve(address(adapter), type(uint256).max);
