@@ -15,7 +15,7 @@ export default function GlobalError({
         >
           <span className="eyebrow">MASTER CONTROL ERROR</span>
           <h1>Dead air</h1>
-          <p>The broadcast failed safely. No wallet action was submitted.</p>
+          <p>The round failed safely. No wallet action was submitted.</p>
           <button className="primaryAction" type="button" onClick={reset}>
             RETUNE THE SIGNAL
           </button>

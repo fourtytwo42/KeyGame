@@ -6,6 +6,7 @@ import {
 import { quoteV4Production } from "@/lib/server/v4-production";
 import { quoteV4Devnet } from "@/lib/web3/v4-devnet-runtime";
 import type { TickerId } from "@/lib/game/types";
+import type { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       ticker?: TickerId;
       amountUsd?: number;
+      player?: Address;
     };
     if (!isV4Runtime()) {
       return NextResponse.json(
@@ -22,8 +24,16 @@ export async function POST(request: Request) {
       );
     }
     const quote = isV4DevnetRuntime()
-      ? await quoteV4Devnet(body.ticker ?? "NVDA", body.amountUsd ?? 1)
-      : await quoteV4Production(body.ticker ?? "NVDA", body.amountUsd ?? 1);
+      ? await quoteV4Devnet(
+          body.ticker ?? "NVDA",
+          body.amountUsd ?? 1,
+          body.player,
+        )
+      : await quoteV4Production(
+          body.ticker ?? "NVDA",
+          body.amountUsd ?? 1,
+          body.player,
+        );
     return NextResponse.json({ ok: true, quote });
   } catch (error) {
     return NextResponse.json(

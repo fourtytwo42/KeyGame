@@ -39,8 +39,8 @@ export function HistoricalRuns() {
   return (
     <section className="historicalRuns" aria-labelledby="historical-runs-title">
       <header>
-        <span className="eyebrow">ARCHIVE TAPE / COMPLETED BROADCASTS</span>
-        <h2 id="historical-runs-title">Historical runs</h2>
+        <span className="eyebrow">YEARBOOK / FINISHED ROUNDS</span>
+        <h2 id="historical-runs-title">Yearbook</h2>
         <p>
           See how large each pot became, who held the final bell, and which
           stock won the point race.
@@ -111,8 +111,8 @@ export function HistoricalRuns() {
       ) : (
         <p className="emptyHistory">
           {ready
-            ? "No completed broadcasts yet. The first finished run will appear here automatically."
-            : "Checking the archive tape…"}
+            ? "No finished rounds yet. The first Final Bell will appear here automatically."
+            : "Checking the Yearbook…"}
         </p>
       )}
     </section>

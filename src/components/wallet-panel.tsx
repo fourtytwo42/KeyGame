@@ -142,7 +142,7 @@ export function WalletPanel() {
                     <dd>{game.session?.availableActions ?? 0}</dd>
                   </div>
                   <div>
-                    <dt>Producer Pass</dt>
+                    <dt>Hall Pass</dt>
                     <dd>
                       {game.session?.producerPass
                         ? "Actually holds the bag"

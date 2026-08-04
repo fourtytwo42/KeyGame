@@ -635,6 +635,7 @@ export async function getV4DevnetSession(
 export async function quoteV4Devnet(
   ticker: TickerId,
   amountUsd: number,
+  player?: Address,
 ): Promise<StockSwapQuote> {
   if (!Number.isFinite(amountUsd) || amountUsd < 1) {
     throw new Error("The minimum contribution is $1.");
@@ -644,7 +645,7 @@ export async function quoteV4Devnet(
   const index = tickerSlots.findIndex((item) => item.id === ticker);
   if (index < 0) throw new Error("Unknown ticker.");
   const amount = BigInt(Math.floor(amountUsd * 1e6));
-  const [output, multiplier, standings, block] = await Promise.all([
+  const [output, multiplier, standings, block, playerPoints] = await Promise.all([
     client.readContract({
       address: d.swapAdapter,
       abi: stockSwapAdapterAbi,
@@ -668,6 +669,14 @@ export async function quoteV4Devnet(
       ),
     ),
     client.getBlock({ blockTag: "pending" }),
+    player
+      ? client.readContract({
+          address: round,
+          abi: lastBellV4Abi,
+          functionName: "playerTickerPoints",
+          args: [player, index],
+        })
+      : Promise.resolve(0n),
   ]);
   const projected = (amount * BigInt(multiplier)) / 10_000n;
   const resulting = standings.map((value, item) =>
@@ -683,6 +692,10 @@ export async function quoteV4Devnet(
   );
   const rank = (values: readonly bigint[], tickerIndex: number) =>
     1 + values.filter((value) => value > values[tickerIndex]).length;
+  const projectedPlayerPoints = playerPoints + projected;
+  const projectedShareBps = resulting[index] > 0n
+    ? Number((projectedPlayerPoints * 10_000n) / resulting[index])
+    : 0;
   return {
     ticker,
     tickerIndex: index,
@@ -692,12 +705,20 @@ export async function quoteV4Devnet(
     quoteBlock: Number(block.number),
     expiresAt: Number(block.timestamp) + 30,
     multiplierBps: Number(multiplier),
+    basePoints: amountUsd,
     projectedPoints: usd(projected),
+    currentTickerPoints: usd(standings[index]),
+    projectedTickerPoints: usd(resulting[index]),
     projectedLeader: tickerId(leader),
     pointsToLead: Math.max(0, usd(currentLead - standings[index]) + 0.000001),
+    pointsToLeadAfter: Math.max(0, usd(currentLead - resulting[index]) + 0.000001),
     currentRank: rank(standings, index),
     projectedRank: rank(resulting, index),
     pointsToFlip: Math.max(0, usd(currentLead - standings[index]) + 0.000001),
+    currentPlayerTickerPoints: usd(playerPoints),
+    projectedPlayerTickerPoints: usd(projectedPlayerPoints),
+    projectedPlayerShareBps: projectedShareBps,
+    pendingLifetimePoints: usd(projected),
     heatLevel: heatLevel(Number(multiplier)),
     approvalRequired: true,
   };

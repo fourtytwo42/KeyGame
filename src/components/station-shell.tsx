@@ -10,7 +10,7 @@ export function StationShell({ children }: { children: ReactNode }) {
   return (
     <div className="stationFrame">
       <a className="skipLink" href="#main-content">
-        Skip to broadcast
+        Skip to Bell Board
       </a>
       <header className="stationHeader">
         <Link
@@ -19,7 +19,7 @@ export function StationShell({ children }: { children: ReactNode }) {
           aria-label="Saved by the Bell home"
         >
           <Image
-            src="/brand/saved-bell-mascot.png"
+            src="/brand/bell-rush-hall-monitor.png"
             alt=""
             width={62}
             height={62}
@@ -29,14 +29,15 @@ export function StationShell({ children }: { children: ReactNode }) {
             <span className="stationTitleWord">SAVED</span>
             <span className="stationTitleBridge">BY THE</span>
             <span className="stationTitleWord">BELL</span>
+            <small>BELL RUSH</small>
           </strong>
         </Link>
         <OnAirStatus />
         <nav className="desktopNav" aria-label="Primary">
           <Link href="/rules">Rules</Link>
-          <Link href="/supported-assets">Bags</Link>
+          <Link href="/supported-assets">Stocks</Link>
           <EarningsNavLink />
-          <Link href="/leaderboards">Whales</Link>
+          <Link href="/leaderboards">Rankings</Link>
         </nav>
         <WalletPanel />
       </header>
@@ -50,8 +51,8 @@ export function StationShell({ children }: { children: ReactNode }) {
         </p>
         <nav aria-label="Footer">
           <Link href="/rules">Rules</Link>
-          <Link href="/supported-assets">Supported assets</Link>
-          <Link href="/earnings">Earnings</Link>
+          <Link href="/supported-assets">Stocks</Link>
+          <Link href="/earnings">Rewards</Link>
         </nav>
       </footer>
     </div>

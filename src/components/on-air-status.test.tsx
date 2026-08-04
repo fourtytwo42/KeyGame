@@ -5,7 +5,7 @@ import { OnAirStatus } from "./on-air-status";
 describe("OnAirStatus", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("uses the existing ON AIR badge for a healthy LAN RPC", async () => {
+  it("uses the Bell Live badge for a healthy LAN RPC", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -14,7 +14,7 @@ describe("OnAirStatus", () => {
       }),
     );
     render(<OnAirStatus />);
-    expect(await screen.findByText("ON AIR")).toBeInTheDocument();
+    expect(await screen.findByText("BELL LIVE")).toBeInTheDocument();
     expect(screen.getByLabelText("LAN RPC healthy")).toBeInTheDocument();
   });
 
@@ -27,7 +27,7 @@ describe("OnAirStatus", () => {
       }),
     );
     render(<OnAirStatus />);
-    expect(await screen.findByText("DEGRADED")).toBeInTheDocument();
+    expect(await screen.findByText("CONNECTION DEGRADED")).toBeInTheDocument();
     expect(screen.getByLabelText("LAN RPC degraded")).toBeInTheDocument();
   });
 });

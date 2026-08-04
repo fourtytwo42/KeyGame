@@ -75,7 +75,7 @@ export function LiveGame({
   const [playerProjection, setPlayerProjection] =
     useState<PlayerRoundProjection | null>(null);
   const [announcement, setAnnouncement] = useState(
-    "Live broadcast synchronized.",
+    "Bell Board synchronized.",
   );
   const [audioEnabled, setAudioEnabled] = useState(
     () =>
@@ -169,6 +169,7 @@ export function LiveGame({
         body: JSON.stringify({
           ticker: effectiveTicker,
           amountUsd,
+          player: activeSession?.player,
         }),
         signal: controller.signal,
       })
@@ -194,7 +195,14 @@ export function LiveGame({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [amountUsd, effectiveTicker, state.roundId, state.freshness, v4Economy]);
+  }, [
+    activeSession?.player,
+    amountUsd,
+    effectiveTicker,
+    state.roundId,
+    state.freshness,
+    v4Economy,
+  ]);
 
   const loadScenario = (nextScenario: SimulationScenarioId) => {
     setScenario(nextScenario);
@@ -222,7 +230,7 @@ export function LiveGame({
     if (nextRoundIdentity !== activeRoundIdentity.current) {
       activeRoundIdentity.current = nextRoundIdentity;
       setActionStatus("idle");
-      setAnnouncement("Live broadcast synchronized.");
+      setAnnouncement("Bell Board synchronized.");
     }
     setState(payload.state);
     if (payload.session) {
@@ -369,9 +377,9 @@ export function LiveGame({
       setActionStatus("accepted");
       setAnnouncement(
         action === "enter"
-          ? `${ticker} is on air. Reusable USDG approval active.`
+          ? `${ticker} is bell live. Reusable USDG approval active.`
           : action === "claim"
-            ? `Claim accepted on chain 31337. ${ticker} is on air.`
+            ? `Call accepted on chain 31337. ${ticker} is bell live.`
             : action.startsWith("claim-")
               ? "Pull-payment claim confirmed on chain 31337."
               : action === "revoke"
@@ -443,7 +451,7 @@ export function LiveGame({
         setActionStatus(result.event.accepted ? "accepted" : "rejected");
         setAnnouncement(
           result.event.accepted
-            ? `Claim accepted. ${ticker} is on air.`
+            ? `Call accepted. ${ticker} is bell live.`
             : `Claim rejected. ${result.event.reason}.`,
         );
         window.setTimeout(() => setActionStatus("idle"), 1500);
@@ -455,7 +463,7 @@ export function LiveGame({
   const enterRound = async () => {
     setActionStatus("submitted");
     setAnnouncement(
-      `Putting ${effectiveTicker} on air with a reusable USDG approval.`,
+      `Taking the bell with ${effectiveTicker} using a reusable USDG approval.`,
     );
     if (chainMode) {
       if (walletGame.isConnected) {
@@ -464,7 +472,7 @@ export function LiveGame({
           await refreshChain();
           setActionStatus("accepted");
           setAnnouncement(
-            `${effectiveTicker} is on air from your connected wallet.`,
+            `${effectiveTicker} is bell live from your connected wallet.`,
           );
         } catch (error) {
           setActionStatus("rejected");
@@ -512,7 +520,7 @@ export function LiveGame({
     });
     setActionStatus("accepted");
     setAnnouncement(
-      `${effectiveTicker} is on air. Bell stolen for ${formatUsd(amountUsd)}.`,
+      `${effectiveTicker} is bell live. Bell stolen for ${formatUsd(amountUsd)}.`,
     );
   };
 
@@ -526,8 +534,8 @@ export function LiveGame({
   const hasChainClaimPath = walletGame.isConnected
     ? walletGame.ready
     : devnetMode &&
-      joined &&
-      (v4Economy || (activeSession?.availableActions ?? 0) > 0);
+      (v4Economy ||
+        (joined && (activeSession?.availableActions ?? 0) > 0));
   const canAct =
     state.freshness === "live" &&
     (state.phase === "live" || state.phase === "rug") &&
@@ -536,6 +544,7 @@ export function LiveGame({
 
   return (
     <>
+      {!v4Economy ? (
       <div className="scenarioBar" aria-label="Local development source">
         {chainMode ? (
           <>
@@ -564,7 +573,44 @@ export function LiveGame({
           </>
         )}
       </div>
+      ) : null}
 
+      {v4Economy ? (
+        <BellRushBoard
+          state={state}
+          selected={effectiveTicker}
+          onSelect={setSelectedTicker}
+          amountUsd={amountUsd}
+          onAmountChange={setAmountUsd}
+          quote={quote}
+          quoteError={quoteError}
+          transactionStage={transactionStage}
+          approvalHash={walletGame.latestApprovalHash}
+          contributionHash={walletGame.latestContributionHash}
+          actionStatus={actionStatus}
+          canAct={
+            entryRequired
+              ? state.freshness === "live" &&
+                Boolean(chainMode ? hasChainClaimPath : true)
+              : canAct
+          }
+          onAction={() => entryRequired ? void enterRound() : takeBell(effectiveTicker)}
+          session={activeSession}
+          playerProjection={playerProjection}
+          claimable={activeClaimable}
+          onClaim={(kind) =>
+            walletGame.isConnected
+              ? void walletGame.claimReward(kind)
+              : void requestDevnetAction(
+                  kind === "holder"
+                    ? "claim-holder"
+                    : kind === "refund"
+                      ? "claim-refund"
+                      : "claim-print",
+                )
+          }
+        />
+      ) : (
       <div className="broadcastGrid">
         <aside className="sideRail leftRail" aria-label="Round briefing">
           <details className="railCard ruleCard howItWorks">
@@ -721,6 +767,7 @@ export function LiveGame({
           <RaidPanel />
         </aside>
       </div>
+      )}
       {v4Economy &&
       (state.phase === "entry" ||
         state.phase === "live" ||
@@ -742,6 +789,394 @@ export function LiveGame({
         />
       ) : null}
     </>
+  );
+}
+
+function BellRushBoard({
+  state,
+  selected,
+  onSelect,
+  amountUsd,
+  onAmountChange,
+  quote,
+  quoteError,
+  transactionStage,
+  approvalHash,
+  contributionHash,
+  actionStatus,
+  canAct,
+  onAction,
+  session,
+  playerProjection,
+  claimable,
+  onClaim,
+}: {
+  state: RoundState;
+  selected: TickerId;
+  onSelect: (ticker: TickerId) => void;
+  amountUsd: number;
+  onAmountChange: (amount: number) => void;
+  quote: StockSwapQuote | null;
+  quoteError: string | null;
+  transactionStage: TransactionStage;
+  approvalHash: `0x${string}` | null;
+  contributionHash: `0x${string}` | null;
+  actionStatus: ActionStatus;
+  canAct: boolean;
+  onAction: () => void;
+  session: SessionBudget | null;
+  playerProjection: PlayerRoundProjection | null;
+  claimable: ClaimableBalances;
+  onClaim: (kind: "holder" | "airtime" | "refund") => void;
+}) {
+  const ranked = [...state.tickerScores].sort(
+    (a, b) =>
+      b.weightedScore - a.weightedScore || a.ticker.localeCompare(b.ticker),
+  );
+  const leader = ranked[0];
+  const selectedScore = state.tickerScores.find(
+    (score) => score.ticker === selected,
+  )!;
+  const selectedRank =
+    ranked.findIndex((score) => score.ticker === selected) + 1;
+  const projectedPoints =
+    quote?.projectedPoints ??
+    (amountUsd * selectedScore.multiplierBps) / 10_000;
+  const latestClaim = state.claims.at(-1);
+  const playerAddress = session?.player?.toLowerCase();
+  const bellStolen = Boolean(
+    playerAddress &&
+      latestClaim?.previousHolder?.toLowerCase() === playerAddress &&
+      state.holder?.address.toLowerCase() !== playerAddress,
+  );
+  const finalWindow =
+    (state.phase === "live" || state.phase === "rug") &&
+    state.hardTimeLeftSeconds <= 300;
+  const canTakeFirst =
+    selectedRank > 1 && (quote?.projectedRank ?? selectedRank) === 1;
+  const leadGap = Math.max(
+    0,
+    (leader?.weightedScore ?? 0) - selectedScore.weightedScore,
+  );
+  const takeLeadAmount = contributionShortcuts(
+    quote?.pointsToLead ?? leadGap,
+    quote?.multiplierBps ?? selectedScore.multiplierBps,
+  ).takeTheLead;
+
+  const pressure = state.phase === "rug"
+    ? {
+        tone: "rug",
+        title: "RUG ZONE · LAST ACCEPTED CALL WINS 50%",
+        detail: `Automated wallets may be faster. Hard stop in ${formatClock(state.hardTimeLeftSeconds)}.`,
+      }
+    : finalWindow
+      ? {
+          tone: "final",
+          title: "FINAL WINDOW",
+          detail: `The bell clock cannot reset past the ${formatClock(state.hardTimeLeftSeconds)} hard stop.`,
+        }
+      : bellStolen
+        ? {
+            tone: "stolen",
+            title: "YOUR BELL WAS STOLEN",
+            detail: `${state.holder?.displayName ?? "Another caller"} took it with ${formatUsd(latestClaim?.usdgAmount ?? 0)} on ${state.holder?.ticker ?? selected}.`,
+          }
+        : canTakeFirst
+          ? {
+              tone: "flip",
+              title: `${selected} TAKES #1 WITH THIS CALL`,
+              detail: `${projectedPoints.toLocaleString()} points would move it to the top of the board.`,
+            }
+          : selectedRank > 1
+            ? {
+                tone: "race",
+                title: `${selected} IS ${Math.ceil(leadGap).toLocaleString()} PTS FROM #1`,
+                detail: `At ${(selectedScore.multiplierBps / 10_000).toFixed(2)}×, ${formatUsd(takeLeadAmount)} takes the lead.`,
+              }
+            : selectedScore.multiplierBps >= 17_500
+              ? {
+                  tone: "heat",
+                  title: `${selected} IS NUCLEAR · ${(selectedScore.multiplierBps / 10_000).toFixed(2)}×`,
+                  detail: "Recent activity is currently earning more Round Points per dollar.",
+                }
+              : {
+                  tone: "ready",
+                  title: "MAKE YOUR MOVE",
+                  detail: "Every accepted contribution earns Round Points and takes the bell.",
+                };
+
+  const mascot = state.phase === "rug"
+    ? "/brand/bell-rush-hall-monitor-rug.png"
+    : state.phase === "settled"
+      ? "/brand/bell-rush-hall-monitor-settled.png"
+      : actionStatus === "accepted"
+        ? "/brand/bell-rush-hall-monitor-accepted.png"
+        : bellStolen
+          ? "/brand/bell-rush-hall-monitor-stolen.png"
+          : state.currentHeadline?.kind === "TICKER_FLIP"
+            ? "/brand/bell-rush-hall-monitor-flip.png"
+            : "/brand/bell-rush-hall-monitor.png";
+
+  const playable =
+    state.phase === "entry" || state.phase === "live" || state.phase === "rug";
+  const currentLeaderShare = leader?.weightedScore
+    ? ((leader.playerPoints ?? 0) / leader.weightedScore) * 100
+    : 0;
+
+  return (
+    <section className={`bellRushBoard phase-${state.phase}`}>
+      <header className="bellRushEssentials">
+        <div className="bellRushClock">
+          <span>BELL CLOCK</span>
+          <strong>
+            {state.phase === "entry" ? "05:00" : formatClock(state.timeLeftSeconds)}
+          </strong>
+          <small>
+            HARD STOP · {state.phase === "entry" ? "10:00" : formatClock(state.hardTimeLeftSeconds)}
+          </small>
+          <i
+            aria-hidden="true"
+            style={{
+              width: `${Math.min(100, Math.max(0, (state.hardTimeLeftSeconds / 600) * 100))}%`,
+            }}
+          />
+        </div>
+        <div className="bellRushPot">
+          <span>ROUND {state.roundId ?? roundConfig.roundId} · POT</span>
+          <strong>{formatUsd(state.potUsd)}</strong>
+          <small>{(state.claims?.length ?? 0).toLocaleString()} ACCEPTED CALLS</small>
+        </div>
+        <div className="bellRushHolder">
+          <Image src={mascot} alt="Bell Rush Hall Monitor" width={120} height={120} priority />
+          <span>
+            <small>HOLDS THE BELL</small>
+            <strong>{state.holder?.displayName ?? "OPEN BELL"}</strong>
+            <b>{state.holder?.ticker ?? "PICK A STOCK"}</b>
+          </span>
+        </div>
+        <div className="bellRushHolderPrize">
+          <span>WINS IF IT RANG NOW · 50%</span>
+          <strong>{formatUsd(state.pools?.holderUsd ?? state.potUsd * 0.5)}</strong>
+          <small>{state.holder ? "PROJECTED · SETTLES ONCHAIN" : "WAITING FOR FIRST CALL"}</small>
+        </div>
+      </header>
+
+      <div className="bellRushRule">
+        <strong>PICK A STOCK. APE TO EARN POINTS AND STEAL THE BELL.</strong>
+        <span>#1 STOCK SPLITS 30% · HOLD THE BELL AT ZERO TO WIN 50%</span>
+      </div>
+
+      {state.freshness === "offline" ? (
+        <DeadAir />
+      ) : playable ? (
+        <>
+          <StockRaceBoard
+            state={state}
+            ranked={ranked}
+            selected={selected}
+            onSelect={onSelect}
+            connected={Boolean(session)}
+          />
+          <section className="bellRushPressure" data-tone={pressure.tone} role="status">
+            <div>
+              <strong>{pressure.title}</strong>
+              <span>{pressure.detail}</span>
+            </div>
+            {bellStolen || selectedRank > 1 ? (
+              <div className="pressureShortcuts">
+                <button type="button" onClick={() => onAmountChange(1)}>
+                  SET RETAKE · $1
+                </button>
+                <button type="button" onClick={() => onAmountChange(takeLeadAmount)}>
+                  SET TAKE #1 · {formatUsd(takeLeadAmount)}
+                </button>
+              </div>
+            ) : null}
+          </section>
+          <ActionComposer
+            state={state}
+            selected={selected}
+            onSelect={onSelect}
+            amountUsd={amountUsd}
+            onAmountChange={onAmountChange}
+            quote={quote}
+            quoteError={quoteError}
+            transactionStage={transactionStage}
+            approvalHash={approvalHash}
+            contributionHash={contributionHash}
+            actionLabel={`APE ${formatUsd(amountUsd)} ON ${selected}`}
+            onAction={onAction}
+            disabled={!canAct || actionStatus === "submitted"}
+          />
+          <PrizeStrip
+            state={state}
+            leader={leader?.ticker ?? selected}
+            leaderPoints={leader?.weightedScore ?? 0}
+            playerLeaderShare={currentLeaderShare}
+            playerProjection={playerProjection}
+          />
+          <HallwayFeed state={state} />
+        </>
+      ) : state.phase === "cancelled" ? (
+        <CancelledRound state={state} refundUsd={claimable.refundUsd} onClaim={() => onClaim("refund")} />
+      ) : state.phase === "finalizing" ? (
+        <Finalizing state={state} />
+      ) : (
+        <FinalTransmission state={state} claimable={claimable} onClaim={onClaim} />
+      )}
+    </section>
+  );
+}
+
+function StockRaceBoard({
+  state,
+  ranked,
+  selected,
+  onSelect,
+  connected,
+}: {
+  state: RoundState;
+  ranked: RoundState["tickerScores"];
+  selected: TickerId;
+  onSelect: (ticker: TickerId) => void;
+  connected: boolean;
+}) {
+  const max = Math.max(ranked[0]?.weightedScore ?? 0, 1);
+  return (
+    <section className="stockRaceBoard" aria-label="Stock Race">
+      <header>
+        <div>
+          <span>BELL RUSH</span>
+          <h2>THE STOCK RACE</h2>
+        </div>
+        <small>ROUND POINTS PICK THE #1 STOCK</small>
+      </header>
+      <div className="stockRaceRows">
+        {ranked.map((score, index) => {
+          const playerShare = score.weightedScore
+            ? ((score.playerPoints ?? 0) / score.weightedScore) * 100
+            : 0;
+          const gap = Math.max(0, max - score.weightedScore);
+          const captain = state.tickerCaptains?.find(
+            (item) => item.ticker === score.ticker,
+          );
+          return (
+            <article
+              className="stockRaceRow"
+              data-selected={score.ticker === selected}
+              data-leader={index === 0}
+              key={score.ticker}
+            >
+              <span className="raceRank">#{index + 1}</span>
+              <button
+                type="button"
+                className="raceTickerButton"
+                aria-pressed={score.ticker === selected}
+                onClick={() => onSelect(score.ticker)}
+              >
+                {score.ticker}
+              </button>
+              <span className="racePoints">
+                <b>{score.weightedScore.toLocaleString()}</b>
+                <small>ROUND PTS</small>
+              </span>
+              <span className="raceTrack" aria-hidden="true">
+                <i
+                  style={{
+                    width: `${(score.weightedScore / max) * 100}%`,
+                    background: tickerById(score.ticker).color,
+                  }}
+                />
+              </span>
+              <span className="raceHeat">
+                <b>{(score.multiplierBps / 10_000).toFixed(2)}×</b>
+                <small>{heatLevel(score.multiplierBps)}</small>
+              </span>
+              <span className="raceGap">
+                {index === 0 ? "LEADS" : `−${Math.ceil(gap).toLocaleString()} PTS`}
+              </span>
+              <span className="racePlayer">
+                {connected
+                  ? `YOU ${(score.playerPoints ?? 0).toLocaleString()} · ${playerShare.toFixed(1)}%`
+                  : "CONNECT TO SEE YOUR POSITION"}
+              </span>
+              <details className="raceDetails" onClick={(event) => event.stopPropagation()}>
+                <summary>DETAILS</summary>
+                <span>{(score.recentVolumeUsd ?? 0).toLocaleString()} USDG · 30S HEAT</span>
+                <span>{(score.potTokenQuantity ?? 0).toLocaleString()} {score.ticker} IN POT</span>
+                {captain ? <span>CAPTAIN · {captain.displayName}</span> : null}
+              </details>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function PrizeStrip({
+  state,
+  leader,
+  leaderPoints,
+  playerLeaderShare,
+  playerProjection,
+}: {
+  state: RoundState;
+  leader: TickerId;
+  leaderPoints: number;
+  playerLeaderShare: number;
+  playerProjection: PlayerRoundProjection | null;
+}) {
+  const holderPool = state.pools?.holderUsd ?? state.potUsd * 0.5;
+  const stockPool = state.potUsd * 0.3;
+  const lifetimePool = state.potUsd * 0.1;
+  return (
+    <section className="bellRushPrizes" aria-label="Current projected prizes">
+      <article>
+        <span>LAST BELL · 50%</span>
+        <strong>{state.holder?.displayName ?? "NO CALLER"}</strong>
+        <b>{formatUsd(holderPool)}</b>
+      </article>
+      <article>
+        <span>#1 STOCK · 30%</span>
+        <strong>{leader} · {leaderPoints.toLocaleString()} PTS</strong>
+        <b>
+          {playerLeaderShare > 0
+            ? `YOU ${playerLeaderShare.toFixed(1)}% · ${formatUsd(stockPool * playerLeaderShare / 100)}`
+            : `${formatUsd(stockPool)} TO BACKERS`}
+        </b>
+      </article>
+      <article>
+        <span>LIFETIME · 10%</span>
+        <strong>POINTS NEVER BURN</strong>
+        <b>
+          {playerProjection
+            ? `YOUR EST. ${formatUsd(Math.max(0, playerProjection.projectedTotalRewardUsd - playerProjection.projectedHolderRewardUsd - playerProjection.projectedAirtimeRewardUsd))}`
+            : `${formatUsd(lifetimePool)} THIS ROUND`}
+        </b>
+      </article>
+      <details>
+        <summary>FULL POT SPLIT · 50 / 30 / 10 / 5 / 5</summary>
+        <div className="potSplitBar" aria-hidden="true">
+          <i /><i /><i /><i /><i />
+        </div>
+        <p>50% Last Bell · 30% #1 Stock · 10% Lifetime · 5% next-round seed · 5% protocol</p>
+      </details>
+    </section>
+  );
+}
+
+function HallwayFeed({ state }: { state: RoundState }) {
+  const last = state.claims.at(-1);
+  const fallback = last
+    ? `${last.claimant.displayName} APED ${formatUsd(last.usdgAmount ?? 0)} ON ${last.claimant.ticker}`
+    : "THE BELL IS WAITING FOR ITS FIRST CALLER";
+  return (
+    <section className="hallwayFeed" aria-label="Hallway Feed">
+      <span>HALLWAY FEED</span>
+      <strong>{state.currentHeadline?.text ?? fallback}</strong>
+      <small>CANONICAL GAME EVENTS ONLY</small>
+    </section>
   );
 }
 
@@ -858,9 +1293,10 @@ function ActionComposer({
     quote?.multiplierBps ?? selectedScore.multiplierBps,
   );
   const shortcuts = [
-    ["MATCH LEADER", calculated.matchLeader],
-    ["TAKE THE LEAD", calculated.takeTheLead],
-    ["FLIP THE STOCK", calculated.flipTheStock],
+    ["TAKE BELL", 1],
+    ["MATCH #1", calculated.matchLeader],
+    ["TAKE #1", calculated.takeTheLead],
+    ["FLIP STOCK", calculated.flipTheStock],
   ] as const;
   const currentRank =
     quote?.currentRank ??
@@ -871,6 +1307,19 @@ function ActionComposer({
   const multiplierBps = quote?.multiplierBps ?? selectedScore.multiplierBps;
   const projectedPoints =
     quote?.projectedPoints ?? (amountUsd * multiplierBps) / 10_000;
+  const projectedTickerPoints =
+    quote?.projectedTickerPoints ?? selectedScore.weightedScore + projectedPoints;
+  const projectedPlayerPoints =
+    quote?.projectedPlayerTickerPoints ??
+    (selectedScore.playerPoints ?? 0) + projectedPoints;
+  const projectedShareBps =
+    quote?.projectedPlayerShareBps ??
+    (projectedTickerPoints > 0
+      ? Math.round((projectedPlayerPoints / projectedTickerPoints) * 10_000)
+      : 0);
+  const pointsToLeadAfter =
+    quote?.pointsToLeadAfter ??
+    Math.max(0, (quote?.pointsToLead ?? 0) - projectedPoints);
   const acceptedResult =
     transactionStage === "ACCEPTED_ONCHAIN" ? state.claims.at(-1) : undefined;
   const stockOutput = quote
@@ -900,7 +1349,7 @@ function ActionComposer({
       </div>
       <div className="callTicket">
         <div className="composerAmountPanel">
-          <span className="ticketKicker">YOUR CALL</span>
+          <span className="ticketKicker">YOUR {selected} CALL</span>
           <AmountComposer amountUsd={amountUsd} onChange={onAmountChange} />
           <div className="impactShortcuts" aria-label="Contribution shortcuts">
             {shortcuts.map(([label, value]) => (
@@ -917,6 +1366,34 @@ function ActionComposer({
         </div>
         <div className="composerImpactPanel">
           <span className="ticketKicker">IF ACCEPTED</span>
+          <div className="bellRushImpactGrid">
+            <span>
+              <strong>+{projectedPoints.toLocaleString()}</strong>
+              <small>ROUND PTS</small>
+            </span>
+            <span>
+              <strong>
+                {selected}{" "}
+                {projectedRank === currentRank
+                  ? `STAYS #${currentRank}`
+                  : `GOES #${projectedRank}`}
+              </strong>
+              <small>
+                {projectedRank === 1
+                  ? "TAKES THE LEAD"
+                  : `${Math.ceil(pointsToLeadAfter).toLocaleString()} TO #1`}
+              </small>
+            </span>
+            <span>
+              <strong>YOU OWN {(projectedShareBps / 100).toFixed(1)}%</strong>
+              <small>
+                {formatUsd(
+                  (state.potUsd * 0.3 * projectedShareBps) / 10_000,
+                )}{" "}
+                IF {selected} WINS
+              </small>
+            </span>
+          </div>
           <div className="impactHero">
             <strong>+{projectedPoints.toLocaleString()} PTS</strong>
             <span>
@@ -1051,7 +1528,7 @@ function AudioControl({
 }) {
   return (
     <section className="railCard audioControl">
-      <span className="railLabel">BROADCAST AUDIO</span>
+      <span className="railLabel">BELL SOUNDS</span>
       <button
         type="button"
         aria-pressed={enabled}
@@ -1688,11 +2165,11 @@ function Finalizing({ state }: { state: RoundState }) {
         <i />
         <i />
       </div>
-      <span className="eyebrow">PLEASE STAND BY</span>
-      <h1>Checking the tape</h1>
+      <span className="eyebrow">FINAL BELL</span>
+      <h1>Checking the chain</h1>
       <p>
         The clock is frozen at zero. We are confirming the final accepted claim
-        before naming a winner.
+        before naming the Last Bell winner.
       </p>
       <strong>{state.holder?.displayName ?? "No final holder"}</strong>
     </div>
@@ -1717,9 +2194,9 @@ function FinalTransmission({
   const protocol = state.pools?.protocolUsd ?? state.potUsd * 0.05;
   return (
     <div className="finalTransmission">
-      <span className="phaseBug">FINAL TRANSMISSION</span>
+      <span className="phaseBug">FINAL BELL</span>
       <Image
-        src="/brand/saved-bell-mascot-settled.png"
+        src="/brand/bell-rush-hall-monitor-settled.png"
         alt=""
         width={190}
         height={190}
@@ -1770,7 +2247,7 @@ function FinalTransmission({
       </div>
       {typeof state.nextRoundStartsInSeconds === "number" ? (
         <p className="nextRoundNotice" role="status">
-          NEXT BROADCAST STARTS AUTOMATICALLY IN{" "}
+          NEXT ROUND PREPARES AUTOMATICALLY IN{" "}
           {state.nextRoundStartsInSeconds}s
         </p>
       ) : null}

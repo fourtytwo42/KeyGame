@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Saved by the Bell",
     short_name: "Saved Bell",
-    description: "The last caller holding the bell wins the broadcast.",
+    description: "Pick a stock, earn points, and hold the bell at zero.",
     start_url: "/",
     display: "standalone",
     background_color: "#F3E7C7",

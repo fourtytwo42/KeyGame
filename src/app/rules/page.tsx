@@ -10,9 +10,9 @@ export default function RulesPage() {
   const { roundAddress, devDollarAddress } = getCurrentDevnetDeployment();
   return (
     <InfoPage
-      eyebrow="HOW TO PLAY / ROUND 4663"
-      title="The rules, in plain English"
-      intro="Pick a stock, choose how much to put in, and take the bell. The final caller wins half of every Stock Token in the pot."
+      eyebrow="BELL RUSH / HOW TO PLAY"
+      title="Four stocks. One bell."
+      intro="Pick a stock. Ape to earn Round Points and steal the bell. The #1 stock splits 30%. Hold the bell at zero to win 50%."
     >
       <section>
         <span className="chapterNumber">01</span>
@@ -79,6 +79,19 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">06</span>
         <div>
+          <h2>Example: what a $100 call does</h2>
+          <p>
+            TSLA is earning 1.50 points per dollar. A $100 call earns 150 Round
+            Points and makes you the bell holder. If TSLA finishes as the #1
+            stock and your 150 points are 10% of all TSLA points, you receive
+            10% of the Winning Stock pool. If nobody takes the bell before zero,
+            you also receive the separate 50% Last Bell prize.
+          </p>
+        </div>
+      </section>
+      <section>
+        <span className="chapterNumber">07</span>
+        <div>
           <h2>Rug Zone is first come, first served</h2>
           <p>
             RUG ZONE IS FCFS. Automated wallets may be faster. The last accepted
@@ -88,7 +101,7 @@ export default function RulesPage() {
         </div>
       </section>
       <section>
-        <span className="chapterNumber">07</span>
+        <span className="chapterNumber">08</span>
         <div>
           <h2>Your wallet gives one reusable approval</h2>
           <p>
@@ -100,7 +113,7 @@ export default function RulesPage() {
         </div>
       </section>
       <section>
-        <span className="chapterNumber">08</span>
+        <span className="chapterNumber">09</span>
         <div>
           <h2>Market execution has no protocol price cap</h2>
           <p>
@@ -114,7 +127,7 @@ export default function RulesPage() {
       </section>
       <div className="constantTape">
         <span>START 5m</span>
-        <span>ADD 2s</span>
+        <span>RESET 5m</span>
         <span>RUG ZONE 10s</span>
         <span>HARD STOP 10m</span>
         <span>$1 MIN · NO MAX</span>

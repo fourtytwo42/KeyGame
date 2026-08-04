@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPage } from "@/components/info-page";
 
-export const metadata: Metadata = { title: "Leaderboards" };
+export const metadata: Metadata = { title: "Rankings" };
 export const dynamic = "force-dynamic";
 
 export default async function LeaderboardsPage({
@@ -59,8 +59,8 @@ export default async function LeaderboardsPage({
   };
   return (
     <InfoPage
-      eyebrow="WHALE TAPE / STATUS ONLY"
-      title="Leaderboards"
+      eyebrow="HALL OF FAME / STATUS ONLY"
+      title="Rankings"
       intro="Points, volume, and biggest calls earn status. They do not add another payout multiplier."
     >
       <nav className="leaderboardScopes" aria-label="Leaderboard scope">

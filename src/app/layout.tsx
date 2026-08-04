@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Saved by the Bell",
-    description: "The last caller holding the bell wins the broadcast.",
+    description: "Pick a stock, earn points, and hold the bell at zero.",
     type: "website",
   },
   twitter: { card: "summary_large_image" },

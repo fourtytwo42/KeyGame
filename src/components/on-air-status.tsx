@@ -44,10 +44,10 @@ export function OnAirStatus() {
 
   const label =
     status === "healthy"
-      ? "ON AIR"
+      ? "BELL LIVE"
       : status === "degraded"
-        ? "DEGRADED"
-        : "CHECKING";
+        ? "CONNECTION DEGRADED"
+        : "CHECKING BELL";
   return (
     <div
       className="onAirBug"

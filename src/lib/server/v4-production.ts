@@ -32,6 +32,7 @@ const quoterAbi = parseAbi([
 export async function quoteV4Production(
   ticker: TickerId,
   amountUsd: number,
+  player?: Address,
 ): Promise<StockSwapQuote> {
   if (!Number.isFinite(amountUsd) || amountUsd < 1) {
     throw new Error("The minimum contribution is $1.");
@@ -124,7 +125,7 @@ export async function quoteV4Production(
           functionName: "quoteUsdgForStock",
           args: [token, amount],
         });
-  const [output, multiplier, standings, block] = await Promise.all([
+  const [output, multiplier, standings, block, playerPoints] = await Promise.all([
     outputPromise,
     client.readContract({
       address: active,
@@ -143,6 +144,14 @@ export async function quoteV4Production(
       ),
     ),
     client.getBlock({ blockTag: "pending" }),
+    player
+      ? client.readContract({
+          address: active,
+          abi: lastBellV4Abi,
+          functionName: "playerTickerPoints",
+          args: [player, tickerIndex],
+        })
+      : Promise.resolve(0n),
   ]);
   const projected = (amount * BigInt(multiplier)) / 10_000n;
   const resulting = standings.map((value, index) =>
@@ -158,6 +167,10 @@ export async function quoteV4Production(
   );
   const rank = (values: readonly bigint[], index: number) =>
     1 + values.filter((value) => value > values[index]).length;
+  const projectedPlayerPoints = playerPoints + projected;
+  const projectedShareBps = resulting[tickerIndex] > 0n
+    ? Number((projectedPlayerPoints * 10_000n) / resulting[tickerIndex])
+    : 0;
   return {
     ticker: symbols[tickerIndex],
     tickerIndex,
@@ -191,11 +204,18 @@ export async function quoteV4Production(
     priceSourceChainId: metadata?.source_chain_id ?? 4663,
     mockOnly: manifest.mockOnly,
     multiplierBps: Number(multiplier),
+    basePoints: amountUsd,
     projectedPoints: usd(projected),
+    currentTickerPoints: usd(standings[tickerIndex]),
+    projectedTickerPoints: usd(resulting[tickerIndex]),
     projectedLeader: symbols[leader],
     pointsToLead: Math.max(
       0,
       usd(currentLead - standings[tickerIndex]) + 0.000001,
+    ),
+    pointsToLeadAfter: Math.max(
+      0,
+      usd(currentLead - resulting[tickerIndex]) + 0.000001,
     ),
     currentRank: rank(standings, tickerIndex),
     projectedRank: rank(resulting, tickerIndex),
@@ -203,6 +223,10 @@ export async function quoteV4Production(
       0,
       usd(currentLead - standings[tickerIndex]) + 0.000001,
     ),
+    currentPlayerTickerPoints: usd(playerPoints),
+    projectedPlayerTickerPoints: usd(projectedPlayerPoints),
+    projectedPlayerShareBps: projectedShareBps,
+    pendingLifetimePoints: usd(projected),
     heatLevel: heatLevel(Number(multiplier)),
     approvalRequired: true,
   };

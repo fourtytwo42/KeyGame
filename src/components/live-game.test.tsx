@@ -24,36 +24,36 @@ describe("LiveGame", () => {
 
   it("renders the variable-amount stock-pot game state first", () => {
     render(<LiveGame initialScenario="live" />);
-    expect(screen.getByText("$89 POT")).toBeInTheDocument();
-    expect(screen.getByText("YOUR CALL")).toBeInTheDocument();
+    expect(screen.getByText("$89")).toBeInTheDocument();
+    expect(screen.getByText("YOUR NVDA CALL")).toBeInTheDocument();
     expect(screen.getByText("IF ACCEPTED")).toBeInTheDocument();
     expect(screen.queryByText(/QUOTE FLOOR/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /APE \$10 ON NVDA/i }),
     ).toBeEnabled();
-    expect(screen.getAllByText(/WINNING STOCK · 30%/i)).toHaveLength(3);
+    expect(screen.getByText(/#1 STOCK · 30%/i)).toBeInTheDocument();
   });
 
   it("turns the starter ticker into the first paid claim", () => {
     render(<LiveGame initialScenario="entry" />);
-    expect(
-      screen.getByText(/Your buy starts the five-minute clock/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("BELL CLOCK")).toBeInTheDocument();
     expect(screen.getByText("05:00")).toBeInTheDocument();
-    expect(screen.getByText(/WAITING FOR THE FIRST APE/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /#2AAPL/i }));
+    expect(screen.getByText(/WAITING FOR FIRST CALL/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "AAPL" }));
     fireEvent.click(screen.getByRole("button", { name: "APE $10 ON AAPL" }));
     expect(
       screen.getByRole("button", { name: /APE \$10 ON AAPL/i }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$100").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("you.local").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", { name: /APE \$10 ON AAPL/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows submitted state before accepting a simulated ticker switch", () => {
     vi.useFakeTimers();
     render(<LiveGame initialScenario="live" />);
-    fireEvent.click(screen.getByRole("button", { name: /#2AAPL/i }));
+    fireEvent.click(screen.getByRole("button", { name: "AAPL" }));
     fireEvent.click(screen.getByRole("button", { name: /APE \$10 ON AAPL/i }));
     expect(
       screen.getByRole("button", { name: /APE \$10 ON AAPL/i }),

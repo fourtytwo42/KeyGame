@@ -3,20 +3,20 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/info-page";
 import { tickerSlots } from "@/lib/game/constants";
 
-export const metadata: Metadata = { title: "Tonight's Stock Tokens" };
+export const metadata: Metadata = { title: "Bell Rush Stocks" };
 
 export default function SupportedAssetsPage() {
   return (
     <InfoPage
-      eyebrow="STOCK POT / TONIGHT'S LINEUP"
-      title="Pick your bag"
+      eyebrow="BELL RUSH / STOCK LINEUP"
+      title="Pick your stock"
       intro="Choose an amount and a stock. Your USDG buys that Stock Token for the round pot, awards points, and takes the bell."
     >
       <section className="bagRoster" aria-labelledby="bag-roster-title">
         <div className="bagRosterHeader">
           <div>
             <span className="eyebrow">FOUR STOCKS · ONE BELL</span>
-            <h2 id="bag-roster-title">Tonight&apos;s stocks</h2>
+            <h2 id="bag-roster-title">The Stock Race</h2>
           </div>
           <p>
             Recent buys heat a stock for followers. The 30-second multiplier

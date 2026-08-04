@@ -4,6 +4,34 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: Bell Rush devnet presentation is implemented in
+  `.codex-worktrees/v5-release` and deployed for operator review at
+  `http://192.168.50.138:3000`. The current shared UI uses a single
+  school-hallway game board with Bell Clock, Stock Race, one contribution
+  ticket, player-facing 50/30/10 prize strip, Hallway Feed, and state-driven
+  urgency prompt. Quote responses include projected ticker/player points,
+  rank, deficit, share, and pending lifetime points. Six transparent Hall
+  Monitor state assets live under `public/brand/bell-rush-hall-monitor*.png`.
+  The review checkpoint passes 117 Vitest tests, lint, TypeScript, diff checks,
+  and production builds locally and on the VM. Browser verification passes at
+  1280x720 with the complete active board ending exactly at the viewport edge,
+  every active section visible, and no horizontal overflow. At 390x844 the
+  shared mobile action dock is visible and the document has no horizontal
+  overflow. Anvil, web, keeper, and indexer are active; the automated
+  simulation remains stopped. Do not resume qualification until the operator
+  approves the visual direction.
+
+- 2026-08-04: At operator request, the current observable simulation controller
+  `keygame-v5-observable-simulation` was stopped before the presentation
+  redesign. Anvil, the devnet web app, keeper, and indexer remain active for
+  review at `http://192.168.50.138:3000`. Do not resume qualification testing
+  until the Bell Rush visual redesign is implemented on devnet and the operator
+  explicitly approves the result. The planned presentation direction removes
+  the television-station metaphor in favor of an original 1990s school-hallway
+  arcade theme: one stock race board, one contribution ticket, a compact prize
+  split, event-scaled feedback, and canonical state-driven counterattack
+  prompts. No contract, timer, points, payout, wallet, or RPC-policy change is
+  included in this visual phase.
 - 2026-08-04: Current v5 timing now resets the soft deadline to five minutes
   after every accepted contribution: `deadline = min(block.timestamp + 300,
   hardEnd)`. The first accepted contribution still starts at five minutes and
@@ -1311,10 +1339,9 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Monitor the running eight-hour `v5-observable` campaign to completion and
-  preserve its generated JSON/Markdown report and checksum. The exact VM
-  checkout is `/home/hendo420/releases/keygame-v5-abe0495`; do not reset Anvil
-  or the `keygame_observable_live5` schema while the controller is active.
+- The eight-hour `v5-observable` campaign is intentionally stopped for the Bell
+  Rush presentation redesign. Preserve the partial evidence as non-qualifying
+  diagnostic data. Restart a clean campaign only after operator visual approval.
 - Because the five-minute reset changed round runtime bytecode, rerun the full
   one-million-action state-machine campaign and 10,000-contribution live
   devnet campaign before producing new testnet-ready or mainnet-planning

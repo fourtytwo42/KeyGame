@@ -31,7 +31,7 @@ export function EarningsNavLink() {
   }, [address, isConnected]);
   return (
     <Link href="/earnings" className="earningsNavLink">
-      Earnings
+      Rewards
       {isConnected && claimable > 0 ? (
         <mark>${claimable.toFixed(2)}</mark>
       ) : null}

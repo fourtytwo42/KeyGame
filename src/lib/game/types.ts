@@ -284,12 +284,21 @@ export interface StockSwapQuote {
   priceSourceChainId?: number;
   mockOnly?: boolean;
   multiplierBps: number;
+  basePoints?: number;
   projectedPoints: number;
+  currentTickerPoints?: number;
+  projectedTickerPoints?: number;
   projectedLeader: TickerId;
   pointsToLead: number;
+  pointsToLeadAfter?: number;
   currentRank?: number;
   projectedRank?: number;
   pointsToFlip?: number;
+  currentPlayerTickerPoints?: number;
+  projectedPlayerTickerPoints?: number;
+  projectedPlayerShareBps?: number;
+  projectedWinningStockRewardUsd?: number;
+  pendingLifetimePoints?: number;
   heatLevel?: HeatLevel;
   approvalRequired?: boolean;
 }
