@@ -76,7 +76,7 @@ export const roundConfig: RoundConfig = {
   roundId: "4663",
   claimPriceUsd: 1,
   startSeconds: 300,
-  extensionSeconds: 2,
+  extensionSeconds: 300,
   rugZoneSeconds: 10,
   hardCapSeconds: 600,
   marketMode: "DEX",

@@ -113,16 +113,10 @@ export function claimBell(
     };
   }
 
-  const canExtend =
-    state.phase !== "rug" &&
-    state.timeLeftSeconds > roundConfig.rugZoneSeconds &&
-    state.hardTimeLeftSeconds > state.timeLeftSeconds;
-  const extended = canExtend
-    ? Math.min(
-        state.timeLeftSeconds + roundConfig.extensionSeconds,
-        state.hardTimeLeftSeconds,
-      )
-    : state.timeLeftSeconds;
+  const extended = Math.min(
+    roundConfig.extensionSeconds,
+    state.hardTimeLeftSeconds,
+  );
   const event: ClaimEvent = {
     ...baseEvent,
     potAfterUsd: state.potUsd + usdgAmount,

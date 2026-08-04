@@ -1399,8 +1399,8 @@ function LiveArena({
         )}
         <p className="actionFinePrint">
           {state.phase === "rug"
-            ? "A successful claim changes the holder but adds no time."
-            : "A successful claim changes the holder and adds 2 seconds."}
+            ? "A successful contribution takes the bell and resets the clock, up to the hard stop."
+            : "A successful contribution takes the bell and resets the clock to 5:00."}
         </p>
       </div>
     </div>

@@ -4,6 +4,21 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: Current v5 timing now resets the soft deadline to five minutes
+  after every accepted contribution: `deadline = min(block.timestamp + 300,
+  hardEnd)`. The first accepted contribution still starts at five minutes and
+  the ten-minute hard stop remains absolute. This also applies to a call made
+  in Rug Zone, which can move the round back out of Rug Zone unless the hard
+  stop is closer. Deploy scripts, both v4 keepers, simulator, UI copy, Rules,
+  tests, and authoritative PRD 16 now use `300/300/600`. VM verification passed
+  16 focused Foundry tests (including 512 fuzz runs), the complete Foundry
+  suite, 117 Vitest tests, lint, TypeScript, production build, and contract-size
+  enforcement. A keeper-created rollover round reports `300/300/600`, and
+  canonical `BellClaimed` events in round 4669 show `deadline - acceptedAt =
+  300` for later calls. The manager runtime hash changed to
+  `0x22e0512ad03c318bf6e28aa1943132c32e1765c1e634a57fd5a1caa2e8824031`,
+  so prior v5 qualification/testnet planning artifacts are invalid and the
+  complete torture qualification must be rerun before any chain release.
 - 2026-08-04: The VM root disk was expanded from a 62 GB LVM partition/volume
   to 92 GB (`/dev/sda3` and `/dev/ubuntu-vg/ubuntu-lv`), yielding a 91 GB ext4
   filesystem. The replacement observable run later stopped at 268 settlements,
@@ -181,13 +196,12 @@ Durable project context lives here. Update this file whenever information should
   manifests, and run standard Anvil without a code-size override. Commits
   `7ca760e` and `b679d95` implement and verify this correction; the live devnet
   now uses standard Anvil and the release-profile runtime hashes are stable.
-- 2026-08-03 timing change: authoritative v4 rounds start at five minutes
-  (`300s`) on the first accepted contribution, retain `+2s` later-call
-  extensions and the final `10s` Rug Zone, and use a ten-minute (`600s`) hard
-  stop. This changes round constructor configuration and invalidates the
-  current planned-mainnet manifest/authorization scope. Existing testnet rounds
-  remain configured at 45/180 until a separately authorized redeployment;
-  never make the frontend claim otherwise when reading those live contracts.
+- 2026-08-03 timing history: v4 originally changed only the first accepted
+  contribution to five minutes while retaining `+2s` later-call extensions.
+  This was superseded on 2026-08-04 for current v5: every accepted contribution
+  now resets the soft deadline to five minutes, capped by the ten-minute hard
+  stop. Existing historical testnet rounds retain their deployed timing;
+  current UI copy must follow the connected contract version.
 - 2026-08-03 brand refinement: remove `Channel 4663` from all current
   user-facing branding, metadata, receipts, profile/receipt social cards,
   not-found copy, and Status copy. The header now uses a cohesive
@@ -459,8 +473,9 @@ Durable project context lives here. Update this file whenever information should
   live page is `http://192.168.50.138:3000`. The Status page recognizes the
   `v5-observable` profile and exposes rounds, cancellations, accepted calls,
   and reconciliation discrepancies. The current clean run uses PostgreSQL
-  schema `keygame_observable_live2`; the original `keygame_observable` run is
-  failed evidence and must not be resumed.
+  schema `keygame_observable_live5`; older observable runs are failed or
+  superseded evidence and must not be resumed. The current run was restarted
+  from newly deployed timer-reset bytecode on 2026-08-04.
 
 - V5 is the current implementation and qualification target. The round records
   full USDG deposited, exact adapter input consumed, residual USDG, Stock Token
@@ -1299,7 +1314,11 @@ When sources conflict, use this order:
 - Monitor the running eight-hour `v5-observable` campaign to completion and
   preserve its generated JSON/Markdown report and checksum. The exact VM
   checkout is `/home/hendo420/releases/keygame-v5-abe0495`; do not reset Anvil
-  or the `keygame_observable_live2` schema while the controller is active.
+  or the `keygame_observable_live5` schema while the controller is active.
+- Because the five-minute reset changed round runtime bytecode, rerun the full
+  one-million-action state-machine campaign and 10,000-contribution live
+  devnet campaign before producing new testnet-ready or mainnet-planning
+  artifacts.
 - V5 requires a new one-deployment/two-round mock testnet authorization after
   local acceptance. No prior v4 authorization or smoke evidence can qualify
   v5, and no v5 testnet or mainnet broadcast is currently authorized.

@@ -21,17 +21,17 @@ describe("Closing Print simulator", () => {
     expect(result.timeLeftSeconds).toBe(10);
   });
 
-  it("never extends a claim during Rug Zone", () => {
+  it("resets a Rug Zone claim up to the hard stop", () => {
     const result = claimBell(scenarios.rug.state, claimant);
     expect(result.event.accepted).toBe(true);
-    expect(result.state.timeLeftSeconds).toBe(7);
+    expect(result.state.timeLeftSeconds).toBe(29);
     expect(result.state.potUsd).toBe(scenarios.rug.state.potUsd + 10);
   });
 
   it("allows a different ticker on every accepted claim", () => {
     const result = claimBell(scenarios.live.state, claimant);
     expect(result.state.holder?.ticker).toBe("AAPL");
-    expect(result.state.timeLeftSeconds).toBe(23);
+    expect(result.state.timeLeftSeconds).toBe(52);
   });
 
   it("awards variable contribution points before the timer advances", () => {

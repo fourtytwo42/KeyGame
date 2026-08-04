@@ -87,8 +87,8 @@ contracts and parsers remain available for old receipts and replays.
 
 The minimum contribution is 1 USDG. There is no contract or interface maximum.
 The first accepted contribution starts a five-minute countdown. Later accepted
-calls add two seconds outside the final ten-second Rug Zone, and the round has a
-ten-minute hard stop.
+calls reset the countdown to five minutes, capped by the round's ten-minute hard
+stop.
 Every accepted call deposits its complete USDG amount and attempts a direct
 swap into the selected Stock Token. The adapter reports and proves both USDG
 consumed and Stock Token received. A positive partial fill is accepted: the

@@ -194,7 +194,7 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
     id: "live",
     label: "Live transmission",
     description:
-      "Each accepted contribution buys the selected Stock Token, steals the bell, and adds two seconds.",
+      "Each accepted contribution buys the selected Stock Token, steals the bell, and resets the clock to five minutes.",
     state: baseState,
   },
   "green-switch": {
@@ -219,7 +219,8 @@ export const scenarios: Record<SimulationScenarioId, SimulationScenario> = {
   rug: {
     id: "rug",
     label: "Rug Zone",
-    description: "Claims still steal the bell, but the timer no longer grows.",
+    description:
+      "Claims still steal the bell and reset the clock, capped by the ten-minute hard stop.",
     state: stateFor("rug", {
       timeLeftSeconds: 7,
       elapsedSeconds: 151,

@@ -43,7 +43,7 @@ contract DeployTestnetV4 is ScriptBase {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: vm.envUint("INITIAL_ROUND_ID"),
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,

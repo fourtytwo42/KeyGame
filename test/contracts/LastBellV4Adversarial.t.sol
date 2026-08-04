@@ -195,7 +195,7 @@ contract LastBellV4AdversarialTest is TestBase {
         return LastBellRoundV4.RoundSettings({
             roundId: id,
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,

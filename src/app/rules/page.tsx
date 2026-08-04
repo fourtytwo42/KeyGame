@@ -42,13 +42,12 @@ export default function RulesPage() {
       <section>
         <span className="chapterNumber">03</span>
         <div>
-          <h2>Later plays add two seconds</h2>
+          <h2>Every play resets the clock</h2>
           <p>
-            Your first successful play starts the clock at 5 minutes. Later
-            successful plays usually add {roundConfig.extensionSeconds} seconds
-            to it. The round can never last longer than 10 minutes. When only{" "}
-            {roundConfig.rugZoneSeconds} seconds remain, the Rug Zone begins.
-            You can still take the bell, but the clock will not gain more time.
+            Your first successful play starts the clock at 5 minutes. Every
+            later successful play resets it to 5 minutes. The round still has a
+            10-minute hard stop, so a late reset uses whatever time remains
+            before that hard stop.
           </p>
         </div>
       </section>
@@ -83,8 +82,8 @@ export default function RulesPage() {
           <h2>Rug Zone is first come, first served</h2>
           <p>
             RUG ZONE IS FCFS. Automated wallets may be faster. The last accepted
-            call before zero wins the full 50% final-holder prize. Calls in Rug
-            Zone add no time.
+            call before zero wins the full 50% final-holder prize. A successful
+            call resets the clock unless the 10-minute hard stop is closer.
           </p>
         </div>
       </section>

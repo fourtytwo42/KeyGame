@@ -332,8 +332,8 @@ contract LastBellRoundV4 {
             deadline = startedAt + startDuration;
             hardEnd = startedAt + hardCapDuration;
             emit RoundStarted(roundId, startedAt, deadline, hardEnd);
-        } else if (phase == Phase.Live) {
-            uint64 candidate = deadline + extensionDuration;
+        } else {
+            uint64 candidate = uint64(block.timestamp) + extensionDuration;
             deadline = candidate > hardEnd ? hardEnd : candidate;
         }
         paid[msg.sender] += usdgAmount;

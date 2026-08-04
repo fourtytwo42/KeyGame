@@ -255,7 +255,7 @@ const plan: PlannedMainnetDeploymentManifest = {
     conversionOperator: deployerAddress,
     initialRoundId,
     startDurationSeconds: 300,
-    extensionSeconds: 2,
+    extensionSeconds: 300,
     rugZoneSeconds: 10,
     hardCapSeconds: 600,
     heatTargetRawUsdg: "4000000000",

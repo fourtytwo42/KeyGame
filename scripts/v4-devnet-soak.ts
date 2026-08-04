@@ -610,7 +610,7 @@ async function prepareAndActivate(
     {
       roundId: nextId,
       startDuration: 300n,
-      extensionDuration: 2n,
+      extensionDuration: 300n,
       rugDuration: 10n,
       hardCapDuration: 600n,
       heatTarget: 4_000_000_000n,

@@ -58,6 +58,26 @@ contract LastBellRoundV4Test is TestBase {
         assertEq(round.accountedStock(0), 254_000e18, "stock pot");
     }
 
+    function test_EveryAcceptedCallResetsFiveMinutesUntilHardStop() public {
+        uint64 firstAcceptedAt = uint64(block.timestamp);
+        _claim(ALICE, 0, 10e6);
+        assertEq(round.deadline(), firstAcceptedAt + 300, "first five minutes");
+        assertEq(round.hardEnd(), firstAcceptedAt + 600, "ten minute hard stop");
+
+        vm.warp(firstAcceptedAt + 120);
+        _claim(BOB, 1, 10e6);
+        assertEq(round.deadline(), block.timestamp + 300, "call resets five minutes");
+
+        vm.warp(round.deadline() - 5);
+        assertEq(
+            uint256(round.currentPhase()),
+            uint256(LastBellRoundV4.Phase.Rug),
+            "rug zone reached"
+        );
+        _claim(CAROL, 2, 10e6);
+        assertEq(round.deadline(), round.hardEnd(), "reset capped by hard stop");
+    }
+
     function test_RoundFactoryIsBoundToManagerAndRejectsDirectDeployment()
         public
     {
@@ -67,7 +87,7 @@ contract LastBellRoundV4Test is TestBase {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 999,
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,
@@ -279,7 +299,7 @@ contract LastBellRoundV4Test is TestBase {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 2,
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,
@@ -305,7 +325,7 @@ contract LastBellRoundV4Test is TestBase {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 2,
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,
@@ -331,7 +351,7 @@ contract LastBellRoundV4Test is TestBase {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: 2,
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,
@@ -378,7 +398,7 @@ contract LastBellRoundV4Test is TestBase {
         LastBellRoundV4.RoundSettings memory settings = LastBellRoundV4.RoundSettings({
             roundId: id,
             startDuration: 300,
-            extensionDuration: 2,
+            extensionDuration: 300,
             rugDuration: 10,
             hardCapDuration: 600,
             heatTarget: 4_000e6,
