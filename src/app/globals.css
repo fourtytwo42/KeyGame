@@ -4930,8 +4930,16 @@ body {
 .stockRaceRow:last-child { border-bottom: 0; }
 .stockRaceRow:hover { background: #fff; }
 .stockRaceRow:active { transform: translateX(2px); }
-.stockRaceRow[data-selected="true"] { background: #fff; box-shadow: inset 7px 0 0 var(--hall-orange); }
 .stockRaceRow[data-leader="true"] { background: #f1ffc2; }
+.stockRaceRow[data-selected="true"] {
+  position: relative;
+  z-index: 1;
+  background: #dfe7ff;
+  box-shadow: inset 8px 0 0 var(--hall-orange), inset 0 0 0 3px var(--hall-blue);
+}
+.stockRaceRow[data-selected="true"][data-leader="true"] {
+  background: linear-gradient(90deg, #dfe7ff 0 42%, #f1ffc2 70%);
+}
 .raceRank { font: 950 1.15rem/1 var(--font-display), sans-serif; }
 .raceTickerButton {
   border: 0;
@@ -4941,8 +4949,21 @@ body {
   text-align: left;
   font: 950 1.05rem/1 var(--font-display), sans-serif;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-.raceTickerButton[aria-pressed="true"] { color: var(--hall-blue); text-decoration: underline 4px var(--hall-orange); }
+.raceTickerButton[aria-pressed="true"] { color: var(--hall-blue); }
+.selectedTickerFlag {
+  display: none;
+  padding: 2px 4px;
+  border: 1px solid var(--hall-ink);
+  background: var(--hall-orange);
+  color: white;
+  font: 950 8px/1 var(--font-mono), monospace;
+  letter-spacing: .05em;
+}
+.raceTickerButton[aria-pressed="true"] .selectedTickerFlag { display: inline-block; }
 .racePoints,.raceHeat { display: flex; flex-direction: column; }
 .racePoints b,.raceHeat b { font-family: var(--font-mono), monospace; }
 .raceTrack { height: 12px; background: rgba(23,19,33,.13); border: 2px solid var(--hall-ink); overflow: hidden; transform: skewX(-10deg); }
@@ -5052,6 +5073,14 @@ body {
 .hallwayFeed > span { color: var(--hall-lime); }
 .hallwayFeed strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 850 11px/1 var(--font-mono), monospace; }
 
+@media (max-height: 1000px) and (min-width: 821px) {
+  .stockRaceRow { min-height: 40px; padding-block: 2px; }
+  .raceTickerButton { gap: 1px; padding-block: 1px; }
+  .selectedTickerFlag { padding-block: 1px; font-size: 7px; }
+  .bellRushBoard .quoteMath { display: none; }
+  .bellRushPrizes > details { display: none; }
+}
+
 @media (max-height: 760px) and (min-width: 821px) {
   .bellRushBoard { gap: 5px; padding-top: 6px; }
   .bellRushEssentials > div { min-height: 64px; padding-block: 5px; }
@@ -5059,6 +5088,8 @@ body {
   .bellRushRule { min-height: 27px; }
   .stockRaceBoard > header { min-height: 29px; }
   .stockRaceRow { height: 36px; min-height: 0; padding-block: 1px; }
+  .raceTickerButton { gap: 1px; padding-block: 1px; }
+  .selectedTickerFlag { padding-block: 1px; font-size: 7px; }
   .bellRushPressure { min-height: 35px; }
   .bellRushBoard .callTicket { grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); }
   .bellRushBoard .composerAmountPanel,.bellRushBoard .composerImpactPanel { padding-block: 4px; }

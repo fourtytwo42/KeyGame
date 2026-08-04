@@ -52,6 +52,11 @@ describe("LiveGame", () => {
     expect(
       screen.getByRole("button", { name: /APE \$10 ON TSLA/i }),
     ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        '[data-stock="TSLA"][data-selected="true"] .selectedTickerFlag',
+      ),
+    ).toHaveTextContent("PICKED");
   });
 
   it("shows submitted state before accepting a simulated ticker switch", () => {

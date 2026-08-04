@@ -4,6 +4,15 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: Stock selection now has an unmistakable visual state: the picked
+  row receives a blue inset outline, orange left rail, blue-tinted background,
+  and visible `PICKED` badge; a selected leader blends the selection treatment
+  with the leader color. Compact Bell Rush layout now has a moderate 761-1000px
+  height tier that hides only secondary quote/pot-split details and keeps the
+  selected badge compact, while the full compression remains limited to 760px
+  and below. Focused Vitest (7 tests), lint, TypeScript, and the VM production
+  build passed. The update is deployed to devnet; simulation remains stopped.
+
 - 2026-08-04: Bell Rush review follow-up makes every Stock Race row clickable;
   the ticker button remains keyboard-accessible, and the Details disclosure
   stops propagation so inspecting it does not change the selected stock. The

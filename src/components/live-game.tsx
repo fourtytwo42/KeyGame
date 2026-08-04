@@ -1080,7 +1080,8 @@ function StockRaceBoard({
                   onSelect(score.ticker);
                 }}
               >
-                {score.ticker}
+                <span>{score.ticker}</span>
+                <small className="selectedTickerFlag" aria-hidden="true">PICKED</small>
               </button>
               <span className="racePoints">
                 <b>{score.weightedScore.toLocaleString()}</b>
