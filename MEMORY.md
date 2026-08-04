@@ -4,6 +4,16 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: The VM root disk was expanded from a 62 GB LVM partition/volume
+  to 92 GB (`/dev/sda3` and `/dev/ubuntu-vg/ubuntu-lv`), yielding a 91 GB ext4
+  filesystem. The replacement observable run later stopped at 268 settlements,
+  26 cancellations, and 5,441 accepted contributions because Anvil retained
+  41 GB of historical states and filled the disk again. Accounting remained at
+  zero discrepancies; round 269 failed when PostgreSQL could not extend its
+  file. `scripts/devnet-start.sh` now starts Anvil with
+  `--prune-history 1024` so observable devnet runs retain bounded in-memory
+  history instead of unbounded disk-backed states. The failed run must not be
+  treated as eight-hour qualification evidence.
 - 2026-08-04: The active-round studio now fits all value-bearing controls in
   desktop browser viewports through 1000px high. `live-game.tsx` groups the
   clock/holder and action areas into compact desktop decks, while the compact
