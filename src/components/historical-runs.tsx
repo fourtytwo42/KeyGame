@@ -1,0 +1,120 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { formatUsd } from "@/lib/game/constants";
+import type { HistoricalRunSummary } from "@/lib/game/history-types";
+
+export function HistoricalRuns() {
+  const [runs, setRuns] = useState<HistoricalRunSummary[]>([]);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/history", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          runs: HistoricalRunSummary[];
+        };
+        if (active) {
+          setRuns(payload.runs);
+          setReady(true);
+        }
+      } catch {
+        if (active) setReady(true);
+      }
+    };
+
+    void refresh();
+    const timer = window.setInterval(refresh, 5_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  return (
+    <section className="historicalRuns" aria-labelledby="historical-runs-title">
+      <header>
+        <span className="eyebrow">ARCHIVE TAPE / COMPLETED BROADCASTS</span>
+        <h2 id="historical-runs-title">Historical runs</h2>
+        <p>
+          See how large each pot became, who held the final bell, and which
+          stock won the point race.
+        </p>
+      </header>
+      {runs.length ? (
+        <div className="historicalRunGrid">
+          {runs.map((run) => (
+            <article className="historicalRunCard" key={run.id}>
+              <span>ROUND {run.roundId}</span>
+              <Link href={`/replay/${run.id}`}>
+                <strong>{formatUsd(run.peakPotUsd)} PEAK POT</strong>
+              </Link>
+              {run.storySummary ? (
+                <p className="runStory">{run.storySummary}</p>
+              ) : null}
+              <dl>
+                <div>
+                  <dt>Final caller</dt>
+                  <dd>
+                    {run.finalHolderHandle ? (
+                      <Link href={`/profile/${run.finalHolderHandle}`}>
+                        {run.finalHolder}
+                      </Link>
+                    ) : (
+                      run.finalHolder
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Winning stock</dt>
+                  <dd>{run.winningTicker ?? "NO WINNER"}</dd>
+                </div>
+                <div>
+                  <dt>Calls</dt>
+                  <dd>{run.claimCount}</dd>
+                </div>
+                <div>
+                  <dt>Largest ape</dt>
+                  <dd>{formatUsd(run.largestCallUsd ?? 0)}</dd>
+                </div>
+                <div>
+                  <dt>Stock flips</dt>
+                  <dd>{run.flipCount ?? 0}</dd>
+                </div>
+                <div>
+                  <dt>Last call</dt>
+                  <dd>
+                    {run.lastCallTimeRemaining === undefined
+                      ? "—"
+                      : `${run.lastCallTimeRemaining.toFixed(1)}s left`}
+                  </dd>
+                </div>
+              </dl>
+              {run.achievements?.length ? (
+                <div className="achievementBadges">
+                  {run.achievements.slice(0, 3).map((achievement) => (
+                    <span key={achievement.id}>{achievement.title}</span>
+                  ))}
+                </div>
+              ) : null}
+              <Link href={`/replay/${run.id}`}>
+                <small>OPEN FULL RUN →</small>
+              </Link>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="emptyHistory">
+          {ready
+            ? "No completed broadcasts yet. The first finished run will appear here automatically."
+            : "Checking the archive tape…"}
+        </p>
+      )}
+    </section>
+  );
+}

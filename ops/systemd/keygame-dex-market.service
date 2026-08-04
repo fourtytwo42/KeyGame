@@ -1,0 +1,20 @@
+[Unit]
+Description=KeyGame Robinhood Chain DEX market attestation adapter
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hendo420/projects/KeyGame
+EnvironmentFile=/home/hendo420/.config/keygame/testnet.env
+Environment=PATH=/home/hendo420/.nvm/versions/node/v24.18.0/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/hendo420/.nvm/versions/node/v24.18.0/bin/corepack pnpm service:dex-market
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/hendo420/projects/KeyGame /var/run/postgresql
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "environment": "robinhood-testnet",
+  "chainId": 46630,
+  "deploymentBlock": 95124915,
+  "sourceCommit": "213ff49ddb40aa0094630362162a497c52b38cad",
+  "mockOnly": true,
+  "contractVersion": "closing-print-v2-dex",
+  "supersededBy": "closing-print-v3-airtime",
+  "contracts": {
+    "manager": "0x73efd21ee56bafce2f286511a66702e74c7133fe",
+    "paymentRouter": "0xc9A28Fb0Cac73F07038078e25645cd7E8B9A9baB",
+    "paymentToken": "0x0bbe0774147a2530b7328f09979b51804bc0b844",
+    "marketVerifier": "0x6083abe0b26e3ac1409eab2ccb4aeb908febb894"
+  },
+  "rpc": {
+    "primary": "http://192.168.50.117:8547"
+  },
+  "verifier": {
+    "type": "testnet-dex-attested",
+    "sourceChainId": 4663,
+    "twapWindowSeconds": 600
+  },
+  "assetCatalog": "config/testnet-stock-token-mocks.json"
+}

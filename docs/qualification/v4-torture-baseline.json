@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "accepted",
+  "runId": "v4-torture-live-2026-08-01T03-57-02-588Z",
+  "qualifiedSourceCommit": "6198c73944a021aa24d86c03c59c8e7ee8abcea5",
+  "qualificationRecordCommit": "e8b6498",
+  "reportSha256": "53588821d781f3ab65390d3517f1ba0031fb648a4060f5cd87e8e2ae1afb40db",
+  "markdownSha256": "0eedfed31cacf29d24b550afba5e64a600f013fc8b70bc90849d10512262bf4e",
+  "evidenceTreeSha256": "01b894ea4de44ee10e86a893e4724049f9c95a6e09702137e549bb8d2cd295ea",
+  "supersedesRunId": "v4-torture-live-2026-07-31T07-10-55-856Z",
+  "counts": {
+    "stateMachineActions": 1000000,
+    "acceptedLiveContributions": 10000,
+    "settledRounds": 500,
+    "cancelledRounds": 50,
+    "confirmedTransactions": 13825,
+    "assetReconciliationRows": 2200
+  },
+  "acceptance": {
+    "basketDiscrepancies": 0,
+    "pointDiscrepancies": 0,
+    "failedAssertions": 0,
+    "failedActions": 0,
+    "unresolvedRevertedTransactions": 0,
+    "faultsRestored": 11
+  },
+  "broadcasts": {
+    "robinhoodTestnet": false,
+    "robinhoodMainnet": false
+  }
+}

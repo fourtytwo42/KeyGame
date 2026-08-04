@@ -1,0 +1,24 @@
+[Unit]
+Description=Saved by the Bell isolated v4 rehearsal Status app
+After=network-online.target postgresql.service keygame-v4-rehearsal-indexer.service keygame-v4-rehearsal-keeper.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hendo420
+WorkingDirectory=/home/hendo420/projects/KeyGame
+EnvironmentFile=/etc/keygame/v4-rehearsal.env
+Environment=PATH=/home/hendo420/.nvm/versions/node/v24.18.0/bin:/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=production
+Environment=NEXT_DIST_DIR=.next-rehearsal
+Environment=PORT=3010
+ExecStart=/home/hendo420/.nvm/versions/node/v24.18.0/bin/corepack pnpm start
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/hendo420/projects/KeyGame/.next-rehearsal /var/run/postgresql
+
+[Install]
+WantedBy=multi-user.target

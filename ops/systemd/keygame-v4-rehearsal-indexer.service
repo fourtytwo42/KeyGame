@@ -1,0 +1,21 @@
+[Unit]
+Description=Saved by the Bell isolated v4 rehearsal indexer
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hendo420
+WorkingDirectory=/home/hendo420/projects/KeyGame
+EnvironmentFile=/etc/keygame/v4-rehearsal.env
+Environment=PATH=/home/hendo420/.nvm/versions/node/v24.18.0/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/hendo420/.nvm/versions/node/v24.18.0/bin/corepack pnpm service:indexer
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/hendo420/projects/KeyGame /var/run/postgresql
+
+[Install]
+WantedBy=multi-user.target

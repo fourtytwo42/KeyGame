@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the Saved by the Bell devnet launch rehearsal every ten seconds
+
+[Timer]
+OnBootSec=10s
+OnUnitActiveSec=10s
+AccuracySec=1s
+Persistent=false
+Unit=keygame-v4-launch-rehearsal.service
+
+[Install]
+WantedBy=timers.target

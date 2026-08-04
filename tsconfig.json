@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/lib/web3/uat-connector-runtime": [
+        "./src/lib/web3/uat-connector.disabled.ts"
+      ],
+      "@/components/uat-controls-runtime": [
+        "./src/components/uat-controls.disabled.tsx"
+      ],
+      "@/lib/server/uat-funding-runtime": [
+        "./src/lib/server/uat-funding.disabled.ts"
+      ],
+      "@/lib/web3/v4-devnet-runtime": ["./src/lib/web3/v4-devnet.disabled.ts"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    ".next-uat/types/**/*.ts",
+    ".next-uat/dev/types/**/*.ts",
+    ".next-protected/types/**/*.ts",
+    ".next-protected/dev/types/**/*.ts",
+    "**/*.mts",
+    ".next-torture/types/**/*.ts",
+    ".next-torture/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

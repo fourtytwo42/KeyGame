@@ -1,0 +1,16 @@
+AGENTS.md
+MEMORY.md
+docs/
+deployments/
+public/
+src/generated/
+.next/
+node_modules/
+out/
+cache/
+broadcast/
+.devnet/
+playwright-report/
+test-results/
+artifacts/
+.torture/

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 5,
+  "contractVersion": "saved-bell-v5-market-pot",
+  "chainId": 46630,
+  "environment": "robinhood-testnet",
+  "mockOnly": true,
+  "valueLabel": "TESTNET MOCK · NO VALUE",
+  "sourceCommit": "SET_AT_PACKAGE_TIME",
+  "deploymentBlock": null,
+  "rpc": {
+    "primaryEnv": "ROBINHOOD_TESTNET_RPC_URL",
+    "fallbackEnv": "ROBINHOOD_TESTNET_FALLBACK_RPC_URL",
+    "policy": "LAN_ONLY",
+    "referenceUse": "HEALTH_CHECK_ONLY",
+    "automaticFailover": false
+  },
+  "roles": {
+    "roleCustodyMode": "single-deployer-eoa",
+    "managerAdmin": "DEPLOYER_ADDRESS",
+    "pendingManagerAdmin": null,
+    "marketAdmin": "DEPLOYER_ADDRESS",
+    "pendingMarketAdmin": null,
+    "keeper": "DEPLOYER_ADDRESS",
+    "treasury": "DEPLOYER_ADDRESS",
+    "pendingTreasury": null,
+    "conversionOperator": "DEPLOYER_ADDRESS",
+    "faucet": "DEPLOYER_ADDRESS"
+  },
+  "contracts": {
+    "manager": null,
+    "paymentRouter": null,
+    "lifetimePointsVault": null,
+    "roundFactory": null,
+    "rewardRouter": null,
+    "seedRebalancer": "MANAGER_INTERNAL_V5",
+    "swapAdapter": null,
+    "paymentToken": null,
+    "mockUsdg": null,
+    "mockStockTokens": [],
+    "activeRound": null
+  },
+  "broadcastAuthorized": false,
+  "releaseGates": {
+    "contractSizePassed": false,
+    "operatorRiskAcknowledged": true,
+    "roleCustodyVerified": false,
+    "testnetSmokeAuthorized": false,
+    "testnetSmokePassed": false,
+    "testnetTwoRoundSmokePassed": false,
+    "testnetHistoricalSmokePassed": true,
+    "testnetCurrentBytecodeMatches": false,
+    "devnetLaunchRehearsalPassed": true,
+    "externalWalletUatPassed": false,
+    "externalWalletUatStatus": "NOT_PERFORMED",
+    "browserWalletCompatibility": "UNVERIFIED",
+    "walletUatRequiredForCanary": false,
+    "mainnetBroadcastAuthorized": false
+  },
+  "releaseEvidence": {
+    "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT",
+    "operatorRiskAcknowledgement": "No legal review or independent audit",
+    "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME",
+    "contractSizeReportSha256": null
+  },
+  "verifier": {
+    "type": "mock-stock-swap-adapter",
+    "mainnetAllowed": false
+  },
+  "notes": [
+    "Template only. No testnet transaction was broadcast.",
+    "Built-in wallet, faucet, generated-key, and mock code are forbidden from protected/mainnet bundles."
+  ]
+}

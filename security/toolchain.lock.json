@@ -1,0 +1,11 @@
+{
+  "slither": "0.11.3",
+  "uvInstaller": "0.12.0",
+  "aderyn": "0.6.8",
+  "semgrep": "1.134.0",
+  "pythonSetuptoolsCompatibility": "80.9.0",
+  "solhint": "6.2.3",
+  "gitleaks": "8.30.1",
+  "statefulFuzzer": "echidna 2.3.2",
+  "note": "Install into an isolated VM tool environment. The review runner fails closed when a required command is absent. Update versions only in a reviewed source commit."
+}

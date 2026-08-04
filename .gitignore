@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next*/
+out/
+
+# Build and test output
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+artifacts/
+tmp/imagegen/
+.torture/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Deployment
+.vercel/
+
+# Foundry and local runtime
+broadcast/
+cache/
+.devnet/
+.soak/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

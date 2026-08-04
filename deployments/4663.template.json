@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 4,
+  "environment": "robinhood-mainnet",
+  "chainId": 4663,
+  "deploymentBlock": 0,
+  "sourceCommit": "REQUIRED_FROZEN_INTERNALLY_REVIEWED_COMMIT",
+  "mockOnly": false,
+  "contractVersion": "last-bell-v4-stock-pot",
+  "broadcastLocked": true,
+  "roles": {
+    "roleCustodyMode": "single-deployer-eoa",
+    "managerAdmin": "DEPLOYER_ADDRESS",
+    "pendingManagerAdmin": null,
+    "marketAdmin": "DEPLOYER_ADDRESS",
+    "pendingMarketAdmin": null,
+    "keeper": "DEPLOYER_ADDRESS",
+    "treasury": "DEPLOYER_ADDRESS",
+    "pendingTreasury": null,
+    "conversionOperator": "DEPLOYER_ADDRESS"
+  },
+  "contracts": {
+    "manager": null,
+    "paymentRouter": null,
+    "paymentToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "lifetimePointsVault": null,
+    "rewardRouter": null,
+    "swapAdapter": null,
+    "activeRound": null
+  },
+  "rpc": {
+    "primary": "http://192.168.50.173:8547",
+    "fallback": "SERVER_ONLY_HEALTH_REFERENCE_REQUIRED",
+    "policy": "LAN_ONLY",
+    "referenceUse": "HEALTH_CHECK_ONLY",
+    "automaticFailover": false
+  },
+  "market": {
+    "type": "direct-uniswap-v3-stock-swap",
+    "factory": "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
+    "quoteToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "twapWindowSeconds": 600,
+    "requiredHistorySeconds": 1800,
+    "maximumExecutionDeviationBps": 100,
+    "minimumUsdgDepth": 10000,
+    "catalogLimit": 16,
+    "approvedCatalog": [
+      {
+        "symbol": "AAPL",
+        "stockToken": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+        "pool": "0x783c9bbb765047cfdd2b84b92b2ca9f11d34b7ed",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "TSLA",
+        "stockToken": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d",
+        "pool": "0xf4acdaeeb7022862a763c9b1b885e11191c889e3",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "AMZN",
+        "stockToken": "0x12f190a9F9d7D37a250758b26824B97CE941bF54",
+        "pool": "0x8ac92da74ab5f3b1d024dc1943ad7e15dc4179ef",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "SPY",
+        "stockToken": "0x117cc2133c37B721F49dE2A7a74833232B3B4C0C",
+        "pool": "0xa43b424bc609495aed4bcd88d654934b510b0ad9",
+        "feeTier": 3000
+      },
+      {
+        "symbol": "NVDA",
+        "stockToken": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+        "pool": "0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3",
+        "feeTier": 500
+      }
+    ]
+  },
+  "releaseGates": {
+    "contractSizePassed": false,
+    "tortureBaselinePreserved": true,
+    "productionAdapterQualified": true,
+    "testnetSmokeAuthorized": false,
+    "testnetSmokePassed": true,
+    "internalSecurityReviewPassed": true,
+    "operatorRiskAcknowledged": true,
+    "roleCustodyVerified": true,
+    "externalWalletUatPassed": false,
+    "externalWalletUatStatus": "SKIPPED_BY_OPERATOR",
+    "browserWalletCompatibility": "UNVERIFIED",
+    "walletUatRequiredForCanary": false,
+    "devnetLaunchRehearsalPassed": true,
+    "testnetTwoRoundSmokePassed": true,
+    "testnetHistoricalSmokePassed": true,
+    "testnetCurrentBytecodeMatches": true,
+    "mainnetGameplayPretested": false,
+    "launchValidation": "READ_ONLY",
+    "promotionRequiresSeparateAuthorization": true,
+    "mainnetBroadcastAuthorized": false,
+    "mainnetDeploymentCompleted": false,
+    "mainnetAuthorizationState": "NOT_AUTHORIZED",
+    "launchValidationStatus": "NOT_DEPLOYED",
+    "promotionStatus": "LOCKED"
+  },
+  "releaseEvidence": {
+    "label": "INTERNALLY REVIEWED · NO INDEPENDENT AUDIT · EXTERNAL WALLET COMPATIBILITY UNVERIFIED",
+    "internalSecurityReviewSha256": null,
+    "operatorRiskAcknowledgement": "No legal review or independent audit",
+    "operatorRiskAcknowledgedAt": "SET_AT_PACKAGE_TIME",
+    "protectedBuildSha256": null,
+    "contractSizeReportSha256": null,
+    "externalWalletUatEvidenceSha256": null,
+    "externalWalletUatDispositionRecordedAt": "SET_AT_PACKAGE_TIME"
+  }
+}
