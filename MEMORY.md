@@ -4,6 +4,19 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
+- 2026-08-04: Added the observable v5 devnet simulation harness. Profile
+  `v5-observable` uses 64 deterministic non-admin wallets, mock DEX fill/rate
+  rotation, repeated atomic-revert cases, interleaved cancellations, rewards,
+  lifetime claims, protocol claims, and exact five-asset reconciliation. The
+  production target is 800 settled rounds plus 80 cancellations over eight
+  wall-clock hours, with 36-second scheduled rounds representing about 66.7
+  hours of five-minute game time and roughly 15,790 accepted contributions.
+  The isolated PostgreSQL schema is `keygame_observable`; keeper and indexer
+  are restarted against it to avoid stale idempotency keys from earlier Anvil
+  deployments. A two-settlement/one-cancellation rehearsal passed with 43
+  accepted contributions, zero discrepancies, zero failed assertions, and
+  zero failed actions. The live app continues polling chain state every second,
+  so gameplay is visible without refreshing.
 - 2026-08-04: `saved-bell-v5-market-pot` is implemented and locally qualified
   in worktree `.codex-worktrees/v5-release` on branch
   `codex/saved-bell-v5-open-market`. Contributions accept verified partial
@@ -403,6 +416,13 @@ Durable project context lives here. Update this file whenever information should
 
 ## Current State
 
+- The observable campaign is controlled by
+  `scripts/v5-observable-simulation.sh` and the `v5-simulation:*` pnpm
+  commands. Its systemd controller is `keygame-v5-observable-simulation`; the
+  live page is `http://192.168.50.138:3000`. The Status page recognizes the
+  `v5-observable` profile and exposes rounds, cancellations, accepted calls,
+  and reconciliation discrepancies.
+
 - V5 is the current implementation and qualification target. The round records
   full USDG deposited, exact adapter input consumed, residual USDG, Stock Token
   output, and full-deposit points. Settlement, cancellation, lifetime rewards,
@@ -655,6 +675,13 @@ When sources conflict, use this order:
 - PRD status discipline: `DECIDED` requirements may guide implementation; `SELECTED FOR PROTOTYPE`, `PROPOSED`, `OPEN`, and `GATE` items retain their labeled uncertainty and cannot be silently promoted to production decisions.
 
 ## Verification Ledger
+
+- 2026-08-04 observable harness checkpoint: `bash -n`, ESLint, TypeScript, 117
+  Vitest tests, and the Next.js production build passed on the KeyGame VM. The
+  short live rehearsal run `v5-observable-live-2026-08-04T04-50-15-718Z`
+  completed two settlements and one cancellation in 8.4 seconds with 43
+  accepted contributions, 15 reconciled asset rows, and no accounting, point,
+  assertion, or action failure.
 
 - 2026-08-03 PRD 17 live rollout and repair: migration 015 applied; both
   environment-specific apps returned HTTP 200; testnet status, snapshot,
@@ -1230,8 +1257,10 @@ When sources conflict, use this order:
 
 ## Open Follow-ups
 
-- Package and commit only the reviewed v5 source without absorbing unrelated
-  dirty work. The clean campaign and desktop/mobile Playwright UAT are green.
+- Commit and push the observable-harness source, deploy that exact checkout to
+  the VM without resetting the current Anvil contracts, then start and monitor
+  the full eight-hour `v5-observable` campaign. Preserve its JSON/Markdown
+  report and checksum after completion.
 - V5 requires a new one-deployment/two-round mock testnet authorization after
   local acceptance. No prior v4 authorization or smoke evidence can qualify
   v5, and no v5 testnet or mainnet broadcast is currently authorized.

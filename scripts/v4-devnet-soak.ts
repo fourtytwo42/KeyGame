@@ -79,31 +79,54 @@ const requestedProfile = process.env.V4_SOAK_PROFILE;
 const runProfile =
   requestedProfile === "endurance"
     ? "v4-endurance"
-    : requestedProfile === "torture"
-      ? "v4-torture"
-      : "v4-accelerated";
+    : requestedProfile === "observable"
+      ? "v5-observable"
+      : requestedProfile === "torture"
+        ? "v4-torture"
+        : "v4-accelerated";
 const tortureMode = runProfile === "v4-torture";
-const campaignPlayers = tortureMode
+const observableMode = runProfile === "v5-observable";
+const highLoadMode = tortureMode || observableMode;
+const campaignPlayers = highLoadMode
   ? deployment.players.slice(0, 64)
   : deployment.players.slice(0, 4);
-if (tortureMode && campaignPlayers.length !== 64) {
-  throw new Error("V4 torture requires exactly 64 deterministic players.");
+if (highLoadMode && campaignPlayers.length !== 64) {
+  throw new Error(`${runProfile} requires exactly 64 deterministic players.`);
 }
 const targetSettled = Number(
   process.env.V4_SOAK_TARGET_ROUNDS ||
-    (runProfile === "v4-endurance" ? 24 : tortureMode ? 500 : 100),
+    (runProfile === "v4-endurance"
+      ? 24
+      : observableMode
+        ? 800
+        : tortureMode
+          ? 500
+          : 100),
 );
 const targetCancelled = Number(
   process.env.V4_SOAK_CANCEL_ROUNDS ||
-    (runProfile === "v4-endurance" ? 0 : tortureMode ? 50 : 10),
+    (runProfile === "v4-endurance"
+      ? 0
+      : observableMode
+        ? 80
+        : tortureMode
+          ? 50
+          : 10),
 );
 const enduranceIntervalMs = Number(
-  process.env.V4_SOAK_ENDURANCE_INTERVAL_MS || 300_000,
+  process.env.V4_SOAK_ENDURANCE_INTERVAL_MS ||
+    (observableMode ? 36_000 : 300_000),
+);
+const observableCallDelayMs = Number(
+  process.env.V4_OBSERVABLE_CALL_DELAY_MS || 400,
+);
+const targetDurationHours = Number(
+  process.env.V4_SOAK_DURATION_HOURS || (observableMode ? 8 : 2),
 );
 const reportDirectory = path.join(
   process.cwd(),
   "artifacts",
-  tortureMode ? "torture" : "qualification",
+  tortureMode ? "torture" : observableMode ? "observable" : "qualification",
 );
 
 const erc20Abi = parseAbi([
@@ -117,6 +140,8 @@ const mockAdapterAbi = parseAbi([
   "function failSwaps() view returns (bool)",
   "function setFillBps(uint16)",
   "function fillBps() view returns (uint16)",
+  "function setRate(address,uint256)",
+  "function stockPerUsdg(address) view returns (uint256)",
 ]);
 
 function wallet(account: Address) {
@@ -363,7 +388,7 @@ async function expectRejectedWithoutStateChange(
 }
 
 async function exerciseAtomicFailures(round: Address, ordinal: number) {
-  if (ordinal > 4) return;
+  if (ordinal > 7) return;
   const player = deployment.players[(ordinal + 1) % 3];
   const ticker = ordinal % 4;
   const token = deployment.stockTokens[ticker];
@@ -412,7 +437,7 @@ async function exerciseAtomicFailures(round: Address, ordinal: number) {
       block.timestamp + 60n,
       255,
     ]);
-  } else {
+  } else if (ordinal === 4) {
     await wallet(player).writeContract({
       address: paymentToken,
       abi: erc20Abi,
@@ -432,7 +457,67 @@ async function exerciseAtomicFailures(round: Address, ordinal: number) {
       functionName: "approve",
       args: [paymentRouter, maxUint256],
     });
+  } else if (ordinal === 5) {
+    await expectRejectedWithoutStateChange(round, player, [
+      4,
+      amount,
+      1n,
+      block.timestamp + 60n,
+      255,
+    ]);
+  } else if (ordinal === 6) {
+    await expectRejectedWithoutStateChange(round, player, [
+      ticker,
+      999_999n,
+      1n,
+      block.timestamp + 60n,
+      255,
+    ]);
+  } else {
+    const priorRate = await client.readContract({
+      address: adapter,
+      abi: mockAdapterAbi,
+      functionName: "stockPerUsdg",
+      args: [token],
+    });
+    await wallet(deployment.deployer).writeContract({
+      address: adapter,
+      abi: mockAdapterAbi,
+      functionName: "setRate",
+      args: [token, 0n],
+    });
+    await expectRejectedWithoutStateChange(round, player, [
+      ticker,
+      amount,
+      1n,
+      block.timestamp + 60n,
+      255,
+    ]);
+    await wallet(deployment.deployer).writeContract({
+      address: adapter,
+      abi: mockAdapterAbi,
+      functionName: "setRate",
+      args: [token, priorRate],
+    });
   }
+}
+
+async function exerciseCurrentHolderRejection(round: Address) {
+  const [holder, block] = await Promise.all([
+    client.readContract({
+      address: round,
+      abi: lastBellV4Abi,
+      functionName: "holder",
+    }),
+    client.getBlock(),
+  ]);
+  await expectRejectedWithoutStateChange(round, holder, [
+    0,
+    1_000_000n,
+    1n,
+    block.timestamp + 60n,
+    255,
+  ]);
 }
 
 async function finishRoundClock(round: Address, natural: boolean) {
@@ -890,7 +975,14 @@ async function claimSettledRewards(
       }),
   );
   if (ordinal % 10 === 0) {
-    for (const player of deployment.players.slice(0, 3)) {
+    const lifetimeClaimants = observableMode
+      ? Array.from(
+          { length: 8 },
+          (_, index) =>
+            campaignPlayers[(ordinal + index) % campaignPlayers.length],
+        )
+      : deployment.players.slice(0, 3);
+    for (const player of lifetimeClaimants) {
       await transaction(
         runId,
         actionId,
@@ -961,18 +1053,53 @@ async function runSettledRound(
   if (phase !== 0 && phase !== 1 && phase !== 2) {
     throw new Error(`Round ${round} cannot resume from phase ${phase}.`);
   }
-  if (phase === 0) await exerciseAtomicFailures(round, ordinal);
-  const fillBps = tortureMode
+  const fillBps = highLoadMode
     ? [10_000, 7_500, 2_500, 100][ordinal % 4]
     : ordinal % 5 === 0
       ? 2_500
       : 10_000;
-  await wallet(deployment.deployer).writeContract({
-    address: adapter,
-    abi: mockAdapterAbi,
-    functionName: "setFillBps",
-    args: [fillBps],
-  });
+  await transaction(
+    runId,
+    actionId,
+    `market:${ordinal}:fill:${fillBps}`,
+    deployment.deployer,
+    () =>
+      wallet(deployment.deployer).writeContract({
+        address: adapter,
+        abi: mockAdapterAbi,
+        functionName: "setFillBps",
+        args: [fillBps],
+      }),
+  );
+  if (observableMode) {
+    const rates = [
+      100_000_000_000_000_000n,
+      500_000_000_000_000_000n,
+      1_000_000_000_000_000_000n,
+      2_000_000_000_000_000_000n,
+      10_000_000_000_000_000_000n,
+    ];
+    for (let ticker = 0; ticker < deployment.stockTokens.length; ticker += 1) {
+      const rate = rates[(ordinal + ticker) % rates.length];
+      await transaction(
+        runId,
+        actionId,
+        `market:${ordinal}:rate:${ticker}:${rate}`,
+        deployment.deployer,
+        () =>
+          wallet(deployment.deployer).writeContract({
+            address: adapter,
+            abi: mockAdapterAbi,
+            functionName: "setRate",
+            args: [deployment.stockTokens[ticker], rate],
+          }),
+      );
+    }
+  }
+  if (phase === 0) {
+    const edgeOrdinal = observableMode ? ((ordinal - 1) % 100) + 1 : ordinal;
+    await exerciseAtomicFailures(round, edgeOrdinal);
+  }
   const amounts = [
     1_000_000n,
     10_000_000n,
@@ -981,7 +1108,7 @@ async function runSettledRound(
     5_000_000_000n,
     25_000_000_000n,
   ];
-  const callCount = tortureMode
+  const callCount = highLoadMode
     ? ordinal <= 350
       ? 20
       : 19
@@ -993,7 +1120,7 @@ async function runSettledRound(
     const player = deployment.players[(ordinal + index) % 4];
     const ticker = (ordinal + index * 3) % 4;
     const amount = amounts[(scenarioSeed + ordinal + index) % amounts.length];
-    const selectedPlayer = tortureMode
+    const selectedPlayer = highLoadMode
       ? campaignPlayers[(ordinal + index) % campaignPlayers.length]
       : player;
     calls.push(() =>
@@ -1008,15 +1135,26 @@ async function runSettledRound(
       ),
     );
   }
-  if (tortureMode) {
-    for (let index = 0; index < calls.length; index += 4) {
-      await Promise.all(calls.slice(index, index + 4).map((call) => call()));
+  if (highLoadMode) {
+    const batchSize = observableMode ? 2 : 4;
+    for (let index = 0; index < calls.length; index += batchSize) {
+      await Promise.all(
+        calls.slice(index, index + batchSize).map((call) => call()),
+      );
+      if (observableMode && index + batchSize < calls.length) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, observableCallDelayMs),
+        );
+      }
     }
   } else {
     for (const call of calls) await call();
   }
+  if (observableMode && ((ordinal - 1) % 100) + 1 === 8) {
+    await exerciseCurrentHolderRejection(round);
+  }
   await finishRoundClock(round, natural);
-  if (natural || tortureMode) {
+  if (natural || highLoadMode) {
     await waitForKeeperRollover(round);
   } else {
     await managerCall(
@@ -1029,7 +1167,7 @@ async function runSettledRound(
   const discrepancies = await reconcileRound(runId, round, false);
   if (discrepancies) throw new Error(`Round ${ordinal} did not conserve.`);
   await claimSettledRewards(runId, actionId, round, ordinal);
-  if (!natural && !tortureMode) {
+  if (!natural && !highLoadMode) {
     await prepareAndActivate(runId, actionId, round);
   }
 }
@@ -1149,7 +1287,7 @@ async function runCancelledRound(
     throw new Error("Cancellation did not discard pending points.");
   }
   await reconcileRound(runId, round, true);
-  if (tortureMode) {
+  if (highLoadMode) {
     await waitForKeeperRollover(round);
   } else {
     await prepareAndActivate(runId, actionId, round);
@@ -1166,9 +1304,12 @@ async function start() {
   if (existing.rowCount) {
     throw new Error(`Active soak already exists: ${existing.rows[0].id}`);
   }
-  const runId = `${tortureMode ? "v4-torture-live" : "v4-devnet"}-${new Date()
-    .toISOString()
-    .replace(/[:.]/g, "-")}`;
+  const runPrefix = tortureMode
+    ? "v4-torture-live"
+    : observableMode
+      ? "v5-observable-live"
+      : "v4-devnet";
+  const runId = `${runPrefix}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   await pool.query(
     `INSERT INTO soak_runs(
        id,deployment_key,chain_id,state,target_hours,target_rounds,
@@ -1177,7 +1318,11 @@ async function start() {
     [
       runId,
       deploymentKey,
-      runProfile === "v4-endurance" ? 2 : 0,
+      observableMode
+        ? targetDurationHours
+        : runProfile === "v4-endurance"
+          ? 2
+          : 0,
       targetSettled,
       JSON.stringify({
         targetSettled,
@@ -1188,7 +1333,7 @@ async function start() {
       }),
       runProfile,
       scenarioSeed,
-      120,
+      observableMode ? targetDurationHours * 60 : 120,
     ],
   );
   await ensurePlayers(runId);
@@ -1217,10 +1362,46 @@ async function waitForDatabase(label: string) {
   return waitForDatabaseRecovery(() => pool.query("SELECT 1"), label);
 }
 
+async function executeCancelledAction(runId: string, ordinal: number) {
+  for (;;) {
+    try {
+      const action = await pool.query<{ id: string }>(
+        `INSERT INTO soak_actions(
+           run_id,idempotency_key,action_type,scheduled_at,state,payload,started_at)
+         VALUES($1,$2,'v4-cancelled-round',now(),'running',$3,now())
+         ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
+           state=CASE WHEN soak_actions.state='confirmed'
+             THEN 'confirmed' ELSE 'running' END
+         RETURNING id`,
+        [runId, `cancelled:${ordinal}`, JSON.stringify({ ordinal })],
+      );
+      const already = await pool.query<{ state: string }>(
+        `SELECT state FROM soak_actions
+         WHERE run_id=$1 AND idempotency_key=$2`,
+        [runId, `cancelled:${ordinal}`],
+      );
+      if (already.rows[0]?.state !== "confirmed") {
+        await runCancelledRound(runId, ordinal, action.rows[0].id);
+        await pool.query(
+          `UPDATE soak_actions SET state='confirmed',completed_at=now()
+           WHERE id=$1`,
+          [action.rows[0].id],
+        );
+      }
+      return;
+    } catch (error) {
+      if (!isTransientDatabaseError(error)) throw error;
+      await waitForDatabase(`cancelled round ${ordinal}`);
+    }
+  }
+}
+
 async function run() {
   await waitForDatabase("controller startup");
   const current = await currentRun();
   const natural = current.run_profile === "v4-endurance";
+  const observable = current.run_profile === "v5-observable";
+  let interleavedCancellations = 0;
   for (let ordinal = 1; ordinal <= current.config.targetSettled; ordinal += 1) {
     const intervalStarted = Date.now();
     for (;;) {
@@ -1272,7 +1453,22 @@ async function run() {
         throw error;
       }
     }
-    if (natural && ordinal < current.config.targetSettled) {
+    if (
+      observable &&
+      interleavedCancellations < current.config.targetCancelled &&
+      ordinal %
+        Math.max(
+          1,
+          Math.floor(
+            current.config.targetSettled / current.config.targetCancelled,
+          ),
+        ) ===
+        0
+    ) {
+      interleavedCancellations += 1;
+      await executeCancelledAction(current.id, interleavedCancellations);
+    }
+    if ((natural || observable) && ordinal < current.config.targetSettled) {
       const remaining =
         (current.config.intervalMs ?? enduranceIntervalMs) -
         (Date.now() - intervalStarted);
@@ -1282,41 +1478,11 @@ async function run() {
     }
   }
   for (
-    let ordinal = 1;
+    let ordinal = interleavedCancellations + 1;
     ordinal <= current.config.targetCancelled;
     ordinal += 1
   ) {
-    for (;;) {
-      try {
-        const action = await pool.query<{ id: string }>(
-          `INSERT INTO soak_actions(
-             run_id,idempotency_key,action_type,scheduled_at,state,payload,started_at)
-           VALUES($1,$2,'v4-cancelled-round',now(),'running',$3,now())
-           ON CONFLICT(run_id,idempotency_key) DO UPDATE SET
-             state=CASE WHEN soak_actions.state='confirmed'
-               THEN 'confirmed' ELSE 'running' END
-           RETURNING id`,
-          [current.id, `cancelled:${ordinal}`, JSON.stringify({ ordinal })],
-        );
-        const already = await pool.query<{ state: string }>(
-          `SELECT state FROM soak_actions
-           WHERE run_id=$1 AND idempotency_key=$2`,
-          [current.id, `cancelled:${ordinal}`],
-        );
-        if (already.rows[0]?.state !== "confirmed") {
-          await runCancelledRound(current.id, ordinal, action.rows[0].id);
-          await pool.query(
-            `UPDATE soak_actions SET state='confirmed',completed_at=now()
-             WHERE id=$1`,
-            [action.rows[0].id],
-          );
-        }
-        break;
-      } catch (error) {
-        if (!isTransientDatabaseError(error)) throw error;
-        await waitForDatabase(`cancelled round ${ordinal}`);
-      }
-    }
+    await executeCancelledAction(current.id, ordinal);
   }
   for (;;) {
     try {
@@ -1574,7 +1740,11 @@ async function report() {
   const machineReport = {
     runId: current.id,
     generatedAt: new Date().toISOString(),
-    reportFormat: "saved-bell-v5-torture-v1",
+    reportFormat: observableMode
+      ? "saved-bell-v5-observable-simulation-v1"
+      : tortureMode
+        ? "saved-bell-v5-torture-v1"
+        : "saved-bell-v5-devnet-qualification-v1",
     sourceCommit: deployment.sourceCommit,
     deploymentKey,
     scenarioSeed,
@@ -1599,7 +1769,13 @@ async function report() {
   const resource = resources.rows[0] as Record<string, unknown>;
   const transaction = transactionStats.rows[0] as Record<string, unknown>;
   const markdownContent = [
-    `# Last Bell v4 ${tortureMode ? "Torture Campaign" : "Devnet Qualification"}`,
+    `# Saved by the Bell v5 ${
+      observableMode
+        ? "Observable Devnet Simulation"
+        : tortureMode
+          ? "Torture Campaign"
+          : "Devnet Qualification"
+    }`,
     ``,
     `- Run: \`${current.id}\``,
     `- Source: \`${deployment.sourceCommit}\``,
