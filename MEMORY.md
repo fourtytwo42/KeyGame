@@ -4,13 +4,17 @@ Durable project context lives here. Update this file whenever information should
 
 ## Active Handoff
 
-- 2026-08-04: The active-round studio now fits all value-bearing controls in a
-  normal 1280x720 viewport. `live-game.tsx` groups the clock/holder and action
-  areas into compact desktop decks, while the short-desktop CSS breakpoint
+- 2026-08-04: The active-round studio now fits all value-bearing controls in
+  desktop browser viewports through 1000px high. `live-game.tsx` groups the
+  clock/holder and action areas into compact desktop decks, while the compact
+  desktop CSS breakpoint
   reduces scoreboard, clock, caller, ticker, quote, and action spacing without
   changing mobile layout or game logic. Deployed-browser evidence at 1280x720:
   broadcast arena bottom 708px, live stage bottom 689px, APE action bottom
-  650px, crawl bottom 703px, and no horizontal overflow. At 390x844 the mobile
+  650px, crawl bottom 703px, and no horizontal overflow. The operator's actual
+  1278x911 viewport originally missed the 820px-high breakpoint and clipped the
+  APE action at 1060px; the corrected 1000px breakpoint puts the live action at
+  823px and crawl at 894px inside the 911px viewport. At 390x844 the mobile
   action dock remains visible and there is no horizontal overflow.
 - 2026-08-04: The first observable run
   `v5-observable-live-2026-08-04T04-54-06-920Z` was invalidated after the VM
